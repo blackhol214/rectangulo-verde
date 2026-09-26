@@ -1,0 +1,1245 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rectángulo Verde</title>
+<style>
+  :root { color-scheme: light; --sky:#bfe3f2; --ink:#16301f; --panel:rgba(255,255,255,.78); --accent:#2fae4e; }
+  html, body { height:100%; margin:0; overflow:hidden; background:var(--sky); font-family: ui-rounded, "SF Pro Rounded", system-ui, sans-serif; color:var(--ink); }
+  [hidden] { display:none !important; }
+  #game { position:fixed; inset:0; display:block; width:100%; height:100%; touch-action:none; }
+  .hud { position:fixed; left:16px; top:calc(16px + env(safe-area-inset-top,0px)); background:var(--panel); padding:10px 14px; border-radius:10px; font-size:13px; line-height:1.5; backdrop-filter:blur(6px); max-width:calc(100% - 32px); }
+  .hud b { color:var(--accent); }
+  kbd { font:600 11px ui-monospace, Menlo, monospace; background:#fff; border:1px solid #cfd8d2; border-bottom-width:2px; border-radius:4px; padding:0 5px; }
+  #stick { position:fixed; left:24px; bottom:calc(24px + env(safe-area-inset-bottom,0px)); width:110px; height:110px; border-radius:50%; background:rgba(255,255,255,.35); border:2px solid rgba(255,255,255,.7); display:none; touch-action:none; }
+  #knob { position:absolute; left:35px; top:35px; width:40px; height:40px; border-radius:50%; background:rgba(255,255,255,.9); }
+  #jump { position:fixed; right:24px; bottom:calc(34px + env(safe-area-inset-bottom,0px)); width:80px; height:80px; border-radius:50%; border:2px solid rgba(255,255,255,.7); background:rgba(47,174,78,.75); color:#fff; font:700 14px system-ui; display:none; touch-action:none; }
+  #warn { position:fixed; left:50%; top:30%; transform:translate(-50%,-50%) scale(.6); margin:0; font:400 clamp(40px, 11vw, 120px)/1 Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif; color:#e01010; letter-spacing:.02em; text-shadow:0 4px 0 #6a0000, 0 8px 18px rgba(0,0,0,.35); white-space:nowrap; opacity:0; pointer-events:none; transition:opacity .25s, transform .25s; }
+  #warn.show { opacity:1; transform:translate(-50%,-50%) scale(1); }
+  .coins { position:fixed; right:16px; top:calc(16px + env(safe-area-inset-top,0px)); display:flex; align-items:center; gap:8px; background:var(--panel); padding:8px 14px; border-radius:10px; font:400 26px/1 Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif; color:#7a5200; font-variant-numeric:tabular-nums; backdrop-filter:blur(6px); }
+  .clock { position:fixed; right:16px; top:calc(66px + env(safe-area-inset-top,0px)); display:flex; align-items:center; gap:8px; background:var(--panel); padding:6px 12px; border-radius:10px; font:700 14px system-ui, sans-serif; color:#16301f; font-variant-numeric:tabular-nums; backdrop-filter:blur(6px); }
+  .clock #clockIcon { font:400 16px Impact, "Arial Narrow Bold", sans-serif; letter-spacing:.04em; color:#c98a00; }
+  .clock.night #clockIcon { color:#3b4fa8; }
+  .coins i { width:20px; height:20px; border-radius:50%; background:radial-gradient(circle at 35% 35%, #fff3a8, #ffc400 55%, #c98a00); box-shadow:inset 0 0 0 2px #b07800; }
+  #toast { position:fixed; left:50%; bottom:calc(28px + env(safe-area-inset-bottom,0px)); transform:translate(-50%, 10px); margin:0; padding:10px 18px; border-radius:999px; background:rgba(22,48,31,.88); color:#fff; font:700 16px system-ui, sans-serif; white-space:nowrap; opacity:0; pointer-events:none; transition:opacity .2s, transform .2s; }
+  #toast.show { opacity:1; transform:translate(-50%, 0); }
+  #toast.bad { background:rgba(150,20,20,.9); }
+  #cross { position:fixed; left:50%; top:50%; width:22px; height:22px; margin:-11px 0 0 -11px; pointer-events:none; display:none; }
+  #cross::before, #cross::after { content:""; position:absolute; background:#fff; box-shadow:0 0 0 1px rgba(0,0,0,.5); }
+  #cross::before { left:10px; top:0; width:2px; height:22px; }
+  #cross::after { top:10px; left:0; height:2px; width:22px; }
+  #lockHint { position:fixed; left:50%; top:58%; transform:translateX(-50%); margin:0; padding:8px 14px; border-radius:8px; background:rgba(22,48,31,.85); color:#fff; font:600 14px system-ui, sans-serif; pointer-events:none; }
+  canvas.aim { cursor:crosshair; }
+  #cmd { position:fixed; left:16px; bottom:calc(16px + env(safe-area-inset-bottom,0px)); width:min(420px, calc(100% - 32px)); display:flex; align-items:center; gap:8px; margin:0; padding:8px 10px; border-radius:10px; background:rgba(22,48,31,.9); }
+  #cmd label { font:700 11px system-ui, sans-serif; letter-spacing:.08em; text-transform:uppercase; color:#9fe0b0; }
+  #cmdInput { flex:1; min-width:0; border:0; border-radius:6px; padding:8px 10px; font:15px ui-monospace, Menlo, monospace; background:#fff; color:#16301f; }
+  #cmdInput:focus { outline:2px solid #2fae4e; }
+  #bedPrompt { position:fixed; left:50%; top:62%; transform:translateX(-50%); margin:0; padding:8px 14px; border-radius:8px; background:rgba(22,48,31,.85); color:#fff; font:600 15px system-ui, sans-serif; pointer-events:none; white-space:nowrap; }
+  #sleep { position:fixed; inset:0; display:grid; place-items:center; background:#05070f; opacity:0; pointer-events:none; transition:opacity 1s; }
+  #sleep span { font:400 clamp(36px, 8vw, 72px)/1 Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif; color:#cdd8ff; letter-spacing:.04em; }
+  #sleep.on { opacity:1; }
+  #reload { position:fixed; left:50%; bottom:calc(84px + env(safe-area-inset-bottom,0px)); transform:translateX(-50%); width:min(220px, calc(100% - 32px)); display:flex; flex-direction:column; gap:4px; pointer-events:none; }
+  #reload span { font:600 11px system-ui, sans-serif; letter-spacing:.08em; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.6); text-align:center; }
+  #reload .bar { height:10px; border-radius:5px; background:rgba(22,48,31,.55); overflow:hidden; box-shadow:0 0 0 2px rgba(255,255,255,.7); }
+  #reloadFill { height:100%; width:100%; background:#8fa6c8; }
+  #reload.ready #reloadFill { background:#1e6bff; }
+  @media (prefers-reduced-motion: reduce) { #warn, #toast { transition:none; } }
+  @media (pointer:coarse) { #stick, #jump { display:block; } .hud .keys { display:none; } }
+</style>
+</head>
+<body>
+
+<canvas id="game"></canvas>
+<div class="hud">
+  <b>Rectángulo Verde</b><br>
+  <span class="keys">Moverse: <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> · Saltar: <kbd>Espacio</kbd><br>Girar cámara: <kbd>←</kbd><kbd>→</kbd> o arrastra · Primera persona: <kbd>V</kbd> · Disparar láser: <kbd>clic</kbd><br>Bots te siguen / dejan de seguirte: <kbd>P</kbd> · Dormir en tu cama (de noche): <kbd>E</kbd> · Comandos: <kbd>T</kbd><br></span>
+  El gigante rojo <b style="color:#d0101a">no puede cruzar</b> la <span style="color:#b98a00;font-weight:700">línea amarilla</span>. Detrás de ella estás a salvo.<br>De noche el gigante <b>duerme</b>: no te acerques o se despierta.<br>Recoge <b style="color:#b07800">monedas</b> en su zona y gástalas en las <b>tiendas</b>: acércate al vendedor y pulsa <kbd>E</kbd>.
+</div>
+<div class="coins" aria-label="Monedas"><i></i><span id="coins">0</span></div>
+<div class="clock" aria-label="Hora del juego"><span id="clockIcon">DÍA</span><span id="clockTime">08:00</span></div>
+<p id="warn" aria-live="assertive">NO TE SALGAS</p>
+<p id="toast" aria-live="polite"></p>
+<div id="cross"></div>
+<div id="reload" hidden><span id="reloadText">LÁSER LISTO</span><div class="bar"><div id="reloadFill"></div></div></div>
+<form id="cmd" hidden autocomplete="off"><label for="cmdInput">Comando</label><input id="cmdInput" type="text" placeholder="set hour 21  ·  set hour 9:30 am" spellcheck="false"></form>
+<p id="bedPrompt" hidden>Pulsa <kbd>E</kbd> para dormir hasta la mañana</p>
+<div id="sleep" aria-live="polite"><span>Zzz… durmiendo</span></div>
+<p id="lockHint" hidden>Haz clic para mirar con el ratón (Esc para soltarlo)</p>
+<div id="stick"><div id="knob"></div></div>
+<button id="jump" type="button">SALTAR</button>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script type="module">
+import { HOUSE, STAIRS, collideWalls, moveAndCollide, insideHouse as insideHouseAt, exitHouseTarget as exitRoute, goToBedTarget as bedRoute, boxHit,
+         upgradePrice, fmt, sunElevation, clockText, hourToPhase, parseSetHour, launchSpeedForHeight } from './src/logic.js';
+(() => {
+  const canvas = document.getElementById('game');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xbfe3f2);
+  scene.fog = new THREE.Fog(0xbfe3f2, 50, 180);
+
+  const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 900);
+  scene.add(camera); // para que el bláster de primera persona (hijo de la cámara) se dibuje
+
+  // Luces
+  const hemi = new THREE.HemisphereLight(0xffffff, 0x7a5230, 0.75);
+  scene.add(hemi);
+  const moon = new THREE.DirectionalLight(0x9fb4ff, 0);
+  scene.add(moon, moon.target);
+  // Estrellas: solo se ven de noche
+  const starGeo = new THREE.BufferGeometry();
+  const starPos = new Float32Array(900 * 3);
+  for (let i = 0; i < 900; i++) {
+    const u = Math.random() * Math.PI * 2, v = Math.random() * 0.9 + 0.05; // solo la mitad de arriba del cielo
+    const r = 380, y = r * v, rr = Math.sqrt(r * r - y * y);
+    starPos.set([Math.cos(u) * rr, y, Math.sin(u) * rr], i * 3);
+  }
+  starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+  const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 1.6, sizeAttenuation: false, transparent: true, opacity: 0, fog: false, depthWrite: false }));
+  scene.add(stars);
+  const sun = new THREE.DirectionalLight(0xffffff, 0.85);
+  sun.position.set(20, 40, 15);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  Object.assign(sun.shadow.camera, { left:-30, right:30, top:30, bottom:-30, near:1, far:120 });
+  scene.add(sun, sun.target);
+
+  // Gran zona plana con textura de cuadrícula
+  const SIZE = 200;
+  const tex = (() => {
+    const c = document.createElement('canvas'); c.width = c.height = 128;
+    const g = c.getContext('2d');
+    g.fillStyle = '#8b5a2b'; g.fillRect(0,0,128,128);
+    g.fillStyle = '#7f5226'; g.fillRect(0,0,64,64); g.fillRect(64,64,64,64);
+    g.strokeStyle = 'rgba(50,28,10,.22)'; g.lineWidth = 2; g.strokeRect(0,0,128,128);
+    const t = new THREE.CanvasTexture(c);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(SIZE/8, SIZE/8);
+    t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    return t;
+  })();
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(SIZE, SIZE), new THREE.MeshLambertMaterial({ map: tex }));
+  ground.rotation.x = -Math.PI/2;
+  ground.receiveShadow = true;
+  scene.add(ground);
+
+  // Sin plataformas: la física las sigue admitiendo, pero la lista está vacía
+  const platforms = [];
+  // Caja sólida: se ve y además choca (se puede pisar y no se puede atravesar)
+  function addBox(x0, x1, y0, y1, z0, z1, mat, level = 0) {
+    const w = x1 - x0, h = y1 - y0, d = z1 - z0;
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+    m.position.set((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2);
+    m.castShadow = m.receiveShadow = true;
+    scene.add(m);
+    platforms.push({ x: (x0 + x1) / 2, z: (z0 + z1) / 2, hw: w / 2, hd: d / 2, top: y1, bottom: y0 });
+    houseParts.push({ mesh: m, level });
+    return m;
+  }
+
+  // ---------- Casa grande de 2 pisos ----------
+  const houseParts = [];
+  const { HX0, HX1, HZ0, HZ1, DOOR_Z, FLOOR_H } = HOUSE, WT = 0.3, ROOF_Y = 8;
+  const wallMat = new THREE.MeshLambertMaterial({ color: 0xf1e3c8 });
+  const floorMat = new THREE.MeshLambertMaterial({ color: 0xa87444 });
+  const stairMat = new THREE.MeshLambertMaterial({ color: 0x8a5a33 });
+  const roofMat = new THREE.MeshLambertMaterial({ color: 0x7b3b2a });
+  // Paredes (la puerta está del lado que mira hacia donde apareces)
+  addBox(HX0, HX1, 0, ROOF_Y, HZ1 - WT, HZ1, wallMat, -1);                  // atrás
+  addBox(HX0, HX1, 0, ROOF_Y, HZ0, HZ0 + WT, wallMat, -1);                  // frente
+  addBox(HX1 - WT, HX1, 0, ROOF_Y, HZ0, HZ1, wallMat, -1);                  // derecha
+  addBox(HX0, HX0 + WT, 0, ROOF_Y, HZ0, DOOR_Z - 1.5, wallMat, -1);         // izquierda (con puerta)
+  addBox(HX0, HX0 + WT, 0, ROOF_Y, DOOR_Z + 1.5, HZ1, wallMat, -1);
+  addBox(HX0, HX0 + WT, 3, ROOF_Y, DOOR_Z - 1.5, DOOR_Z + 1.5, wallMat, -1); // encima de la puerta
+  // Piso de madera de la planta baja (solo se ve)
+  const groundFloor = new THREE.Mesh(new THREE.PlaneGeometry(HX1 - HX0 - 2 * WT, HZ1 - HZ0 - 2 * WT), floorMat);
+  groundFloor.rotation.x = -Math.PI / 2; groundFloor.position.set((HX0 + HX1) / 2, 0.02, (HZ0 + HZ1) / 2);
+  groundFloor.receiveShadow = true; scene.add(groundFloor);
+  const IX0 = HX0 + WT, IX1 = HX1 - WT, IZ0 = HZ0 + WT, IZ1 = HZ1 - WT;
+  // Piso 2 (con hueco para la escalera de atrás)
+  addBox(IX0, IX1, 3.7, 4, IZ0, STAIRS.Z0, floorMat, 1);
+  addBox(IX0, STAIRS.X0, 3.7, 4, STAIRS.Z0, IZ1, floorMat, 1);
+  addBox(STAIRS.X1, IX1, 3.7, 4, STAIRS.Z0, IZ1, floorMat, 1);
+  // Techo
+  addBox(HX0 - 0.5, HX1 + 0.5, ROOF_Y - 0.3, ROOF_Y, HZ0 - 0.5, HZ1 + 0.5, roofMat, 2);
+  // Escalera grande: 10 escalones de 1 m × 3 m, de 0,4 m de alto (se sube caminando)
+  for (let i = 0; i < STAIRS.STEPS; i++)
+    addBox(STAIRS.X0 + STAIRS.RUN * i, STAIRS.X0 + STAIRS.RUN * (i + 1), 0, STAIRS.RISE * (i + 1), STAIRS.Z0, STAIRS.Z1, stairMat, 0);
+  // Camas: 3 por piso, una de cada color (el tuyo y el de los 5 bots)
+  const woodMat = new THREE.MeshLambertMaterial({ color: 0x6b4226 });
+  const sheetMat = new THREE.MeshLambertMaterial({ color: 0xf7f4ee });
+  function addBed(x, floor, z, color) {
+    const y = floor * FLOOR_H, lvl = floor;
+    addBox(x - 0.75, x + 0.75, y, y + 0.35, z - 1.25, z + 1.25, woodMat, lvl);                          // base
+    const add = (w, h, d, mat, px, py, pz) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(px, py, pz); m.castShadow = m.receiveShadow = true; scene.add(m); houseParts.push({ mesh: m, level: lvl }); };
+    add(1.4, 0.2, 2.3, sheetMat, x, y + 0.45, z);                                                        // colchón
+    add(1.44, 0.22, 1.5, new THREE.MeshLambertMaterial({ color }), x, y + 0.47, z + 0.38);               // cobija de color
+    add(1.0, 0.14, 0.45, sheetMat, x, y + 0.62, z - 0.85);                                               // almohada
+    add(1.5, 1.0, 0.12, woodMat, x, y + 0.5, z - 1.25);                                                  // cabecera
+    platforms.push({ x, z, hw: 0.75, hd: 1.25, top: y + 0.55, bottom: y });
+  }
+  addBed(27, 0, 9, 0x2fae4e); addBed(32, 0, 9, 0xffd23f); addBed(37, 0, 9, 0x4cc9f0);      // planta baja: verde (tú), amarillo, celeste
+  addBed(27, 1, 10, 0xb388eb); addBed(32, 1, 10, 0xff8a5b); addBed(37, 1, 10, 0xf15bb5);   // piso 2: morado, naranja, rosa
+  // Ventanas: de día se ven oscuras, de noche brillan
+  const windowMat = new THREE.MeshBasicMaterial({ color: 0x3a4a5c });
+  const winGeo = new THREE.PlaneGeometry(1.6, 1.4);
+  for (let f = 0; f < 2; f++) {
+    const wy = f * FLOOR_H + 2;
+    for (const wx of [25, 32, 39]) {
+      const a = new THREE.Mesh(winGeo, windowMat); a.position.set(wx, wy, HZ0 - 0.02); a.rotation.y = Math.PI; scene.add(a);
+      const b = new THREE.Mesh(winGeo, windowMat); b.position.set(wx, wy, HZ1 + 0.02); scene.add(b);
+    }
+    const c = new THREE.Mesh(winGeo, windowMat); c.position.set(HX1 + 0.02, wy, DOOR_Z); c.rotation.y = Math.PI / 2; scene.add(c);
+  }
+  // ---------- Trampolín gigante (esquina de tu mitad) ----------
+  const TRAMP = { x: 82, z: 82, r: 3 };
+  const TRAMP_UP = launchSpeedForHeight(100, 30); // velocidad para subir 100 m con la gravedad del juego
+  (() => {
+    const g = new THREE.Group();
+    const frame = new THREE.Mesh(new THREE.TorusGeometry(TRAMP.r, 0.22, 10, 40), new THREE.MeshLambertMaterial({ color: 0x1e6bff }));
+    frame.rotation.x = Math.PI / 2; frame.position.y = 0.8; frame.castShadow = true; g.add(frame);
+    const mat = new THREE.Mesh(new THREE.CircleGeometry(TRAMP.r - 0.1, 40), new THREE.MeshLambertMaterial({ color: 0x1a1a1a, side: THREE.DoubleSide }));
+    mat.rotation.x = -Math.PI / 2; mat.position.y = 0.75; g.add(mat);
+    const legMat = new THREE.MeshLambertMaterial({ color: 0x777f88 });
+    for (let i = 0; i < 6; i++) {
+      const a = i / 6 * Math.PI * 2;
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.8, 8), legMat);
+      leg.position.set(Math.cos(a) * TRAMP.r, 0.4, Math.sin(a) * TRAMP.r); leg.castShadow = true; g.add(leg);
+    }
+    g.position.set(TRAMP.x, 0, TRAMP.z);
+    scene.add(g);
+  })();
+  const onTrampoline = st => st.pos.y < 1.2 && Math.hypot(st.pos.x - TRAMP.x, st.pos.z - TRAMP.z) < TRAMP.r;
+  // Lanza 100 m hacia arriba; a los bots además los manda fuera del mapa
+  function trampolineLaunch(st, outward) {
+    const ox = TRAMP.x, oz = TRAMP.z, d = Math.hypot(ox, oz), k = outward ? 12 : 0;
+    st.vel.set(ox / d * k, TRAMP_UP, oz / d * k);
+    st.onGround = false;
+  }
+
+  // La cámara no atraviesa la casa: si una pared queda en medio, se acerca (como en Roblox)
+  const houseMeshes = () => houseParts.map(hp => hp.mesh);
+  const camRay = new THREE.Raycaster();
+
+  // Línea de seguro: cruza todo el mapa. El enemigo no puede pasar al lado de z > 0
+  const LINE_W = 3;
+  const lineMat = new THREE.MeshBasicMaterial({ color: 0xffd400 });
+  const safeLine = new THREE.Mesh(new THREE.PlaneGeometry(SIZE, LINE_W), lineMat);
+  safeLine.rotation.x = -Math.PI/2; safeLine.position.y = 0.02;
+  scene.add(safeLine);
+  // Pared transparente para que se note que es una barrera
+  const wall = new THREE.Mesh(new THREE.PlaneGeometry(SIZE, 8),
+    new THREE.MeshBasicMaterial({ color: 0xffd400, transparent: true, opacity: 0.12, side: THREE.DoubleSide, depthWrite: false }));
+  wall.position.set(0, 4, 0);
+  scene.add(wall);
+  let spawn = { x: 0, y: 0, z: 15 };
+
+  // Personaje: rectángulo vertical verde con dos ojos negros
+  const player = new THREE.Group();
+  const H = 2, W = 1, D = 0.6;
+  const body = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), new THREE.MeshLambertMaterial({ color: 0x2fae4e }));
+  body.position.y = H/2; body.castShadow = true;
+  player.add(body);
+  const eyeGeo = new THREE.SphereGeometry(0.11, 16, 12);
+  const eyeMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+  [-0.22, 0.22].forEach(x => {
+    const eye = new THREE.Mesh(eyeGeo, eyeMat);
+    eye.scale.z = 0.5;
+    eye.position.set(x, H*0.78, D/2 + 0.02);
+    player.add(eye);
+  });
+  scene.add(player);
+
+  // Enemigo: rectángulo rojo con ojos enojados
+  const enemy = new THREE.Group();
+  const enemyBody = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), new THREE.MeshLambertMaterial({ color: 0xd4161b }));
+  enemyBody.position.y = H/2; enemyBody.castShadow = true;
+  enemy.add(enemyBody);
+  const browGeo = new THREE.BoxGeometry(0.34, 0.07, 0.04);
+  const enemyEyes = [];
+  [-0.22, 0.22].forEach(x => {
+    const eye = new THREE.Mesh(eyeGeo, eyeMat);
+    eye.scale.z = 0.5;
+    eye.position.set(x, H*0.78, D/2 + 0.02);
+    // Cejas inclinadas hacia el centro
+    const brow = new THREE.Mesh(browGeo, eyeMat);
+    brow.position.set(x * 0.95, H*0.78 + 0.17, D/2 + 0.03);
+    brow.rotation.z = x < 0 ? -0.5 : 0.5;
+    enemyBody.add(eye, brow);
+    eye.position.y -= H/2; brow.position.y -= H/2;
+    enemyEyes.push(eye);
+  });
+  const ENEMY_SCALE = 3;
+  enemy.scale.setScalar(ENEMY_SCALE); // gigante: 3 veces más grande
+  scene.add(enemy);
+
+  // Bláster estilo Roblox: cuerpo gris, cañón, mango y detalles azules que brillan
+  function makeBlaster() {
+    const g = new THREE.Group();
+    const grey = new THREE.MeshLambertMaterial({ color: 0x4a5058 });
+    const dark = new THREE.MeshLambertMaterial({ color: 0x2b2f35 });
+    const metal = new THREE.MeshLambertMaterial({ color: 0xa7b0ba });
+    const blue = new THREE.MeshBasicMaterial({ color: 0x3d8bff });
+    const add = (geo, mat, x, y, z, rx = 0) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.rotation.x = rx; m.castShadow = true; g.add(m); return m; };
+    add(new THREE.BoxGeometry(0.26, 0.3, 0.9), grey, 0, 0, 0);              // cuerpo
+    add(new THREE.BoxGeometry(0.12, 0.07, 0.62), blue, 0, 0.18, 0.02);      // franja azul de arriba
+    add(new THREE.BoxGeometry(0.28, 0.08, 0.3), blue, 0, -0.02, -0.28);     // batería
+    add(new THREE.CylinderGeometry(0.07, 0.07, 0.5, 12), metal, 0, 0.02, 0.68, Math.PI/2); // cañón
+    add(new THREE.CylinderGeometry(0.1, 0.1, 0.08, 14), blue, 0, 0.02, 0.95, Math.PI/2);   // punta
+    add(new THREE.BoxGeometry(0.18, 0.42, 0.2), dark, 0, -0.3, -0.18, 0.3); // mango
+    add(new THREE.BoxGeometry(0.06, 0.14, 0.18), dark, 0, -0.2, 0.08);      // gatillo
+    return g;
+  }
+  // En la mano del personaje (su derecha), apuntando al frente
+  const handBlaster = makeBlaster();
+  handBlaster.position.set(-0.68, 1.15, 0.25);
+  handBlaster.visible = false;
+  player.add(handBlaster);
+  // En primera persona: abajo a la derecha de la pantalla
+  const fpBlaster = makeBlaster();
+  fpBlaster.position.set(0.38, -0.36, -0.75);
+  fpBlaster.rotation.y = Math.PI;
+  fpBlaster.visible = false;
+  camera.add(fpBlaster);
+
+  // Entrada
+  const keys = {};
+  let firstPerson = false, fpPitch = 0;
+  let botsFollow = false; // con P los bots te siguen a todas partes (hasta la muerte)
+  addEventListener('keydown', e => {
+    if (e.target === cmdInput) return;           // escribiendo un comando: el juego ignora las teclas
+    if (e.code === 'KeyT' && !e.repeat) { e.preventDefault(); openCmd(); return; }
+    keys[e.code] = true;
+    if (e.code === 'Space' || e.code.startsWith('Arrow')) e.preventDefault();
+    if (e.code === 'KeyV' && !e.repeat) setFirstPerson(!firstPerson);
+    if (e.code === 'KeyE' && !e.repeat) { if (!tryBuy()) trySleep(); }
+    if (e.code === 'KeyP' && !e.repeat) {
+      botsFollow = !botsFollow;
+      showToast(botsFollow ? '¡Los bots te siguen!' : 'Los bots ya no te siguen');
+    }
+  });
+  addEventListener('keyup', e => { keys[e.code] = false; });
+
+  // ---------- Comandos (T) ----------
+  const cmdForm = document.getElementById('cmd'), cmdInput = document.getElementById('cmdInput');
+  function openCmd() {
+    for (const k in keys) keys[k] = false;       // suelta las teclas para que no sigas caminando
+    cmdForm.hidden = false; cmdInput.value = ''; cmdInput.focus();
+  }
+  function closeCmd() { cmdForm.hidden = true; cmdInput.blur(); }
+  cmdInput.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); closeCmd(); } });
+  cmdForm.addEventListener('submit', e => {
+    e.preventDefault();
+    runCommand(cmdInput.value.trim());
+    closeCmd();
+  });
+  function runCommand(text) {
+    if (!text) return;
+    // set hour 21  ·  set hour 21:30  ·  set hour 9 pm  ·  set hour 9:30am
+    const r = parseSetHour(text);
+    if (r.error === 'format') { showToast('No entendí. Prueba: set hour 21 o set hour 9:30 pm', true); return; }
+    if (r.error === 'range') { showToast('Esa hora no existe. Usa 0–23 o 1–12 con am/pm', true); return; }
+    dayPhase = hourToPhase(r.h, r.min);
+    lastMinute = -1; // refresca el reloj ya
+    showToast(`Hora cambiada a ${clockText(dayPhase)}`);
+  }
+
+  let camYaw = 0, camPitch = 0.35, dragging = false, lx = 0, ly = 0, downX = 0, downY = 0;
+
+  // Primera persona: el cursor se bloquea al centro y el ratón mueve la cámara sin hacer clic
+  const cross = document.getElementById('cross'), lockHint = document.getElementById('lockHint');
+  const isLocked = () => document.pointerLockElement === canvas;
+  function requestLock() { try { const r = canvas.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (e) {} }
+  function setFirstPerson(on) {
+    firstPerson = on; player.visible = !on; fpPitch = 0;
+    if (on) requestLock(); else if (isLocked()) document.exitPointerLock();
+    updateLockUI();
+  }
+  function updateLockUI() {
+    cross.style.display = firstPerson && isLocked() ? 'block' : 'none';
+    lockHint.hidden = !(firstPerson && !isLocked());
+  }
+  const FP_SENS = 0.005; // sensibilidad del ratón en primera persona
+  document.addEventListener('pointerlockchange', updateLockUI);
+  document.addEventListener('mousemove', e => {
+    if (!firstPerson || !isLocked()) return;
+    camYaw -= e.movementX * FP_SENS;
+    fpPitch = Math.min(1.3, Math.max(-1.3, fpPitch - e.movementY * FP_SENS));
+  });
+
+  canvas.addEventListener('pointerdown', e => {
+    if (firstPerson) {
+      if (!isLocked()) requestLock();   // el primer clic bloquea el cursor
+      else shoot(0, 0);                 // con el cursor bloqueado, dispara al centro
+      return;
+    }
+    dragging = true; lx = downX = e.clientX; ly = downY = e.clientY;
+  });
+  addEventListener('pointerup', e => {
+    // Un clic sin arrastrar dispara hacia donde apunta el cursor
+    if (dragging && Math.hypot(e.clientX - downX, e.clientY - downY) < 6) {
+      const r = canvas.getBoundingClientRect();
+      shoot(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    }
+    dragging = false;
+  });
+  addEventListener('pointermove', e => {
+    if (!dragging || firstPerson) return;
+    camYaw -= (e.clientX - lx) * 0.005;
+    if (firstPerson) fpPitch = Math.min(1.3, Math.max(-1.3, fpPitch - (e.clientY - ly) * 0.004));
+    else camPitch = Math.min(1.2, Math.max(0.1, camPitch + (e.clientY - ly) * 0.004));
+    lx = e.clientX; ly = e.clientY;
+  });
+
+  // Joystick táctil
+  const stick = document.getElementById('stick'), knob = document.getElementById('knob');
+  const joy = { x: 0, y: 0 };
+  let stickId = null;
+  const moveStick = e => {
+    const r = stick.getBoundingClientRect();
+    let dx = e.clientX - (r.left + r.width/2), dy = e.clientY - (r.top + r.height/2);
+    const m = Math.hypot(dx, dy), max = 40;
+    if (m > max) { dx *= max/m; dy *= max/m; }
+    knob.style.transform = `translate(${dx}px,${dy}px)`;
+    joy.x = dx/max; joy.y = dy/max;
+  };
+  stick.addEventListener('pointerdown', e => { stickId = e.pointerId; stick.setPointerCapture(e.pointerId); moveStick(e); e.stopPropagation(); });
+  stick.addEventListener('pointermove', e => { if (e.pointerId === stickId) moveStick(e); });
+  const endStick = () => { stickId = null; joy.x = joy.y = 0; knob.style.transform = ''; };
+  stick.addEventListener('pointerup', endStick); stick.addEventListener('pointercancel', endStick);
+  const jumpBtn = document.getElementById('jump');
+  jumpBtn.addEventListener('pointerdown', e => { keys.Space = true; e.stopPropagation(); });
+  jumpBtn.addEventListener('pointerup', () => keys.Space = false);
+
+  // Física simple (compartida por el jugador y el enemigo)
+  const SPEED = 12, GRAV = 30, JUMP = 12.5, EDGE = SIZE/2;
+  const ENEMY_SPEED = 12, ENEMY_JUMP = 16; // el enemigo corre a tu velocidad inicial y salta más alto
+  // Tus estadísticas: empiezan en lo básico y suben con las mejoras de la tienda
+  const stats = { speed: SPEED, jump: JUMP, blaster: false };
+  const PICKUP = 1.3; // distancia para recoger una moneda
+  const BOUNCE_UP = 16, BOUNCE_IN = 26;
+  const PR = 0.45; // radio de colisión de los personajes contra paredes y pisos
+  const STEP_UP = 0.45; // altura máxima que se sube sin saltar
+  const COLL = { PR, H, STEP_UP };
+  const overlaps = (pl, x, z) => Math.abs(x - pl.x) < pl.hw + PR && Math.abs(z - pl.z) < pl.hd + PR;
+  const makeState = obj => ({ obj, pos: obj.position, vel: new THREE.Vector3(), walkX: 0, walkZ: 0, onGround: true, carrying: null, standing: null, hitWall: false, facing: 0 });
+
+  // Si estaba encima de una plataforma móvil, se mueve con ella
+  function applyCarry(st) {
+    if (st.carrying) { st.pos.x += st.carrying.dx; st.pos.y += st.carrying.dy; st.pos.z += st.carrying.dz; }
+  }
+  // Empuje horizontal, choques laterales, gravedad, suelo y techo
+  function physics(st, dt, wantJump, jump = JUMP) {
+    // Lo que camina este cuadro + el empuje que trae, en pasitos para no atravesar paredes
+    const tx = st.walkX + st.vel.x * dt, tz = st.walkZ + st.vel.z * dt;
+    st.walkX = st.walkZ = 0;
+    st.hitWall = moveAndCollide(st, tx, tz, platforms, COLL);
+    const damp = Math.exp(-(st.onGround ? 6 : 0.4) * dt);
+    st.vel.x *= damp; st.vel.z *= damp;
+
+    if (wantJump && st.onGround) { st.vel.y = jump; st.onGround = false; }
+    const prevY = st.pos.y;
+    let floor = 0, standing = null;
+    for (const pl of platforms) {
+      if (pl.top > floor && pl.top <= prevY + 0.01 && overlaps(pl, st.pos.x, st.pos.z)) { floor = pl.top; standing = pl; }
+    }
+    st.vel.y -= GRAV * dt;
+    st.pos.y += st.vel.y * dt;
+    if (st.vel.y > 0) {
+      for (const pl of platforms) {
+        if (prevY + H <= pl.bottom && st.pos.y + H > pl.bottom && overlaps(pl, st.pos.x, st.pos.z)) {
+          st.pos.y = pl.bottom - H; st.vel.y = 0;
+        }
+      }
+    }
+    if (st.pos.y <= floor) { st.pos.y = floor; st.vel.y = 0; st.onGround = true; }
+    else { st.onGround = false; standing = null; }
+    st.standing = standing;
+    st.carrying = standing && standing.move ? standing : null;
+  }
+  // Gira el cuerpo suavemente hacia donde camina
+  function turnTo(st, mx, mz, dt) {
+    let d = Math.atan2(mx, mz) - st.facing;
+    d = Math.atan2(Math.sin(d), Math.cos(d));
+    st.facing += d * Math.min(1, dt * 12);
+    st.obj.rotation.y = st.facing;
+  }
+
+  const ps = makeState(player);
+  const es = makeState(enemy);
+  const ENEMY_SPAWN = { x: 0, y: 0, z: -40 };
+  ps.pos.set(spawn.x, spawn.y, spawn.z);
+  es.pos.set(ENEMY_SPAWN.x, ENEMY_SPAWN.y, ENEMY_SPAWN.z);
+  let enemyWait = 2; // segundos quieto al empezar y después de atraparte
+  let stunTime = 0;  // segundos aturdido por el láser
+
+  const warn = document.getElementById('warn');
+  let warnTimer = 0;
+  function flashWarn(text, secs) { warn.textContent = text; warn.classList.add('show'); warnTimer = secs; }
+
+  function die() {
+    ps.pos.set(spawn.x, spawn.y, spawn.z);
+    ps.vel.set(0, 0, 0); ps.carrying = null; ps.onGround = true;
+    es.pos.set(ENEMY_SPAWN.x, ENEMY_SPAWN.y, ENEMY_SPAWN.z);
+    es.vel.set(0, 0, 0); es.carrying = null; es.onGround = true;
+    enemyWait = 2; stunTime = 0; enemyAwake = !isNight;
+    flashWarn('¡MORISTE!', 1.2);
+  }
+
+  // IA del enemigo: te persigue a tu misma velocidad, pero no puede cruzar la línea amarilla
+  const ENEMY_R = 0.5 * ENEMY_SCALE; // medio ancho del gigante
+  const ENEMY_MAX_Z = -LINE_W/2 - ENEMY_R;
+  // ---------- Monedas ----------
+  const coinsEl = document.getElementById('coins'), toast = document.getElementById('toast');
+  let toastTimer = null;
+  function showToast(text, bad) {
+    toast.textContent = text; toast.classList.toggle('bad', !!bad); toast.classList.add('show');
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
+  }
+  // Progreso de esta partida: se reinicia cada vez que recargas la página
+  const save = { coins: 0, levels: { speed: 0, jump: 0, blaster: 0 } };
+  try { localStorage.removeItem('rectangulo-verde-tienda'); } catch (e) {} // borra el guardado de versiones anteriores
+
+  function renderCoins() { coinsEl.textContent = fmt(save.coins); }
+
+  const COIN_COUNT = 30;
+  const coinGeo = new THREE.CylinderGeometry(0.6, 0.6, 0.15, 28);
+  coinGeo.rotateX(Math.PI / 2);
+  const coinMat = new THREE.MeshLambertMaterial({ color: 0xffc400, emissive: 0x6b4a00 });
+  const coins = [];
+  function placeCoin(c) {
+    // Siempre en la mitad del enemigo
+    c.position.set((Math.random() * 2 - 1) * (EDGE - 6), 1.2, -6 - Math.random() * (EDGE - 12));
+  }
+  for (let i = 0; i < COIN_COUNT; i++) {
+    const c = new THREE.Mesh(coinGeo, coinMat);
+    c.castShadow = true; c.userData.phase = Math.random() * 6;
+    placeCoin(c); scene.add(c); coins.push(c);
+  }
+  function updateCoins(dt) {
+    for (const c of coins) {
+      c.rotation.y += dt * 3;
+      c.position.y = 1.2 + Math.sin(t * 2 + c.userData.phase) * 0.2;
+      const d = Math.hypot(c.position.x - ps.pos.x, c.position.z - ps.pos.z);
+      if (d < PICKUP && c.position.y > ps.pos.y - 0.8 && c.position.y < ps.pos.y + H + 0.8) {
+        save.coins++; renderCoins();
+        placeCoin(c); // aparece otra en un lugar nuevo
+      }
+    }
+  }
+
+  // ---------- Mini tiendas atendidas por bots ----------
+  const UPGRADES = [
+    { id: 'speed',   name: 'VELOCIDAD', de: 'de velocidad', color: '#2f7de1', keeper: 0xe0e0e0, base: 5,  max: Infinity, x: -24, apply: l => stats.speed = SPEED + l * 2 },
+    { id: 'jump',    name: 'SALTO',     de: 'de salto',     color: '#9b4de0', keeper: 0x9c6644, base: 5,  max: Infinity, x: -14, apply: l => stats.jump = JUMP + l * 1.5 },
+    // Compra única: 20 monedas (y la tienda explota)
+    { id: 'blaster', name: 'BLÁSTER LÁSER', de: 'del bláster láser', color: '#e0302f', keeper: 0x2a9d8f, base: 20, max: 1, x: -4, apply: l => { stats.blaster = l > 0; canvas.classList.toggle('aim', l > 0); handBlaster.visible = l > 0; document.getElementById('reload').hidden = !(l > 0); } },
+  ];
+  const price = u => upgradePrice(u.base, save.levels[u.id]);
+  const SHOP_Z = 8;
+  function drawLabel(u) {
+    const g = u.ctx, lvl = save.levels[u.id], maxed = lvl >= u.max;
+    g.clearRect(0, 0, 256, 160);
+    g.fillStyle = 'rgba(255,255,255,.95)'; g.beginPath(); g.roundRect(4, 4, 248, 152, 18); g.fill();
+    g.textAlign = 'center';
+    g.fillStyle = u.color; g.font = (u.name.length > 10 ? '34px' : '44px') + ' Impact, "Arial Narrow Bold", sans-serif'; g.fillText(u.name, 128, 54);
+    g.fillStyle = '#16301f'; g.font = 'bold 24px system-ui, sans-serif';
+    g.fillText(u.max === 1 ? (maxed ? 'Ya es tuyo' : 'Aturde al gigante 2 s') : `Nivel ${lvl} → ${lvl + 1}`, 128, 92);
+    g.fillStyle = maxed ? '#6b7a70' : (save.coins >= price(u) ? '#1f8a3b' : '#c0141a');
+    const priceText = maxed ? 'COMPRADO' : `${fmt(price(u))} monedas`;
+    let size = 36;
+    do { g.font = `${size}px Impact, "Arial Narrow Bold", sans-serif`; } while (g.measureText(priceText).width > 232 && --size > 14);
+    g.fillText(priceText, 128, 138);
+    u.tex.needsUpdate = true;
+  }
+  // Globo de diálogo del vendedor
+  function drawBubble(u, text) {
+    const g = u.bctx;
+    g.clearRect(0, 0, 512, 170);
+    g.fillStyle = '#ffffff'; g.strokeStyle = '#16301f'; g.lineWidth = 6;
+    g.beginPath(); g.roundRect(6, 6, 500, 124, 26); g.fill(); g.stroke();
+    g.beginPath(); g.moveTo(236, 128); g.lineTo(256, 164); g.lineTo(276, 128); g.closePath(); g.fill(); g.stroke();
+    g.fillStyle = '#ffffff'; g.fillRect(238, 122, 36, 10);
+    g.fillStyle = '#16301f'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    // Parte el texto en 2 líneas si es largo
+    let size = 34; g.font = `bold ${size}px system-ui, sans-serif`;
+    const words = text.split(' '); let l1 = text, l2 = '';
+    if (g.measureText(text).width > 470) {
+      let i = Math.ceil(words.length / 2); l1 = words.slice(0, i).join(' '); l2 = words.slice(i).join(' ');
+      size = 30; g.font = `bold ${size}px system-ui, sans-serif`;
+    }
+    if (l2) { g.fillText(l1, 256, 48); g.fillText(l2, 256, 88); } else g.fillText(l1, 256, 68);
+    u.btex.needsUpdate = true;
+  }
+  function say(u, text, secs) { drawBubble(u, text); u.bubble.visible = true; u.sayTimer = secs; u.saying = text; }
+
+  const shopWood = new THREE.MeshLambertMaterial({ color: 0x8a5a33 });
+  const stripeMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+  for (const u of UPGRADES) {
+    u.parts = []; u.solids = [];
+    const x = u.x, color = new THREE.Color(u.color);
+    const colorMat = new THREE.MeshLambertMaterial({ color });
+    const piece = (w, h, d, mat, px, py, pz, solid) => {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+      m.position.set(px, py, pz); m.castShadow = m.receiveShadow = true; scene.add(m); u.parts.push(m);
+      if (solid) { const pl = { x: px, z: pz, hw: w / 2, hd: d / 2, top: py + h / 2, bottom: py - h / 2 }; platforms.push(pl); u.solids.push(pl); }
+    };
+    piece(4, 1.1, 0.8, shopWood, x, 0.55, SHOP_Z + 1, true);           // mostrador
+    piece(4.02, 0.3, 0.82, colorMat, x, 0.9, SHOP_Z + 1, false);       // franja de color del mostrador
+    piece(4, 1.8, 0.4, shopWood, x, 0.9, SHOP_Z - 1.9, true);          // estante de atrás
+    for (const [px, pz] of [[-2.3, -2.1], [2.3, -2.1], [-2.3, 1.3], [2.3, 1.3]])
+      piece(0.18, 3.2, 0.18, shopWood, x + px, 1.6, SHOP_Z + pz, true); // postes
+    piece(5.2, 0.18, 4, colorMat, x, 3.29, SHOP_Z - 0.4, false);       // toldo
+    for (const sx of [-1.6, 0, 1.6]) piece(0.8, 0.2, 4.02, stripeMat, x + sx, 3.3, SHOP_Z - 0.4, false); // rayas blancas
+    // Cartel con el precio
+    const c = document.createElement('canvas'); c.width = 256; c.height = 160;
+    u.ctx = c.getContext('2d'); u.tex = new THREE.CanvasTexture(c);
+    u.sign = new THREE.Sprite(new THREE.SpriteMaterial({ map: u.tex }));
+    u.sign.scale.set(3.6, 2.25, 1); u.sign.position.set(x, 4.7, SHOP_Z + 1.2);
+    scene.add(u.sign);
+    // Vendedor: un bot detrás del mostrador, con gorra del color de la tienda
+    const k = new THREE.Group();
+    const kb = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), new THREE.MeshLambertMaterial({ color: u.keeper }));
+    kb.position.y = H / 2; kb.castShadow = true; k.add(kb);
+    [-0.22, 0.22].forEach(ex => { const e = new THREE.Mesh(eyeGeo, eyeMat); e.scale.z = 0.5; e.position.set(ex, H * 0.78, D / 2 + 0.02); k.add(e); });
+    const cap = new THREE.Mesh(new THREE.BoxGeometry(1.08, 0.22, 0.7), colorMat); cap.position.set(0, H + 0.11, 0); k.add(cap);
+    const brim = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.06, 0.4), colorMat); brim.position.set(0, H + 0.03, 0.5); k.add(brim);
+    k.position.set(x, 0, SHOP_Z - 0.6); scene.add(k); u.parts.push(k); u.keeperObj = k;
+    const kpl = { x, z: SHOP_Z - 0.6, hw: W / 2, hd: D / 2, top: H, bottom: 0 }; platforms.push(kpl); u.solids.push(kpl);
+    // Globo de diálogo
+    const bc = document.createElement('canvas'); bc.width = 512; bc.height = 170;
+    u.bctx = bc.getContext('2d'); u.btex = new THREE.CanvasTexture(bc);
+    u.bubble = new THREE.Sprite(new THREE.SpriteMaterial({ map: u.btex, depthTest: false }));
+    u.bubble.scale.set(4.6, 1.53, 1); u.bubble.position.set(x, 6.6, SHOP_Z + 0.4); u.bubble.visible = false; u.bubble.renderOrder = 10;
+    scene.add(u.bubble);
+    u.apply(save.levels[u.id]);
+    u.near = false; u.shown = null; u.sayTimer = 0; u.gone = false; u.boomIn = 0;
+  }
+
+  const nearShop = u => !u.gone && ps.pos.y < 1.5 && Math.hypot(ps.pos.x - u.x, ps.pos.z - (SHOP_Z + 2.4)) < 3.2;
+  // E cerca de una tienda: comprar
+  function tryBuy() {
+    const u = UPGRADES.find(nearShop);
+    if (!u || u.boomIn > 0) return !!u;
+    if (save.levels[u.id] >= u.max) { say(u, 'Ya lo tienes. ¡Gracias!', 2.5); return true; }
+    if (save.coins < price(u)) { say(u, 'No tienes suficiente dinero..', 2.5); return true; }
+    save.coins -= price(u); save.levels[u.id]++; u.apply(save.levels[u.id]); renderCoins();
+    if (u.id === 'blaster') {
+      say(u, 'Gracias por tu com-', 5);
+      u.boomIn = 1.1; // ...y explota
+      showToast('¡BLÁSTER LÁSER comprado! Haz clic para disparar');
+    } else {
+      say(u, 'Gracias por tu compra', 2.5);
+      showToast(`¡${u.name} nivel ${save.levels[u.id]}!`);
+    }
+    return true;
+  }
+
+  // Explosión: todas las piezas salen volando, bola de fuego y luego desaparecen
+  const debris = [];
+  const boomGeo = new THREE.SphereGeometry(1, 24, 16);
+  let shake = 0;
+  function explode(u) {
+    u.gone = true; u.bubble.visible = false;
+    scene.remove(u.sign);
+    for (const pl of u.solids) platforms.splice(platforms.indexOf(pl), 1);
+    const cx = u.x, cz = SHOP_Z;
+    for (const m of u.parts) {
+      const dx = m.position.x - cx + (Math.random() - 0.5), dz = m.position.z - cz + (Math.random() - 0.5), d = Math.hypot(dx, dz) || 1;
+      const sp = 8 + Math.random() * 10;
+      debris.push({ mesh: m, vel: new THREE.Vector3(dx / d * sp, 10 + Math.random() * 12, dz / d * sp),
+                    spin: new THREE.Vector3(Math.random() * 10 - 5, Math.random() * 10 - 5, Math.random() * 10 - 5), life: 2.5 });
+    }
+    for (let i = 0; i < 3; i++) {
+      const fire = new THREE.Mesh(boomGeo, new THREE.MeshBasicMaterial({ color: [0xffd23f, 0xff7a1a, 0xff3b1a][i], transparent: true, opacity: 0.95, depthWrite: false }));
+      fire.position.set(cx + (Math.random() - 0.5) * 2, 1.5 + i * 0.6, cz + (Math.random() - 0.5) * 2);
+      scene.add(fire); debris.push({ mesh: fire, boom: true, life: 0.7 + i * 0.15, max: 0.7 + i * 0.15 });
+    }
+    for (let i = 0; i < 40; i++) addPuff(new THREE.Vector3(cx + (Math.random() - 0.5) * 5, Math.random() * 4, cz + (Math.random() - 0.5) * 5));
+    shake = 0.6;
+    showToast('¡BOOM!', true);
+  }
+  function updateDebris(dt) {
+    shake = Math.max(0, shake - dt);
+    for (let i = debris.length - 1; i >= 0; i--) {
+      const d = debris[i]; d.life -= dt;
+      if (d.boom) {
+        const k = 1 - d.life / d.max;
+        d.mesh.scale.setScalar(1 + k * 6); d.mesh.material.opacity = 0.95 * (1 - k);
+      } else {
+        d.vel.y -= 30 * dt;
+        d.mesh.position.addScaledVector(d.vel, dt);
+        d.mesh.rotation.x += d.spin.x * dt; d.mesh.rotation.y += d.spin.y * dt; d.mesh.rotation.z += d.spin.z * dt;
+        if (d.mesh.position.y < 0.2) { d.mesh.position.y = 0.2; d.vel.multiplyScalar(0.5); d.vel.y = Math.abs(d.vel.y) * 0.3; }
+        if (d.life < 0.6) d.mesh.scale.setScalar(Math.max(0.01, d.life / 0.6)); // se encogen y desaparecen
+      }
+      if (d.life <= 0) { scene.remove(d.mesh); debris.splice(i, 1); }
+    }
+  }
+
+  function updateShop(dt) {
+    for (const u of UPGRADES) {
+      if (u.gone) continue;
+      // Saludo al acercarte
+      const near = nearShop(u);
+      if (near && !u.near && u.boomIn <= 0) say(u, `Hola, bienvenido a la tienda ${u.de}`, Infinity);
+      if (!near && u.near && u.sayTimer === Infinity) u.sayTimer = 0.4;
+      u.near = near;
+      if (u.sayTimer > 0 && (u.sayTimer -= dt) <= 0) u.bubble.visible = false;
+      // El vendedor te mira cuando estás cerca
+      const k = u.keeperObj;
+      const target = near ? Math.atan2(ps.pos.x - k.position.x, ps.pos.z - k.position.z) : 0;
+      k.rotation.y += (target - k.rotation.y) * Math.min(1, dt * 6);
+      if (u.boomIn > 0) {
+        k.position.x = u.x + (Math.random() - 0.5) * 0.12; // tiembla antes de explotar
+        if ((u.boomIn -= dt) <= 0) explode(u);
+      }
+      // Redibuja el cartel solo si cambió algo
+      const sig = `${save.levels[u.id]}-${save.coins >= price(u) ? 1 : 0}`;
+      if (sig !== u.shown) { drawLabel(u); u.shown = sig; }
+    }
+    updateDebris(dt);
+  }
+  renderCoins();
+
+  // Paseo al azar: elige un punto de su mitad que quede lejos de ti
+  const WANDER_MIN_DIST = 35;
+  let wander = { x: 0, z: -40 }, wanderTime = 0;
+  function pickWander() {
+    const lim = EDGE - ENEMY_R - 2;
+    for (let i = 0; i < 20; i++) {
+      const x = (Math.random() * 2 - 1) * lim, z = -10 - Math.random() * (lim - 10);
+      if (Math.hypot(x - ps.pos.x, z - ps.pos.z) >= WANDER_MIN_DIST) { wander = { x, z }; break; }
+    }
+    wanderTime = 3 + Math.random() * 4; // cambia de rumbo cada 3–7 segundos
+  }
+  // Sueño del gigante
+  const WAKE_DIST = 12, SLEEP_DIST = 30;
+  let enemyAwake = true;
+  const zzz = (() => {
+    const c = document.createElement('canvas'); c.width = 256; c.height = 128;
+    const g = c.getContext('2d');
+    g.fillStyle = '#ffffff'; g.strokeStyle = '#1b2a5c'; g.lineWidth = 6; g.textBaseline = 'middle';
+    [['Z', 60, 90, 70], ['z', 140, 60, 52], ['z', 200, 34, 38]].forEach(([ch, x, y, size]) => {
+      g.font = `${size}px Impact, "Arial Narrow Bold", sans-serif`; g.strokeText(ch, x, y); g.fillText(ch, x, y);
+    });
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true }));
+    sp.scale.set(4, 2, 1); sp.visible = false; scene.add(sp);
+    return sp;
+  })();
+  function updateEnemy(dt) {
+    let wantJump = false, moving = false;
+    const stunned = stunTime > 0;
+    if (stunned) stunTime -= dt;
+    enemyBody.material.color.setHex(stunned ? 0x6f8cff : 0xd4161b);
+    enemyBody.rotation.z = stunned ? Math.sin(t * 30) * 0.05 : 0; // tiembla mientras está aturdido
+    // De noche duerme, a menos que te acerques demasiado
+    if (isNight) {
+      const d = Math.hypot(ps.pos.x - es.pos.x, ps.pos.z - es.pos.z);
+      if (!enemyAwake && d < WAKE_DIST) { enemyAwake = true; showToast('¡Despertaste al gigante!', true); }
+      else if (enemyAwake && d > SLEEP_DIST) enemyAwake = false; // te alejaste: se vuelve a dormir
+    } else enemyAwake = true;
+    const sleeping = !enemyAwake;
+    for (const e of enemyEyes) e.scale.y = sleeping ? 0.15 : 1; // ojos cerrados
+    zzz.visible = sleeping;
+    if (sleeping) {
+      zzz.position.set(es.pos.x + 1.2, es.pos.y + H * ENEMY_SCALE + 1 + Math.sin(t * 2) * 0.3, es.pos.z);
+      zzz.material.opacity = 0.6 + Math.sin(t * 3) * 0.3;
+    }
+    if (stunned || sleeping) { /* no se mueve */ }
+    else if (enemyWait > 0) { enemyWait -= dt; }
+    else {
+      let tx, tz, speed;
+      if (ps.pos.z > -LINE_W/2) {
+        // Estás en la zona segura: camina al azar por su mitad, lejos de ti
+        wanderTime -= dt;
+        const far = Math.hypot(wander.x - ps.pos.x, wander.z - ps.pos.z) >= WANDER_MIN_DIST;
+        if (wanderTime <= 0 || !far || Math.hypot(wander.x - es.pos.x, wander.z - es.pos.z) < 1) pickWander();
+        tx = wander.x; tz = wander.z; speed = ENEMY_SPEED * 0.5;
+      } else {
+        // Estás en su mitad: te persigue a tu misma velocidad
+        tx = ps.pos.x; tz = Math.min(ps.pos.z, ENEMY_MAX_Z); speed = ENEMY_SPEED;
+        wanderTime = 0;
+      }
+      const dx = tx - es.pos.x, dz = tz - es.pos.z, dist = Math.hypot(dx, dz);
+      if (dist > 0.05) {
+        const step = Math.min(speed * dt, dist);
+        es.walkX += dx / dist * step; es.walkZ += dz / dist * step;
+        turnTo(es, dx, dz, dt);
+        moving = dist > 0.3;
+      }
+      // Salta si tú saltas cerca de él
+      if (ps.pos.y > es.pos.y + 0.5 && Math.hypot(ps.pos.x - es.pos.x, ps.pos.z - es.pos.z) < 8) wantJump = true;
+    }
+    physics(es, dt, wantJump, ENEMY_JUMP);
+    es.pos.x = Math.max(-EDGE + ENEMY_R, Math.min(EDGE - ENEMY_R, es.pos.x));
+    es.pos.z = Math.max(-EDGE + ENEMY_R, Math.min(ENEMY_MAX_Z, es.pos.z));
+    enemyBody.position.y = H/2 + (moving && es.onGround ? Math.abs(Math.sin(t * 8)) * 0.08 : 0);
+  }
+
+  // ---------- Bots tontos ----------
+  // Corren y saltan al azar por todo el mapa. Si el gigante los toca, salen disparados como cohetes
+  const BOT_COLORS = [0xffd23f, 0x4cc9f0, 0xb388eb, 0xff8a5b, 0xf15bb5];
+  const BOT_SPEED = 8;
+  const FOLLOW_SPEED = BOT_SPEED, FOLLOW_DIST = 1.3; // cuando te siguen: misma velocidad de siempre y a 1,3 m
+  const bots = BOT_COLORS.map((color, slot) => {
+    const g = new THREE.Group();
+    const b = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), new THREE.MeshLambertMaterial({ color }));
+    b.position.y = H/2; b.castShadow = true;
+    g.add(b);
+    const eyes = [];
+    [-0.22, 0.22].forEach(x => {
+      const eye = new THREE.Mesh(eyeGeo, eyeMat);
+      eye.scale.z = 0.5; eye.position.set(x, H*0.78 - H/2, D/2 + 0.02);
+      b.add(eye); eyes.push(eye);
+    });
+    scene.add(g);
+    const st = makeState(g);
+    st.eyes = eyes; st.sleeping = false;
+    st.zzz = new THREE.Sprite(zzz.material); st.zzz.scale.set(1.6, 0.8, 1); st.zzz.visible = false; scene.add(st.zzz);
+    st.body = b; st.slot = slot; st.rocket = false; st.outbound = false; st.gone = 0; st.target = null; st.timer = 0; st.smoke = 0;
+    st.stuckT = 0; st.detour = null; st.detourT = 0;
+    return st;
+  });
+  // Cada bot tiene su cama (del mismo color) donde reaparece
+  const BOT_BEDS = [[32, 0, 9], [37, 0, 9], [27, 1, 10], [32, 1, 10], [37, 1, 10]]; // amarillo, celeste, morado, naranja, rosa
+  const insideHouse = st => insideHouseAt(st.pos);
+  function pickBotTarget(st) {
+    if (Math.random() < 0.35) {
+      // A veces van directo al trampolín
+      st.target = { x: TRAMP.x, z: TRAMP.z };
+    } else {
+      // Si no, a cualquier parte del mapa (menos dentro de la casa)
+      do { st.target = { x: (Math.random() * 2 - 1) * (EDGE - 10), z: (Math.random() * 2 - 1) * (EDGE - 10) }; }
+      while (st.target.x > HX0 - 2 && st.target.x < HX1 + 2 && st.target.z > HZ0 - 2 && st.target.z < HZ1 + 2);
+    }
+    st.timer = 6 + Math.random() * 6;
+  }
+  // Ruta para salir de la casa: bajar la escalera y salir por la puerta
+  const exitHouseTarget = st => exitRoute(st.pos);
+  // Ruta para ir a su cama: entrar por la puerta, subir la escalera y subirse a la cama
+  const goToBedTarget = st => bedRoute(st.pos, BOT_BEDS[st.slot]);
+  const onOwnBed = st => {
+    const [bx, bf, bz] = BOT_BEDS[st.slot];
+    return Math.abs(st.pos.x - bx) < 0.75 && Math.abs(st.pos.z - bz) < 1.25 && Math.abs(st.pos.y - (bf * FLOOR_H + 0.55)) < 0.1;
+  };
+  function setBotSleeping(st, on) {
+    st.sleeping = on;
+    st.zzz.visible = on;
+    for (const e of st.eyes) e.scale.y = on ? 0.15 : 1;
+    if (on) {
+      // Se acuesta a lo largo de la cama, con la cabeza en la almohada
+      const [bx, bf, bz] = BOT_BEDS[st.slot];
+      st.pos.set(bx, bf * FLOOR_H + 0.55, bz);
+      st.obj.rotation.y = 0; st.facing = 0;
+      st.body.rotation.set(-Math.PI / 2, 0, 0);
+      st.body.position.set(0, D / 2, 0.05);
+      st.zzz.position.set(bx + 0.6, bf * FLOOR_H + 2.2, bz - 0.8);
+    } else {
+      st.body.rotation.set(0, 0, 0);
+      st.body.position.set(0, H / 2, 0);
+    }
+  }
+
+  function respawnInBed(st) {
+    const [bx, floor, bz] = BOT_BEDS[st.slot];
+    st.pos.set(bx, floor * FLOOR_H + 0.55, bz);
+    st.vel.set(0, 0, 0); st.rocket = false; st.gone = 0; st.obj.visible = true;
+    st.body.rotation.set(0, 0, 0); st.target = null; st.onGround = true;
+    if (st.sleeping) setBotSleeping(st, false);
+  }
+  bots.forEach(respawnInBed); // empiezan en sus camas
+
+  // Fuego y humo de los cohetes
+  const puffGeo = new THREE.SphereGeometry(0.35, 10, 8);
+  const puffs = [];
+  function addPuff(pos) {
+    const fire = Math.random() < 0.6;
+    const m = new THREE.Mesh(puffGeo, new THREE.MeshBasicMaterial({ color: fire ? (Math.random() < 0.5 ? 0xff7a1a : 0xffd23f) : 0x9a9a9a, transparent: true, opacity: 0.9, depthWrite: false }));
+    m.position.copy(pos).add(new THREE.Vector3((Math.random() - 0.5) * 0.4, 0, (Math.random() - 0.5) * 0.4));
+    scene.add(m); puffs.push({ mesh: m, life: 0.6 });
+  }
+  function launchBot(st, vx, vz) {
+    st.rocket = true; st.onGround = false;
+    st.vel.set(vx, 26 + Math.random() * 6, vz);
+  }
+
+  // ---------- Hitboxes exactas ----------
+  // Cada rectángulo es una caja girada: se compara con el teorema de los ejes separadores (SAT)
+  // en el plano del suelo, y aparte se revisa que se crucen en altura.
+  function boxOf(st, scale = 1) {
+    return { x: st.pos.x, z: st.pos.z, hw: W/2 * scale, hd: D/2 * scale, a: st.obj.rotation.y, y0: st.pos.y, y1: st.pos.y + H * scale };
+  }
+  // boxHit (SAT) vive en src/logic.js
+  // Empuja dos cuerpos sólidos para que no se atraviesen (mitad cada uno)
+  function pushApart(a, b) {
+    const hit = boxHit(boxOf(a), boxOf(b));
+    if (!hit) return;
+    const m = hit.depth / 2;
+    a.prevX = a.pos.x; a.prevZ = a.pos.z; b.prevX = b.pos.x; b.prevZ = b.pos.z;
+    a.pos.x -= hit.nx * m; a.pos.z -= hit.nz * m;
+    b.pos.x += hit.nx * m; b.pos.z += hit.nz * m;
+    // Un empujón nunca puede meter a nadie dentro (o al otro lado) de una pared
+    collideWalls(a, platforms, COLL);
+    collideWalls(b, platforms, COLL);
+  }
+  function resolveSolids() {
+    const ground = bots.filter(b => !b.rocket && !(b.gone > 0) && !b.sleeping);
+    // Bots contra bots
+    for (let i = 0; i < ground.length; i++)
+      for (let j = i + 1; j < ground.length; j++) pushApart(ground[i], ground[j]);
+    const giant = boxOf(es, ENEMY_SCALE);
+    for (const b of ground) {
+      // Tú contra los bots: se empujan igual
+      pushApart(ps, b);
+      // El gigante contra un bot: el bot sale volando como cohete, lejos del gigante
+      if (boxHit(giant, boxOf(b))) {
+        const dx = b.pos.x - es.pos.x, dz = b.pos.z - es.pos.z, d = Math.hypot(dx, dz) || 1;
+        launchBot(b, dx / d * 20, dz / d * 20);
+      }
+    }
+  }
+
+  function updateBots(dt) {
+    for (const st of bots) {
+      let wantJump = false;
+      // Salió del mapa por el trampolín: desaparece un rato y reaparece en su cama
+      if (st.gone > 0) { st.gone -= dt; if (st.gone <= 0) respawnInBed(st); continue; }
+      // Cuánto se movió desde el cuadro anterior (para saber si está atascado)
+      const moved = Math.hypot(st.pos.x - (st.lx ?? st.pos.x), st.pos.z - (st.lz ?? st.pos.z));
+      st.lx = st.pos.x; st.lz = st.pos.z;
+      // Durmiendo: se queda acostado hasta que amanezca
+      if (st.sleeping) {
+        if (!isNight) setBotSleeping(st, false);
+        else { st.zzz.material.opacity = 0.6 + Math.sin(t * 3 + st.slot) * 0.3; continue; }
+      }
+      if (st.rocket) {
+        // Volando: gira como loco y deja una estela de fuego
+        st.body.rotation.x += dt * 12;
+        st.body.rotation.z += dt * 5;
+        st.smoke -= dt;
+        if (st.smoke <= 0) { addPuff(st.pos.clone().add(new THREE.Vector3(0, 0.5, 0))); st.smoke = 0.025; }
+      } else {
+        let speed = BOT_SPEED;
+        if (isNight) {
+          // De noche van a su cama, aunque te estén siguiendo
+          st.target = goToBedTarget(st);
+          if (onOwnBed(st)) { setBotSleeping(st, true); continue; }
+        } else if (botsFollow) {
+          // Te siguen despacio y se quedan a 1,3 m de ti
+          const fx = st.pos.x - ps.pos.x, fz = st.pos.z - ps.pos.z, fd = Math.hypot(fx, fz) || 1;
+          st.target = fd > FOLLOW_DIST ? { x: ps.pos.x + fx / fd * FOLLOW_DIST, z: ps.pos.z + fz / fd * FOLLOW_DIST } : { x: st.pos.x, z: st.pos.z };
+          speed = FOLLOW_SPEED;
+        } else {
+          if (insideHouse(st)) st.target = exitHouseTarget(st);   // primero salir de la casa
+          else {
+            st.timer -= dt;
+            if (!st.target || st.timer <= 0 || Math.hypot(st.target.x - st.pos.x, st.target.z - st.pos.z) < 1) pickBotTarget(st);
+          }
+        }
+        // Si lleva un rato sin poder avanzar, da un rodeo corto y salta, y luego sigue con lo suyo
+        const want = Math.hypot(st.target.x - st.pos.x, st.target.z - st.pos.z);
+        if (want > 0.6 && st.detourT <= 0 && moved < speed * dt * 0.25) st.stuckT += dt;
+        else st.stuckT = Math.max(0, st.stuckT - dt * 2);
+        if (st.stuckT > 1.2) {
+          st.stuckT = 0; st.detourT = 1.2; wantJump = true;
+          const a = Math.random() * Math.PI * 2;
+          st.detour = { x: st.pos.x + Math.cos(a) * 3, z: st.pos.z + Math.sin(a) * 3 };
+          if (insideHouse(st)) { // el rodeo no puede salir por una pared
+            st.detour.x = Math.min(IX1 - 1, Math.max(IX0 + 1, st.detour.x));
+            st.detour.z = Math.min(IZ1 - 1, Math.max(IZ0 + 1, st.detour.z));
+          }
+        }
+        if (st.detourT > 0) { st.detourT -= dt; st.target = st.detour; }
+        const dx = st.target.x - st.pos.x, dz = st.target.z - st.pos.z, dist = Math.hypot(dx, dz);
+        if (dist > 0.05) {
+          const step = Math.min(speed * dt, dist);
+          st.walkX += dx / dist * step; st.walkZ += dz / dist * step;
+          turnTo(st, dx, dz, dt);
+        }
+        if (!isNight && st.onGround && Math.random() < dt * 0.8) wantJump = true; // saltan porque sí (de día)
+        if (st.onGround && st.hitWall) wantJump = true; // si chocan con algo (una cama), lo saltan
+        st.body.position.y = H/2 + (st.onGround ? Math.abs(Math.sin(t * 12 + st.pos.x)) * 0.08 : 0);
+      }
+      // ¡Trampolín! Salen disparados 100 m hacia arriba y fuera del mapa
+      if (!st.rocket && onTrampoline(st)) { trampolineLaunch(st, true); st.rocket = true; st.outbound = true; }
+      physics(st, dt, wantJump, JUMP);
+      const outside = Math.abs(st.pos.x) > EDGE || Math.abs(st.pos.z) > EDGE;
+      if (st.outbound && outside && st.pos.y < 20) {
+        st.obj.visible = false; st.gone = 3; st.outbound = false; st.rocket = false; continue;
+      }
+      if (st.rocket && st.onGround) {
+        st.rocket = false; st.outbound = false; st.body.rotation.set(0, 0, 0); st.target = null; // aterrizó
+      }
+      if (!st.outbound) {
+        st.pos.x = Math.max(-EDGE + 1, Math.min(EDGE - 1, st.pos.x));
+        st.pos.z = Math.max(-EDGE + 1, Math.min(EDGE - 1, st.pos.z));
+      }
+    }
+    for (let i = puffs.length - 1; i >= 0; i--) {
+      const P = puffs[i]; P.life -= dt;
+      const k = 1 - P.life / 0.6;
+      P.mesh.scale.setScalar(1 + k * 2);
+      P.mesh.material.opacity = 0.9 * (1 - k);
+      if (P.life <= 0) { scene.remove(P.mesh); P.mesh.material.dispose(); puffs.splice(i, 1); }
+    }
+  }
+
+  // ---------- Bláster láser ----------
+  // Varios láseres a la vez; después de cada disparo la barra tiene que recargarse
+  const LASER_SPEED = 30;    // metros por segundo
+  const LASER_RANGE = 120;   // se apaga después de recorrer esta distancia
+  const RELOAD = 1;          // segundos para recargar
+  const raycaster = new THREE.Raycaster();
+  const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+  const laserGeo = new THREE.BoxGeometry(0.2, 0.5, 1);
+  const laserMat = new THREE.MeshBasicMaterial({ color: 0x1e6bff });
+  const glowGeo = new THREE.BoxGeometry(0.45, 0.75, 1.25);
+  const glowMat = new THREE.MeshBasicMaterial({ color: 0x7fb2ff, transparent: true, opacity: 0.35, depthWrite: false });
+  const lasers = [];
+  let reloadLeft = 0;
+  const reloadEl = document.getElementById('reload'), reloadFill = document.getElementById('reloadFill'), reloadText = document.getElementById('reloadText');
+  // Destellos al impactar
+  const burstGeo = new THREE.SphereGeometry(1, 20, 14);
+  const bursts = [];
+
+  function shoot(nx, ny) {
+    if (!stats.blaster || reloadLeft > 0) return;
+    raycaster.setFromCamera({ x: nx, y: ny }, camera);
+    // A dónde apuntas: al gigante, si no al suelo, si no a lo lejos
+    const hit = raycaster.intersectObject(enemyBody, true)[0];
+    const target = hit ? hit.point
+      : (raycaster.ray.intersectPlane(groundPlane, new THREE.Vector3()) || raycaster.ray.at(LASER_RANGE, new THREE.Vector3()));
+    let start;
+    if (firstPerson) {
+      start = new THREE.Vector3(); fpBlaster.getWorldPosition(start);
+    } else {
+      // El personaje se gira hacia donde dispara y el láser sale del bláster
+      const flat = target.clone().sub(ps.pos);
+      ps.facing = Math.atan2(flat.x, flat.z); player.rotation.y = ps.facing;
+      player.updateMatrixWorld(true);
+      start = new THREE.Vector3(0, 0.02, 0.95); handBlaster.localToWorld(start);
+    }
+    const dir = target.clone().sub(start).normalize();
+    const mesh = new THREE.Mesh(laserGeo, laserMat);
+    mesh.add(new THREE.Mesh(glowGeo, glowMat));
+    mesh.position.copy(start).addScaledVector(dir, 0.5);
+    mesh.lookAt(mesh.position.clone().add(dir));
+    scene.add(mesh);
+    lasers.push({ mesh, dir, travel: 0 });
+    reloadLeft = RELOAD;
+    // Pequeño retroceso del bláster
+    (firstPerson ? fpBlaster : handBlaster).userData.kick = 1;
+  }
+  function updateLaser(dt) {
+    // Barra de recarga
+    reloadLeft = Math.max(0, reloadLeft - dt);
+    const ready = reloadLeft === 0;
+    reloadFill.style.width = `${(1 - reloadLeft / RELOAD) * 100}%`;
+    reloadEl.classList.toggle('ready', ready);
+    reloadText.textContent = ready ? 'LÁSER LISTO' : 'RECARGANDO…';
+    fpBlaster.visible = stats.blaster && firstPerson;
+    for (const b of [handBlaster, fpBlaster]) {
+      const k = b.userData.kick || 0;
+      b.userData.kick = Math.max(0, k - dt * 6);
+      b.rotation.x = -k * 0.25;
+    }
+
+    for (let i = lasers.length - 1; i >= 0; i--) {
+      const L = lasers[i];
+      const step = LASER_SPEED * dt;
+      L.mesh.position.addScaledVector(L.dir, step);
+      L.travel += step;
+      const lp = L.mesh.position;
+      // El láser también es una caja: 0,2 de ancho, 0,5 de alto y 1 de largo
+      const laserBox = { x: lp.x, z: lp.z, hw: 0.1, hd: 0.5, a: Math.atan2(L.dir.x, L.dir.z), y0: lp.y - 0.25, y1: lp.y + 0.25 };
+      const hitEnemy = !!boxHit(laserBox, boxOf(es, ENEMY_SCALE));
+      if (hitEnemy) {
+        stunTime = 2;
+        const bm = new THREE.Mesh(burstGeo, new THREE.MeshBasicMaterial({ color: 0x4d8dff, transparent: true, opacity: 0.8, depthWrite: false }));
+        bm.position.copy(lp); scene.add(bm); bursts.push({ mesh: bm, life: 0.4 });
+        showToast('¡Gigante aturdido 2 segundos!');
+      }
+      if (hitEnemy || lp.y < 0 || L.travel > LASER_RANGE) { scene.remove(L.mesh); lasers.splice(i, 1); }
+    }
+    for (let i = bursts.length - 1; i >= 0; i--) {
+      const B = bursts[i]; B.life -= dt;
+      const k = 1 - B.life / 0.4;
+      B.mesh.scale.setScalar(0.5 + k * 3);
+      B.mesh.material.opacity = 0.8 * (1 - k);
+      if (B.life <= 0) { scene.remove(B.mesh); B.mesh.material.dispose(); bursts.splice(i, 1); }
+    }
+  }
+
+  // ---------- Ciclo día / noche ----------
+  const DAY_LEN = 240;                 // segundos por día completo (4 minutos)
+  let dayPhase = 8 / 24;               // empieza a las 8:00 (0 = medianoche, 0.5 = mediodía)
+  let isNight = false;
+  const SKY_DAY = new THREE.Color(0xbfe3f2), SKY_NIGHT = new THREE.Color(0x0b1330), SKY_SUNSET = new THREE.Color(0xf29b63);
+  const WIN_DAY = new THREE.Color(0x3a4a5c), WIN_NIGHT = new THREE.Color(0xffd27a);
+  const clockEl = document.querySelector('.clock'), clockIcon = document.getElementById('clockIcon'), clockTime = document.getElementById('clockTime');
+  const sunDir = new THREE.Vector3(), tmpColor = new THREE.Color();
+  let lastMinute = -1;
+  function updateDayNight(dt) {
+    dayPhase = (dayPhase + dt / DAY_LEN) % 1;
+    const ang = dayPhase * Math.PI * 2;
+    const elev = sunElevation(dayPhase);                // -1 medianoche, 0 amanecer/atardecer, 1 mediodía
+    const day = THREE.MathUtils.smoothstep(elev, -0.15, 0.25);
+    const dusk = Math.max(0, 1 - Math.abs(elev) / 0.3); // color naranja cerca del horizonte
+    tmpColor.copy(SKY_NIGHT).lerp(SKY_DAY, day).lerp(SKY_SUNSET, dusk * 0.55);
+    scene.background.copy(tmpColor); scene.fog.color.copy(tmpColor);
+    hemi.intensity = 0.18 + 0.57 * day;
+    sun.intensity = 0.85 * day;
+    moon.intensity = 0.3 * (1 - day);
+    stars.material.opacity = 1 - day;
+    stars.position.copy(camera.position);
+    windowMat.color.copy(WIN_DAY).lerp(WIN_NIGHT, 1 - day);
+    // El sol sale por un lado y se pone por el otro
+    sunDir.set(Math.sin(ang) * -0.9, Math.max(elev, 0.05), 0.35).normalize();
+    const p = ps.pos;
+    sun.position.set(p.x + sunDir.x * 50, p.y + sunDir.y * 50, p.z + sunDir.z * 50);
+    sun.target.position.copy(p);
+    moon.position.set(p.x - sunDir.x * 50, p.y + 40, p.z - sunDir.z * 50);
+    moon.target.position.copy(p);
+    const wasNight = isNight;
+    isNight = elev < -0.05;
+    if (isNight && !wasNight) { enemyAwake = false; showToast('Se hizo de noche: el gigante se durmió'); }
+    if (!isNight && wasNight) showToast('¡Amaneció! El gigante despertó', true);
+    // Reloj
+    const mins = Math.floor(dayPhase * 24 * 60);
+    if (mins !== lastMinute) {
+      lastMinute = mins;
+      clockTime.textContent = clockText(dayPhase);
+      clockIcon.textContent = isNight ? 'NOCHE' : 'DÍA';
+      clockEl.classList.toggle('night', isNight);
+    }
+  }
+
+  // ---------- Dormir en tu cama ----------
+  const MY_BED = { x: 27, z: 9 };
+  const sleepEl = document.getElementById('sleep'), bedPrompt = document.getElementById('bedPrompt');
+  let sleepLeft = 0;
+  const nearMyBed = () => ps.pos.y < 3 && Math.hypot(ps.pos.x - MY_BED.x, ps.pos.z - MY_BED.z) < 3;
+  function trySleep() {
+    if (sleepLeft > 0 || !nearMyBed()) return;
+    if (!isNight) { showToast('Solo puedes dormir de noche'); return; }
+    sleepLeft = 5;
+    sleepEl.classList.add('on');
+    ps.pos.set(MY_BED.x, 0.55, MY_BED.z); ps.vel.set(0, 0, 0);
+  }
+  function updateSleep(dt) {
+    bedPrompt.hidden = !(isNight && sleepLeft <= 0 && nearMyBed());
+    if (sleepLeft <= 0) return;
+    sleepLeft -= dt;
+    if (sleepLeft <= 0) {
+      dayPhase = hourToPhase(9);     // se salta la noche: son las 9:00
+      sleepEl.classList.remove('on');
+      showToast('¡Buenos días! Son las 9:00');
+    }
+  }
+
+  function resize() {
+    const w = innerWidth, h = innerHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h; camera.updateProjectionMatrix();
+  }
+  addEventListener('resize', resize); resize();
+
+  const clock = new THREE.Clock();
+  let t = 0;
+  function tick() {
+    const dt = Math.min(clock.getDelta(), 0.05); t += dt;
+
+
+    updateSleep(dt);
+    let fx = 0, fz = 0;
+    if (keys.KeyW || keys.ArrowUp) fz -= 1;
+    if (keys.KeyS || keys.ArrowDown) fz += 1;
+    if (keys.KeyA) fx -= 1;
+    if (keys.KeyD) fx += 1;
+    // Flechas izquierda/derecha giran la cámara (más rápido que con el ratón)
+    const CAM_TURN = 3;
+    if (keys.ArrowLeft) camYaw += CAM_TURN * dt;
+    if (keys.ArrowRight) camYaw -= CAM_TURN * dt;
+    fx += joy.x; fz += joy.y;
+    if (sleepLeft > 0) fx = fz = 0; // dormido no te mueves
+    const len = Math.hypot(fx, fz);
+    let moving = false;
+    if (len > 0.1) {
+      moving = true;
+      const n = Math.min(len, 1) / len;
+      fx *= n; fz *= n;
+      // relativo a la cámara
+      const s = Math.sin(camYaw), c = Math.cos(camYaw);
+      const mx = fx * c + fz * s, mz = -fx * s + fz * c;
+      ps.walkX += mx * stats.speed * dt;
+      ps.walkZ += mz * stats.speed * dt;
+      turnTo(ps, mx, mz, dt);
+    }
+
+    // Trampolín invisible en los bordes: donde ya no hay suelo
+    const px = ps.pos.x, pz = ps.pos.z;
+    if (Math.abs(px) > EDGE || Math.abs(pz) > EDGE) {
+      if (Math.abs(px) > EDGE) { ps.pos.x = Math.sign(px) * EDGE; ps.vel.x = -Math.sign(px) * BOUNCE_IN; }
+      if (Math.abs(pz) > EDGE) { ps.pos.z = Math.sign(pz) * EDGE; ps.vel.z = -Math.sign(pz) * BOUNCE_IN; }
+      ps.vel.y = BOUNCE_UP; ps.onGround = false;
+      flashWarn('NO TE SALGAS', 2);
+    }
+    if (warnTimer > 0 && (warnTimer -= dt) <= 0) warn.classList.remove('show');
+
+    if (onTrampoline(ps) && ps.vel.y <= 0) { trampolineLaunch(ps, false); showToast('¡BOING! 100 metros'); }
+    physics(ps, dt, keys.Space && sleepLeft <= 0, stats.jump);
+    const pp = ps.pos;
+
+    // Enemigo: funciona como un killbrick que te persigue
+    updateEnemy(dt);
+    updateBots(dt);
+    resolveSolids();
+    updateCoins(dt);
+    updateLaser(dt);
+    updateShop(dt);
+    if (boxHit(boxOf(ps), boxOf(es, ENEMY_SCALE))) die();
+
+    const onGround = ps.onGround;
+
+    // pequeño rebote al caminar
+    body.position.y = H/2 + (moving && onGround ? Math.abs(Math.sin(t * 12)) * 0.08 : 0);
+
+    // Cámara en tercera persona
+    const p = player.position;
+    if (firstPerson) {
+      // Primera persona: la cámara va en los ojos y mira hacia donde apunta la cámara
+      const ey = p.y + body.position.y - H/2 + H*0.78;
+      camera.position.set(p.x, ey, p.z);
+      camera.lookAt(
+        p.x - Math.sin(camYaw) * Math.cos(fpPitch),
+        ey + Math.sin(fpPitch),
+        p.z - Math.cos(camYaw) * Math.cos(fpPitch)
+      );
+    } else {
+      let dist = 9;
+      const head = new THREE.Vector3(p.x, p.y + 1.2, p.z);
+      const back = new THREE.Vector3(Math.sin(camYaw) * Math.cos(camPitch), Math.sin(camPitch), Math.cos(camYaw) * Math.cos(camPitch));
+      camRay.set(head, back); camRay.far = dist;
+      const block = camRay.intersectObjects(houseMeshes(), false)[0];
+      if (block) dist = Math.max(0.6, block.distance - 0.3);
+      camera.position.copy(head).addScaledVector(back, dist);
+      camera.lookAt(head);
+      if (shake > 0) camera.position.add(new THREE.Vector3((Math.random() - 0.5), (Math.random() - 0.5), (Math.random() - 0.5)).multiplyScalar(shake));
+    }
+
+    updateDayNight(dt);
+
+    renderer.render(scene, camera);
+    requestAnimationFrame(tick);
+  }
+  tick();
+})();
+</script>
+</body>
+</html>
