@@ -18,6 +18,9 @@
   #warn { position:fixed; left:50%; top:30%; transform:translate(-50%,-50%) scale(.6); margin:0; font:400 clamp(40px, 11vw, 120px)/1 Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif; color:#e01010; letter-spacing:.02em; text-shadow:0 4px 0 #6a0000, 0 8px 18px rgba(0,0,0,.35); white-space:nowrap; opacity:0; pointer-events:none; transition:opacity .25s, transform .25s; }
   #warn.show { opacity:1; transform:translate(-50%,-50%) scale(1); }
   .coins { position:fixed; right:16px; top:calc(16px + env(safe-area-inset-top,0px)); display:flex; align-items:center; gap:8px; background:var(--panel); padding:8px 14px; border-radius:10px; font:400 26px/1 Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif; color:#7a5200; font-variant-numeric:tabular-nums; backdrop-filter:blur(6px); }
+  .boxes { position:fixed; right:16px; top:calc(66px + env(safe-area-inset-top,0px)); display:flex; align-items:center; gap:8px; background:var(--panel); padding:6px 12px; border-radius:10px; font:400 22px/1 Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif; color:#7a5200; font-variant-numeric:tabular-nums; backdrop-filter:blur(6px); }
+  .boxes i { width:16px; height:16px; border-radius:3px; background:linear-gradient(135deg, #fff3a8, #ffc83d 55%, #c98a00); box-shadow:inset 0 0 0 2px #b07800; }
+  .boxes:not([hidden]) ~ .clock { top:calc(110px + env(safe-area-inset-top,0px)); }
   .clock { position:fixed; right:16px; top:calc(66px + env(safe-area-inset-top,0px)); display:flex; align-items:center; gap:8px; background:var(--panel); padding:6px 12px; border-radius:10px; font:700 14px system-ui, sans-serif; color:#16301f; font-variant-numeric:tabular-nums; backdrop-filter:blur(6px); }
   .clock #clockIcon { font:400 16px Impact, "Arial Narrow Bold", sans-serif; letter-spacing:.04em; color:#c98a00; }
   .clock.night #clockIcon { color:#3b4fa8; }
@@ -35,6 +38,22 @@
   #cmd label { font:700 11px system-ui, sans-serif; letter-spacing:.08em; text-transform:uppercase; color:#9fe0b0; }
   #cmdInput { flex:1; min-width:0; border:0; border-radius:6px; padding:8px 10px; font:15px ui-monospace, Menlo, monospace; background:#fff; color:#16301f; }
   #cmdInput:focus { outline:2px solid #2fae4e; }
+  /* Tienda (P) */
+  #shop { position:fixed; inset:0; display:grid; place-items:center; padding:16px; background:rgba(10,20,14,.55); backdrop-filter:blur(3px); z-index:20; }
+  .shop-card { width:min(560px, 100%); max-height:calc(100% - 32px); overflow:auto; background:#fbfaf5; color:#16301f; border-radius:14px; box-shadow:0 20px 50px rgba(0,0,0,.35); padding:18px; display:flex; flex-direction:column; gap:12px; }
+  .shop-head { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  .shop-head h2 { margin:0; font:400 30px/1 Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif; letter-spacing:.02em; color:#1f8a3b; }
+  .shop-head .wallet { margin-left:auto; font:400 22px/1 Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif; color:#7a5200; font-variant-numeric:tabular-nums; }
+  .shop-head button { border:0; border-radius:8px; padding:8px 12px; font:700 13px system-ui, sans-serif; background:#e6ebe7; color:#16301f; cursor:pointer; }
+  .shop-group { margin:6px 0 0; font:700 11px system-ui, sans-serif; letter-spacing:.1em; text-transform:uppercase; color:#5c7465; }
+  .shop-item { display:grid; grid-template-columns:1fr auto; gap:4px 12px; align-items:center; padding:12px; border-radius:10px; background:#fff; box-shadow:inset 0 0 0 1px #dde5df; }
+  .shop-item h3 { margin:0; font:700 16px system-ui, sans-serif; }
+  .shop-item p { margin:0; grid-column:1; font:13px/1.4 system-ui, sans-serif; color:#4a5f52; }
+  .shop-item .buy { grid-column:2; grid-row:1 / span 2; min-width:120px; border:0; border-radius:8px; padding:10px 12px; font:700 14px system-ui, sans-serif; background:#2fae4e; color:#fff; cursor:pointer; font-variant-numeric:tabular-nums; }
+  .shop-item .buy:disabled { background:#d9dfdb; color:#6b7a70; cursor:not-allowed; }
+  .shop-item .buy:focus-visible, .shop-head button:focus-visible { outline:3px solid #1e6bff; outline-offset:2px; }
+  @media (max-width:420px) { .shop-item { grid-template-columns:1fr; } .shop-item .buy { grid-column:1; grid-row:auto; } }
+  /* Dormir */
   #bedPrompt { position:fixed; left:50%; top:62%; transform:translateX(-50%); margin:0; padding:8px 14px; border-radius:8px; background:rgba(22,48,31,.85); color:#fff; font:600 15px system-ui, sans-serif; pointer-events:none; white-space:nowrap; }
   #sleep { position:fixed; inset:0; display:grid; place-items:center; background:#05070f; opacity:0; pointer-events:none; transition:opacity 1s; }
   #sleep span { font:400 clamp(36px, 8vw, 72px)/1 Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif; color:#cdd8ff; letter-spacing:.04em; }
@@ -53,16 +72,23 @@
 <canvas id="game"></canvas>
 <div class="hud">
   <b>Rectángulo Verde</b><br>
-  <span class="keys">Moverse: <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> · Saltar: <kbd>Espacio</kbd><br>Girar cámara: <kbd>←</kbd><kbd>→</kbd> o arrastra · Primera persona: <kbd>V</kbd> · Disparar láser: <kbd>clic</kbd><br>Bots te siguen / dejan de seguirte: <kbd>P</kbd> · Dormir en tu cama (de noche): <kbd>E</kbd> · Comandos: <kbd>T</kbd><br></span>
-  El gigante rojo <b style="color:#d0101a">no puede cruzar</b> la <span style="color:#b98a00;font-weight:700">línea amarilla</span>. Detrás de ella estás a salvo.<br>De noche el gigante <b>duerme</b>: no te acerques o se despierta.<br>Recoge <b style="color:#b07800">monedas</b> en su zona y gástalas en las <b>tiendas</b>: acércate al vendedor y pulsa <kbd>E</kbd>.
+  <span class="keys">Moverse: <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> · Saltar: <kbd>Espacio</kbd><br>Girar cámara: <kbd>←</kbd><kbd>→</kbd> o arrastra · Primera persona: <kbd>V</kbd> · Disparar láser: <kbd>clic</kbd><br>Tienda: <kbd>P</kbd> · Dormir en tu cama (de noche): <kbd>E</kbd> · Comandos: <kbd>T</kbd><br></span>
+  El gigante rojo <b style="color:#d0101a">no puede cruzar</b> la <span style="color:#b98a00;font-weight:700">línea amarilla</span>. Detrás de ella estás a salvo.<br>De noche el gigante <b>duerme</b>: no te acerques o se despierta.<br>Recoge <b style="color:#b07800">monedas</b> en su zona y gástalas en la <b>tienda</b> (<kbd>P</kbd>).
 </div>
 <div class="coins" aria-label="Monedas"><i></i><span id="coins">0</span></div>
+<div class="boxes" aria-label="Cajas doradas" hidden><i></i><span id="boxes">0</span></div>
 <div class="clock" aria-label="Hora del juego"><span id="clockIcon">DÍA</span><span id="clockTime">08:00</span></div>
 <p id="warn" aria-live="assertive">NO TE SALGAS</p>
 <p id="toast" aria-live="polite"></p>
 <div id="cross"></div>
 <div id="reload" hidden><span id="reloadText">LÁSER LISTO</span><div class="bar"><div id="reloadFill"></div></div></div>
 <form id="cmd" hidden autocomplete="off"><label for="cmdInput">Comando</label><input id="cmdInput" type="text" placeholder="set hour 21  ·  set hour 9:30 am" spellcheck="false"></form>
+<div id="shop" hidden role="dialog" aria-modal="true" aria-labelledby="shopTitle">
+  <div class="shop-card">
+    <div class="shop-head"><h2 id="shopTitle">TIENDA</h2><span class="wallet" id="shopWallet">0 monedas</span><button type="button" id="shopClose">Cerrar (P)</button></div>
+    <div id="shopItems"></div>
+  </div>
+</div>
 <p id="bedPrompt" hidden>Pulsa <kbd>E</kbd> para dormir hasta la mañana</p>
 <div id="sleep" aria-live="polite"><span>Zzz… durmiendo</span></div>
 <p id="lockHint" hidden>Haz clic para mirar con el ratón (Esc para soltarlo)</p>
@@ -71,8 +97,8 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module">
-import { HOUSE, STAIRS, collideWalls, moveAndCollide, insideHouse as insideHouseAt, exitHouseTarget as exitRoute, goToBedTarget as bedRoute, boxHit,
-         upgradePrice, fmt, sunElevation, clockText, hourToPhase, parseSetHour, launchSpeedForHeight } from './src/logic.js';
+import { advanceOnBelt, beltItemIsBox, beltItemY, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
+         upgradePrice, fmt, sunElevation, clockText, hourToPhase, parseSetHour, launchSpeedForHeight } from './src/logic.js?v=2026-09-28d'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
 (() => {
   const canvas = document.getElementById('game');
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -130,72 +156,6 @@ import { HOUSE, STAIRS, collideWalls, moveAndCollide, insideHouse as insideHouse
 
   // Sin plataformas: la física las sigue admitiendo, pero la lista está vacía
   const platforms = [];
-  // Caja sólida: se ve y además choca (se puede pisar y no se puede atravesar)
-  function addBox(x0, x1, y0, y1, z0, z1, mat, level = 0) {
-    const w = x1 - x0, h = y1 - y0, d = z1 - z0;
-    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
-    m.position.set((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2);
-    m.castShadow = m.receiveShadow = true;
-    scene.add(m);
-    platforms.push({ x: (x0 + x1) / 2, z: (z0 + z1) / 2, hw: w / 2, hd: d / 2, top: y1, bottom: y0 });
-    houseParts.push({ mesh: m, level });
-    return m;
-  }
-
-  // ---------- Casa grande de 2 pisos ----------
-  const houseParts = [];
-  const { HX0, HX1, HZ0, HZ1, DOOR_Z, FLOOR_H } = HOUSE, WT = 0.3, ROOF_Y = 8;
-  const wallMat = new THREE.MeshLambertMaterial({ color: 0xf1e3c8 });
-  const floorMat = new THREE.MeshLambertMaterial({ color: 0xa87444 });
-  const stairMat = new THREE.MeshLambertMaterial({ color: 0x8a5a33 });
-  const roofMat = new THREE.MeshLambertMaterial({ color: 0x7b3b2a });
-  // Paredes (la puerta está del lado que mira hacia donde apareces)
-  addBox(HX0, HX1, 0, ROOF_Y, HZ1 - WT, HZ1, wallMat, -1);                  // atrás
-  addBox(HX0, HX1, 0, ROOF_Y, HZ0, HZ0 + WT, wallMat, -1);                  // frente
-  addBox(HX1 - WT, HX1, 0, ROOF_Y, HZ0, HZ1, wallMat, -1);                  // derecha
-  addBox(HX0, HX0 + WT, 0, ROOF_Y, HZ0, DOOR_Z - 1.5, wallMat, -1);         // izquierda (con puerta)
-  addBox(HX0, HX0 + WT, 0, ROOF_Y, DOOR_Z + 1.5, HZ1, wallMat, -1);
-  addBox(HX0, HX0 + WT, 3, ROOF_Y, DOOR_Z - 1.5, DOOR_Z + 1.5, wallMat, -1); // encima de la puerta
-  // Piso de madera de la planta baja (solo se ve)
-  const groundFloor = new THREE.Mesh(new THREE.PlaneGeometry(HX1 - HX0 - 2 * WT, HZ1 - HZ0 - 2 * WT), floorMat);
-  groundFloor.rotation.x = -Math.PI / 2; groundFloor.position.set((HX0 + HX1) / 2, 0.02, (HZ0 + HZ1) / 2);
-  groundFloor.receiveShadow = true; scene.add(groundFloor);
-  const IX0 = HX0 + WT, IX1 = HX1 - WT, IZ0 = HZ0 + WT, IZ1 = HZ1 - WT;
-  // Piso 2 (con hueco para la escalera de atrás)
-  addBox(IX0, IX1, 3.7, 4, IZ0, STAIRS.Z0, floorMat, 1);
-  addBox(IX0, STAIRS.X0, 3.7, 4, STAIRS.Z0, IZ1, floorMat, 1);
-  addBox(STAIRS.X1, IX1, 3.7, 4, STAIRS.Z0, IZ1, floorMat, 1);
-  // Techo
-  addBox(HX0 - 0.5, HX1 + 0.5, ROOF_Y - 0.3, ROOF_Y, HZ0 - 0.5, HZ1 + 0.5, roofMat, 2);
-  // Escalera grande: 10 escalones de 1 m × 3 m, de 0,4 m de alto (se sube caminando)
-  for (let i = 0; i < STAIRS.STEPS; i++)
-    addBox(STAIRS.X0 + STAIRS.RUN * i, STAIRS.X0 + STAIRS.RUN * (i + 1), 0, STAIRS.RISE * (i + 1), STAIRS.Z0, STAIRS.Z1, stairMat, 0);
-  // Camas: 3 por piso, una de cada color (el tuyo y el de los 5 bots)
-  const woodMat = new THREE.MeshLambertMaterial({ color: 0x6b4226 });
-  const sheetMat = new THREE.MeshLambertMaterial({ color: 0xf7f4ee });
-  function addBed(x, floor, z, color) {
-    const y = floor * FLOOR_H, lvl = floor;
-    addBox(x - 0.75, x + 0.75, y, y + 0.35, z - 1.25, z + 1.25, woodMat, lvl);                          // base
-    const add = (w, h, d, mat, px, py, pz) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(px, py, pz); m.castShadow = m.receiveShadow = true; scene.add(m); houseParts.push({ mesh: m, level: lvl }); };
-    add(1.4, 0.2, 2.3, sheetMat, x, y + 0.45, z);                                                        // colchón
-    add(1.44, 0.22, 1.5, new THREE.MeshLambertMaterial({ color }), x, y + 0.47, z + 0.38);               // cobija de color
-    add(1.0, 0.14, 0.45, sheetMat, x, y + 0.62, z - 0.85);                                               // almohada
-    add(1.5, 1.0, 0.12, woodMat, x, y + 0.5, z - 1.25);                                                  // cabecera
-    platforms.push({ x, z, hw: 0.75, hd: 1.25, top: y + 0.55, bottom: y });
-  }
-  addBed(27, 0, 9, 0x2fae4e); addBed(32, 0, 9, 0xffd23f); addBed(37, 0, 9, 0x4cc9f0);      // planta baja: verde (tú), amarillo, celeste
-  addBed(27, 1, 10, 0xb388eb); addBed(32, 1, 10, 0xff8a5b); addBed(37, 1, 10, 0xf15bb5);   // piso 2: morado, naranja, rosa
-  // Ventanas: de día se ven oscuras, de noche brillan
-  const windowMat = new THREE.MeshBasicMaterial({ color: 0x3a4a5c });
-  const winGeo = new THREE.PlaneGeometry(1.6, 1.4);
-  for (let f = 0; f < 2; f++) {
-    const wy = f * FLOOR_H + 2;
-    for (const wx of [25, 32, 39]) {
-      const a = new THREE.Mesh(winGeo, windowMat); a.position.set(wx, wy, HZ0 - 0.02); a.rotation.y = Math.PI; scene.add(a);
-      const b = new THREE.Mesh(winGeo, windowMat); b.position.set(wx, wy, HZ1 + 0.02); scene.add(b);
-    }
-    const c = new THREE.Mesh(winGeo, windowMat); c.position.set(HX1 + 0.02, wy, DOOR_Z); c.rotation.y = Math.PI / 2; scene.add(c);
-  }
   // ---------- Trampolín gigante (esquina de tu mitad) ----------
   const TRAMP = { x: 82, z: 82, r: 3 };
   const TRAMP_UP = launchSpeedForHeight(100, 30); // velocidad para subir 100 m con la gravedad del juego
@@ -215,15 +175,60 @@ import { HOUSE, STAIRS, collideWalls, moveAndCollide, insideHouse as insideHouse
     scene.add(g);
   })();
   const onTrampoline = st => st.pos.y < 1.2 && Math.hypot(st.pos.x - TRAMP.x, st.pos.z - TRAMP.z) < TRAMP.r;
-  // Lanza 100 m hacia arriba; a los bots además los manda fuera del mapa
-  function trampolineLaunch(st, outward) {
-    const ox = TRAMP.x, oz = TRAMP.z, d = Math.hypot(ox, oz), k = outward ? 12 : 0;
-    st.vel.set(ox / d * k, TRAMP_UP, oz / d * k);
+  // Te lanza 100 m hacia arriba
+  function trampolineLaunch(st) {
+    st.vel.set(0, TRAMP_UP, 0);
     st.onGround = false;
   }
 
+  // ---------- Casa mediana con una sola cama ----------
+  const houseParts = [];
+  // Caja sólida: se ve y además choca (se puede pisar y no se puede atravesar)
+  function addBox(x0, x1, y0, y1, z0, z1, mat) {
+    const w = x1 - x0, h = y1 - y0, d = z1 - z0;
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+    m.position.set((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2);
+    m.castShadow = m.receiveShadow = true;
+    scene.add(m);
+    platforms.push({ x: (x0 + x1) / 2, z: (z0 + z1) / 2, hw: w / 2, hd: d / 2, top: y1, bottom: y0 });
+    houseParts.push(m);
+    return m;
+  }
+  const HX0 = 20, HX1 = 32, HZ0 = 4, HZ1 = 14, WT = 0.3, ROOF_Y = 4, DOOR_Z = 9;
+  const wallMat = new THREE.MeshLambertMaterial({ color: 0xf1e3c8 });
+  const floorMat = new THREE.MeshLambertMaterial({ color: 0xa87444 });
+  const roofMat = new THREE.MeshLambertMaterial({ color: 0x7b3b2a });
+  addBox(HX0, HX1, 0, ROOF_Y, HZ1 - WT, HZ1, wallMat);                    // atrás
+  addBox(HX0, HX1, 0, ROOF_Y, HZ0, HZ0 + WT, wallMat);                    // frente
+  addBox(HX1 - WT, HX1, 0, ROOF_Y, HZ0, HZ1, wallMat);                    // derecha
+  addBox(HX0, HX0 + WT, 0, ROOF_Y, HZ0, DOOR_Z - 1.5, wallMat);           // izquierda (con puerta)
+  addBox(HX0, HX0 + WT, 0, ROOF_Y, DOOR_Z + 1.5, HZ1, wallMat);
+  addBox(HX0, HX0 + WT, 3, ROOF_Y, DOOR_Z - 1.5, DOOR_Z + 1.5, wallMat);  // encima de la puerta
+  addBox(HX0 - 0.5, HX1 + 0.5, ROOF_Y, ROOF_Y + 0.3, HZ0 - 0.5, HZ1 + 0.5, roofMat); // techo
+  const houseFloor = new THREE.Mesh(new THREE.PlaneGeometry(HX1 - HX0 - 2 * WT, HZ1 - HZ0 - 2 * WT), floorMat);
+  houseFloor.rotation.x = -Math.PI / 2; houseFloor.position.set((HX0 + HX1) / 2, 0.02, (HZ0 + HZ1) / 2);
+  houseFloor.receiveShadow = true; scene.add(houseFloor);
+  // Tu cama (verde)
+  const MY_BED = { x: 28.5, z: 9 };
+  (() => {
+    const { x, z } = MY_BED;
+    const woodMat = new THREE.MeshLambertMaterial({ color: 0x6b4226 });
+    const sheetMat = new THREE.MeshLambertMaterial({ color: 0xf7f4ee });
+    addBox(x - 0.75, x + 0.75, 0, 0.35, z - 1.25, z + 1.25, woodMat);  // base
+    const add = (w, h, d, mat, px, py, pz) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(px, py, pz); m.castShadow = m.receiveShadow = true; scene.add(m); };
+    add(1.4, 0.2, 2.3, sheetMat, x, 0.45, z);                                              // colchón
+    add(1.44, 0.22, 1.5, new THREE.MeshLambertMaterial({ color: 0x2fae4e }), x, 0.47, z + 0.38); // cobija verde
+    add(1.0, 0.14, 0.45, sheetMat, x, 0.62, z - 0.85);                                     // almohada
+    add(1.5, 1.0, 0.12, woodMat, x, 0.5, z - 1.25);                                        // cabecera
+    platforms.push({ x, z, hw: 0.75, hd: 1.25, top: 0.55, bottom: 0 });
+  })();
+  // Ventanas: de día se ven oscuras, de noche brillan
+  const windowMat = new THREE.MeshBasicMaterial({ color: 0x3a4a5c });
+  const winGeo = new THREE.PlaneGeometry(1.6, 1.4);
+  for (const [wx, wz, ry] of [[26, HZ0 - 0.02, Math.PI], [26, HZ1 + 0.02, 0], [HX1 + 0.02, DOOR_Z, Math.PI / 2]]) {
+    const w = new THREE.Mesh(winGeo, windowMat); w.position.set(wx, 2, wz); w.rotation.y = ry; scene.add(w);
+  }
   // La cámara no atraviesa la casa: si una pared queda en medio, se acerca (como en Roblox)
-  const houseMeshes = () => houseParts.map(hp => hp.mesh);
   const camRay = new THREE.Raycaster();
 
   // Línea de seguro: cruza todo el mapa. El enemigo no puede pasar al lado de z > 0
@@ -310,18 +315,16 @@ import { HOUSE, STAIRS, collideWalls, moveAndCollide, insideHouse as insideHouse
   // Entrada
   const keys = {};
   let firstPerson = false, fpPitch = 0;
-  let botsFollow = false; // con P los bots te siguen a todas partes (hasta la muerte)
   addEventListener('keydown', e => {
     if (e.target === cmdInput) return;           // escribiendo un comando: el juego ignora las teclas
+    // Tienda: P la abre y la cierra (Esc también la cierra)
+    if (e.code === 'KeyP' && !e.repeat) { e.preventDefault(); toggleShop(); return; }
+    if (!shopEl.hidden) { if (e.code === 'Escape') toggleShop(false); return; }
     if (e.code === 'KeyT' && !e.repeat) { e.preventDefault(); openCmd(); return; }
     keys[e.code] = true;
     if (e.code === 'Space' || e.code.startsWith('Arrow')) e.preventDefault();
     if (e.code === 'KeyV' && !e.repeat) setFirstPerson(!firstPerson);
-    if (e.code === 'KeyE' && !e.repeat) { if (!tryBuy()) trySleep(); }
-    if (e.code === 'KeyP' && !e.repeat) {
-      botsFollow = !botsFollow;
-      showToast(botsFollow ? '¡Los bots te siguen!' : 'Los bots ya no te siguen');
-    }
+    if (e.code === 'KeyE' && !e.repeat) trySleep();
   });
   addEventListener('keyup', e => { keys[e.code] = false; });
 
@@ -429,10 +432,6 @@ import { HOUSE, STAIRS, collideWalls, moveAndCollide, insideHouse as insideHouse
   const overlaps = (pl, x, z) => Math.abs(x - pl.x) < pl.hw + PR && Math.abs(z - pl.z) < pl.hd + PR;
   const makeState = obj => ({ obj, pos: obj.position, vel: new THREE.Vector3(), walkX: 0, walkZ: 0, onGround: true, carrying: null, standing: null, hitWall: false, facing: 0 });
 
-  // Si estaba encima de una plataforma móvil, se mueve con ella
-  function applyCarry(st) {
-    if (st.carrying) { st.pos.x += st.carrying.dx; st.pos.y += st.carrying.dy; st.pos.z += st.carrying.dz; }
-  }
   // Empuje horizontal, choques laterales, gravedad, suelo y techo
   function physics(st, dt, wantJump, jump = JUMP) {
     // Lo que camina este cuadro + el empuje que trae, en pasitos para no atravesar paredes
@@ -502,10 +501,14 @@ import { HOUSE, STAIRS, collideWalls, moveAndCollide, insideHouse as insideHouse
     clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
   }
   // Progreso de esta partida: se reinicia cada vez que recargas la página
-  const save = { coins: 0, levels: { speed: 0, jump: 0, blaster: 0 } };
+  const save = { coins: 0, boxes: 0, levels: { belt: 0, assistant: 0, assistSpeed: 0, speed: 0, jump: 0, blaster: 0 } };
   try { localStorage.removeItem('rectangulo-verde-tienda'); } catch (e) {} // borra el guardado de versiones anteriores
 
-  function renderCoins() { coinsEl.textContent = fmt(save.coins); }
+  function renderCoins() {
+    coinsEl.textContent = fmt(save.coins);
+    document.getElementById('boxes').textContent = fmt(save.boxes);
+    if (!shopEl.hidden) renderShop(); // la tienda abierta se actualiza sola
+  }
 
   const COIN_COUNT = 30;
   const coinGeo = new THREE.CylinderGeometry(0.6, 0.6, 0.15, 28);
@@ -533,181 +536,204 @@ import { HOUSE, STAIRS, collideWalls, moveAndCollide, insideHouse as insideHouse
     }
   }
 
-  // ---------- Mini tiendas atendidas por bots ----------
-  const UPGRADES = [
-    { id: 'speed',   name: 'VELOCIDAD', de: 'de velocidad', color: '#2f7de1', keeper: 0xe0e0e0, base: 5,  max: Infinity, x: -24, apply: l => stats.speed = SPEED + l * 2 },
-    { id: 'jump',    name: 'SALTO',     de: 'de salto',     color: '#9b4de0', keeper: 0x9c6644, base: 5,  max: Infinity, x: -14, apply: l => stats.jump = JUMP + l * 1.5 },
-    // Compra única: 20 monedas (y la tienda explota)
-    { id: 'blaster', name: 'BLÁSTER LÁSER', de: 'del bláster láser', color: '#e0302f', keeper: 0x2a9d8f, base: 20, max: 1, x: -4, apply: l => { stats.blaster = l > 0; canvas.classList.toggle('aim', l > 0); handBlaster.visible = l > 0; document.getElementById('reload').hidden = !(l > 0); } },
+  // ---------- Tienda (P) ----------
+  const SHOP = [
+    { id: 'belt', group: 'Tu base', name: 'Cinta transportadora', desc: 'Una cinta de 20 m en medio de tu mitad. Los pedazos amarillos pasan por la máquina y salen como cajas doradas: agárralas en el plato amarillo y guárdalas para comprar al asistente.',
+      base: 100, max: 1, apply: l => setBeltOwned(l > 0) },
+    { id: 'assistant', group: 'Tu base', name: 'Asistente', desc: 'Un robot que va por las monedas por ti. Se paga con cajas doradas de la cinta.',
+      currency: 'boxes', base: 10, max: 1, apply: l => setAssistantOwned(l > 0) },
+    { id: 'assistSpeed', group: 'Mejoras del asistente', name: 'Velocidad del asistente', desc: 'El asistente corre 2 m/s más rápido por nivel.',
+      base: 20, max: Infinity, needs: 'assistant', apply: l => assistant.speed = assistantSpeed(l) },
+    { id: 'speed', group: 'Mejoras para ti', name: 'Tu velocidad', desc: 'Corres 2 m/s más rápido por nivel.',
+      base: 5, max: Infinity, apply: l => stats.speed = SPEED + l * 2 },
+    { id: 'jump', group: 'Mejoras para ti', name: 'Tu salto', desc: 'Saltas más alto en cada nivel.',
+      base: 5, max: Infinity, apply: l => stats.jump = JUMP + l * 1.5 },
+    { id: 'blaster', group: 'Mejoras para ti', name: 'Bláster láser', desc: 'Dispara con clic. Aturde al gigante 2 segundos.',
+      base: 20, max: 1, apply: l => { stats.blaster = l > 0; canvas.classList.toggle('aim', l > 0); handBlaster.visible = l > 0; document.getElementById('reload').hidden = !(l > 0); } },
   ];
-  const price = u => upgradePrice(u.base, save.levels[u.id]);
-  const SHOP_Z = 8;
-  function drawLabel(u) {
-    const g = u.ctx, lvl = save.levels[u.id], maxed = lvl >= u.max;
-    g.clearRect(0, 0, 256, 160);
-    g.fillStyle = 'rgba(255,255,255,.95)'; g.beginPath(); g.roundRect(4, 4, 248, 152, 18); g.fill();
-    g.textAlign = 'center';
-    g.fillStyle = u.color; g.font = (u.name.length > 10 ? '34px' : '44px') + ' Impact, "Arial Narrow Bold", sans-serif'; g.fillText(u.name, 128, 54);
-    g.fillStyle = '#16301f'; g.font = 'bold 24px system-ui, sans-serif';
-    g.fillText(u.max === 1 ? (maxed ? 'Ya es tuyo' : 'Aturde al gigante 2 s') : `Nivel ${lvl} → ${lvl + 1}`, 128, 92);
-    g.fillStyle = maxed ? '#6b7a70' : (save.coins >= price(u) ? '#1f8a3b' : '#c0141a');
-    const priceText = maxed ? 'COMPRADO' : `${fmt(price(u))} monedas`;
-    let size = 36;
-    do { g.font = `${size}px Impact, "Arial Narrow Bold", sans-serif`; } while (g.measureText(priceText).width > 232 && --size > 14);
-    g.fillText(priceText, 128, 138);
-    u.tex.needsUpdate = true;
-  }
-  // Globo de diálogo del vendedor
-  function drawBubble(u, text) {
-    const g = u.bctx;
-    g.clearRect(0, 0, 512, 170);
-    g.fillStyle = '#ffffff'; g.strokeStyle = '#16301f'; g.lineWidth = 6;
-    g.beginPath(); g.roundRect(6, 6, 500, 124, 26); g.fill(); g.stroke();
-    g.beginPath(); g.moveTo(236, 128); g.lineTo(256, 164); g.lineTo(276, 128); g.closePath(); g.fill(); g.stroke();
-    g.fillStyle = '#ffffff'; g.fillRect(238, 122, 36, 10);
-    g.fillStyle = '#16301f'; g.textAlign = 'center'; g.textBaseline = 'middle';
-    // Parte el texto en 2 líneas si es largo
-    let size = 34; g.font = `bold ${size}px system-ui, sans-serif`;
-    const words = text.split(' '); let l1 = text, l2 = '';
-    if (g.measureText(text).width > 470) {
-      let i = Math.ceil(words.length / 2); l1 = words.slice(0, i).join(' '); l2 = words.slice(i).join(' ');
-      size = 30; g.font = `bold ${size}px system-ui, sans-serif`;
+  const price = it => upgradePrice(it.base, save.levels[it.id]);
+  // Con qué se paga cada artículo: monedas (casi todo) o cajas doradas (el asistente)
+  const CURRENCY = { coins: ['moneda', 'monedas'], boxes: ['caja', 'cajas'] };
+  const walletOf = it => it.currency || 'coins';
+  const amountText = (n, cur) => `${fmt(n)} ${CURRENCY[cur][n === 1 ? 0 : 1]}`;
+  const shopEl = document.getElementById('shop'), shopItems = document.getElementById('shopItems'), shopWallet = document.getElementById('shopWallet');
+  document.getElementById('shopClose').addEventListener('click', () => toggleShop(false));
+  shopEl.addEventListener('click', e => { if (e.target === shopEl) toggleShop(false); }); // clic fuera: cerrar
+  function toggleShop(open = shopEl.hidden) {
+    shopEl.hidden = !open;
+    if (open) {
+      for (const k in keys) keys[k] = false;      // suelta las teclas para que no sigas caminando
+      if (isLocked()) document.exitPointerLock();  // libera el cursor para poder hacer clic
+      renderShop();
     }
-    if (l2) { g.fillText(l1, 256, 48); g.fillText(l2, 256, 88); } else g.fillText(l1, 256, 68);
-    u.btex.needsUpdate = true;
   }
-  function say(u, text, secs) { drawBubble(u, text); u.bubble.visible = true; u.sayTimer = secs; u.saying = text; }
-
-  const shopWood = new THREE.MeshLambertMaterial({ color: 0x8a5a33 });
-  const stripeMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
-  for (const u of UPGRADES) {
-    u.parts = []; u.solids = [];
-    const x = u.x, color = new THREE.Color(u.color);
-    const colorMat = new THREE.MeshLambertMaterial({ color });
-    const piece = (w, h, d, mat, px, py, pz, solid) => {
-      const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
-      m.position.set(px, py, pz); m.castShadow = m.receiveShadow = true; scene.add(m); u.parts.push(m);
-      if (solid) { const pl = { x: px, z: pz, hw: w / 2, hd: d / 2, top: py + h / 2, bottom: py - h / 2 }; platforms.push(pl); u.solids.push(pl); }
-    };
-    piece(4, 1.1, 0.8, shopWood, x, 0.55, SHOP_Z + 1, true);           // mostrador
-    piece(4.02, 0.3, 0.82, colorMat, x, 0.9, SHOP_Z + 1, false);       // franja de color del mostrador
-    piece(4, 1.8, 0.4, shopWood, x, 0.9, SHOP_Z - 1.9, true);          // estante de atrás
-    for (const [px, pz] of [[-2.3, -2.1], [2.3, -2.1], [-2.3, 1.3], [2.3, 1.3]])
-      piece(0.18, 3.2, 0.18, shopWood, x + px, 1.6, SHOP_Z + pz, true); // postes
-    piece(5.2, 0.18, 4, colorMat, x, 3.29, SHOP_Z - 0.4, false);       // toldo
-    for (const sx of [-1.6, 0, 1.6]) piece(0.8, 0.2, 4.02, stripeMat, x + sx, 3.3, SHOP_Z - 0.4, false); // rayas blancas
-    // Cartel con el precio
-    const c = document.createElement('canvas'); c.width = 256; c.height = 160;
-    u.ctx = c.getContext('2d'); u.tex = new THREE.CanvasTexture(c);
-    u.sign = new THREE.Sprite(new THREE.SpriteMaterial({ map: u.tex }));
-    u.sign.scale.set(3.6, 2.25, 1); u.sign.position.set(x, 4.7, SHOP_Z + 1.2);
-    scene.add(u.sign);
-    // Vendedor: un bot detrás del mostrador, con gorra del color de la tienda
-    const k = new THREE.Group();
-    const kb = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), new THREE.MeshLambertMaterial({ color: u.keeper }));
-    kb.position.y = H / 2; kb.castShadow = true; k.add(kb);
-    [-0.22, 0.22].forEach(ex => { const e = new THREE.Mesh(eyeGeo, eyeMat); e.scale.z = 0.5; e.position.set(ex, H * 0.78, D / 2 + 0.02); k.add(e); });
-    const cap = new THREE.Mesh(new THREE.BoxGeometry(1.08, 0.22, 0.7), colorMat); cap.position.set(0, H + 0.11, 0); k.add(cap);
-    const brim = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.06, 0.4), colorMat); brim.position.set(0, H + 0.03, 0.5); k.add(brim);
-    k.position.set(x, 0, SHOP_Z - 0.6); scene.add(k); u.parts.push(k); u.keeperObj = k;
-    const kpl = { x, z: SHOP_Z - 0.6, hw: W / 2, hd: D / 2, top: H, bottom: 0 }; platforms.push(kpl); u.solids.push(kpl);
-    // Globo de diálogo
-    const bc = document.createElement('canvas'); bc.width = 512; bc.height = 170;
-    u.bctx = bc.getContext('2d'); u.btex = new THREE.CanvasTexture(bc);
-    u.bubble = new THREE.Sprite(new THREE.SpriteMaterial({ map: u.btex, depthTest: false }));
-    u.bubble.scale.set(4.6, 1.53, 1); u.bubble.position.set(x, 6.6, SHOP_Z + 0.4); u.bubble.visible = false; u.bubble.renderOrder = 10;
-    scene.add(u.bubble);
-    u.apply(save.levels[u.id]);
-    u.near = false; u.shown = null; u.sayTimer = 0; u.gone = false; u.boomIn = 0;
+  function renderShop() {
+    shopWallet.textContent = save.levels.belt ? `${amountText(save.coins, 'coins')} · ${amountText(save.boxes, 'boxes')}` : amountText(save.coins, 'coins');
+    let html = '', lastGroup = '';
+    for (const it of SHOP) {
+      if (it.group !== lastGroup) { html += `<p class="shop-group">${it.group}</p>`; lastGroup = it.group; }
+      const lvl = save.levels[it.id], owned = lvl >= it.max, locked = it.needs && !save.levels[it.needs];
+      const cur = walletOf(it), cost = price(it), short = cost - save[cur];
+      const level = it.max === 1 ? '' : ` · nivel ${lvl}`;
+      const label = owned ? 'Ya es tuyo' : locked ? 'Compra el asistente' : short > 0 ? `Te faltan ${amountText(short, cur)}` : `Comprar · ${amountText(cost, cur)}`;
+      const priceLine = owned ? '' : ` Cuesta ${amountText(cost, cur)}.`;
+      html += `<div class="shop-item"><h3>${it.name}${level}</h3><p>${it.desc}${priceLine}</p>` +
+              `<button type="button" class="buy" id="buy-${it.id}" data-id="${it.id}" ${owned || locked || short > 0 ? 'disabled' : ''}>${label}</button></div>`;
+    }
+    const focused = document.activeElement && document.activeElement.id;
+    shopItems.innerHTML = html;
+    if (focused) { const f = document.getElementById(focused); if (f && !f.disabled) f.focus(); }
+  }
+  shopItems.addEventListener('click', e => {
+    const b = e.target.closest('.buy');
+    if (b && !b.disabled) buy(b.dataset.id);
+  });
+  function buy(id) {
+    const it = SHOP.find(i => i.id === id);
+    const lvl = save.levels[id];
+    const cur = walletOf(it);
+    if (lvl >= it.max || (it.needs && !save.levels[it.needs]) || save[cur] < price(it)) return;
+    save[cur] -= price(it); save.levels[id]++; it.apply(save.levels[id]);
+    renderCoins(); renderShop();
+    showToast(it.max === 1 ? `¡Compraste: ${it.name}!` : `¡${it.name}: nivel ${save.levels[id]}!`);
   }
 
-  const nearShop = u => !u.gone && ps.pos.y < 1.5 && Math.hypot(ps.pos.x - u.x, ps.pos.z - (SHOP_Z + 2.4)) < 3.2;
-  // E cerca de una tienda: comprar
-  function tryBuy() {
-    const u = UPGRADES.find(nearShop);
-    if (!u || u.boomIn > 0) return !!u;
-    if (save.levels[u.id] >= u.max) { say(u, 'Ya lo tienes. ¡Gracias!', 2.5); return true; }
-    if (save.coins < price(u)) { say(u, 'No tienes suficiente dinero..', 2.5); return true; }
-    save.coins -= price(u); save.levels[u.id]++; u.apply(save.levels[u.id]); renderCoins();
-    if (u.id === 'blaster') {
-      say(u, 'Gracias por tu com-', 5);
-      u.boomIn = 1.1; // ...y explota
-      showToast('¡BLÁSTER LÁSER comprado! Haz clic para disparar');
-    } else {
-      say(u, 'Gracias por tu compra', 2.5);
-      showToast(`¡${u.name} nivel ${save.levels[u.id]}!`);
+  // ---------- Cinta transportadora (20 m, en medio de tu mitad) ----------
+  // Al inicio aparecen pedazos amarillos, pasan por la máquina (una caja hueca) y sale una caja dorada,
+  // que baja de la cinta a un plato amarillo en el suelo y ahí espera a que la agarres.
+  const BELT = { x: 0, z: 50, len: 20, width: 2, top: 0.4, speed: 2 };
+  BELT.x0 = BELT.x - BELT.len / 2; BELT.x1 = BELT.x + BELT.len / 2;   // extremos de la cinta
+  BELT.start = BELT.x0 + 0.6;                                         // donde aparecen los pedazos
+  BELT.machineX = BELT.x0 + 6;                                        // centro de la máquina
+  BELT.plateX = BELT.x1 + 1.6;                                        // plato amarillo al final
+  const MACHINE = { len: 2.4, width: BELT.width + 0.6, top: 2.2 };
+  const beltGroup = new THREE.Group();
+  const beltTex = (() => {
+    const c = document.createElement('canvas'); c.width = 128; c.height = 32;
+    const g = c.getContext('2d');
+    g.fillStyle = '#2b2f35'; g.fillRect(0, 0, 128, 32);
+    g.fillStyle = '#3d434b'; for (let i = 0; i < 128; i += 32) g.fillRect(i, 0, 14, 32); // rayas que se mueven
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(BELT.len / 2, 1); return t;
+  })();
+  (() => {
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(BELT.len + 0.6, BELT.top - 0.05, BELT.width + 0.4), new THREE.MeshLambertMaterial({ color: 0x59606a }));
+    frame.position.y = (BELT.top - 0.05) / 2; beltGroup.add(frame);
+    const surface = new THREE.Mesh(new THREE.PlaneGeometry(BELT.len, BELT.width), new THREE.MeshLambertMaterial({ map: beltTex }));
+    surface.rotation.x = -Math.PI / 2; surface.position.y = BELT.top; beltGroup.add(surface);
+    const railMat = new THREE.MeshLambertMaterial({ color: 0xffc400 });
+    for (const sz of [-1, 1]) { const r = new THREE.Mesh(new THREE.BoxGeometry(BELT.len + 0.6, 0.12, 0.15), railMat); r.position.set(0, BELT.top + 0.06, sz * (BELT.width / 2 + 0.12)); beltGroup.add(r); }
+    // Máquina: caja hueca (abierta por delante y por detrás) sobre la cinta
+    const steel = new THREE.MeshLambertMaterial({ color: 0x3a4658 });
+    const band = new THREE.MeshLambertMaterial({ color: 0xffc400 });
+    const mx = BELT.machineX - BELT.x, h = MACHINE.top - BELT.top;
+    const top = new THREE.Mesh(new THREE.BoxGeometry(MACHINE.len, 0.2, MACHINE.width), steel); top.position.set(mx, MACHINE.top - 0.1, 0); beltGroup.add(top);
+    for (const sz of [-1, 1]) {
+      const wall = new THREE.Mesh(new THREE.BoxGeometry(MACHINE.len, h, 0.2), steel); wall.position.set(mx, BELT.top + h / 2, sz * (MACHINE.width / 2 - 0.1)); beltGroup.add(wall);
+      const stripe = new THREE.Mesh(new THREE.BoxGeometry(MACHINE.len + 0.02, 0.18, 0.22), band); stripe.position.set(mx, BELT.top + h * 0.6, sz * (MACHINE.width / 2 - 0.1)); beltGroup.add(stripe);
     }
-    return true;
+    // Plato amarillo en el suelo donde termina la caja
+    const plate = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.3, 0.08, 36), new THREE.MeshLambertMaterial({ color: 0xffc400 }));
+    plate.position.set(BELT.plateX - BELT.x, 0.04, 0); beltGroup.add(plate);
+    beltGroup.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
+    beltGroup.position.set(BELT.x, 0, BELT.z); beltGroup.visible = false; scene.add(beltGroup);
+  })();
+  const beltPlatform = { x: BELT.x, z: BELT.z, hw: BELT.len / 2 + 0.3, hd: BELT.width / 2 + 0.2, top: BELT.top, bottom: 0 };
+  const machinePlatform = { x: BELT.machineX, z: BELT.z, hw: MACHINE.len / 2, hd: MACHINE.width / 2, top: MACHINE.top, bottom: 0 };
+  // Pedazos amarillos (antes de la máquina) y caja dorada (después)
+  const pieces = new THREE.Group();
+  const pieceMat = new THREE.MeshLambertMaterial({ color: 0xffd23f });
+  for (let i = 0; i < 6; i++) {
+    const sz = 0.16 + Math.random() * 0.14;
+    const m = new THREE.Mesh(new THREE.BoxGeometry(sz, sz, sz), pieceMat);
+    m.position.set((Math.random() - 0.5) * 0.7, sz / 2 + Math.random() * 0.1, (Math.random() - 0.5) * 0.7);
+    m.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
+    m.castShadow = true; pieces.add(m);
   }
-
-  // Explosión: todas las piezas salen volando, bola de fuego y luego desaparecen
-  const debris = [];
-  const boomGeo = new THREE.SphereGeometry(1, 24, 16);
-  let shake = 0;
-  function explode(u) {
-    u.gone = true; u.bubble.visible = false;
-    scene.remove(u.sign);
-    for (const pl of u.solids) platforms.splice(platforms.indexOf(pl), 1);
-    const cx = u.x, cz = SHOP_Z;
-    for (const m of u.parts) {
-      const dx = m.position.x - cx + (Math.random() - 0.5), dz = m.position.z - cz + (Math.random() - 0.5), d = Math.hypot(dx, dz) || 1;
-      const sp = 8 + Math.random() * 10;
-      debris.push({ mesh: m, vel: new THREE.Vector3(dx / d * sp, 10 + Math.random() * 12, dz / d * sp),
-                    spin: new THREE.Vector3(Math.random() * 10 - 5, Math.random() * 10 - 5, Math.random() * 10 - 5), life: 2.5 });
-    }
-    for (let i = 0; i < 3; i++) {
-      const fire = new THREE.Mesh(boomGeo, new THREE.MeshBasicMaterial({ color: [0xffd23f, 0xff7a1a, 0xff3b1a][i], transparent: true, opacity: 0.95, depthWrite: false }));
-      fire.position.set(cx + (Math.random() - 0.5) * 2, 1.5 + i * 0.6, cz + (Math.random() - 0.5) * 2);
-      scene.add(fire); debris.push({ mesh: fire, boom: true, life: 0.7 + i * 0.15, max: 0.7 + i * 0.15 });
-    }
-    for (let i = 0; i < 40; i++) addPuff(new THREE.Vector3(cx + (Math.random() - 0.5) * 5, Math.random() * 4, cz + (Math.random() - 0.5) * 5));
-    shake = 0.6;
-    showToast('¡BOOM!', true);
+  pieces.visible = false; scene.add(pieces);
+  const goldBox = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.8, 0.8), new THREE.MeshLambertMaterial({ color: 0xffc83d, emissive: 0x6b4a00 }));
+  goldBox.castShadow = true; goldBox.visible = false; scene.add(goldBox);
+  let beltOwned = false, itemX = BELT.start, itemWait = 0;
+  function setBeltOwned(on) {
+    if (on === beltOwned) return;
+    beltOwned = on; beltGroup.visible = on;
+    document.querySelector('.boxes').hidden = !on;
+    if (on) { platforms.push(beltPlatform, machinePlatform); itemX = BELT.start; itemWait = 0; showToast('La cinta está en medio de tu mitad'); }
   }
-  function updateDebris(dt) {
-    shake = Math.max(0, shake - dt);
-    for (let i = debris.length - 1; i >= 0; i--) {
-      const d = debris[i]; d.life -= dt;
-      if (d.boom) {
-        const k = 1 - d.life / d.max;
-        d.mesh.scale.setScalar(1 + k * 6); d.mesh.material.opacity = 0.95 * (1 - k);
-      } else {
-        d.vel.y -= 30 * dt;
-        d.mesh.position.addScaledVector(d.vel, dt);
-        d.mesh.rotation.x += d.spin.x * dt; d.mesh.rotation.y += d.spin.y * dt; d.mesh.rotation.z += d.spin.z * dt;
-        if (d.mesh.position.y < 0.2) { d.mesh.position.y = 0.2; d.vel.multiplyScalar(0.5); d.vel.y = Math.abs(d.vel.y) * 0.3; }
-        if (d.life < 0.6) d.mesh.scale.setScalar(Math.max(0.01, d.life / 0.6)); // se encogen y desaparecen
-      }
-      if (d.life <= 0) { scene.remove(d.mesh); debris.splice(i, 1); }
+  function updateBelt(dt) {
+    if (!beltOwned) return;
+    beltTex.offset.x -= BELT.speed * dt / 2; // las rayas avanzan con la cinta
+    // Si estás parado en la cinta, te lleva
+    if (ps.standing === beltPlatform) ps.walkX += BELT.speed * dt;
+    if (itemWait > 0) {
+      itemWait -= dt; pieces.visible = goldBox.visible = false;
+      if (itemWait <= 0) itemX = BELT.start;
+      return;
+    }
+    itemX = advanceOnBelt(itemX, BELT.speed, dt, BELT.plateX);   // avanza y se detiene en el plato
+    const isBox = beltItemIsBox(itemX, BELT.machineX);             // dentro de la máquina los pedazos se vuelven caja
+    const onPlate = itemX >= BELT.plateX;
+    const y = beltItemY(itemX, BELT.x1, BELT.plateX, BELT.top + 0.4, 0.08 + 0.4);
+    pieces.visible = !isBox; goldBox.visible = isBox;
+    if (!isBox) { pieces.position.set(itemX, BELT.top, BELT.z); pieces.rotation.y += dt * 0.6; }
+    else {
+      goldBox.position.set(itemX, y + (onPlate ? Math.sin(t * 4) * 0.06 : 0), BELT.z);
+      goldBox.rotation.y = onPlate ? t * 1.5 : 0;
+    }
+    // Agarrarla: tocarla cuando ya está en el plato
+    if (onPlate && Math.hypot(ps.pos.x - itemX, ps.pos.z - BELT.z) < 1.5 && ps.pos.y < 1.5) {
+      save.boxes++; renderCoins();
+      showToast(save.levels.assistant || save.boxes >= 10 ? '+1 caja dorada' : `+1 caja dorada (${save.boxes}/10 para el asistente)`);
+      itemWait = 1.5; // los siguientes pedazos salen en un momento
     }
   }
 
-  function updateShop(dt) {
-    for (const u of UPGRADES) {
-      if (u.gone) continue;
-      // Saludo al acercarte
-      const near = nearShop(u);
-      if (near && !u.near && u.boomIn <= 0) say(u, `Hola, bienvenido a la tienda ${u.de}`, Infinity);
-      if (!near && u.near && u.sayTimer === Infinity) u.sayTimer = 0.4;
-      u.near = near;
-      if (u.sayTimer > 0 && (u.sayTimer -= dt) <= 0) u.bubble.visible = false;
-      // El vendedor te mira cuando estás cerca
-      const k = u.keeperObj;
-      const target = near ? Math.atan2(ps.pos.x - k.position.x, ps.pos.z - k.position.z) : 0;
-      k.rotation.y += (target - k.rotation.y) * Math.min(1, dt * 6);
-      if (u.boomIn > 0) {
-        k.position.x = u.x + (Math.random() - 0.5) * 0.12; // tiembla antes de explotar
-        if ((u.boomIn -= dt) <= 0) explode(u);
-      }
-      // Redibuja el cartel solo si cambió algo
-      const sig = `${save.levels[u.id]}-${save.coins >= price(u) ? 1 : 0}`;
-      if (sig !== u.shown) { drawLabel(u); u.shown = sig; }
-    }
-    updateDebris(dt);
+  // ---------- Asistente: recoge monedas por ti ----------
+  const assistantObj = (() => {
+    const g = new THREE.Group();
+    const metal = new THREE.MeshLambertMaterial({ color: 0x9fb8d6 });
+    const dark = new THREE.MeshLambertMaterial({ color: 0x3a4658 });
+    const glow = new THREE.MeshBasicMaterial({ color: 0x2de2ff });
+    const part = (geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = true; g.add(m); return m; };
+    part(new THREE.BoxGeometry(0.8, 0.9, 0.55), metal, 0, 0.75, 0);          // cuerpo
+    part(new THREE.BoxGeometry(0.64, 0.46, 0.5), metal, 0, 1.45, 0);         // cabeza
+    part(new THREE.BoxGeometry(0.5, 0.14, 0.04), dark, 0, 1.47, 0.26);       // visor
+    part(new THREE.BoxGeometry(0.12, 0.08, 0.02), glow, -0.12, 1.47, 0.29);  // ojos
+    part(new THREE.BoxGeometry(0.12, 0.08, 0.02), glow, 0.12, 1.47, 0.29);
+    part(new THREE.CylinderGeometry(0.03, 0.03, 0.35, 6), dark, 0, 1.85, 0); // antena
+    part(new THREE.SphereGeometry(0.08, 10, 8), new THREE.MeshBasicMaterial({ color: 0xff3b3b }), 0, 2.05, 0);
+    part(new THREE.BoxGeometry(0.2, 0.3, 0.2), dark, -0.22, 0.15, 0);        // piernas
+    part(new THREE.BoxGeometry(0.2, 0.3, 0.2), dark, 0.22, 0.15, 0);
+    g.visible = false; scene.add(g);
+    return g;
+  })();
+  const assistant = makeState(assistantObj);
+  assistant.speed = assistantSpeed(0);
+  function setAssistantOwned(on) {
+    assistantObj.visible = on;
+    if (on) { assistant.pos.set(ps.pos.x + 1.5, 0, ps.pos.z); showToast('¡Tu asistente ya está buscando monedas!'); }
   }
+  function updateAssistant(dt) {
+    if (!save.levels.assistant) return;
+    // Va por la moneda más cercana
+    const i = nearestIndex(assistant.pos, coins.map(c => c.position));
+    const c = coins[i];
+    const dx = c.position.x - assistant.pos.x, dz = c.position.z - assistant.pos.z, dist = Math.hypot(dx, dz);
+    if (dist > 0.05) {
+      const step = Math.min(assistant.speed * dt, dist);
+      assistant.walkX += dx / dist * step; assistant.walkZ += dz / dist * step;
+      turnTo(assistant, dx, dz, dt);
+    }
+    physics(assistant, dt, assistant.onGround && assistant.hitWall, JUMP); // si choca con algo, lo salta
+    if (Math.hypot(c.position.x - assistant.pos.x, c.position.z - assistant.pos.z) < PICKUP) {
+      save.coins++; renderCoins();
+      placeCoin(c);
+    }
+    assistantObj.children[0].position.y = 0.75 + Math.abs(Math.sin(t * 14)) * 0.05; // camina
+  }
+
   renderCoins();
 
-  // Paseo al azar: elige un punto de su mitad que quede lejos de ti
+  // Paseo al azar:  // Paseo al azar: elige un punto de su mitad que quede lejos de ti
   const WANDER_MIN_DIST = 35;
   let wander = { x: 0, z: -40 }, wanderTime = 0;
   function pickWander() {
@@ -782,212 +808,10 @@ import { HOUSE, STAIRS, collideWalls, moveAndCollide, insideHouse as insideHouse
     enemyBody.position.y = H/2 + (moving && es.onGround ? Math.abs(Math.sin(t * 8)) * 0.08 : 0);
   }
 
-  // ---------- Bots tontos ----------
-  // Corren y saltan al azar por todo el mapa. Si el gigante los toca, salen disparados como cohetes
-  const BOT_COLORS = [0xffd23f, 0x4cc9f0, 0xb388eb, 0xff8a5b, 0xf15bb5];
-  const BOT_SPEED = 8;
-  const FOLLOW_SPEED = BOT_SPEED, FOLLOW_DIST = 1.3; // cuando te siguen: misma velocidad de siempre y a 1,3 m
-  const bots = BOT_COLORS.map((color, slot) => {
-    const g = new THREE.Group();
-    const b = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), new THREE.MeshLambertMaterial({ color }));
-    b.position.y = H/2; b.castShadow = true;
-    g.add(b);
-    const eyes = [];
-    [-0.22, 0.22].forEach(x => {
-      const eye = new THREE.Mesh(eyeGeo, eyeMat);
-      eye.scale.z = 0.5; eye.position.set(x, H*0.78 - H/2, D/2 + 0.02);
-      b.add(eye); eyes.push(eye);
-    });
-    scene.add(g);
-    const st = makeState(g);
-    st.eyes = eyes; st.sleeping = false;
-    st.zzz = new THREE.Sprite(zzz.material); st.zzz.scale.set(1.6, 0.8, 1); st.zzz.visible = false; scene.add(st.zzz);
-    st.body = b; st.slot = slot; st.rocket = false; st.outbound = false; st.gone = 0; st.target = null; st.timer = 0; st.smoke = 0;
-    st.stuckT = 0; st.detour = null; st.detourT = 0;
-    return st;
-  });
-  // Cada bot tiene su cama (del mismo color) donde reaparece
-  const BOT_BEDS = [[32, 0, 9], [37, 0, 9], [27, 1, 10], [32, 1, 10], [37, 1, 10]]; // amarillo, celeste, morado, naranja, rosa
-  const insideHouse = st => insideHouseAt(st.pos);
-  function pickBotTarget(st) {
-    if (Math.random() < 0.35) {
-      // A veces van directo al trampolín
-      st.target = { x: TRAMP.x, z: TRAMP.z };
-    } else {
-      // Si no, a cualquier parte del mapa (menos dentro de la casa)
-      do { st.target = { x: (Math.random() * 2 - 1) * (EDGE - 10), z: (Math.random() * 2 - 1) * (EDGE - 10) }; }
-      while (st.target.x > HX0 - 2 && st.target.x < HX1 + 2 && st.target.z > HZ0 - 2 && st.target.z < HZ1 + 2);
-    }
-    st.timer = 6 + Math.random() * 6;
-  }
-  // Ruta para salir de la casa: bajar la escalera y salir por la puerta
-  const exitHouseTarget = st => exitRoute(st.pos);
-  // Ruta para ir a su cama: entrar por la puerta, subir la escalera y subirse a la cama
-  const goToBedTarget = st => bedRoute(st.pos, BOT_BEDS[st.slot]);
-  const onOwnBed = st => {
-    const [bx, bf, bz] = BOT_BEDS[st.slot];
-    return Math.abs(st.pos.x - bx) < 0.75 && Math.abs(st.pos.z - bz) < 1.25 && Math.abs(st.pos.y - (bf * FLOOR_H + 0.55)) < 0.1;
-  };
-  function setBotSleeping(st, on) {
-    st.sleeping = on;
-    st.zzz.visible = on;
-    for (const e of st.eyes) e.scale.y = on ? 0.15 : 1;
-    if (on) {
-      // Se acuesta a lo largo de la cama, con la cabeza en la almohada
-      const [bx, bf, bz] = BOT_BEDS[st.slot];
-      st.pos.set(bx, bf * FLOOR_H + 0.55, bz);
-      st.obj.rotation.y = 0; st.facing = 0;
-      st.body.rotation.set(-Math.PI / 2, 0, 0);
-      st.body.position.set(0, D / 2, 0.05);
-      st.zzz.position.set(bx + 0.6, bf * FLOOR_H + 2.2, bz - 0.8);
-    } else {
-      st.body.rotation.set(0, 0, 0);
-      st.body.position.set(0, H / 2, 0);
-    }
-  }
-
-  function respawnInBed(st) {
-    const [bx, floor, bz] = BOT_BEDS[st.slot];
-    st.pos.set(bx, floor * FLOOR_H + 0.55, bz);
-    st.vel.set(0, 0, 0); st.rocket = false; st.gone = 0; st.obj.visible = true;
-    st.body.rotation.set(0, 0, 0); st.target = null; st.onGround = true;
-    if (st.sleeping) setBotSleeping(st, false);
-  }
-  bots.forEach(respawnInBed); // empiezan en sus camas
-
-  // Fuego y humo de los cohetes
-  const puffGeo = new THREE.SphereGeometry(0.35, 10, 8);
-  const puffs = [];
-  function addPuff(pos) {
-    const fire = Math.random() < 0.6;
-    const m = new THREE.Mesh(puffGeo, new THREE.MeshBasicMaterial({ color: fire ? (Math.random() < 0.5 ? 0xff7a1a : 0xffd23f) : 0x9a9a9a, transparent: true, opacity: 0.9, depthWrite: false }));
-    m.position.copy(pos).add(new THREE.Vector3((Math.random() - 0.5) * 0.4, 0, (Math.random() - 0.5) * 0.4));
-    scene.add(m); puffs.push({ mesh: m, life: 0.6 });
-  }
-  function launchBot(st, vx, vz) {
-    st.rocket = true; st.onGround = false;
-    st.vel.set(vx, 26 + Math.random() * 6, vz);
-  }
-
   // ---------- Hitboxes exactas ----------
-  // Cada rectángulo es una caja girada: se compara con el teorema de los ejes separadores (SAT)
-  // en el plano del suelo, y aparte se revisa que se crucen en altura.
+  // Cada rectángulo es una caja girada; boxHit (SAT) vive en src/logic.js
   function boxOf(st, scale = 1) {
     return { x: st.pos.x, z: st.pos.z, hw: W/2 * scale, hd: D/2 * scale, a: st.obj.rotation.y, y0: st.pos.y, y1: st.pos.y + H * scale };
-  }
-  // boxHit (SAT) vive en src/logic.js
-  // Empuja dos cuerpos sólidos para que no se atraviesen (mitad cada uno)
-  function pushApart(a, b) {
-    const hit = boxHit(boxOf(a), boxOf(b));
-    if (!hit) return;
-    const m = hit.depth / 2;
-    a.prevX = a.pos.x; a.prevZ = a.pos.z; b.prevX = b.pos.x; b.prevZ = b.pos.z;
-    a.pos.x -= hit.nx * m; a.pos.z -= hit.nz * m;
-    b.pos.x += hit.nx * m; b.pos.z += hit.nz * m;
-    // Un empujón nunca puede meter a nadie dentro (o al otro lado) de una pared
-    collideWalls(a, platforms, COLL);
-    collideWalls(b, platforms, COLL);
-  }
-  function resolveSolids() {
-    const ground = bots.filter(b => !b.rocket && !(b.gone > 0) && !b.sleeping);
-    // Bots contra bots
-    for (let i = 0; i < ground.length; i++)
-      for (let j = i + 1; j < ground.length; j++) pushApart(ground[i], ground[j]);
-    const giant = boxOf(es, ENEMY_SCALE);
-    for (const b of ground) {
-      // Tú contra los bots: se empujan igual
-      pushApart(ps, b);
-      // El gigante contra un bot: el bot sale volando como cohete, lejos del gigante
-      if (boxHit(giant, boxOf(b))) {
-        const dx = b.pos.x - es.pos.x, dz = b.pos.z - es.pos.z, d = Math.hypot(dx, dz) || 1;
-        launchBot(b, dx / d * 20, dz / d * 20);
-      }
-    }
-  }
-
-  function updateBots(dt) {
-    for (const st of bots) {
-      let wantJump = false;
-      // Salió del mapa por el trampolín: desaparece un rato y reaparece en su cama
-      if (st.gone > 0) { st.gone -= dt; if (st.gone <= 0) respawnInBed(st); continue; }
-      // Cuánto se movió desde el cuadro anterior (para saber si está atascado)
-      const moved = Math.hypot(st.pos.x - (st.lx ?? st.pos.x), st.pos.z - (st.lz ?? st.pos.z));
-      st.lx = st.pos.x; st.lz = st.pos.z;
-      // Durmiendo: se queda acostado hasta que amanezca
-      if (st.sleeping) {
-        if (!isNight) setBotSleeping(st, false);
-        else { st.zzz.material.opacity = 0.6 + Math.sin(t * 3 + st.slot) * 0.3; continue; }
-      }
-      if (st.rocket) {
-        // Volando: gira como loco y deja una estela de fuego
-        st.body.rotation.x += dt * 12;
-        st.body.rotation.z += dt * 5;
-        st.smoke -= dt;
-        if (st.smoke <= 0) { addPuff(st.pos.clone().add(new THREE.Vector3(0, 0.5, 0))); st.smoke = 0.025; }
-      } else {
-        let speed = BOT_SPEED;
-        if (isNight) {
-          // De noche van a su cama, aunque te estén siguiendo
-          st.target = goToBedTarget(st);
-          if (onOwnBed(st)) { setBotSleeping(st, true); continue; }
-        } else if (botsFollow) {
-          // Te siguen despacio y se quedan a 1,3 m de ti
-          const fx = st.pos.x - ps.pos.x, fz = st.pos.z - ps.pos.z, fd = Math.hypot(fx, fz) || 1;
-          st.target = fd > FOLLOW_DIST ? { x: ps.pos.x + fx / fd * FOLLOW_DIST, z: ps.pos.z + fz / fd * FOLLOW_DIST } : { x: st.pos.x, z: st.pos.z };
-          speed = FOLLOW_SPEED;
-        } else {
-          if (insideHouse(st)) st.target = exitHouseTarget(st);   // primero salir de la casa
-          else {
-            st.timer -= dt;
-            if (!st.target || st.timer <= 0 || Math.hypot(st.target.x - st.pos.x, st.target.z - st.pos.z) < 1) pickBotTarget(st);
-          }
-        }
-        // Si lleva un rato sin poder avanzar, da un rodeo corto y salta, y luego sigue con lo suyo
-        const want = Math.hypot(st.target.x - st.pos.x, st.target.z - st.pos.z);
-        if (want > 0.6 && st.detourT <= 0 && moved < speed * dt * 0.25) st.stuckT += dt;
-        else st.stuckT = Math.max(0, st.stuckT - dt * 2);
-        if (st.stuckT > 1.2) {
-          st.stuckT = 0; st.detourT = 1.2; wantJump = true;
-          const a = Math.random() * Math.PI * 2;
-          st.detour = { x: st.pos.x + Math.cos(a) * 3, z: st.pos.z + Math.sin(a) * 3 };
-          if (insideHouse(st)) { // el rodeo no puede salir por una pared
-            st.detour.x = Math.min(IX1 - 1, Math.max(IX0 + 1, st.detour.x));
-            st.detour.z = Math.min(IZ1 - 1, Math.max(IZ0 + 1, st.detour.z));
-          }
-        }
-        if (st.detourT > 0) { st.detourT -= dt; st.target = st.detour; }
-        const dx = st.target.x - st.pos.x, dz = st.target.z - st.pos.z, dist = Math.hypot(dx, dz);
-        if (dist > 0.05) {
-          const step = Math.min(speed * dt, dist);
-          st.walkX += dx / dist * step; st.walkZ += dz / dist * step;
-          turnTo(st, dx, dz, dt);
-        }
-        if (!isNight && st.onGround && Math.random() < dt * 0.8) wantJump = true; // saltan porque sí (de día)
-        if (st.onGround && st.hitWall) wantJump = true; // si chocan con algo (una cama), lo saltan
-        st.body.position.y = H/2 + (st.onGround ? Math.abs(Math.sin(t * 12 + st.pos.x)) * 0.08 : 0);
-      }
-      // ¡Trampolín! Salen disparados 100 m hacia arriba y fuera del mapa
-      if (!st.rocket && onTrampoline(st)) { trampolineLaunch(st, true); st.rocket = true; st.outbound = true; }
-      physics(st, dt, wantJump, JUMP);
-      const outside = Math.abs(st.pos.x) > EDGE || Math.abs(st.pos.z) > EDGE;
-      if (st.outbound && outside && st.pos.y < 20) {
-        st.obj.visible = false; st.gone = 3; st.outbound = false; st.rocket = false; continue;
-      }
-      if (st.rocket && st.onGround) {
-        st.rocket = false; st.outbound = false; st.body.rotation.set(0, 0, 0); st.target = null; // aterrizó
-      }
-      if (!st.outbound) {
-        st.pos.x = Math.max(-EDGE + 1, Math.min(EDGE - 1, st.pos.x));
-        st.pos.z = Math.max(-EDGE + 1, Math.min(EDGE - 1, st.pos.z));
-      }
-    }
-    for (let i = puffs.length - 1; i >= 0; i--) {
-      const P = puffs[i]; P.life -= dt;
-      const k = 1 - P.life / 0.6;
-      P.mesh.scale.setScalar(1 + k * 2);
-      P.mesh.material.opacity = 0.9 * (1 - k);
-      if (P.life <= 0) { scene.remove(P.mesh); P.mesh.material.dispose(); puffs.splice(i, 1); }
-    }
   }
 
   // ---------- Bláster láser ----------
@@ -1120,8 +944,7 @@ import { HOUSE, STAIRS, collideWalls, moveAndCollide, insideHouse as insideHouse
     }
   }
 
-  // ---------- Dormir en tu cama ----------
-  const MY_BED = { x: 27, z: 9 };
+  // ---------- Dormir en tu cama (E, de noche) ----------
   const sleepEl = document.getElementById('sleep'), bedPrompt = document.getElementById('bedPrompt');
   let sleepLeft = 0;
   const nearMyBed = () => ps.pos.y < 3 && Math.hypot(ps.pos.x - MY_BED.x, ps.pos.z - MY_BED.z) < 3;
@@ -1153,10 +976,10 @@ import { HOUSE, STAIRS, collideWalls, moveAndCollide, insideHouse as insideHouse
   const clock = new THREE.Clock();
   let t = 0;
   function tick() {
-    const dt = Math.min(clock.getDelta(), 0.05); t += dt;
-
-
+    const dt = Math.min(clock.getDelta(), 0.05);
+    t += dt;
     updateSleep(dt);
+
     let fx = 0, fz = 0;
     if (keys.KeyW || keys.ArrowUp) fz -= 1;
     if (keys.KeyS || keys.ArrowDown) fz += 1;
@@ -1167,7 +990,7 @@ import { HOUSE, STAIRS, collideWalls, moveAndCollide, insideHouse as insideHouse
     if (keys.ArrowLeft) camYaw += CAM_TURN * dt;
     if (keys.ArrowRight) camYaw -= CAM_TURN * dt;
     fx += joy.x; fz += joy.y;
-    if (sleepLeft > 0) fx = fz = 0; // dormido no te mueves
+    if (sleepLeft > 0 || !shopEl.hidden) fx = fz = 0; // dormido o en la tienda no te mueves
     const len = Math.hypot(fx, fz);
     let moving = false;
     if (len > 0.1) {
@@ -1192,17 +1015,15 @@ import { HOUSE, STAIRS, collideWalls, moveAndCollide, insideHouse as insideHouse
     }
     if (warnTimer > 0 && (warnTimer -= dt) <= 0) warn.classList.remove('show');
 
-    if (onTrampoline(ps) && ps.vel.y <= 0) { trampolineLaunch(ps, false); showToast('¡BOING! 100 metros'); }
-    physics(ps, dt, keys.Space && sleepLeft <= 0, stats.jump);
-    const pp = ps.pos;
+    if (onTrampoline(ps) && ps.vel.y <= 0) { trampolineLaunch(ps); showToast('¡BOING! 100 metros'); }
+    physics(ps, dt, keys.Space && sleepLeft <= 0 && shopEl.hidden, stats.jump);
 
     // Enemigo: funciona como un killbrick que te persigue
     updateEnemy(dt);
-    updateBots(dt);
-    resolveSolids();
     updateCoins(dt);
     updateLaser(dt);
-    updateShop(dt);
+    updateBelt(dt);
+    updateAssistant(dt);
     if (boxHit(boxOf(ps), boxOf(es, ENEMY_SCALE))) die();
 
     const onGround = ps.onGround;
@@ -1226,11 +1047,10 @@ import { HOUSE, STAIRS, collideWalls, moveAndCollide, insideHouse as insideHouse
       const head = new THREE.Vector3(p.x, p.y + 1.2, p.z);
       const back = new THREE.Vector3(Math.sin(camYaw) * Math.cos(camPitch), Math.sin(camPitch), Math.cos(camYaw) * Math.cos(camPitch));
       camRay.set(head, back); camRay.far = dist;
-      const block = camRay.intersectObjects(houseMeshes(), false)[0];
+      const block = camRay.intersectObjects(houseParts, false)[0];
       if (block) dist = Math.max(0.6, block.distance - 0.3);
       camera.position.copy(head).addScaledVector(back, dist);
       camera.lookAt(head);
-      if (shake > 0) camera.position.add(new THREE.Vector3((Math.random() - 0.5), (Math.random() - 0.5), (Math.random() - 0.5)).multiplyScalar(shake));
     }
 
     updateDayNight(dt);

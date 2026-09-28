@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import {
-  HOUSE, STAIRS, insideHouse, onStairs, collideWalls, moveAndCollide, exitHouseTarget, goToBedTarget, boxHit,
+  collideWalls, moveAndCollide, boxHit,
   upgradePrice, fmt, sunElevation, isNightPhase, clockText, hourToPhase,
-  parseSetHour, launchSpeedForHeight,
+  parseSetHour, launchSpeedForHeight, advanceOnBelt, beltItemIsBox, beltItemY, nearestIndex, assistantSpeed,
 } from '../src/logic.js';
 
 // Caja de un personaje normal (1 × 0,6 × 2 m) en (x, z), girada `a` radianes
@@ -167,124 +167,53 @@ describe('choques contra paredes (sin atravesarlas)', () => {
   });
 });
 
-describe('escalera', () => {
-  it('es más grande: 3 m de ancho, 10 m de largo y llega justo al piso 2', () => {
-    expect(STAIRS.Z1 - STAIRS.Z0).toBeCloseTo(3);
-    expect(STAIRS.X1 - STAIRS.X0).toBe(10);
-    expect(STAIRS.RISE * STAIRS.STEPS).toBeCloseTo(HOUSE.FLOOR_H);
-    expect(STAIRS.RISE).toBeLessThanOrEqual(0.45); // se sube caminando
+describe('cinta transportadora', () => {
+  it('la caja avanza con la velocidad de la cinta', () => {
+    expect(advanceOnBelt(-4.4, 2, 0.5, 4.4)).toBeCloseTo(-3.4);
+  });
+
+  it('se detiene justo al final y no se pasa', () => {
+    expect(advanceOnBelt(4.3, 2, 0.5, 4.4)).toBe(4.4);
+    expect(advanceOnBelt(4.4, 2, 1, 4.4)).toBe(4.4);
+  });
+
+  it('recorre la cinta de 20 m hasta el plato en unos 11 segundos', () => {
+    const start = -9.4, plate = 11.6;
+    let x = start, time = 0;
+    while (x < plate) { x = advanceOnBelt(x, 2, 0.1, plate); time += 0.1; }
+    expect(Math.abs(time - (plate - start) / 2)).toBeLessThanOrEqual(0.1 + 1e-9); // 10,5 s, con pasos de 0,1 s
+  });
+
+  it('son pedazos amarillos antes de la máquina y una caja dorada después', () => {
+    const machineX = -4;
+    expect(beltItemIsBox(-9.4, machineX)).toBe(false);
+    expect(beltItemIsBox(-4.1, machineX)).toBe(false);
+    expect(beltItemIsBox(-4, machineX)).toBe(true);
+    expect(beltItemIsBox(10, machineX)).toBe(true);
+  });
+
+  it('la caja va arriba de la cinta y al final baja al plato del suelo', () => {
+    const y = x => beltItemY(x, 10, 11.6, 0.8, 0.48);
+    expect(y(0)).toBe(0.8);
+    expect(y(10)).toBe(0.8);
+    expect(y(10.8)).toBeCloseTo(0.64);
+    expect(y(11.6)).toBeCloseTo(0.48);
+    expect(y(20)).toBeCloseTo(0.48); // nunca más abajo que el plato
   });
 });
 
-describe('rutas de los bots en la casa', () => {
-  const { HX0, DOOR_Z } = HOUSE;
-  const at = (x, z, y = 0) => ({ x, z, y });
-
-  it('sabe si alguien está dentro de la casa', () => {
-    expect(insideHouse(at(30, 10))).toBe(true);
-    expect(insideHouse(at(10, 10))).toBe(false);
-    expect(insideHouse(at(30, 25))).toBe(false);
+describe('asistente', () => {
+  it('elige la moneda más cercana', () => {
+    const coins = [{ x: 10, z: 0 }, { x: 2, z: 1 }, { x: -5, z: -5 }];
+    expect(nearestIndex({ x: 0, z: 0 }, coins)).toBe(1);
+    expect(nearestIndex({ x: -4, z: -4 }, coins)).toBe(2);
   });
 
-  describe('salir de la casa', () => {
-    it('desde la planta baja va hacia la puerta y luego afuera', () => {
-      expect(exitHouseTarget(at(32, 9))).toEqual({ x: 21, z: DOOR_Z });
-      expect(exitHouseTarget(at(21, DOOR_Z))).toEqual({ x: 15, z: DOOR_Z });
-    });
-
-    it('en la planta baja se aparta de la escalera antes de ir a la puerta', () => {
-      expect(exitHouseTarget(at(26, 18.5))).toEqual({ x: 26, z: STAIRS.Z0 - 1.5 });
-    });
-
-    it('desde el piso 2 va a la escalera sin caer al hueco y luego baja', () => {
-      expect(exitHouseTarget(at(32, 10, 4.55))).toEqual({ x: STAIRS.X1 + 1.2, z: STAIRS.Z0 - 0.7 });
-      expect(exitHouseTarget(at(STAIRS.X1 + 1.2, STAIRS.Z0 - 0.7, 4))).toEqual({ x: STAIRS.X1 + 0.8, z: STAIRS.MZ });
-      expect(exitHouseTarget(at(STAIRS.X1 + 0.8, STAIRS.MZ, 4))).toEqual({ x: STAIRS.X0 - 0.6, z: STAIRS.MZ });
-    });
-
-    it('siguiendo la ruta paso a paso termina fuera de la casa', () => {
-      // Camina en línea recta entre puntos; la altura baja al pisar la escalera (x 22–30)
-      let p = at(37, 10, 4.55);
-      for (let i = 0; i < 40 && insideHouse(p); i++) {
-        const t = exitHouseTarget(p);
-        const onStairs = t.z > STAIRS.Z0 - 0.3 && t.x < STAIRS.X1;
-        p = { x: t.x, z: t.z, y: onStairs ? Math.max(0, (t.x - STAIRS.X0) / STAIRS.RUN * STAIRS.RISE) : p.y };
-      }
-      expect(insideHouse(p)).toBe(false);
-      expect(p.x).toBeLessThan(HX0);
-    });
+  it('sin monedas no elige ninguna', () => {
+    expect(nearestIndex({ x: 0, z: 0 }, [])).toBe(-1);
   });
 
-  // Simulación sencilla: camina 0,4 m por paso hacia el siguiente punto de la ruta,
-  // con la altura real del piso (planta baja, escalera o piso 2) donde está parado.
-  function walk(start, route, stop, maxSteps = 600) {
-    const S = STAIRS;
-    const heightAt = (x, z, y) => {
-      if (z > S.Z0 && z < S.Z1 && x > S.X0 && x < S.X1) return S.RISE * Math.min(S.STEPS, Math.ceil((x - S.X0) / S.RUN)); // escalera
-      if (y > 3.5 && insideHouse({ x, z })) return HOUSE.FLOOR_H; // sigue en el piso 2
-      return 0;
-    };
-    let p = { ...start };
-    for (let i = 0; i < maxSteps; i++) {
-      if (stop(p)) return { p, steps: i };
-      const t = route(p), dx = t.x - p.x, dz = t.z - p.z, d = Math.hypot(dx, dz);
-      const k = d > 0.4 ? 0.4 / d : 1;
-      const x = p.x + dx * k, z = p.z + dz * k;
-      p = { x, z, y: heightAt(x, z, p.y) };
-    }
-    return { p, steps: maxSteps };
-  }
-
-  describe('los bots del piso 2 (morado, naranja y rosa) saben bajar solos', () => {
-    // Antes, al bajar un par de escalones, la ruta los mandaba otra vez arriba y se quedaban dando vueltas
-    it('en la escalera sigue bajando aunque todavía esté alto', () => {
-      const midStair = { x: STAIRS.X0 + 8.5, z: STAIRS.MZ, y: 3.6 }; // escalón 9, más alto que 3,5 m
-      expect(onStairs(midStair)).toBe(true);
-      expect(exitHouseTarget(midStair).x).toBeLessThan(STAIRS.X0);
-    });
-
-    it.each([['morado', 27], ['naranja', 32], ['rosa', 37]])('el bot %s sale de la casa desde su cama', (_, bx) => {
-      const { p, steps } = walk({ x: bx, z: 10, y: 4.55 }, exitHouseTarget, q => !insideHouse(q));
-      expect(steps).toBeLessThan(600);   // no se queda atascado
-      expect(p.y).toBe(0);
-      expect(insideHouse(p)).toBe(false);
-    });
-
-    it.each([['morado', 27], ['naranja', 32], ['rosa', 37]])('el bot %s vuelve de noche a su cama', (_, bx) => {
-      const bed = [bx, 1, 10];
-      const { p, steps } = walk({ x: 0, z: 12, y: 0 }, q => goToBedTarget(q, bed),
-        q => Math.hypot(q.x - bx, q.z - 10) < 0.5 && q.y === HOUSE.FLOOR_H);
-      expect(steps).toBeLessThan(600);
-      expect(p.y).toBe(HOUSE.FLOOR_H);
-    });
-
-    it('un bot de la planta baja que quedó en el piso 2 baja a su cama', () => {
-      const bed = [32, 0, 9];
-      const { p, steps } = walk({ x: 37, z: 10, y: 4 }, q => goToBedTarget(q, bed),
-        q => Math.hypot(q.x - 32, q.z - 9) < 0.5 && q.y === 0);
-      expect(steps).toBeLessThan(600);
-      expect(p.y).toBe(0);
-    });
-  });
-
-  describe('ir a su cama', () => {
-    it('desde lejos rodea la casa y llega frente a la puerta', () => {
-      expect(goToBedTarget(at(0, 12), [32, 0, 9])).toEqual({ x: HX0 - 2.5, z: DOOR_Z });
-      expect(goToBedTarget(at(50, 10), [32, 0, 9])).toEqual({ x: 46.5, z: 1.5 }); // por detrás
-      expect(goToBedTarget(at(HX0 - 2.5, DOOR_Z), [32, 0, 9])).toEqual({ x: 21.8, z: DOOR_Z });
-    });
-
-    it('si su cama está en la planta baja va directo a ella', () => {
-      expect(goToBedTarget(at(22, DOOR_Z), [37, 0, 9])).toEqual({ x: 37, z: 9 });
-    });
-
-    it('si su cama está en el piso 2 sube la escalera', () => {
-      const bed = [27, 1, 10], top = { x: STAIRS.X1 + 0.9, z: STAIRS.MZ };
-      expect(goToBedTarget(at(22, DOOR_Z), bed)).toEqual({ x: STAIRS.X0 - 0.4, z: STAIRS.MZ }); // al pie
-      expect(goToBedTarget(at(STAIRS.X0 - 0.4, STAIRS.MZ), bed)).toEqual(top);                  // sube
-      expect(goToBedTarget(at(27, STAIRS.MZ, 2), bed)).toEqual(top);                            // a medio camino
-      expect(goToBedTarget(at(top.x, top.z, 4), bed)).toEqual({ x: STAIRS.X1 + 1.5, z: STAIRS.Z0 - 1.5 }); // se aleja del hueco
-      expect(goToBedTarget(at(STAIRS.X1 + 1.5, STAIRS.Z0 - 1.5, 4), bed)).toEqual({ x: 27, z: 10 });      // a la cama
-    });
+  it('cada mejora de velocidad le suma 2', () => {
+    expect([0, 1, 2, 5].map(assistantSpeed)).toEqual([6, 8, 10, 16]);
   });
 });

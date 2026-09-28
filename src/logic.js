@@ -1,58 +1,5 @@
 // Lógica pura del juego (sin Three.js ni DOM), para poder probarla con tests.
 
-// ---------- Casa ----------
-export const HOUSE = { HX0: 20, HX1: 44, HZ0: 4, HZ1: 20, DOOR_Z: 12, FLOOR_H: 4 };
-// Escalera: 10 escalones de 1 m de largo, 0,4 m de alto y 3 m de ancho, pegada a la pared de atrás
-export const STAIRS = { X0: 22, RUN: 1, RISE: 0.4, STEPS: 10, Z0: 16.4, Z1: 19.4 };
-STAIRS.X1 = STAIRS.X0 + STAIRS.RUN * STAIRS.STEPS;   // 32: donde termina (arriba)
-STAIRS.MZ = (STAIRS.Z0 + STAIRS.Z1) / 2;            // 17.9: el centro de la escalera
-
-export const insideHouse = ({ x, z }, h = HOUSE) => x > h.HX0 && x < h.HX1 && z > h.HZ0 && z < h.HZ1;
-
-// ¿Está parado sobre la escalera (entre la planta baja y el piso 2)?
-export const onStairs = ({ x, z, y }, h = HOUSE, S = STAIRS) =>
-  z > S.Z0 - 0.3 && z < S.Z1 + 0.3 && x > S.X0 - 0.5 && x < S.X1 + 0.2 && y > 0.2 && y < h.FLOOR_H - 0.1;
-
-// Ruta para salir de la casa: bajar la escalera y salir por la puerta
-export function exitHouseTarget(pos, h = HOUSE, S = STAIRS) {
-  const { x, z, y } = pos;
-  // Ya va en la escalera: sigue bajando hasta el final (antes se daba la vuelta a medio camino)
-  if (onStairs(pos, h, S)) return { x: S.X0 - 0.6, z: S.MZ };
-  if (y > 3.5) {                                                   // piso 2
-    if (z > S.Z0 - 0.3 && x > S.X0 && x < S.X1 + 1) return { x: S.X0 - 0.6, z: S.MZ }; // arriba de la escalera: baja
-    if (z < S.Z0 - 1) return { x: S.X1 + 1.2, z: S.Z0 - 0.7 };     // se acerca a la escalera sin caer al hueco
-    return { x: S.X1 + 0.8, z: S.MZ };                             // se pone arriba de la escalera
-  }
-  // Planta baja
-  if (z > S.Z0 - 0.5 && x > S.X0 - 0.5) return { x, z: S.Z0 - 1.5 }; // se aparta de la escalera
-  if (x > h.HX0 + 1.2) return { x: h.HX0 + 1, z: h.DOOR_Z };          // hacia la puerta
-  return { x: h.HX0 - 5, z: h.DOOR_Z };                               // ¡afuera!
-}
-
-// Ruta para ir a su cama: entrar por la puerta, subir la escalera y subirse a la cama.
-// bed = [x, piso, z]
-export function goToBedTarget(pos, bed, h = HOUSE, S = STAIRS) {
-  const [bx, bf, bz] = bed;
-  const { x, z, y } = pos;
-  if (!insideHouse(pos, h)) {
-    if (x > h.HX0 - 3 && x < h.HX0 + 0.5 && Math.abs(z - h.DOOR_Z) < 1.2) return { x: h.HX0 + 1.8, z: h.DOOR_Z };             // entra por la puerta
-    if (x > h.HX1 - 1 && z > h.HZ0 - 1.5 && z < h.HZ1 + 1.5) return { x: h.HX1 + 2.5, z: z < h.DOOR_Z ? h.HZ0 - 2.5 : h.HZ1 + 2.5 }; // rodea la casa por detrás
-    if (x > h.HX0 - 1.2) return { x: h.HX0 - 2.5, z: z < h.DOOR_Z ? h.HZ0 - 2.5 : h.HZ1 + 2.5 };                                 // rodea por los lados
-    return { x: h.HX0 - 2.5, z: h.DOOR_Z };                                                                                      // frente a la puerta
-  }
-  // En la escalera: sube si su cama está arriba, baja si está abajo
-  if (onStairs(pos, h, S)) return bf === 0 ? { x: S.X0 - 0.6, z: S.MZ } : { x: S.X1 + 0.9, z: S.MZ };
-  // Está en el piso 2 pero su cama está abajo: baja por la misma ruta que para salir
-  if (y >= 3.5 && bf === 0) return exitHouseTarget(pos, h, S);
-  if (y < 3.5) {                                               // planta baja
-    if (bf === 0) return z > S.Z0 - 0.5 ? { x, z: S.Z0 - 1.5 } : { x: bx, z: bz }; // se aparta de la escalera y va a su cama
-    if (z > S.Z0 - 0.3 && x < S.X0 + 0.3) return { x: S.X1 + 0.9, z: S.MZ }; // sube la escalera
-    return { x: S.X0 - 0.4, z: S.MZ };                          // al pie de la escalera
-  }
-  if (z > S.Z0 - 0.3 && x > S.X0 && x < S.X1 + 1) return { x: S.X1 + 1.5, z: S.Z0 - 1.5 }; // piso 2: se aleja del hueco
-  return { x: bx, z: bz };
-}
-
 // ---------- Choques contra paredes, pisos y muebles ----------
 // Cajas fijas alineadas a los ejes: { x, z, hw, hd, top, bottom }.
 // st = { pos: {x,y,z}, vel: {x,z}, onGround, prevX, prevZ }. Saca al cuerpo de cualquier caja que atraviese.
@@ -128,6 +75,7 @@ export function clockText(phase) {
 }
 export const hourToPhase = (h, min = 0) => (h * 60 + min) / (24 * 60);
 
+
 // Comando "set hour": acepta 21, 21:30, 9 pm, 9:30am.
 // Devuelve { h, min } o { error: 'format' | 'range' }.
 export function parseSetHour(text) {
@@ -144,3 +92,30 @@ export function parseSetHour(text) {
 // ---------- Física ----------
 // Velocidad inicial para subir `height` metros con la gravedad `grav`
 export const launchSpeedForHeight = (height, grav) => Math.sqrt(2 * grav * height);
+
+// ---------- Cinta transportadora y asistente ----------
+// La caja avanza por la cinta y se detiene justo al final
+export const advanceOnBelt = (x, speed, dt, end) => Math.min(x + speed * dt, end);
+
+// Antes de la máquina viajan pedazos amarillos; desde el centro de la máquina, ya es una caja dorada
+export const beltItemIsBox = (x, machineX) => x >= machineX;
+
+// Altura de la caja: arriba de la cinta, y al pasar el final baja poco a poco hasta el plato del suelo
+export function beltItemY(x, beltEndX, plateX, onBeltY, onPlateY) {
+  if (x <= beltEndX) return onBeltY;
+  const k = Math.min(1, (x - beltEndX) / (plateX - beltEndX));
+  return onBeltY + (onPlateY - onBeltY) * k;
+}
+
+// Índice del punto más cercano (en el suelo) a `from`
+export function nearestIndex(from, points) {
+  let best = -1, bestD = Infinity;
+  points.forEach((p, i) => {
+    const d = Math.hypot(p.x - from.x, p.z - from.z);
+    if (d < bestD) { bestD = d; best = i; }
+  });
+  return best;
+}
+
+// Velocidad del asistente según el nivel de su mejora
+export const assistantSpeed = level => 6 + level * 2;
