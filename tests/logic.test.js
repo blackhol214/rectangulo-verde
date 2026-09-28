@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   collideWalls, moveAndCollide, boxHit,
   upgradePrice, fmt, sunElevation, isNightPhase, clockText, hourToPhase,
-  parseSetHour, launchSpeedForHeight, advanceOnBelt, beltItemIsBox, beltItemY, nearestIndex, assistantSpeed,
+  parseSetHour, launchSpeedForHeight, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, boxReward, BOX_SELL, nearestIndex, assistantSpeed,
 } from '../src/logic.js';
 
 // Caja de un personaje normal (1 × 0,6 × 2 m) en (x, z), girada `a` radianes
@@ -199,6 +199,19 @@ describe('cinta transportadora', () => {
     expect(y(10.8)).toBeCloseTo(0.64);
     expect(y(11.6)).toBeCloseTo(0.48);
     expect(y(20)).toBeCloseTo(0.48); // nunca más abajo que el plato
+  });
+});
+
+describe('mejoras de la cinta', () => {
+  it('la Cinta 2.0 va un 50% más rápido', () => {
+    expect(beltSpeed(false)).toBe(2);
+    expect(beltSpeed(true)).toBe(3);
+  });
+
+  it('el transformador: L guarda una caja, O la vende por 10 monedas', () => {
+    expect(boxReward('store')).toEqual({ coins: 0, boxes: 1 });
+    expect(boxReward('sell')).toEqual({ coins: 10, boxes: 0 });
+    expect(BOX_SELL).toBe(10);
   });
 });
 

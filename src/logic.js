@@ -97,6 +97,13 @@ export const launchSpeedForHeight = (height, grav) => Math.sqrt(2 * grav * heigh
 // La caja avanza por la cinta y se detiene justo al final
 export const advanceOnBelt = (x, speed, dt, end) => Math.min(x + speed * dt, end);
 
+// Velocidad de la cinta: la Cinta 2.0 va un 50% más rápido
+export const beltSpeed = upgraded => 2 * (upgraded ? 1.5 : 1);
+
+// Lo que ganas al recoger lo que llega al plato: con el transformador en "vender" (O) son monedas, si no, una caja
+export const BOX_SELL = 10;
+export const boxReward = mode => (mode === 'sell' ? { coins: BOX_SELL, boxes: 0 } : { coins: 0, boxes: 1 });
+
 // Antes de la máquina viajan pedazos amarillos; desde el centro de la máquina, ya es una caja dorada
 export const beltItemIsBox = (x, machineX) => x >= machineX;
 
