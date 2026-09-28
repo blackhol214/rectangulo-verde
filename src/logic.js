@@ -126,3 +126,31 @@ export function nearestIndex(from, points) {
 
 // Velocidad del asistente según el nivel de su mejora
 export const assistantSpeed = level => 6 + level * 2;
+
+// ---------- Guardado por usuario (localStorage) ----------
+// "El Humano", " el   humano " y "el humano" son el mismo usuario
+export const normalizeName = name => String(name).trim().replace(/\s+/g, ' ').toLowerCase();
+export const saveKey = name => `rectangulo-verde:partida:${normalizeName(name)}`;
+
+// El comando que guarda (se escribe con T)
+export const isSaveCommand = text => /^save_changes$/i.test(String(text).trim());
+
+// Convierte la partida en texto para guardarla
+export function serializeSave({ coins, boxes, levels, dayPhase, pos }) {
+  return JSON.stringify({ v: 1, coins, boxes, levels, dayPhase, pos: { x: pos.x, y: pos.y, z: pos.z } });
+}
+
+// Lee una partida guardada. Si el texto está roto o trae valores raros, los ignora.
+// knownLevels: los nombres de mejoras que existen hoy en el juego.
+export function parseSave(text, knownLevels) {
+  let d;
+  try { d = JSON.parse(text); } catch { return null; }
+  if (!d || typeof d !== 'object' || d.v !== 1) return null;
+  const count = n => (Number.isFinite(n) && n >= 0 ? Math.floor(n) : 0);
+  const levels = {};
+  for (const k of knownLevels) levels[k] = count(d.levels && d.levels[k]);
+  const phase = Number.isFinite(d.dayPhase) && d.dayPhase >= 0 && d.dayPhase < 1 ? d.dayPhase : null;
+  const p = d.pos || {};
+  const pos = [p.x, p.y, p.z].every(Number.isFinite) ? { x: p.x, y: p.y, z: p.z } : null;
+  return { coins: count(d.coins), boxes: count(d.boxes), levels, dayPhase: phase, pos };
+}

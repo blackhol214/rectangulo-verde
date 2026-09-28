@@ -4,10 +4,27 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Rectángulo Verde</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=ADLaM+Display&display=swap">
 <style>
   :root { color-scheme: light; --sky:#bfe3f2; --ink:#16301f; --panel:rgba(255,255,255,.78); --accent:#2fae4e; }
   html, body { height:100%; margin:0; overflow:hidden; background:var(--sky); font-family: ui-rounded, "SF Pro Rounded", system-ui, sans-serif; color:var(--ink); }
   [hidden] { display:none !important; }
+  /* Pantalla de inicio: pide tu usuario */
+  #login { position:fixed; inset:0; z-index:30; display:grid; place-items:center; padding:16px; background:rgba(10,20,14,.55); backdrop-filter:blur(4px); }
+  .login-card { width:min(380px, 100%); display:flex; flex-direction:column; gap:10px; padding:22px; border-radius:14px; background:#fbfaf5; color:#16301f; box-shadow:0 20px 50px rgba(0,0,0,.35); }
+  .login-card h1 { margin:0 0 4px; font:400 34px/1 Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif; color:#1f8a3b; letter-spacing:.02em; }
+  .login-card label { font:700 13px system-ui, sans-serif; }
+  .login-card input { border:2px solid #cfd8d2; border-radius:8px; padding:10px 12px; font:16px system-ui, sans-serif; color:#16301f; background:#fff; }
+  .login-card input:focus { outline:none; border-color:#2fae4e; }
+  .login-card p { margin:0; font:13px/1.4 system-ui, sans-serif; color:#4a5f52; }
+  .login-card button { border:0; border-radius:8px; padding:12px; font:700 16px system-ui, sans-serif; background:#2fae4e; color:#fff; cursor:pointer; }
+  .login-card button:focus-visible { outline:3px solid #1e6bff; outline-offset:2px; }
+  #loginError { color:#c0141a; font-weight:600; }
+  /* Aviso de guardado */
+  #saved { position:fixed; left:50%; top:40%; transform:translate(-50%,-50%) scale(.7); margin:0; z-index:25; font:400 clamp(34px, 8vw, 84px)/1.1 "ADLaM Display", Impact, "Arial Narrow Bold", sans-serif; color:#2fd158; text-shadow:0 4px 0 #0d5a22, 0 8px 18px rgba(0,0,0,.35); white-space:nowrap; opacity:0; pointer-events:none; transition:opacity .25s, transform .25s; }
+  #saved.show { opacity:1; transform:translate(-50%,-50%) scale(1); }
   #game { position:fixed; inset:0; display:block; width:100%; height:100%; touch-action:none; }
   .hud { position:fixed; left:16px; top:calc(16px + env(safe-area-inset-top,0px)); background:var(--panel); padding:10px 14px; border-radius:10px; font-size:13px; line-height:1.5; backdrop-filter:blur(6px); max-width:calc(100% - 32px); }
   .hud b { color:var(--accent); }
@@ -63,7 +80,7 @@
   #reload .bar { height:10px; border-radius:5px; background:rgba(22,48,31,.55); overflow:hidden; box-shadow:0 0 0 2px rgba(255,255,255,.7); }
   #reloadFill { height:100%; width:100%; background:#8fa6c8; }
   #reload.ready #reloadFill { background:#1e6bff; }
-  @media (prefers-reduced-motion: reduce) { #warn, #toast { transition:none; } }
+  @media (prefers-reduced-motion: reduce) { #warn, #toast, #saved { transition:none; } }
   @media (pointer:coarse) { #stick, #jump { display:block; } .hud .keys { display:none; } }
 </style>
 </head>
@@ -71,8 +88,8 @@
 
 <canvas id="game"></canvas>
 <div class="hud">
-  <b>Rectángulo Verde</b><br>
-  <span class="keys">Moverse: <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> · Saltar: <kbd>Espacio</kbd><br>Girar cámara: <kbd>←</kbd><kbd>→</kbd> o arrastra · Primera persona: <kbd>V</kbd> · Disparar láser: <kbd>clic</kbd><br>Tienda: <kbd>P</kbd> · Dormir en tu cama (de noche): <kbd>E</kbd> · Comandos: <kbd>T</kbd><br></span>
+  <b>Rectángulo Verde</b> · <span id="playerName"></span><br>
+  <span class="keys">Moverse: <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> · Saltar: <kbd>Espacio</kbd><br>Girar cámara: <kbd>←</kbd><kbd>→</kbd> o arrastra · Primera persona: <kbd>V</kbd> · Disparar láser: <kbd>clic</kbd><br>Tienda: <kbd>P</kbd> · Dormir en tu cama (de noche): <kbd>E</kbd> · Comandos: <kbd>T</kbd> (guardar: <code>save_changes</code>)<br></span>
   El gigante rojo <b style="color:#d0101a">no puede cruzar</b> la <span style="color:#b98a00;font-weight:700">línea amarilla</span>. Detrás de ella estás a salvo.<br>De noche el gigante <b>duerme</b>: no te acerques o se despierta.<br>Recoge <b style="color:#b07800">monedas</b> en su zona y gástalas en la <b>tienda</b> (<kbd>P</kbd>).
 </div>
 <div class="coins" aria-label="Monedas"><i></i><span id="coins">0</span></div>
@@ -82,7 +99,18 @@
 <p id="toast" aria-live="polite"></p>
 <div id="cross"></div>
 <div id="reload" hidden><span id="reloadText">LÁSER LISTO</span><div class="bar"><div id="reloadFill"></div></div></div>
-<form id="cmd" hidden autocomplete="off"><label for="cmdInput">Comando</label><input id="cmdInput" type="text" placeholder="set hour 21  ·  set hour 9:30 am" spellcheck="false"></form>
+<div id="login">
+  <form id="loginForm" class="login-card" autocomplete="off">
+    <h1>RECTÁNGULO VERDE</h1>
+    <label for="loginName">Tu usuario</label>
+    <input id="loginName" type="text" maxlength="24" placeholder="el humano" spellcheck="false">
+    <p>Si ya guardaste con este usuario, sigues donde lo dejaste. Para guardar: <kbd>T</kbd> y escribe <code>save_changes</code>.</p>
+    <p id="loginError" hidden>Escribe un nombre de usuario para jugar.</p>
+    <button type="submit">Jugar</button>
+  </form>
+</div>
+<p id="saved" aria-live="polite">CAMBIOS GUARDADOS</p>
+<form id="cmd" hidden autocomplete="off"><label for="cmdInput">Comando</label><input id="cmdInput" type="text" placeholder="save_changes  ·  set hour 21" spellcheck="false"></form>
 <div id="shop" hidden role="dialog" aria-modal="true" aria-labelledby="shopTitle">
   <div class="shop-card">
     <div class="shop-head"><h2 id="shopTitle">TIENDA</h2><span class="wallet" id="shopWallet">0 monedas</span><button type="button" id="shopClose">Cerrar (P)</button></div>
@@ -97,8 +125,8 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module">
-import { advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
-         upgradePrice, fmt, sunElevation, clockText, hourToPhase, parseSetHour, launchSpeedForHeight } from './src/logic.js?v=2026-09-28g'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
+import { saveKey, isSaveCommand, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
+         upgradePrice, fmt, sunElevation, clockText, hourToPhase, parseSetHour, launchSpeedForHeight } from './src/logic.js?v=2026-10-01'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
 (() => {
   const canvas = document.getElementById('game');
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -316,6 +344,7 @@ import { advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, near
   const keys = {};
   let firstPerson = false, fpPitch = 0;
   addEventListener('keydown', e => {
+    if (!loginEl.hidden) return;                 // en la pantalla de inicio: solo se escribe el usuario
     if (e.target === cmdInput) return;           // escribiendo un comando: el juego ignora las teclas
     // Tienda: P la abre y la cierra (Esc también la cierra)
     if (e.code === 'KeyP' && !e.repeat) { e.preventDefault(); toggleShop(); return; }
@@ -343,6 +372,7 @@ import { advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, near
   });
   function runCommand(text) {
     if (!text) return;
+    if (isSaveCommand(text)) { saveGame(); return; }
     // set hour 21  ·  set hour 21:30  ·  set hour 9 pm  ·  set hour 9:30am
     const r = parseSetHour(text);
     if (r.error === 'format') { showToast('No entendí. Prueba: set hour 21 o set hour 9:30 pm', true); return; }
@@ -496,11 +526,13 @@ import { advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, near
   // ---------- Monedas ----------
   const coinsEl = document.getElementById('coins'), toast = document.getElementById('toast');
   let toastTimer = null;
+  let quietToasts = false; // al cargar una partida no se muestran los avisos de cada compra
   function showToast(text, bad) {
+    if (quietToasts) return;
     toast.textContent = text; toast.classList.toggle('bad', !!bad); toast.classList.add('show');
     clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
   }
-  // Progreso de esta partida: se reinicia cada vez que recargas la página
+  // Progreso de esta partida: se guarda con T → save_changes, por usuario
   const save = { coins: 0, boxes: 0, levels: { belt: 0, hopper: 0, belt2: 0, transformer: 0, hopper2: 0, assistant: 0, assistSpeed: 0, speed: 0, jump: 0, blaster: 0 } };
   try { localStorage.removeItem('rectangulo-verde-tienda'); } catch (e) {} // borra el guardado de versiones anteriores
 
@@ -802,6 +834,52 @@ import { advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, near
 
   renderCoins();
 
+  // ---------- Usuario y guardado (localStorage) ----------
+  const loginEl = document.getElementById('login'), loginForm = document.getElementById('loginForm');
+  const loginName = document.getElementById('loginName'), loginError = document.getElementById('loginError');
+  const savedEl = document.getElementById('saved');
+  let userName = null, savedTimer = null;
+  loginName.focus();
+  loginForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const name = loginName.value.trim().replace(/\s+/g, ' ');
+    if (!name) { loginError.hidden = false; loginName.focus(); return; }
+    userName = name;
+    document.getElementById('playerName').textContent = name;
+    loginEl.hidden = true; loginName.blur();
+    const loaded = loadGame(name);
+    showToast(loaded ? `¡Hola de nuevo, ${name}! Seguiste donde guardaste` : `Hola, ${name}. Para guardar: T y escribe save_changes`);
+  });
+  function saveGame() {
+    if (!userName) return;
+    try {
+      localStorage.setItem(saveKey(userName), serializeSave({ coins: save.coins, boxes: save.boxes, levels: save.levels, dayPhase, pos: ps.pos }));
+    } catch (e) {
+      showToast('No se pudo guardar: este navegador no deja guardar datos', true);
+      return;
+    }
+    savedEl.classList.add('show');
+    clearTimeout(savedTimer); savedTimer = setTimeout(() => savedEl.classList.remove('show'), 2200);
+  }
+  function loadGame(name) {
+    let raw = null;
+    try { raw = localStorage.getItem(saveKey(name)); } catch (e) { return false; }
+    const data = raw && parseSave(raw, SHOP.map(it => it.id));
+    if (!data) return false;
+    if (data.pos) ps.pos.set(data.pos.x, data.pos.y, data.pos.z);
+    if (data.dayPhase !== null) { dayPhase = data.dayPhase; lastMinute = -1; }
+    save.coins = data.coins; save.boxes = data.boxes;
+    // Vuelve a aplicar cada compra en el orden de la tienda (primero la cinta, luego su tolva, etc.)
+    quietToasts = true;
+    for (const it of SHOP) {
+      save.levels[it.id] = Math.min(data.levels[it.id], it.max);
+      if (save.levels[it.id] > 0) it.apply(save.levels[it.id]);
+    }
+    quietToasts = false;
+    renderCoins();
+    return true;
+  }
+
   // Paseo al azar:  // Paseo al azar: elige un punto de su mitad que quede lejos de ti
   const WANDER_MIN_DIST = 35;
   let wander = { x: 0, z: -40 }, wanderTime = 0;
@@ -1059,7 +1137,7 @@ import { advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, near
     if (keys.ArrowLeft) camYaw += CAM_TURN * dt;
     if (keys.ArrowRight) camYaw -= CAM_TURN * dt;
     fx += joy.x; fz += joy.y;
-    if (sleepLeft > 0 || !shopEl.hidden) fx = fz = 0; // dormido o en la tienda no te mueves
+    if (sleepLeft > 0 || !shopEl.hidden || !loginEl.hidden) fx = fz = 0; // dormido, en la tienda o eligiendo usuario no te mueves
     const len = Math.hypot(fx, fz);
     let moving = false;
     if (len > 0.1) {
@@ -1085,7 +1163,7 @@ import { advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, near
     if (warnTimer > 0 && (warnTimer -= dt) <= 0) warn.classList.remove('show');
 
     if (onTrampoline(ps) && ps.vel.y <= 0) { trampolineLaunch(ps); showToast('¡BOING! 100 metros'); }
-    physics(ps, dt, keys.Space && sleepLeft <= 0 && shopEl.hidden, stats.jump);
+    physics(ps, dt, keys.Space && sleepLeft <= 0 && shopEl.hidden && loginEl.hidden, stats.jump);
 
     // Enemigo: funciona como un killbrick que te persigue
     updateEnemy(dt);

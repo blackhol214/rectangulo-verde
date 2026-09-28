@@ -3,6 +3,7 @@ import {
   collideWalls, moveAndCollide, boxHit,
   upgradePrice, fmt, sunElevation, isNightPhase, clockText, hourToPhase,
   parseSetHour, launchSpeedForHeight, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, BAG_VALUE, nearestIndex, assistantSpeed,
+  normalizeName, saveKey, isSaveCommand, serializeSave, parseSave,
 } from '../src/logic.js';
 
 // Caja de un personaje normal (1 × 0,6 × 2 m) en (x, z), girada `a` radianes
@@ -228,5 +229,41 @@ describe('asistente', () => {
 
   it('cada mejora de velocidad le suma 2', () => {
     expect([0, 1, 2, 5].map(assistantSpeed)).toEqual([6, 8, 10, 16]);
+  });
+});
+
+describe('guardado por usuario', () => {
+  const LEVELS = ['belt', 'hopper', 'assistant', 'speed'];
+
+  it('el mismo nombre con mayúsculas o espacios de más es el mismo usuario', () => {
+    expect(normalizeName('  El   Humano ')).toBe('el humano');
+    expect(saveKey('El Humano')).toBe(saveKey('el humano'));
+    expect(saveKey('el humano')).not.toBe(saveKey('otro'));
+  });
+
+  it('reconoce el comando save_changes', () => {
+    expect(isSaveCommand('save_changes')).toBe(true);
+    expect(isSaveCommand('  SAVE_CHANGES ')).toBe(true);
+    expect(isSaveCommand('save changes')).toBe(false);
+    expect(isSaveCommand('set hour 9')).toBe(false);
+  });
+
+  it('lo que se guarda se recupera igual', () => {
+    const game = { coins: 130, boxes: 7, levels: { belt: 1, hopper: 1, assistant: 0, speed: 3 }, dayPhase: 0.375, pos: { x: 4, y: 0, z: 12.5 } };
+    expect(parseSave(serializeSave(game), LEVELS)).toEqual(game);
+  });
+
+  it('un guardado roto o de otra versión no se carga', () => {
+    expect(parseSave('esto no es json', LEVELS)).toBeNull();
+    expect(parseSave('null', LEVELS)).toBeNull();
+    expect(parseSave(JSON.stringify({ v: 99, coins: 5 }), LEVELS)).toBeNull();
+    expect(parseSave(null, LEVELS)).toBeNull();
+  });
+
+  it('ignora valores raros y mejoras que ya no existen', () => {
+    const raw = JSON.stringify({ v: 1, coins: -50, boxes: 2.9, levels: { belt: 1, magnet: 4, speed: 'mucho' }, dayPhase: 3, pos: { x: 1, y: 'a', z: 2 } });
+    expect(parseSave(raw, LEVELS)).toEqual({
+      coins: 0, boxes: 2, levels: { belt: 1, hopper: 0, assistant: 0, speed: 0 }, dayPhase: null, pos: null,
+    });
   });
 });
