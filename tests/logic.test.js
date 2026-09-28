@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   collideWalls, moveAndCollide, boxHit,
   upgradePrice, fmt, sunElevation, isNightPhase, clockText, hourToPhase,
-  parseSetHour, launchSpeedForHeight, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, boxReward, BOX_SELL, nearestIndex, assistantSpeed,
+  parseSetHour, launchSpeedForHeight, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, BAG_VALUE, nearestIndex, assistantSpeed,
 } from '../src/logic.js';
 
 // Caja de un personaje normal (1 × 0,6 × 2 m) en (x, z), girada `a` radianes
@@ -208,10 +208,10 @@ describe('mejoras de la cinta', () => {
     expect(beltSpeed(true)).toBe(3);
   });
 
-  it('el transformador: L guarda una caja, O la vende por 10 monedas', () => {
-    expect(boxReward('store')).toEqual({ coins: 0, boxes: 1 });
-    expect(boxReward('sell')).toEqual({ coins: 10, boxes: 0 });
-    expect(BOX_SELL).toBe(10);
+  it('la cinta normal da cajas doradas y el transformador bolsas de 10 monedas', () => {
+    expect(productReward('box')).toEqual({ coins: 0, boxes: 1 });
+    expect(productReward('bag')).toEqual({ coins: 10, boxes: 0 });
+    expect(BAG_VALUE).toBe(10);
   });
 });
 

@@ -72,7 +72,7 @@
 <canvas id="game"></canvas>
 <div class="hud">
   <b>Rectángulo Verde</b><br>
-  <span class="keys">Moverse: <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> · Saltar: <kbd>Espacio</kbd><br>Girar cámara: <kbd>←</kbd><kbd>→</kbd> o arrastra · Primera persona: <kbd>V</kbd> · Disparar láser: <kbd>clic</kbd><br>Tienda: <kbd>P</kbd> · Dormir en tu cama (de noche): <kbd>E</kbd> · Comandos: <kbd>T</kbd><br>Transformador: <kbd>L</kbd> guardar cajas · <kbd>O</kbd> venderlas<br></span>
+  <span class="keys">Moverse: <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> · Saltar: <kbd>Espacio</kbd><br>Girar cámara: <kbd>←</kbd><kbd>→</kbd> o arrastra · Primera persona: <kbd>V</kbd> · Disparar láser: <kbd>clic</kbd><br>Tienda: <kbd>P</kbd> · Dormir en tu cama (de noche): <kbd>E</kbd> · Comandos: <kbd>T</kbd><br></span>
   El gigante rojo <b style="color:#d0101a">no puede cruzar</b> la <span style="color:#b98a00;font-weight:700">línea amarilla</span>. Detrás de ella estás a salvo.<br>De noche el gigante <b>duerme</b>: no te acerques o se despierta.<br>Recoge <b style="color:#b07800">monedas</b> en su zona y gástalas en la <b>tienda</b> (<kbd>P</kbd>).
 </div>
 <div class="coins" aria-label="Monedas"><i></i><span id="coins">0</span></div>
@@ -97,8 +97,8 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module">
-import { advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, boxReward, BOX_SELL, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
-         upgradePrice, fmt, sunElevation, clockText, hourToPhase, parseSetHour, launchSpeedForHeight } from './src/logic.js?v=2026-09-28e'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
+import { advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
+         upgradePrice, fmt, sunElevation, clockText, hourToPhase, parseSetHour, launchSpeedForHeight } from './src/logic.js?v=2026-09-28g'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
 (() => {
   const canvas = document.getElementById('game');
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -325,8 +325,6 @@ import { advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, boxReward, BOX_SELL
     if (e.code === 'Space' || e.code.startsWith('Arrow')) e.preventDefault();
     if (e.code === 'KeyV' && !e.repeat) setFirstPerson(!firstPerson);
     if (e.code === 'KeyE' && !e.repeat) trySleep();
-    if (e.code === 'KeyL' && !e.repeat) setTransformMode('store');
-    if (e.code === 'KeyO' && !e.repeat) setTransformMode('sell');
   });
   addEventListener('keyup', e => { keys[e.code] = false; });
 
@@ -503,7 +501,7 @@ import { advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, boxReward, BOX_SELL
     clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
   }
   // Progreso de esta partida: se reinicia cada vez que recargas la página
-  const save = { coins: 0, boxes: 0, levels: { belt: 0, hopper: 0, belt2: 0, transformer: 0, assistant: 0, assistSpeed: 0, speed: 0, jump: 0, blaster: 0 } };
+  const save = { coins: 0, boxes: 0, levels: { belt: 0, hopper: 0, belt2: 0, transformer: 0, hopper2: 0, assistant: 0, assistSpeed: 0, speed: 0, jump: 0, blaster: 0 } };
   try { localStorage.removeItem('rectangulo-verde-tienda'); } catch (e) {} // borra el guardado de versiones anteriores
 
   function renderCoins() {
@@ -541,13 +539,15 @@ import { advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, boxReward, BOX_SELL
   // ---------- Tienda (P) ----------
   const SHOP = [
     { id: 'belt', group: 'Tu base', name: 'Cinta transportadora', desc: 'Una cinta de 20 m en medio de tu mitad. Los pedazos amarillos pasan por la máquina y salen como cajas doradas: agárralas en el plato amarillo y guárdalas para comprar al asistente.',
-      base: 100, max: 1, apply: l => setBeltOwned(l > 0) },
-    { id: 'hopper', group: 'Tu base', name: 'Tolva', desc: 'Va al final de la cinta y recoge las cajas doradas sola, sin que tengas que ir por ellas.',
-      currency: 'boxes', base: 5, max: 1, needs: 'belt', apply: l => setHopperOwned(l > 0) },
-    { id: 'belt2', group: 'Tu base', name: 'Cinta 2.0', desc: 'Tu cinta se ve igual, pero va un 50% más rápido.',
-      currency: 'boxes', base: 5, max: 1, needs: 'belt', apply: l => setBeltFast(l > 0) },
-    { id: 'transformer', group: 'Tu base', name: 'Transformador de cajas', desc: 'Una cinta más al final de la tuya, con dos botones: L guarda las cajas y O las vende por 10 monedas cada una.',
-      currency: 'boxes', base: 20, max: 1, needs: 'belt', apply: l => setTransformerOwned(l > 0) },
+      base: 100, max: 1, apply: l => lines.box.setOwned(l > 0) },
+    { id: 'hopper', group: 'Tu base', name: 'Tolva (cinta de cajas)', desc: 'Va al final de tu cinta y recoge las cajas doradas sola, sin que tengas que ir por ellas.',
+      currency: 'boxes', base: 5, max: 1, needs: 'belt', apply: l => { lines.box.setHopper(l > 0); if (l) showToast('La tolva recoge las cajas por ti'); } },
+    { id: 'belt2', group: 'Tu base', name: 'Cinta 2.0', desc: 'Tus cintas se ven igual, pero van un 50% más rápido.',
+      currency: 'boxes', base: 5, max: 1, needs: 'belt', apply: l => setBeltsFast(l > 0) },
+    { id: 'transformer', group: 'Tu base', name: 'Transformador', desc: 'Otra cinta de 15 m, aparte, al lado de la tuya. Sus pedazos amarillos se vuelven bolsas de monedas: cada bolsa vale 10 monedas.',
+      currency: 'boxes', base: 20, max: 1, needs: 'belt', apply: l => lines.bag.setOwned(l > 0) },
+    { id: 'hopper2', group: 'Tu base', name: 'Tolva (transformador)', desc: 'Va al final del transformador y recoge las bolsas de monedas sola.',
+      currency: 'boxes', base: 5, max: 1, needs: 'transformer', apply: l => { lines.bag.setHopper(l > 0); if (l) showToast('La tolva recoge las bolsas de monedas por ti'); } },
     { id: 'assistant', group: 'Tu base', name: 'Asistente', desc: 'Un robot que va por las monedas por ti. Se paga con cajas doradas de la cinta.',
       currency: 'boxes', base: 10, max: 1, apply: l => setAssistantOwned(l > 0) },
     { id: 'assistSpeed', group: 'Mejoras del asistente', name: 'Velocidad del asistente', desc: 'El asistente corre 2 m/s más rápido por nivel.',
@@ -606,185 +606,155 @@ import { advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, boxReward, BOX_SELL
     showToast(it.max === 1 ? `¡Compraste: ${it.name}!` : `¡${it.name}: nivel ${save.levels[id]}!`);
   }
 
-  // ---------- Cinta transportadora (20 m, en medio de tu mitad) ----------
-  // Al inicio aparecen pedazos amarillos, pasan por la máquina (una caja hueca) y sale una caja dorada,
-  // que baja de la cinta a un plato amarillo en el suelo y ahí espera a que la agarres.
-  // Extras de la tienda: tolva (la recoge sola), cinta 2.0 (50% más rápida) y transformador (L guarda / O vende).
-  const BELT = { x: 0, z: 50, len: 20, width: 2, top: 0.4, baseSpeed: 2 };
-  BELT.speed = beltSpeed(false);
-  BELT.x0 = BELT.x - BELT.len / 2; BELT.x1 = BELT.x + BELT.len / 2;   // extremos de la cinta
-  BELT.start = BELT.x0 + 0.6;                                         // donde aparecen los pedazos
-  BELT.machineX = BELT.x0 + 6;                                        // centro de la máquina
-  const TRANS = { len: 6, machineLen: 2 };                            // transformador: cinta extra después del final
-  TRANS.x0 = BELT.x1 + 0.3; TRANS.x1 = TRANS.x0 + TRANS.len; TRANS.machineX = TRANS.x0 + TRANS.len / 2;
-  const PLATE_GAP = 1.6;                                              // del final de la última cinta al centro del plato
-  const MACHINE = { len: 2.4, width: BELT.width + 0.6, top: 2.2 };
-  const beltStripes = () => {
+  // ---------- Cintas transportadoras ----------
+  // Dos cintas aparte, una al lado de la otra. En cada una aparecen pedazos amarillos al inicio,
+  // pasan por su máquina (una caja hueca) y salen convertidos; al final esperan en un plato amarillo.
+  //   · Cinta normal (20 m): los pedazos se vuelven cajas doradas.
+  //   · Transformador (15 m): los pedazos se vuelven bolsas de monedas (10 monedas cada una).
+  // A cada una se le puede comprar su tolva, que recoge sola lo que llega al plato.
+  const BELT_W = 2, BELT_TOP = 0.4, PLATE_GAP = 1.6;
+  const MACHINE = { width: BELT_W + 0.6, top: 2.2 };
+  const shadowsOn = g => g.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
+  function makeBeltTex(len) {
     const c = document.createElement('canvas'); c.width = 128; c.height = 32;
     const g = c.getContext('2d');
     g.fillStyle = '#2b2f35'; g.fillRect(0, 0, 128, 32);
     g.fillStyle = '#3d434b'; for (let i = 0; i < 128; i += 32) g.fillRect(i, 0, 14, 32); // rayas que se mueven
-    return g.canvas;
-  };
-  const makeBeltTex = len => { const t = new THREE.CanvasTexture(beltStripes()); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(len / 2, 1); return t; };
-  const beltTex = makeBeltTex(BELT.len), transTex = makeBeltTex(TRANS.len);
-  // Una cinta: marco, superficie con rayas y barandas amarillas
-  function buildBelt(group, cx, len, tex) {
-    const frame = new THREE.Mesh(new THREE.BoxGeometry(len + 0.6, BELT.top - 0.05, BELT.width + 0.4), new THREE.MeshLambertMaterial({ color: 0x59606a }));
-    frame.position.set(cx, (BELT.top - 0.05) / 2, 0); group.add(frame);
-    const surface = new THREE.Mesh(new THREE.PlaneGeometry(len, BELT.width), new THREE.MeshLambertMaterial({ map: tex }));
-    surface.rotation.x = -Math.PI / 2; surface.position.set(cx, BELT.top, 0); group.add(surface);
-    const railMat = new THREE.MeshLambertMaterial({ color: 0xffc400 });
-    for (const sz of [-1, 1]) { const r = new THREE.Mesh(new THREE.BoxGeometry(len + 0.6, 0.12, 0.15), railMat); r.position.set(cx, BELT.top + 0.06, sz * (BELT.width / 2 + 0.12)); group.add(r); }
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(len / 2, 1); return t;
   }
-  // Una máquina hueca (abierta por delante y por detrás) sobre la cinta
-  function buildMachine(group, cx, len, color, bandColor) {
-    const steel = new THREE.MeshLambertMaterial({ color }), band = new THREE.MeshLambertMaterial({ color: bandColor });
-    const h = MACHINE.top - BELT.top;
-    const top = new THREE.Mesh(new THREE.BoxGeometry(len, 0.2, MACHINE.width), steel); top.position.set(cx, MACHINE.top - 0.1, 0); group.add(top);
-    for (const sz of [-1, 1]) {
-      const wall = new THREE.Mesh(new THREE.BoxGeometry(len, h, 0.2), steel); wall.position.set(cx, BELT.top + h / 2, sz * (MACHINE.width / 2 - 0.1)); group.add(wall);
-      const stripe = new THREE.Mesh(new THREE.BoxGeometry(len + 0.02, 0.18, 0.22), band); stripe.position.set(cx, BELT.top + h * 0.6, sz * (MACHINE.width / 2 - 0.1)); group.add(stripe);
+  // Pedazos amarillos que viajan antes de la máquina
+  function makePieces() {
+    const g = new THREE.Group(), mat = new THREE.MeshLambertMaterial({ color: 0xffd23f });
+    for (let i = 0; i < 6; i++) {
+      const sz = 0.16 + Math.random() * 0.14;
+      const m = new THREE.Mesh(new THREE.BoxGeometry(sz, sz, sz), mat);
+      m.position.set((Math.random() - 0.5) * 0.7, sz / 2 + Math.random() * 0.1, (Math.random() - 0.5) * 0.7);
+      m.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
+      m.castShadow = true; g.add(m);
     }
+    return g;
   }
-  const shadowsOn = g => g.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
-
-  // Cinta principal con su máquina
-  const beltGroup = new THREE.Group();
-  buildBelt(beltGroup, 0, BELT.len, beltTex);
-  buildMachine(beltGroup, BELT.machineX - BELT.x, MACHINE.len, 0x3a4658, 0xffc400);
-  shadowsOn(beltGroup);
-  beltGroup.position.set(BELT.x, 0, BELT.z); beltGroup.visible = false; scene.add(beltGroup);
-  const beltPlatform = { x: BELT.x, z: BELT.z, hw: BELT.len / 2 + 0.3, hd: BELT.width / 2 + 0.2, top: BELT.top, bottom: 0 };
-  const machinePlatform = { x: BELT.machineX, z: BELT.z, hw: MACHINE.len / 2, hd: MACHINE.width / 2, top: MACHINE.top, bottom: 0 };
-
-  // Plato amarillo (se mueve al final del transformador cuando lo compras)
-  const plate = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.3, 0.08, 36), new THREE.MeshLambertMaterial({ color: 0xffc400 }));
-  plate.receiveShadow = true; plate.visible = false; scene.add(plate);
-
-  // Tolva: un embudo sobre el plato que se traga las cajas
-  const hopper = new THREE.Group();
-  (() => {
-    const metal = new THREE.MeshLambertMaterial({ color: 0xe0822f, side: THREE.DoubleSide });
-    const funnel = new THREE.Mesh(new THREE.CylinderGeometry(1.25, 0.45, 1.0, 28, 1, true), metal);
-    funnel.position.y = 0.75; hopper.add(funnel);
+  // Caja dorada
+  function makeGoldBox() {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.8, 0.8), new THREE.MeshLambertMaterial({ color: 0xffc83d, emissive: 0x6b4a00 }));
+    m.castShadow = true; return m;
+  }
+  // Bolsa de monedas: saco de tela con cuello atado y un "$"
+  function makeCoinBag() {
+    const g = new THREE.Group();
+    const cloth = new THREE.MeshLambertMaterial({ color: 0xb8894a });
+    const sack = new THREE.Mesh(new THREE.SphereGeometry(0.42, 20, 14), cloth); sack.scale.set(1, 0.9, 1); sack.position.y = 0.38; g.add(sack);
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.2, 0.22, 14), cloth); neck.position.y = 0.8; g.add(neck);
+    const tie = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.035, 8, 16), new THREE.MeshLambertMaterial({ color: 0xffc400 })); tie.rotation.x = Math.PI / 2; tie.position.y = 0.74; g.add(tie);
+    const c = document.createElement('canvas'); c.width = c.height = 64;
+    const x = c.getContext('2d'); x.fillStyle = '#ffc400'; x.font = 'bold 52px system-ui, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('$', 32, 36);
+    const sign = new THREE.Mesh(new THREE.PlaneGeometry(0.34, 0.34), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true }));
+    sign.position.set(0, 0.4, 0.4); g.add(sign);
+    shadowsOn(g); return g;
+  }
+  // Tolva: un embudo sobre el plato que se traga lo que llega
+  function makeHopper() {
+    const g = new THREE.Group();
+    const funnel = new THREE.Mesh(new THREE.CylinderGeometry(1.25, 0.45, 1.0, 28, 1, true), new THREE.MeshLambertMaterial({ color: 0xe0822f, side: THREE.DoubleSide }));
+    funnel.position.y = 0.75; g.add(funnel);
     const rim = new THREE.Mesh(new THREE.TorusGeometry(1.25, 0.07, 8, 32), new THREE.MeshLambertMaterial({ color: 0x9c4f12 }));
-    rim.rotation.x = Math.PI / 2; rim.position.y = 1.25; hopper.add(rim);
+    rim.rotation.x = Math.PI / 2; rim.position.y = 1.25; g.add(rim);
     for (let i = 0; i < 4; i++) {
       const a = i / 4 * Math.PI * 2 + Math.PI / 4;
       const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.25, 8), new THREE.MeshLambertMaterial({ color: 0x59606a }));
-      leg.position.set(Math.cos(a) * 1.05, 0.62, Math.sin(a) * 1.05); hopper.add(leg);
+      leg.position.set(Math.cos(a) * 1.05, 0.62, Math.sin(a) * 1.05); g.add(leg);
     }
-    shadowsOn(hopper); hopper.visible = false; scene.add(hopper);
-  })();
+    shadowsOn(g); return g;
+  }
 
-  // Transformador: cinta extra con máquina morada y dos botones (L guardar, O vender)
-  const transGroup = new THREE.Group();
-  buildBelt(transGroup, (TRANS.x0 + TRANS.x1) / 2 - BELT.x, TRANS.len, transTex);
-  buildMachine(transGroup, TRANS.machineX - BELT.x, TRANS.machineLen, 0x5b2a86, 0xffffff);
-  function makeButton(label, color, dz) {
-    const c = document.createElement('canvas'); c.width = 256; c.height = 128;
-    const g = c.getContext('2d');
-    g.fillStyle = '#' + color.toString(16).padStart(6, '0'); g.fillRect(0, 0, 256, 128);
-    g.fillStyle = '#ffffff'; g.textAlign = 'center'; g.textBaseline = 'middle';
-    g.font = '64px Impact, "Arial Narrow Bold", sans-serif'; g.fillText(label, 128, 68);
-    const mat = new THREE.MeshLambertMaterial({ map: new THREE.CanvasTexture(c), emissive: 0x000000 });
-    const btn = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.25, 0.9), [mat, mat, mat, mat, mat, mat]);
-    btn.position.set(TRANS.x1 - BELT.x - 0.8, 0.13, dz); transGroup.add(btn);
-    return mat;
-  }
-  const btnStore = makeButton('L · GUARDAR', 0x1f8a3b, BELT.width / 2 + 1.4);
-  const btnSell = makeButton('O · VENDER', 0xc98a00, BELT.width / 2 + 2.5);
-  shadowsOn(transGroup);
-  transGroup.position.set(BELT.x, 0, BELT.z); transGroup.visible = false; scene.add(transGroup);
-  const transPlatform = { x: (TRANS.x0 + TRANS.x1) / 2, z: BELT.z, hw: TRANS.len / 2 + 0.3, hd: BELT.width / 2 + 0.2, top: BELT.top, bottom: 0 };
-  const transMachinePlatform = { x: TRANS.machineX, z: BELT.z, hw: TRANS.machineLen / 2, hd: MACHINE.width / 2, top: MACHINE.top, bottom: 0 };
-
-  // Lo que viaja: pedazos amarillos → caja dorada → (con O en el transformador) moneda grande
-  const pieces = new THREE.Group();
-  const pieceMat = new THREE.MeshLambertMaterial({ color: 0xffd23f });
-  for (let i = 0; i < 6; i++) {
-    const sz = 0.16 + Math.random() * 0.14;
-    const m = new THREE.Mesh(new THREE.BoxGeometry(sz, sz, sz), pieceMat);
-    m.position.set((Math.random() - 0.5) * 0.7, sz / 2 + Math.random() * 0.1, (Math.random() - 0.5) * 0.7);
-    m.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
-    m.castShadow = true; pieces.add(m);
-  }
-  pieces.visible = false; scene.add(pieces);
-  const goldBox = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.8, 0.8), new THREE.MeshLambertMaterial({ color: 0xffc83d, emissive: 0x6b4a00 }));
-  goldBox.castShadow = true; goldBox.visible = false; scene.add(goldBox);
-  const bigCoin = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.12, 28), coinMat);
-  bigCoin.rotation.x = Math.PI / 2; bigCoin.castShadow = true; bigCoin.visible = false; scene.add(bigCoin);
-
-  let beltOwned = false, hopperOwned = false, transOwned = false, transformMode = 'store';
-  let itemX = BELT.start, itemWait = 0, sinkT = 0;
-  const lastBeltX = () => transOwned ? TRANS.x1 : BELT.x1;   // dónde termina la última cinta
-  const plateX = () => lastBeltX() + PLATE_GAP;
-  function placeEnd() {
-    plate.position.set(plateX(), 0.04, BELT.z);
-    hopper.position.set(plateX(), 0, BELT.z);
-  }
-  function setBeltOwned(on) {
-    if (on === beltOwned) return;
-    beltOwned = on; beltGroup.visible = plate.visible = on;
-    document.querySelector('.boxes').hidden = !on;
-    placeEnd();
-    if (on) { platforms.push(beltPlatform, machinePlatform); itemX = BELT.start; itemWait = 0; showToast('La cinta está en medio de tu mitad'); }
-  }
-  function setHopperOwned(on) {
-    hopperOwned = on; hopper.visible = on; placeEnd();
-    if (on) showToast('La tolva recoge las cajas por ti');
-  }
-  function setBeltFast(on) {
-    BELT.speed = beltSpeed(on);
-    if (on) showToast('Cinta 2.0: 50% más rápida');
-  }
-  function setTransformerOwned(on) {
-    transOwned = on; transGroup.visible = on; placeEnd();
-    if (on) { platforms.push(transPlatform, transMachinePlatform); setTransformMode('store'); showToast('Transformador listo: L guarda las cajas, O las vende'); }
-  }
-  function setTransformMode(mode) {
-    if (!transOwned) { if (beltOwned) showToast('Primero compra el Transformador de cajas en la tienda (P)', true); return; }
-    transformMode = mode;
-    // El botón activo brilla
-    btnStore.emissive.setHex(mode === 'store' ? 0x2a6a36 : 0x000000);
-    btnSell.emissive.setHex(mode === 'sell' ? 0x6a4a00 : 0x000000);
-    showToast(mode === 'store' ? 'L: las cajas se guardan' : `O: cada caja se vende por ${BOX_SELL} monedas`);
-  }
-  // Recoger lo que llegó al plato (tú o la tolva)
-  function collectItem() {
-    const r = boxReward(transOwned ? transformMode : 'store');
-    save.coins += r.coins; save.boxes += r.boxes; renderCoins();
-    if (r.coins) showToast(`+${r.coins} monedas`);
-    else showToast(save.levels.assistant || save.boxes >= 10 ? '+1 caja dorada' : `+1 caja dorada (${save.boxes}/10 para el asistente)`);
-    itemWait = 1.5; sinkT = 0; // los siguientes pedazos salen en un momento
-  }
-  function updateBelt(dt) {
-    if (!beltOwned) return;
-    beltTex.offset.x -= BELT.speed * dt / 2; transTex.offset.x -= BELT.speed * dt / 2; // las rayas avanzan con la cinta
-    // Si estás parado en una cinta, te lleva
-    if (ps.standing === beltPlatform || ps.standing === transPlatform) ps.walkX += BELT.speed * dt;
-    if (itemWait > 0) {
-      itemWait -= dt; pieces.visible = goldBox.visible = bigCoin.visible = false;
-      if (itemWait <= 0) itemX = BELT.start;
-      return;
+  // Una línea completa: cinta + máquina + plato + (tolva) + lo que viaja
+  function createLine({ x0, len, z, machineOffset, machineColor, bandColor, product, onCollect }) {
+    const L = { x0, x1: x0 + len, z, owned: false, hopperOwned: false, speed: beltSpeed(false) };
+    L.start = x0 + 0.6; L.machineX = x0 + machineOffset; L.plateX = L.x1 + PLATE_GAP;
+    const cx = (L.x0 + L.x1) / 2;
+    const tex = makeBeltTex(len);
+    const group = new THREE.Group();
+    // Cinta: marco, superficie con rayas y barandas amarillas
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(len + 0.6, BELT_TOP - 0.05, BELT_W + 0.4), new THREE.MeshLambertMaterial({ color: 0x59606a }));
+    frame.position.y = (BELT_TOP - 0.05) / 2; group.add(frame);
+    const surface = new THREE.Mesh(new THREE.PlaneGeometry(len, BELT_W), new THREE.MeshLambertMaterial({ map: tex }));
+    surface.rotation.x = -Math.PI / 2; surface.position.y = BELT_TOP; group.add(surface);
+    const railMat = new THREE.MeshLambertMaterial({ color: 0xffc400 });
+    for (const sz of [-1, 1]) { const r = new THREE.Mesh(new THREE.BoxGeometry(len + 0.6, 0.12, 0.15), railMat); r.position.set(0, BELT_TOP + 0.06, sz * (BELT_W / 2 + 0.12)); group.add(r); }
+    // Máquina hueca (abierta por delante y por detrás)
+    const steel = new THREE.MeshLambertMaterial({ color: machineColor }), band = new THREE.MeshLambertMaterial({ color: bandColor });
+    const mLen = 2.4, mh = MACHINE.top - BELT_TOP, mx = L.machineX - cx;
+    const top = new THREE.Mesh(new THREE.BoxGeometry(mLen, 0.2, MACHINE.width), steel); top.position.set(mx, MACHINE.top - 0.1, 0); group.add(top);
+    for (const sz of [-1, 1]) {
+      const wall = new THREE.Mesh(new THREE.BoxGeometry(mLen, mh, 0.2), steel); wall.position.set(mx, BELT_TOP + mh / 2, sz * (MACHINE.width / 2 - 0.1)); group.add(wall);
+      const stripe = new THREE.Mesh(new THREE.BoxGeometry(mLen + 0.02, 0.18, 0.22), band); stripe.position.set(mx, BELT_TOP + mh * 0.6, sz * (MACHINE.width / 2 - 0.1)); group.add(stripe);
     }
-    const endX = plateX();
-    itemX = advanceOnBelt(itemX, BELT.speed, dt, endX);            // avanza y se detiene en el plato
-    const isBox = beltItemIsBox(itemX, BELT.machineX);              // dentro de la máquina los pedazos se vuelven caja
-    const isCoin = transOwned && transformMode === 'sell' && itemX >= TRANS.machineX; // con O, el transformador la vuelve moneda
-    const onPlate = itemX >= endX;
-    let y = beltItemY(itemX, lastBeltX(), endX, BELT.top + 0.4, 0.08 + 0.4);
-    // Con tolva: al llegar se hunde en el embudo y se recoge sola
-    if (onPlate && hopperOwned) { sinkT += dt; y -= Math.min(1, sinkT / 0.4) * 0.5; if (sinkT >= 0.4) { collectItem(); return; } }
-    pieces.visible = !isBox; goldBox.visible = isBox && !isCoin; bigCoin.visible = isCoin;
-    if (!isBox) { pieces.position.set(itemX, BELT.top, BELT.z); pieces.rotation.y += dt * 0.6; }
-    const bob = onPlate && !hopperOwned ? Math.sin(t * 4) * 0.06 : 0;
-    goldBox.position.set(itemX, y + bob, BELT.z); goldBox.rotation.y = onPlate ? t * 1.5 : 0;
-    bigCoin.position.set(itemX, y + bob, BELT.z); bigCoin.rotation.z = t * 3;
-    // Sin tolva: agarrarla tocándola cuando ya está en el plato
-    if (onPlate && !hopperOwned && Math.hypot(ps.pos.x - itemX, ps.pos.z - BELT.z) < 1.5 && ps.pos.y < 1.5) collectItem();
+    // Plato amarillo en el suelo al final
+    const plate = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.3, 0.08, 36), new THREE.MeshLambertMaterial({ color: 0xffc400 }));
+    plate.position.set(L.plateX - cx, 0.04, 0); group.add(plate);
+    shadowsOn(group);
+    group.position.set(cx, 0, z); group.visible = false; scene.add(group);
+    const hopper = makeHopper(); hopper.position.set(L.plateX, 0, z); hopper.visible = false; scene.add(hopper);
+    L.platforms = [
+      { x: cx, z, hw: len / 2 + 0.3, hd: BELT_W / 2 + 0.2, top: BELT_TOP, bottom: 0 },
+      { x: L.machineX, z, hw: mLen / 2, hd: MACHINE.width / 2, top: MACHINE.top, bottom: 0 },
+    ];
+    // Lo que viaja
+    const pieces = makePieces(), item = product === 'bag' ? makeCoinBag() : makeGoldBox();
+    const itemBaseY = product === 'bag' ? 0 : 0.4;   // la bolsa tiene su base en y = 0; la caja, su centro
+    pieces.visible = item.visible = false; scene.add(pieces, item);
+    let x = L.start, wait = 0, sinkT = 0;
+
+    L.setOwned = on => {
+      if (on === L.owned) return;
+      L.owned = on; group.visible = on;
+      if (on) { platforms.push(...L.platforms); x = L.start; wait = 0; }
+    };
+    L.setHopper = on => { L.hopperOwned = on; hopper.visible = on && L.owned; };
+    const collect = () => { onCollect(); wait = 1.5; sinkT = 0; };   // los siguientes pedazos salen en un momento
+    L.update = dt => {
+      if (!L.owned) return;
+      tex.offset.x -= L.speed * dt / 2;                               // las rayas avanzan con la cinta
+      if (ps.standing === L.platforms[0]) ps.walkX += L.speed * dt;  // si estás parado en la cinta, te lleva
+      if (wait > 0) { wait -= dt; pieces.visible = item.visible = false; if (wait <= 0) x = L.start; return; }
+      x = advanceOnBelt(x, L.speed, dt, L.plateX);                    // avanza y se detiene en el plato
+      const converted = beltItemIsBox(x, L.machineX);                 // dentro de la máquina los pedazos se transforman
+      const onPlate = x >= L.plateX;
+      let y = beltItemY(x, L.x1, L.plateX, BELT_TOP, 0.08);           // altura de la base de lo que viaja
+      // Con tolva: al llegar se hunde en el embudo y se recoge sola
+      if (onPlate && L.hopperOwned) { sinkT += dt; y -= Math.min(1, sinkT / 0.4) * 0.6; if (sinkT >= 0.4) { collect(); return; } }
+      pieces.visible = !converted; item.visible = converted;
+      if (!converted) { pieces.position.set(x, BELT_TOP, z); pieces.rotation.y += dt * 0.6; }
+      const bob = onPlate && !L.hopperOwned ? Math.sin(t * 4) * 0.06 : 0;
+      item.position.set(x, y + itemBaseY + bob, z); item.rotation.y = onPlate ? t * 1.5 : 0;
+      // Sin tolva: agarrarlo tocándolo cuando ya está en el plato
+      if (onPlate && !L.hopperOwned && Math.hypot(ps.pos.x - x, ps.pos.z - z) < 1.5 && ps.pos.y < 1.5) collect();
+    };
+    return L;
   }
+
+  const lines = {
+    box: createLine({ x0: -10, len: 20, z: 50, machineOffset: 6, machineColor: 0x3a4658, bandColor: 0xffc400, product: 'box',
+      onCollect: () => {
+        const r = productReward('box'); save.boxes += r.boxes; renderCoins();
+        showToast(save.levels.assistant || save.boxes >= 10 ? '+1 caja dorada' : `+1 caja dorada (${save.boxes}/10 para el asistente)`);
+      } }),
+    bag: createLine({ x0: -5, len: 15, z: 54, machineOffset: 5, machineColor: 0x5b2a86, bandColor: 0xffffff, product: 'bag',
+      onCollect: () => {
+        const r = productReward('bag'); save.coins += r.coins; renderCoins();
+        showToast(`+${r.coins} monedas`);
+      } }),
+  };
+  // Al comprar la cinta aparece el contador de cajas
+  const setBoxLineOwned = lines.box.setOwned;
+  lines.box.setOwned = on => { setBoxLineOwned(on); document.querySelector('.boxes').hidden = !on; if (on) showToast('La cinta está en medio de tu mitad'); };
+  const setBagLineOwned = lines.bag.setOwned;
+  lines.bag.setOwned = on => { setBagLineOwned(on); if (on) showToast('Transformador listo: sus pedazos se vuelven bolsas de 10 monedas'); };
+  function setBeltsFast(on) {
+    for (const L of Object.values(lines)) L.speed = beltSpeed(on);
+    if (on) showToast('Cinta 2.0: tus cintas van 50% más rápido');
+  }
+  function updateBelt(dt) { for (const L of Object.values(lines)) L.update(dt); }
 
   // ---------- Asistente: recoge monedas por ti ----------
   const assistantObj = (() => {
