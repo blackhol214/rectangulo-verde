@@ -97,8 +97,11 @@ export const launchSpeedForHeight = (height, grav) => Math.sqrt(2 * grav * heigh
 // La caja avanza por la cinta y se detiene justo al final
 export const advanceOnBelt = (x, speed, dt, end) => Math.min(x + speed * dt, end);
 
-// Velocidad de la cinta: la Cinta 2.0 va un 50% más rápido
-export const beltSpeed = upgraded => 2 * (upgraded ? 1.5 : 1);
+// Velocidad de la cinta según la mejora: 0 = normal, 1 = Cinta 2.0 (+50%), 2 = turbo (+100%, el doble)
+export const beltSpeed = tier => 2 * [1, 1.5, 2][tier];
+
+// Dónde va cada cinta extra: filas de 4 m detrás de las dos primeras (que están en z = 50 y 54)
+export const extraLineZ = index => 58 + index * 4;
 
 // Lo que ganas al recoger lo que llega al plato: una caja dorada (cinta normal) o una bolsa de 10 monedas (transformador)
 export const BAG_VALUE = 10;

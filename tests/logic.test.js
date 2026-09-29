@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   collideWalls, moveAndCollide, boxHit,
   upgradePrice, fmt, sunElevation, isNightPhase, clockText, hourToPhase,
-  parseSetHour, launchSpeedForHeight, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, BAG_VALUE, nearestIndex, assistantSpeed,
+  parseSetHour, launchSpeedForHeight, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, extraLineZ, productReward, BAG_VALUE, nearestIndex, assistantSpeed,
   normalizeName, saveKey, isSaveCommand, serializeSave, parseSave,
 } from '../src/logic.js';
 
@@ -204,9 +204,17 @@ describe('cinta transportadora', () => {
 });
 
 describe('mejoras de la cinta', () => {
-  it('la Cinta 2.0 va un 50% más rápido', () => {
-    expect(beltSpeed(false)).toBe(2);
-    expect(beltSpeed(true)).toBe(3);
+  it('la Cinta 2.0 va un 50% más rápido y las cintas turbo el doble', () => {
+    expect(beltSpeed(0)).toBe(2);
+    expect(beltSpeed(1)).toBe(3);
+    expect(beltSpeed(2)).toBe(4);
+  });
+
+  it('las cintas extra van en filas sin pisarse y caben en tu mitad del mapa', () => {
+    expect(extraLineZ(0)).toBe(58);
+    expect(extraLineZ(1) - extraLineZ(0)).toBe(4);
+    // Hasta 10 cintas extra (5 de cajas y 5 transformadores): la última y su plato caben antes del borde (z = 100)
+    expect(extraLineZ(9) + 1.3).toBeLessThan(100);
   });
 
   it('la cinta normal da cajas doradas y el transformador bolsas de 10 monedas', () => {

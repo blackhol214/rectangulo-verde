@@ -125,8 +125,8 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module">
-import { saveKey, isSaveCommand, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
-         upgradePrice, fmt, sunElevation, clockText, hourToPhase, parseSetHour, launchSpeedForHeight } from './src/logic.js?v=2026-10-01'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
+import { extraLineZ, saveKey, isSaveCommand, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
+         upgradePrice, fmt, sunElevation, clockText, hourToPhase, parseSetHour, launchSpeedForHeight } from './src/logic.js?v=2026-10-02'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
 (() => {
   const canvas = document.getElementById('game');
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -533,7 +533,7 @@ import { saveKey, isSaveCommand, serializeSave, parseSave, advanceOnBelt, beltIt
     clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
   }
   // Progreso de esta partida: se guarda con T → save_changes, por usuario
-  const save = { coins: 0, boxes: 0, levels: { belt: 0, hopper: 0, belt2: 0, transformer: 0, hopper2: 0, assistant: 0, assistSpeed: 0, speed: 0, jump: 0, blaster: 0 } };
+  const save = { coins: 0, boxes: 0, levels: { belt: 0, hopper: 0, belt2: 0, turbo: 0, transformer: 0, hopper2: 0, lineBox: 0, lineBag: 0, assistant2: 0, assistant: 0, assistSpeed: 0, speed: 0, jump: 0, blaster: 0 } };
   try { localStorage.removeItem('rectangulo-verde-tienda'); } catch (e) {} // borra el guardado de versiones anteriores
 
   function renderCoins() {
@@ -575,15 +575,23 @@ import { saveKey, isSaveCommand, serializeSave, parseSave, advanceOnBelt, beltIt
     { id: 'hopper', group: 'Tu base', name: 'Tolva (cinta de cajas)', desc: 'Va al final de tu cinta y recoge las cajas doradas sola, sin que tengas que ir por ellas.',
       currency: 'boxes', base: 5, max: 1, needs: 'belt', apply: l => { lines.box.setHopper(l > 0); if (l) showToast('La tolva recoge las cajas por ti'); } },
     { id: 'belt2', group: 'Tu base', name: 'Cinta 2.0', desc: 'Tus cintas se ven igual, pero van un 50% más rápido.',
-      currency: 'boxes', base: 5, max: 1, needs: 'belt', apply: l => setBeltsFast(l > 0) },
+      currency: 'boxes', base: 5, max: 1, needs: 'belt', apply: l => { applyBeltSpeeds(); if (l) showToast('Cinta 2.0: tus cintas van 50% más rápido'); } },
+    { id: 'turbo', group: 'Tu base', name: 'Cintas turbo', desc: 'Todas tus cintas van un 100% más rápido que al principio (el doble).',
+      base: 100, max: 1, needs: 'belt', apply: l => { applyBeltSpeeds(); if (l) showToast('¡Cintas turbo: el doble de rápido!'); } },
+    { id: 'lineBox', group: 'Más cintas', name: 'Otra cinta de cajas', desc: 'Una cinta normal más (hace cajas doradas). Viene con su tolva y la velocidad de la Cinta 2.0.',
+      base: 50, flat: true, max: 5, count: true, needs: 'belt', apply: l => { ensureExtraLines('box', l); if (l) showToast('Nueva cinta de cajas, con tolva y Cinta 2.0'); } },
     { id: 'transformer', group: 'Tu base', name: 'Transformador', desc: 'Otra cinta de 15 m, aparte, al lado de la tuya. Sus pedazos amarillos se vuelven bolsas de monedas: cada bolsa vale 10 monedas.',
       currency: 'boxes', base: 20, max: 1, needs: 'belt', apply: l => lines.bag.setOwned(l > 0) },
     { id: 'hopper2', group: 'Tu base', name: 'Tolva (transformador)', desc: 'Va al final del transformador y recoge las bolsas de monedas sola.',
       currency: 'boxes', base: 5, max: 1, needs: 'transformer', apply: l => { lines.bag.setHopper(l > 0); if (l) showToast('La tolva recoge las bolsas de monedas por ti'); } },
+    { id: 'lineBag', group: 'Más cintas', name: 'Otro transformador', desc: 'Un transformador más (hace bolsas de 10 monedas). Viene con su tolva y la velocidad de la Cinta 2.0.',
+      base: 50, flat: true, max: 5, count: true, needs: 'transformer', apply: l => { ensureExtraLines('bag', l); if (l) showToast('Nuevo transformador, con tolva y Cinta 2.0'); } },
     { id: 'assistant', group: 'Tu base', name: 'Asistente', desc: 'Un robot que va por las monedas por ti. Se paga con cajas doradas de la cinta.',
-      currency: 'boxes', base: 10, max: 1, apply: l => setAssistantOwned(l > 0) },
-    { id: 'assistSpeed', group: 'Mejoras del asistente', name: 'Velocidad del asistente', desc: 'El asistente corre 2 m/s más rápido por nivel.',
-      base: 20, max: Infinity, needs: 'assistant', apply: l => assistant.speed = assistantSpeed(l) },
+      currency: 'boxes', base: 10, max: 1, apply: l => { ensureAssistants(); if (l) showToast('¡Tu asistente ya está buscando monedas!'); } },
+    { id: 'assistant2', group: 'Mejoras del asistente', name: 'Otro asistente', desc: 'Un asistente más que también va por las monedas.',
+      currency: 'boxes', base: 15, flat: true, max: 5, count: true, needs: 'assistant', apply: l => { ensureAssistants(); if (l) showToast('¡Otro asistente más!'); } },
+    { id: 'assistSpeed', group: 'Mejoras del asistente', name: 'Velocidad de los asistentes', desc: 'Tus asistentes corren 2 m/s más rápido por nivel.',
+      base: 20, max: Infinity, needs: 'assistant', apply: l => { for (const a of assistants) a.speed = assistantSpeed(l); } },
     { id: 'speed', group: 'Mejoras para ti', name: 'Tu velocidad', desc: 'Corres 2 m/s más rápido por nivel.',
       base: 5, max: Infinity, apply: l => stats.speed = SPEED + l * 2 },
     { id: 'jump', group: 'Mejoras para ti', name: 'Tu salto', desc: 'Saltas más alto en cada nivel.',
@@ -591,7 +599,7 @@ import { saveKey, isSaveCommand, serializeSave, parseSave, advanceOnBelt, beltIt
     { id: 'blaster', group: 'Mejoras para ti', name: 'Bláster láser', desc: 'Dispara con clic. Aturde al gigante 2 segundos.',
       base: 20, max: 1, apply: l => { stats.blaster = l > 0; canvas.classList.toggle('aim', l > 0); handBlaster.visible = l > 0; document.getElementById('reload').hidden = !(l > 0); } },
   ];
-  const price = it => upgradePrice(it.base, save.levels[it.id]);
+  const price = it => it.flat ? it.base : upgradePrice(it.base, save.levels[it.id]); // flat: siempre cuesta lo mismo
   // Con qué se paga cada artículo: monedas (casi todo) o cajas doradas (el asistente)
   const CURRENCY = { coins: ['moneda', 'monedas'], boxes: ['caja', 'cajas'] };
   const walletOf = it => it.currency || 'coins';
@@ -614,8 +622,8 @@ import { saveKey, isSaveCommand, serializeSave, parseSave, advanceOnBelt, beltIt
       if (it.group !== lastGroup) { html += `<p class="shop-group">${it.group}</p>`; lastGroup = it.group; }
       const lvl = save.levels[it.id], owned = lvl >= it.max, locked = it.needs && !save.levels[it.needs];
       const cur = walletOf(it), cost = price(it), short = cost - save[cur];
-      const level = it.max === 1 ? '' : ` · nivel ${lvl}`;
-      const label = owned ? 'Ya es tuyo' : locked ? `Primero: ${SHOP.find(i => i.id === it.needs).name}` : short > 0 ? `Te faltan ${amountText(short, cur)}` : `Comprar · ${amountText(cost, cur)}`;
+      const level = it.max === 1 ? '' : it.count ? ` · tienes ${lvl}` : ` · nivel ${lvl}`;
+      const label = owned ? (it.max > 1 ? 'Ya tienes el máximo' : 'Ya es tuyo') : locked ? `Primero: ${SHOP.find(i => i.id === it.needs).name}` : short > 0 ? `Te faltan ${amountText(short, cur)}` : `Comprar · ${amountText(cost, cur)}`;
       const priceLine = owned ? '' : ` Cuesta ${amountText(cost, cur)}.`;
       html += `<div class="shop-item"><h3>${it.name}${level}</h3><p>${it.desc}${priceLine}</p>` +
               `<button type="button" class="buy" id="buy-${it.id}" data-id="${it.id}" ${owned || locked || short > 0 ? 'disabled' : ''}>${label}</button></div>`;
@@ -701,7 +709,7 @@ import { saveKey, isSaveCommand, serializeSave, parseSave, advanceOnBelt, beltIt
 
   // Una línea completa: cinta + máquina + plato + (tolva) + lo que viaja
   function createLine({ x0, len, z, machineOffset, machineColor, bandColor, product, onCollect }) {
-    const L = { x0, x1: x0 + len, z, owned: false, hopperOwned: false, speed: beltSpeed(false) };
+    const L = { x0, x1: x0 + len, z, owned: false, hopperOwned: false, speed: beltSpeed(0) };
     L.start = x0 + 0.6; L.machineX = x0 + machineOffset; L.plateX = L.x1 + PLATE_GAP;
     const cx = (L.x0 + L.x1) / 2;
     const tex = makeBeltTex(len);
@@ -767,29 +775,48 @@ import { saveKey, isSaveCommand, serializeSave, parseSave, advanceOnBelt, beltIt
 
   const lines = {
     box: createLine({ x0: -10, len: 20, z: 50, machineOffset: 6, machineColor: 0x3a4658, bandColor: 0xffc400, product: 'box',
-      onCollect: () => {
-        const r = productReward('box'); save.boxes += r.boxes; renderCoins();
-        showToast(save.levels.assistant || save.boxes >= 10 ? '+1 caja dorada' : `+1 caja dorada (${save.boxes}/10 para el asistente)`);
-      } }),
+      onCollect: () => lines.box.onCollect() }),
     bag: createLine({ x0: -5, len: 15, z: 54, machineOffset: 5, machineColor: 0x5b2a86, bandColor: 0xffffff, product: 'bag',
-      onCollect: () => {
-        const r = productReward('bag'); save.coins += r.coins; renderCoins();
-        showToast(`+${r.coins} monedas`);
-      } }),
+      onCollect: () => lines.bag.onCollect() }),
+  };
+  // Lo que ganas al recoger en cada tipo de cinta (las cintas extra usan lo mismo)
+  lines.box.onCollect = () => {
+    const r = productReward('box'); save.boxes += r.boxes; renderCoins();
+    showToast(save.levels.assistant || save.boxes >= 10 ? '+1 caja dorada' : `+1 caja dorada (${save.boxes}/10 para el asistente)`);
+  };
+  lines.bag.onCollect = () => {
+    const r = productReward('bag'); save.coins += r.coins; renderCoins();
+    showToast(`+${r.coins} monedas`);
   };
   // Al comprar la cinta aparece el contador de cajas
   const setBoxLineOwned = lines.box.setOwned;
   lines.box.setOwned = on => { setBoxLineOwned(on); document.querySelector('.boxes').hidden = !on; if (on) showToast('La cinta está en medio de tu mitad'); };
   const setBagLineOwned = lines.bag.setOwned;
   lines.bag.setOwned = on => { setBagLineOwned(on); if (on) showToast('Transformador listo: sus pedazos se vuelven bolsas de 10 monedas'); };
-  function setBeltsFast(on) {
-    for (const L of Object.values(lines)) L.speed = beltSpeed(on);
-    if (on) showToast('Cinta 2.0: tus cintas van 50% más rápido');
+  // Cintas extra (se compran con monedas): cada una viene con tolva y, como mínimo, la velocidad de la Cinta 2.0
+  const extraLines = [];
+  const LINE_SPECS = {
+    box: { x0: -10, len: 20, machineOffset: 6, machineColor: 0x3a4658, bandColor: 0xffc400, product: 'box', onCollect: () => lines.box.onCollect() },
+    bag: { x0: -5, len: 15, machineOffset: 5, machineColor: 0x5b2a86, bandColor: 0xffffff, product: 'bag', onCollect: () => lines.bag.onCollect() },
+  };
+  function ensureExtraLines(type, count) {
+    while (extraLines.filter(e => e.type === type).length < count) {
+      const L = createLine({ ...LINE_SPECS[type], z: extraLineZ(extraLines.length) });
+      L.extra = true; L.setOwned(true); L.setHopper(true);
+      extraLines.push({ type, L });
+    }
+    applyBeltSpeeds();
   }
-  function updateBelt(dt) { for (const L of Object.values(lines)) L.update(dt); }
+  const allLines = () => [lines.box, lines.bag, ...extraLines.map(e => e.L)];
+  // Velocidad de todas las cintas: normal, Cinta 2.0 (+50%) o turbo (+100%)
+  function applyBeltSpeeds() {
+    const tier = save.levels.turbo ? 2 : save.levels.belt2 ? 1 : 0;
+    for (const L of allLines()) L.speed = beltSpeed(L.extra ? Math.max(tier, 1) : tier);
+  }
+  function updateBelt(dt) { for (const L of allLines()) L.update(dt); }
 
-  // ---------- Asistente: recoge monedas por ti ----------
-  const assistantObj = (() => {
+  // ---------- Asistentes: recogen monedas por ti ----------
+  function makeAssistantObj() {
     const g = new THREE.Group();
     const metal = new THREE.MeshLambertMaterial({ color: 0x9fb8d6 });
     const dark = new THREE.MeshLambertMaterial({ color: 0x3a4658 });
@@ -804,32 +831,37 @@ import { saveKey, isSaveCommand, serializeSave, parseSave, advanceOnBelt, beltIt
     part(new THREE.SphereGeometry(0.08, 10, 8), new THREE.MeshBasicMaterial({ color: 0xff3b3b }), 0, 2.05, 0);
     part(new THREE.BoxGeometry(0.2, 0.3, 0.2), dark, -0.22, 0.15, 0);        // piernas
     part(new THREE.BoxGeometry(0.2, 0.3, 0.2), dark, 0.22, 0.15, 0);
-    g.visible = false; scene.add(g);
+    scene.add(g);
     return g;
-  })();
-  const assistant = makeState(assistantObj);
-  assistant.speed = assistantSpeed(0);
-  function setAssistantOwned(on) {
-    assistantObj.visible = on;
-    if (on) { assistant.pos.set(ps.pos.x + 1.5, 0, ps.pos.z); showToast('¡Tu asistente ya está buscando monedas!'); }
+  }
+  const assistants = [];
+  // Cuántos asistentes tienes: el primero (10 cajas) más los extra (15 cajas cada uno)
+  const assistantCount = () => (save.levels.assistant ? 1 : 0) + save.levels.assistant2;
+  function ensureAssistants() {
+    while (assistants.length < assistantCount()) {
+      const a = makeState(makeAssistantObj());
+      a.speed = assistantSpeed(save.levels.assistSpeed);
+      a.pos.set(ps.pos.x + 1.5 + assistants.length, 0, ps.pos.z); // aparece a tu lado
+      assistants.push(a);
+    }
   }
   function updateAssistant(dt) {
-    if (!save.levels.assistant) return;
-    // Va por la moneda más cercana
-    const i = nearestIndex(assistant.pos, coins.map(c => c.position));
-    const c = coins[i];
-    const dx = c.position.x - assistant.pos.x, dz = c.position.z - assistant.pos.z, dist = Math.hypot(dx, dz);
-    if (dist > 0.05) {
-      const step = Math.min(assistant.speed * dt, dist);
-      assistant.walkX += dx / dist * step; assistant.walkZ += dz / dist * step;
-      turnTo(assistant, dx, dz, dt);
+    for (const a of assistants) {
+      // Va por la moneda más cercana
+      const c = coins[nearestIndex(a.pos, coins.map(k => k.position))];
+      const dx = c.position.x - a.pos.x, dz = c.position.z - a.pos.z, dist = Math.hypot(dx, dz);
+      if (dist > 0.05) {
+        const step = Math.min(a.speed * dt, dist);
+        a.walkX += dx / dist * step; a.walkZ += dz / dist * step;
+        turnTo(a, dx, dz, dt);
+      }
+      physics(a, dt, a.onGround && a.hitWall, JUMP); // si choca con algo, lo salta
+      if (Math.hypot(c.position.x - a.pos.x, c.position.z - a.pos.z) < PICKUP) {
+        save.coins++; renderCoins();
+        placeCoin(c);
+      }
+      a.obj.children[0].position.y = 0.75 + Math.abs(Math.sin(t * 14 + a.pos.x)) * 0.05; // camina
     }
-    physics(assistant, dt, assistant.onGround && assistant.hitWall, JUMP); // si choca con algo, lo salta
-    if (Math.hypot(c.position.x - assistant.pos.x, c.position.z - assistant.pos.z) < PICKUP) {
-      save.coins++; renderCoins();
-      placeCoin(c);
-    }
-    assistantObj.children[0].position.y = 0.75 + Math.abs(Math.sin(t * 14)) * 0.05; // camina
   }
 
   renderCoins();
