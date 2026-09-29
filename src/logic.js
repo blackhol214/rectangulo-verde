@@ -109,15 +109,6 @@ export function extraLineSlot(type, index) {
   return { x0: -38 - 22 * Math.floor(index / 12), len: 15, z: 50 + (index % 12) * 4 };
 }
 
-// ---------- Bolsa dorada (evento en la mitad del gigante) ----------
-export const GOLD_BAG_VALUE = 60;
-// Aparece cada 35–40 segundos (r en [0, 1) decide cuánto exactamente)
-export const nextGoldBagDelay = r => 35 + r * 5;
-// Un punto al azar en la mitad del gigante (z < 0), lejos de la línea amarilla y del borde
-export function randomGiantHalfPoint(r1, r2, edge = 100, lineHalf = 1.5, margin = 6) {
-  return { x: (r1 * 2 - 1) * (edge - margin), z: -(lineHalf + margin) - r2 * (edge - 2 * margin - lineHalf) };
-}
-
 // Lo que ganas al recoger lo que llega al plato: una caja dorada (cinta normal) o una bolsa de 10 monedas (transformador)
 export const BAG_VALUE = 10;
 export const productReward = kind => (kind === 'bag' ? { coins: BAG_VALUE, boxes: 0 } : { coins: 0, boxes: 1 });
@@ -176,10 +167,10 @@ export function parseSave(text, knownLevels) {
 // ---------- Casa grande con sótano ----------
 // La casa grande ocupa donde estaba la mediana y más. Debajo hay un sótano enorme (a 6 m de profundidad)
 // que llega hasta tus cintas; al comprar la casa, las cintas bajan al sótano.
-export const BIG_HOUSE = { x0: 20, x1: 46, z0: 4, z1: 26, doorZ: 9, height: 5 };
-export const BASEMENT = { x0: -64, x1: 48, z0: 2, z1: 98, y: -6 };
-// Escalera dentro de la casa: baja 6 m en 15 escalones de 0,4 m (se baja caminando)
-export const STAIRWELL = { x0: 41, x1: 44, z0: 7, z1: 22, steps: 15, rise: 0.4 };
+export const BIG_HOUSE = { x0: 20, x1: 36, z0: 4, z1: 18, doorZ: 9, height: 5 };
+export const BASEMENT = { x0: -64, x1: 38, z0: 2, z1: 98, y: -6 };
+// Escalera dentro de la casa: baja 6 m en 15 escalones de 0,4 m de alto y 0,6 m de fondo (se baja caminando)
+export const STAIRWELL = { x0: 31, x1: 34, z0: 6, z1: 15, steps: 15, rise: 0.4, run: 0.6 };
 
 // Altura del suelo en (x, z): dentro del sótano (si ya existe) es el piso del sótano; afuera, 0
 export function groundHeight(x, z, basementOpen) {

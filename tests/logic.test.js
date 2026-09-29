@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   collideWalls, moveAndCollide, boxHit,
   upgradePrice, fmt, sunElevation, isNightPhase, clockText, hourToPhase,
-  parseSetHour, launchSpeedForHeight, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, extraLineSlot, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, GOLD_BAG_VALUE, nextGoldBagDelay, randomGiantHalfPoint, productReward, BAG_VALUE, nearestIndex, assistantSpeed,
+  parseSetHour, launchSpeedForHeight, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, extraLineSlot, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, productReward, BAG_VALUE, nearestIndex, assistantSpeed,
   normalizeName, saveKey, isSaveCommand, serializeSave, parseSave,
   BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, missingFor, canAfford,
 } from '../src/logic.js';
@@ -295,35 +295,20 @@ describe('guardado por usuario', () => {
   });
 });
 
-describe('bolsa dorada', () => {
-  it('vale 60 monedas', () => {
-    expect(GOLD_BAG_VALUE).toBe(60);
-  });
-
-  it('aparece cada 35 a 40 segundos', () => {
-    expect(nextGoldBagDelay(0)).toBe(35);
-    expect(nextGoldBagDelay(0.5)).toBe(37.5);
-    expect(nextGoldBagDelay(0.9999)).toBeLessThan(40);
-  });
-
-  it('siempre aparece en la mitad del gigante, lejos de la línea y del borde', () => {
-    for (const r1 of [0, 0.3, 0.7, 0.9999])
-      for (const r2 of [0, 0.5, 0.9999]) {
-        const p = randomGiantHalfPoint(r1, r2);
-        expect(p.z).toBeLessThan(-7);     // del lado del gigante, a más de 5 m de la línea
-        expect(p.z).toBeGreaterThan(-95);
-        expect(Math.abs(p.x)).toBeLessThan(95);
-      }
-  });
-});
-
 describe('casa grande con sótano', () => {
   const inside = (p, r) => p.x0 >= r.x0 && p.x1 <= r.x1 && p.z0 >= r.z0 && p.z1 <= r.z1;
 
   it('la escalera baja justo hasta el piso del sótano y se baja caminando', () => {
     expect(STAIRWELL.steps * STAIRWELL.rise).toBeCloseTo(-BASEMENT.y);
     expect(STAIRWELL.rise).toBeLessThanOrEqual(0.45);
-    expect(STAIRWELL.z1 - STAIRWELL.z0).toBe(STAIRWELL.steps); // un escalón por metro
+    expect(STAIRWELL.z1 - STAIRWELL.z0).toBeCloseTo(STAIRWELL.steps * STAIRWELL.run); // el hueco mide justo lo que la escalera
+  });
+
+  it('la casa grande es más chica que antes, pero la cama y la escalera caben sin tocarse', () => {
+    expect((BIG_HOUSE.x1 - BIG_HOUSE.x0) * (BIG_HOUSE.z1 - BIG_HOUSE.z0)).toBeLessThan(26 * 22);
+    const bed = { x0: 28.5 - 0.75, x1: 28.5 + 0.75, z0: 9 - 1.25, z1: 9 + 1.25 };
+    const touches = bed.x0 < STAIRWELL.x1 + 0.5 && STAIRWELL.x0 - 0.5 < bed.x1 && bed.z0 < STAIRWELL.z1 && STAIRWELL.z0 < bed.z1;
+    expect(touches).toBe(false);
   });
 
   it('la escalera está dentro de la casa y dentro del sótano', () => {
