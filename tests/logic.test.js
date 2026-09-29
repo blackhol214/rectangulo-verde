@@ -2,8 +2,9 @@ import { describe, it, expect } from 'vitest';
 import {
   collideWalls, moveAndCollide, boxHit,
   upgradePrice, fmt, sunElevation, isNightPhase, clockText, hourToPhase,
-  parseSetHour, launchSpeedForHeight, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, extraLineZ, productReward, BAG_VALUE, nearestIndex, assistantSpeed,
+  parseSetHour, launchSpeedForHeight, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, extraLineSlot, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, GOLD_BAG_VALUE, nextGoldBagDelay, randomGiantHalfPoint, productReward, BAG_VALUE, nearestIndex, assistantSpeed,
   normalizeName, saveKey, isSaveCommand, serializeSave, parseSave,
+  BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, missingFor, canAfford,
 } from '../src/logic.js';
 
 // Caja de un personaje normal (1 × 0,6 × 2 m) en (x, z), girada `a` radianes
@@ -210,11 +211,29 @@ describe('mejoras de la cinta', () => {
     expect(beltSpeed(2)).toBe(4);
   });
 
-  it('las cintas extra van en filas sin pisarse y caben en tu mitad del mapa', () => {
-    expect(extraLineZ(0)).toBe(58);
-    expect(extraLineZ(1) - extraLineZ(0)).toBe(4);
-    // Hasta 10 cintas extra (5 de cajas y 5 transformadores): la última y su plato caben antes del borde (z = 100)
-    expect(extraLineZ(9) + 1.3).toBeLessThan(100);
+  it('todas las cintas extra caben en tu mitad del mapa y no se pisan', () => {
+    // Rectángulo que ocupa cada cinta con su plato y su tolva (radio 1,3 m)
+    const area = ({ x0, len, z }) => ({ xa: x0 - 0.3, xb: x0 + len + 1.6 + 1.3, za: z - 1.3, zb: z + 1.3 });
+    const all = [
+      { x0: -10, len: 20, z: 50 }, { x0: -5, len: 15, z: 54 },          // las dos primeras
+      ...Array.from({ length: MAX_EXTRA_BOX_LINES }, (_, i) => extraLineSlot('box', i)),
+      ...Array.from({ length: MAX_EXTRA_BAG_LINES }, (_, i) => extraLineSlot('bag', i)),
+    ].map(area);
+    for (const a of all) {
+      expect(a.za).toBeGreaterThan(1.5);   // del lado seguro de la línea amarilla
+      expect(a.zb).toBeLessThan(100);      // antes del borde del mapa
+      expect(a.xa).toBeGreaterThan(-100);
+    }
+    for (let i = 0; i < all.length; i++)
+      for (let j = i + 1; j < all.length; j++) {
+        const a = all[i], b = all[j];
+        const overlap = a.xa < b.xb && b.xa < a.xb && a.za < b.zb && b.za < a.zb;
+        expect(overlap).toBe(false);
+      }
+  });
+
+  it('se pueden tener muchos más transformadores que antes', () => {
+    expect(MAX_EXTRA_BAG_LINES).toBeGreaterThan(5);
   });
 
   it('la cinta normal da cajas doradas y el transformador bolsas de 10 monedas', () => {
@@ -273,5 +292,85 @@ describe('guardado por usuario', () => {
     expect(parseSave(raw, LEVELS)).toEqual({
       coins: 0, boxes: 2, levels: { belt: 1, hopper: 0, assistant: 0, speed: 0 }, dayPhase: null, pos: null,
     });
+  });
+});
+
+describe('bolsa dorada', () => {
+  it('vale 60 monedas', () => {
+    expect(GOLD_BAG_VALUE).toBe(60);
+  });
+
+  it('aparece cada 35 a 40 segundos', () => {
+    expect(nextGoldBagDelay(0)).toBe(35);
+    expect(nextGoldBagDelay(0.5)).toBe(37.5);
+    expect(nextGoldBagDelay(0.9999)).toBeLessThan(40);
+  });
+
+  it('siempre aparece en la mitad del gigante, lejos de la línea y del borde', () => {
+    for (const r1 of [0, 0.3, 0.7, 0.9999])
+      for (const r2 of [0, 0.5, 0.9999]) {
+        const p = randomGiantHalfPoint(r1, r2);
+        expect(p.z).toBeLessThan(-7);     // del lado del gigante, a más de 5 m de la línea
+        expect(p.z).toBeGreaterThan(-95);
+        expect(Math.abs(p.x)).toBeLessThan(95);
+      }
+  });
+});
+
+describe('casa grande con sótano', () => {
+  const inside = (p, r) => p.x0 >= r.x0 && p.x1 <= r.x1 && p.z0 >= r.z0 && p.z1 <= r.z1;
+
+  it('la escalera baja justo hasta el piso del sótano y se baja caminando', () => {
+    expect(STAIRWELL.steps * STAIRWELL.rise).toBeCloseTo(-BASEMENT.y);
+    expect(STAIRWELL.rise).toBeLessThanOrEqual(0.45);
+    expect(STAIRWELL.z1 - STAIRWELL.z0).toBe(STAIRWELL.steps); // un escalón por metro
+  });
+
+  it('la escalera está dentro de la casa y dentro del sótano', () => {
+    const houseInside = { x0: BIG_HOUSE.x0 + 0.3, x1: BIG_HOUSE.x1 - 0.3, z0: BIG_HOUSE.z0 + 0.3, z1: BIG_HOUSE.z1 - 0.3 };
+    expect(inside(STAIRWELL, houseInside)).toBe(true);
+    expect(inside(STAIRWELL, BASEMENT)).toBe(true);
+  });
+
+  it('todas las cintas posibles caben en el sótano', () => {
+    const slots = [
+      { x0: -10, len: 20, z: 50 }, { x0: -5, len: 15, z: 54 },
+      ...Array.from({ length: MAX_EXTRA_BOX_LINES }, (_, i) => extraLineSlot('box', i)),
+      ...Array.from({ length: MAX_EXTRA_BAG_LINES }, (_, i) => extraLineSlot('bag', i)),
+    ];
+    for (const { x0, len, z } of slots)
+      expect(inside({ x0: x0 - 0.3, x1: x0 + len + 1.6 + 1.3, z0: z - 1.3, z1: z + 1.3 }, BASEMENT)).toBe(true);
+  });
+
+  it('el suelo baja al sótano solo cuando ya compraste la casa grande', () => {
+    expect(groundHeight(0, 50, false)).toBe(0);
+    expect(groundHeight(0, 50, true)).toBe(BASEMENT.y);
+    expect(groundHeight(0, -20, true)).toBe(0);  // la mitad del gigante no tiene sótano
+    expect(groundHeight(80, 80, true)).toBe(0);  // ni el trampolín
+  });
+
+  it('el techo del sótano cubre todo menos el hueco de la escalera', () => {
+    const pieces = slabPieces();
+    const area = r => (r.x1 - r.x0) * (r.z1 - r.z0);
+    const total = pieces.reduce((a, r) => a + area(r), 0);
+    expect(total).toBeCloseTo(area(BASEMENT) - area(STAIRWELL));
+    for (const r of pieces) {
+      const overlapsHole = r.x0 < STAIRWELL.x1 && STAIRWELL.x0 < r.x1 && r.z0 < STAIRWELL.z1 && STAIRWELL.z0 < r.z1;
+      expect(overlapsHole).toBe(false);
+    }
+  });
+});
+
+describe('precios con cajas y monedas a la vez', () => {
+  const cost = { boxes: 100, coins: 200 };
+  it('alcanza solo si tienes las dos cosas', () => {
+    expect(canAfford({ boxes: 100, coins: 200 }, cost)).toBe(true);
+    expect(canAfford({ boxes: 150, coins: 999 }, cost)).toBe(true);
+    expect(canAfford({ boxes: 99, coins: 999 }, cost)).toBe(false);
+    expect(canAfford({ boxes: 999, coins: 199 }, cost)).toBe(false);
+  });
+  it('dice cuánto falta de cada una', () => {
+    expect(missingFor({ boxes: 80, coins: 250 }, cost)).toEqual({ boxes: 20, coins: 0 });
+    expect(missingFor({ boxes: 0, coins: 0 }, cost)).toEqual({ boxes: 100, coins: 200 });
   });
 });

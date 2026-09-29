@@ -100,8 +100,23 @@ export const advanceOnBelt = (x, speed, dt, end) => Math.min(x + speed * dt, end
 // Velocidad de la cinta según la mejora: 0 = normal, 1 = Cinta 2.0 (+50%), 2 = turbo (+100%, el doble)
 export const beltSpeed = tier => 2 * [1, 1.5, 2][tier];
 
-// Dónde va cada cinta extra: filas de 4 m detrás de las dos primeras (que están en z = 50 y 54)
-export const extraLineZ = index => 58 + index * 4;
+// Dónde va cada cinta extra (x0 = donde empieza, z = su fila; filas cada 4 m):
+//   · cintas de cajas: detrás de las dos primeras (z = 50 y 54), en su misma columna
+//   · transformadores: en su propia zona a la izquierda, en columnas de 12 filas
+export const MAX_EXTRA_BOX_LINES = 5, MAX_EXTRA_BAG_LINES = 24;
+export function extraLineSlot(type, index) {
+  if (type === 'box') return { x0: -10, len: 20, z: 58 + index * 4 };
+  return { x0: -38 - 22 * Math.floor(index / 12), len: 15, z: 50 + (index % 12) * 4 };
+}
+
+// ---------- Bolsa dorada (evento en la mitad del gigante) ----------
+export const GOLD_BAG_VALUE = 60;
+// Aparece cada 35–40 segundos (r en [0, 1) decide cuánto exactamente)
+export const nextGoldBagDelay = r => 35 + r * 5;
+// Un punto al azar en la mitad del gigante (z < 0), lejos de la línea amarilla y del borde
+export function randomGiantHalfPoint(r1, r2, edge = 100, lineHalf = 1.5, margin = 6) {
+  return { x: (r1 * 2 - 1) * (edge - margin), z: -(lineHalf + margin) - r2 * (edge - 2 * margin - lineHalf) };
+}
 
 // Lo que ganas al recoger lo que llega al plato: una caja dorada (cinta normal) o una bolsa de 10 monedas (transformador)
 export const BAG_VALUE = 10;
@@ -157,3 +172,37 @@ export function parseSave(text, knownLevels) {
   const pos = [p.x, p.y, p.z].every(Number.isFinite) ? { x: p.x, y: p.y, z: p.z } : null;
   return { coins: count(d.coins), boxes: count(d.boxes), levels, dayPhase: phase, pos };
 }
+
+// ---------- Casa grande con sótano ----------
+// La casa grande ocupa donde estaba la mediana y más. Debajo hay un sótano enorme (a 6 m de profundidad)
+// que llega hasta tus cintas; al comprar la casa, las cintas bajan al sótano.
+export const BIG_HOUSE = { x0: 20, x1: 46, z0: 4, z1: 26, doorZ: 9, height: 5 };
+export const BASEMENT = { x0: -64, x1: 48, z0: 2, z1: 98, y: -6 };
+// Escalera dentro de la casa: baja 6 m en 15 escalones de 0,4 m (se baja caminando)
+export const STAIRWELL = { x0: 41, x1: 44, z0: 7, z1: 22, steps: 15, rise: 0.4 };
+
+// Altura del suelo en (x, z): dentro del sótano (si ya existe) es el piso del sótano; afuera, 0
+export function groundHeight(x, z, basementOpen) {
+  const b = BASEMENT;
+  return basementOpen && x > b.x0 && x < b.x1 && z > b.z0 && z < b.z1 ? b.y : 0;
+}
+
+// El techo del sótano (que es el suelo de arriba) tiene un hueco para la escalera.
+// Devuelve 4 rectángulos que cubren todo el sótano menos ese hueco.
+export function slabPieces(area = BASEMENT, hole = STAIRWELL) {
+  return [
+    { x0: area.x0, x1: area.x1, z0: area.z0, z1: hole.z0 },  // antes del hueco
+    { x0: area.x0, x1: area.x1, z0: hole.z1, z1: area.z1 },  // después del hueco
+    { x0: area.x0, x1: hole.x0, z0: hole.z0, z1: hole.z1 },  // a la izquierda
+    { x0: hole.x1, x1: area.x1, z0: hole.z0, z1: hole.z1 },  // a la derecha
+  ];
+}
+
+// ---------- Precios con dos monedas (por ejemplo: 100 cajas + 200 monedas) ----------
+// cost = { coins, boxes }. Devuelve cuánto te falta de cada una (0 si alcanza).
+export function missingFor(wallet, cost) {
+  const out = {};
+  for (const k of Object.keys(cost)) out[k] = Math.max(0, cost[k] - (wallet[k] || 0));
+  return out;
+}
+export const canAfford = (wallet, cost) => Object.values(missingFor(wallet, cost)).every(n => n === 0);

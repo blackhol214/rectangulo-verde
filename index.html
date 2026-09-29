@@ -22,6 +22,11 @@
   .login-card button { border:0; border-radius:8px; padding:12px; font:700 16px system-ui, sans-serif; background:#2fae4e; color:#fff; cursor:pointer; }
   .login-card button:focus-visible { outline:3px solid #1e6bff; outline-offset:2px; }
   #loginError { color:#c0141a; font-weight:600; }
+  /* Letrero de la bolsa dorada */
+  #goldBanner { position:fixed; left:16px; right:16px; top:34%; transform:translateY(-50%) scale(.8); z-index:24; margin:0; text-align:center; pointer-events:none; opacity:0; transition:opacity .3s, transform .3s; font-family:"Helvetica Neue", Arial, system-ui, sans-serif; }
+  #goldBanner.show { opacity:1; transform:translateY(-50%) scale(1); }
+  #goldBanner strong { display:block; font-weight:800; font-size:clamp(26px, 6vw, 68px); line-height:1.05; letter-spacing:.01em; color:#ffd23f; text-shadow:0 3px 0 #7a5200, 0 8px 22px rgba(0,0,0,.45); }
+  #goldBanner span { display:block; margin-top:8px; font-weight:700; font-size:clamp(16px, 2.6vw, 28px); color:#fff; text-shadow:0 2px 6px rgba(0,0,0,.6); }
   /* Aviso de guardado */
   #saved { position:fixed; left:50%; top:40%; transform:translate(-50%,-50%) scale(.7); margin:0; z-index:25; font:400 clamp(34px, 8vw, 84px)/1.1 "ADLaM Display", Impact, "Arial Narrow Bold", sans-serif; color:#2fd158; text-shadow:0 4px 0 #0d5a22, 0 8px 18px rgba(0,0,0,.35); white-space:nowrap; opacity:0; pointer-events:none; transition:opacity .25s, transform .25s; }
   #saved.show { opacity:1; transform:translate(-50%,-50%) scale(1); }
@@ -80,7 +85,7 @@
   #reload .bar { height:10px; border-radius:5px; background:rgba(22,48,31,.55); overflow:hidden; box-shadow:0 0 0 2px rgba(255,255,255,.7); }
   #reloadFill { height:100%; width:100%; background:#8fa6c8; }
   #reload.ready #reloadFill { background:#1e6bff; }
-  @media (prefers-reduced-motion: reduce) { #warn, #toast, #saved { transition:none; } }
+  @media (prefers-reduced-motion: reduce) { #warn, #toast, #saved, #goldBanner { transition:none; } }
   @media (pointer:coarse) { #stick, #jump { display:block; } .hud .keys { display:none; } }
 </style>
 </head>
@@ -110,6 +115,7 @@
   </form>
 </div>
 <p id="saved" aria-live="polite">CAMBIOS GUARDADOS</p>
+<p id="goldBanner" aria-live="assertive"><strong>HA APARECIDO UNA BOLSA DORADA</strong><span>recógela para tener 60 monedas</span></p>
 <form id="cmd" hidden autocomplete="off"><label for="cmdInput">Comando</label><input id="cmdInput" type="text" placeholder="save_changes  ·  set hour 21" spellcheck="false"></form>
 <div id="shop" hidden role="dialog" aria-modal="true" aria-labelledby="shopTitle">
   <div class="shop-card">
@@ -125,8 +131,8 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module">
-import { extraLineZ, saveKey, isSaveCommand, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
-         upgradePrice, fmt, sunElevation, clockText, hourToPhase, parseSetHour, launchSpeedForHeight } from './src/logic.js?v=2026-10-02'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
+import { BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, missingFor, canAfford, collideWalls, extraLineSlot, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, GOLD_BAG_VALUE, nextGoldBagDelay, randomGiantHalfPoint, saveKey, isSaveCommand, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
+         upgradePrice, fmt, sunElevation, clockText, hourToPhase, parseSetHour, launchSpeedForHeight } from './src/logic.js?v=2026-10-04'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
 (() => {
   const canvas = document.getElementById('game');
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -173,11 +179,18 @@ import { extraLineZ, saveKey, isSaveCommand, serializeSave, parseSave, advanceOn
     g.fillStyle = '#7f5226'; g.fillRect(0,0,64,64); g.fillRect(64,64,64,64);
     g.strokeStyle = 'rgba(50,28,10,.22)'; g.lineWidth = 2; g.strokeRect(0,0,128,128);
     const t = new THREE.CanvasTexture(c);
-    t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(SIZE/8, SIZE/8);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(1/8, 1/8); // un cuadro cada 8 m
     t.anisotropy = renderer.capabilities.getMaxAnisotropy();
     return t;
   })();
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(SIZE, SIZE), new THREE.MeshLambertMaterial({ map: tex }));
+  // El suelo es una figura plana; cuando compras la casa grande se le abre el hueco de la escalera del sótano
+  function groundGeometry(hole) {
+    const h = SIZE / 2, shape = new THREE.Shape([new THREE.Vector2(-h, -h), new THREE.Vector2(h, -h), new THREE.Vector2(h, h), new THREE.Vector2(-h, h)]);
+    // La figura se acuesta con rotation.x = -90°, así que su "y" es -z en el mundo
+    if (hole) shape.holes.push(new THREE.Path([new THREE.Vector2(hole.x0, -hole.z1), new THREE.Vector2(hole.x1, -hole.z1), new THREE.Vector2(hole.x1, -hole.z0), new THREE.Vector2(hole.x0, -hole.z0)]));
+    return new THREE.ShapeGeometry(shape);
+  }
+  const ground = new THREE.Mesh(groundGeometry(null), new THREE.MeshLambertMaterial({ map: tex }));
   ground.rotation.x = -Math.PI/2;
   ground.receiveShadow = true;
   scene.add(ground);
@@ -209,34 +222,58 @@ import { extraLineZ, saveKey, isSaveCommand, serializeSave, parseSave, advanceOn
     st.onGround = false;
   }
 
-  // ---------- Casa mediana con una sola cama ----------
-  const houseParts = [];
-  // Caja sólida: se ve y además choca (se puede pisar y no se puede atravesar)
-  function addBox(x0, x1, y0, y1, z0, z1, mat) {
+  // ---------- Casa: mediana al principio; con la mejora, casa grande con sótano ----------
+  const houseParts = [];   // lo que tapa la cámara (paredes, techo, techo del sótano)
+  // Caja sólida: se ve y además choca. Si se pasa `list`, se anota para poder quitarla después.
+  function addBox(x0, x1, y0, y1, z0, z1, mat, list) {
     const w = x1 - x0, h = y1 - y0, d = z1 - z0;
     const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
     m.position.set((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2);
     m.castShadow = m.receiveShadow = true;
     scene.add(m);
-    platforms.push({ x: (x0 + x1) / 2, z: (z0 + z1) / 2, hw: w / 2, hd: d / 2, top: y1, bottom: y0 });
+    const pl = { x: (x0 + x1) / 2, z: (z0 + z1) / 2, hw: w / 2, hd: d / 2, top: y1, bottom: y0 };
+    platforms.push(pl);
     houseParts.push(m);
+    if (list) list.push({ mesh: m, pl });
     return m;
   }
-  const HX0 = 20, HX1 = 32, HZ0 = 4, HZ1 = 14, WT = 0.3, ROOF_Y = 4, DOOR_Z = 9;
+  const WT = 0.3, DOOR_Z = 9;
   const wallMat = new THREE.MeshLambertMaterial({ color: 0xf1e3c8 });
   const floorMat = new THREE.MeshLambertMaterial({ color: 0xa87444 });
   const roofMat = new THREE.MeshLambertMaterial({ color: 0x7b3b2a });
-  addBox(HX0, HX1, 0, ROOF_Y, HZ1 - WT, HZ1, wallMat);                    // atrás
-  addBox(HX0, HX1, 0, ROOF_Y, HZ0, HZ0 + WT, wallMat);                    // frente
-  addBox(HX1 - WT, HX1, 0, ROOF_Y, HZ0, HZ1, wallMat);                    // derecha
-  addBox(HX0, HX0 + WT, 0, ROOF_Y, HZ0, DOOR_Z - 1.5, wallMat);           // izquierda (con puerta)
-  addBox(HX0, HX0 + WT, 0, ROOF_Y, DOOR_Z + 1.5, HZ1, wallMat);
-  addBox(HX0, HX0 + WT, 3, ROOF_Y, DOOR_Z - 1.5, DOOR_Z + 1.5, wallMat);  // encima de la puerta
-  addBox(HX0 - 0.5, HX1 + 0.5, ROOF_Y, ROOF_Y + 0.3, HZ0 - 0.5, HZ1 + 0.5, roofMat); // techo
-  const houseFloor = new THREE.Mesh(new THREE.PlaneGeometry(HX1 - HX0 - 2 * WT, HZ1 - HZ0 - 2 * WT), floorMat);
-  houseFloor.rotation.x = -Math.PI / 2; houseFloor.position.set((HX0 + HX1) / 2, 0.02, (HZ0 + HZ1) / 2);
-  houseFloor.receiveShadow = true; scene.add(houseFloor);
-  // Tu cama (verde)
+  const windowMat = new THREE.MeshBasicMaterial({ color: 0x3a4a5c });
+  const winGeo = new THREE.PlaneGeometry(1.6, 1.4);
+  // Paredes con puerta del lado que mira hacia donde apareces, techo, piso de madera y ventanas
+  function buildHouse({ x0, x1, z0, z1, height }, list, floorHole) {
+    addBox(x0, x1, 0, height, z1 - WT, z1, wallMat, list);                        // atrás
+    addBox(x0, x1, 0, height, z0, z0 + WT, wallMat, list);                        // frente
+    addBox(x1 - WT, x1, 0, height, z0, z1, wallMat, list);                        // derecha
+    addBox(x0, x0 + WT, 0, height, z0, DOOR_Z - 1.5, wallMat, list);              // izquierda (con puerta)
+    addBox(x0, x0 + WT, 0, height, DOOR_Z + 1.5, z1, wallMat, list);
+    addBox(x0, x0 + WT, 3, height, DOOR_Z - 1.5, DOOR_Z + 1.5, wallMat, list);    // encima de la puerta
+    addBox(x0 - 0.5, x1 + 0.5, height, height + 0.3, z0 - 0.5, z1 + 0.5, roofMat, list); // techo
+    const inner = { x0: x0 + WT, x1: x1 - WT, z0: z0 + WT, z1: z1 - WT };
+    const shape = new THREE.Shape([new THREE.Vector2(inner.x0, -inner.z1), new THREE.Vector2(inner.x1, -inner.z1), new THREE.Vector2(inner.x1, -inner.z0), new THREE.Vector2(inner.x0, -inner.z0)]);
+    if (floorHole) shape.holes.push(new THREE.Path([new THREE.Vector2(floorHole.x0, -floorHole.z1), new THREE.Vector2(floorHole.x1, -floorHole.z1), new THREE.Vector2(floorHole.x1, -floorHole.z0), new THREE.Vector2(floorHole.x0, -floorHole.z0)]));
+    const floor = new THREE.Mesh(new THREE.ShapeGeometry(shape), floorMat);
+    floor.rotation.x = -Math.PI / 2; floor.position.y = 0.02; floor.receiveShadow = true; scene.add(floor);
+    list.push({ mesh: floor });
+    const midX = (x0 + x1) / 2;
+    for (const [wx, wz, ry] of [[midX, z0 - 0.02, Math.PI], [midX, z1 + 0.02, 0], [x1 + 0.02, (z0 + z1) / 2, Math.PI / 2]]) {
+      const w = new THREE.Mesh(winGeo, windowMat); w.position.set(wx, 2, wz); w.rotation.y = ry; scene.add(w); list.push({ mesh: w });
+    }
+  }
+  function removeParts(list) {
+    for (const { mesh, pl } of list) {
+      scene.remove(mesh);
+      const i = houseParts.indexOf(mesh); if (i >= 0) houseParts.splice(i, 1);
+      if (pl) { const j = platforms.indexOf(pl); if (j >= 0) platforms.splice(j, 1); }
+    }
+    list.length = 0;
+  }
+  const mediumHouse = [];
+  buildHouse({ x0: 20, x1: 32, z0: 4, z1: 14, height: 4 }, mediumHouse, null);
+  // Tu cama (verde): está en el mismo lugar en las dos casas
   const MY_BED = { x: 28.5, z: 9 };
   (() => {
     const { x, z } = MY_BED;
@@ -250,12 +287,48 @@ import { extraLineZ, saveKey, isSaveCommand, serializeSave, parseSave, advanceOn
     add(1.5, 1.0, 0.12, woodMat, x, 0.5, z - 1.25);                                        // cabecera
     platforms.push({ x, z, hw: 0.75, hd: 1.25, top: 0.55, bottom: 0 });
   })();
-  // Ventanas: de día se ven oscuras, de noche brillan
-  const windowMat = new THREE.MeshBasicMaterial({ color: 0x3a4a5c });
-  const winGeo = new THREE.PlaneGeometry(1.6, 1.4);
-  for (const [wx, wz, ry] of [[26, HZ0 - 0.02, Math.PI], [26, HZ1 + 0.02, 0], [HX1 + 0.02, DOOR_Z, Math.PI / 2]]) {
-    const w = new THREE.Mesh(winGeo, windowMat); w.position.set(wx, 2, wz); w.rotation.y = ry; scene.add(w);
+
+  // Casa grande con sótano (se construye al comprarla)
+  let basementOpen = false;
+  function buildBigHouse() {
+    if (basementOpen) return;
+    basementOpen = true;
+    removeParts(mediumHouse);
+    const S = STAIRWELL, B = BASEMENT;
+    buildHouse(BIG_HOUSE, [], S);
+    // Suelo de afuera con el hueco de la escalera
+    ground.geometry.dispose(); ground.geometry = groundGeometry(S);
+    // Escalera: 15 escalones de 0,4 m
+    const stairMat = new THREE.MeshLambertMaterial({ color: 0x8a5a33 });
+    for (let i = 0; i < S.steps; i++) addBox(S.x0, S.x1, B.y, -S.rise * (i + 1), S.z0 + i, S.z0 + i + 1, stairMat);
+    // Barandas a los lados del hueco (la entrada queda abierta)
+    const railMat = new THREE.MeshLambertMaterial({ color: 0x6b4226 });
+    addBox(S.x0 - 0.15, S.x0, 0, 0.9, S.z0, S.z1, railMat);
+    addBox(S.x1, S.x1 + 0.15, 0, 0.9, S.z0, S.z1, railMat);
+    addBox(S.x0 - 0.15, S.x1 + 0.15, 0, 0.9, S.z1, S.z1 + 0.15, railMat);
+    // Sótano: piso de concreto, paredes y techo (el techo mira hacia abajo y tapa el sol)
+    const concrete = new THREE.MeshLambertMaterial({ color: 0x8a8f96 });
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(B.x1 - B.x0, B.z1 - B.z0), concrete);
+    floor.rotation.x = -Math.PI / 2; floor.position.set((B.x0 + B.x1) / 2, B.y + 0.01, (B.z0 + B.z1) / 2); floor.receiveShadow = true; scene.add(floor);
+    const wallC = new THREE.MeshLambertMaterial({ color: 0x6f757d });
+    addBox(B.x0 - 0.5, B.x0, B.y, 0, B.z0, B.z1, wallC); addBox(B.x1, B.x1 + 0.5, B.y, 0, B.z0, B.z1, wallC);
+    addBox(B.x0 - 0.5, B.x1 + 0.5, B.y, 0, B.z0 - 0.5, B.z0, wallC); addBox(B.x0 - 0.5, B.x1 + 0.5, B.y, 0, B.z1, B.z1 + 0.5, wallC);
+    const cshape = new THREE.Shape([new THREE.Vector2(B.x0, B.z0), new THREE.Vector2(B.x1, B.z0), new THREE.Vector2(B.x1, B.z1), new THREE.Vector2(B.x0, B.z1)]);
+    cshape.holes.push(new THREE.Path([new THREE.Vector2(S.x0, S.z0), new THREE.Vector2(S.x0, S.z1), new THREE.Vector2(S.x1, S.z1), new THREE.Vector2(S.x1, S.z0)]));
+    const ceiling = new THREE.Mesh(new THREE.ShapeGeometry(cshape), new THREE.MeshLambertMaterial({ color: 0x9aa0a8 }));
+    ceiling.rotation.x = Math.PI / 2; ceiling.position.y = -0.05; ceiling.castShadow = true; scene.add(ceiling); // su "y" es z en el mundo
+    houseParts.push(ceiling);
+    // El techo del sótano es el suelo de arriba: se puede caminar encima (menos en el hueco de la escalera)
+    for (const r of slabPieces()) platforms.push({ x: (r.x0 + r.x1) / 2, z: (r.z0 + r.z1) / 2, hw: (r.x1 - r.x0) / 2, hd: (r.z1 - r.z0) / 2, top: 0, bottom: -0.3 });
+    // Lámparas del sótano
+    for (const [lx, lz] of [[40, 16], [0, 52], [0, 76], [-40, 56], [-40, 82], [-30, 30], [15, 30]]) {
+      const light = new THREE.PointLight(0xfff1d6, 0.9, 45, 1.5); light.position.set(lx, B.y + 4.6, lz); scene.add(light);
+      const lamp = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.12, 1.2), new THREE.MeshBasicMaterial({ color: 0xfff1d6 })); lamp.position.set(lx, -0.12, lz); scene.add(lamp);
+    }
+    // Las cintas bajan al sótano
+    for (const L of allLines()) L.setBaseY(B.y);
   }
+
   // La cámara no atraviesa la casa: si una pared queda en medio, se acerca (como en Roblox)
   const camRay = new THREE.Raycaster();
 
@@ -473,7 +546,7 @@ import { extraLineZ, saveKey, isSaveCommand, serializeSave, parseSave, advanceOn
 
     if (wantJump && st.onGround) { st.vel.y = jump; st.onGround = false; }
     const prevY = st.pos.y;
-    let floor = 0, standing = null;
+    let floor = groundHeight(st.pos.x, st.pos.z, basementOpen), standing = null;
     for (const pl of platforms) {
       if (pl.top > floor && pl.top <= prevY + 0.01 && overlaps(pl, st.pos.x, st.pos.z)) { floor = pl.top; standing = pl; }
     }
@@ -533,7 +606,7 @@ import { extraLineZ, saveKey, isSaveCommand, serializeSave, parseSave, advanceOn
     clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
   }
   // Progreso de esta partida: se guarda con T → save_changes, por usuario
-  const save = { coins: 0, boxes: 0, levels: { belt: 0, hopper: 0, belt2: 0, turbo: 0, transformer: 0, hopper2: 0, lineBox: 0, lineBag: 0, assistant2: 0, assistant: 0, assistSpeed: 0, speed: 0, jump: 0, blaster: 0 } };
+  const save = { coins: 0, boxes: 0, levels: { belt: 0, hopper: 0, belt2: 0, turbo: 0, bigHouse: 0, transformer: 0, hopper2: 0, lineBox: 0, lineBag: 0, assistant2: 0, assistant: 0, assistSpeed: 0, speed: 0, jump: 0, blaster: 0 } };
   try { localStorage.removeItem('rectangulo-verde-tienda'); } catch (e) {} // borra el guardado de versiones anteriores
 
   function renderCoins() {
@@ -579,13 +652,15 @@ import { extraLineZ, saveKey, isSaveCommand, serializeSave, parseSave, advanceOn
     { id: 'turbo', group: 'Tu base', name: 'Cintas turbo', desc: 'Todas tus cintas van un 100% más rápido que al principio (el doble).',
       base: 100, max: 1, needs: 'belt', apply: l => { applyBeltSpeeds(); if (l) showToast('¡Cintas turbo: el doble de rápido!'); } },
     { id: 'lineBox', group: 'Más cintas', name: 'Otra cinta de cajas', desc: 'Una cinta normal más (hace cajas doradas). Viene con su tolva y la velocidad de la Cinta 2.0.',
-      base: 50, flat: true, max: 5, count: true, needs: 'belt', apply: l => { ensureExtraLines('box', l); if (l) showToast('Nueva cinta de cajas, con tolva y Cinta 2.0'); } },
+      base: 50, flat: true, max: MAX_EXTRA_BOX_LINES, count: true, needs: 'belt', apply: l => { ensureExtraLines('box', l); if (l) showToast('Nueva cinta de cajas, con tolva y Cinta 2.0'); } },
     { id: 'transformer', group: 'Tu base', name: 'Transformador', desc: 'Otra cinta de 15 m, aparte, al lado de la tuya. Sus pedazos amarillos se vuelven bolsas de monedas: cada bolsa vale 10 monedas.',
       currency: 'boxes', base: 20, max: 1, needs: 'belt', apply: l => lines.bag.setOwned(l > 0) },
     { id: 'hopper2', group: 'Tu base', name: 'Tolva (transformador)', desc: 'Va al final del transformador y recoge las bolsas de monedas sola.',
       currency: 'boxes', base: 5, max: 1, needs: 'transformer', apply: l => { lines.bag.setHopper(l > 0); if (l) showToast('La tolva recoge las bolsas de monedas por ti'); } },
-    { id: 'lineBag', group: 'Más cintas', name: 'Otro transformador', desc: 'Un transformador más (hace bolsas de 10 monedas). Viene con su tolva y la velocidad de la Cinta 2.0.',
-      base: 50, flat: true, max: 5, count: true, needs: 'transformer', apply: l => { ensureExtraLines('bag', l); if (l) showToast('Nuevo transformador, con tolva y Cinta 2.0'); } },
+    { id: 'lineBag', group: 'Más cintas', name: 'Otro transformador', desc: 'Un transformador más (hace bolsas de 10 monedas). Viene con su tolva y la velocidad de la Cinta 2.0. Van en su propia zona, a la izquierda de tus cintas.',
+      base: 50, flat: true, max: MAX_EXTRA_BAG_LINES, count: true, needs: 'transformer', apply: l => { ensureExtraLines('bag', l); if (l) showToast('Nuevo transformador, con tolva y Cinta 2.0'); } },
+    { id: 'bigHouse', group: 'Tu base', name: 'Casa grande con sótano', desc: 'Tu casa crece y le sale un sótano enorme. Tus cintas se mudan al sótano; baja por la escalera de la casa.',
+      cost: { boxes: 100, coins: 200 }, max: 1, apply: l => { if (l) { buildBigHouse(); showToast('¡Casa grande! Tus cintas están en el sótano: baja por la escalera'); } } },
     { id: 'assistant', group: 'Tu base', name: 'Asistente', desc: 'Un robot que va por las monedas por ti. Se paga con cajas doradas de la cinta.',
       currency: 'boxes', base: 10, max: 1, apply: l => { ensureAssistants(); if (l) showToast('¡Tu asistente ya está buscando monedas!'); } },
     { id: 'assistant2', group: 'Mejoras del asistente', name: 'Otro asistente', desc: 'Un asistente más que también va por las monedas.',
@@ -604,6 +679,9 @@ import { extraLineZ, saveKey, isSaveCommand, serializeSave, parseSave, advanceOn
   const CURRENCY = { coins: ['moneda', 'monedas'], boxes: ['caja', 'cajas'] };
   const walletOf = it => it.currency || 'coins';
   const amountText = (n, cur) => `${fmt(n)} ${CURRENCY[cur][n === 1 ? 0 : 1]}`;
+  // Lo que cuesta un artículo, en una o dos monedas: { coins, boxes }
+  const costOf = it => it.cost || { [walletOf(it)]: price(it) };
+  const costText = (cost, joiner) => Object.entries(cost).filter(([, n]) => n > 0).map(([c, n]) => amountText(n, c)).join(joiner);
   const shopEl = document.getElementById('shop'), shopItems = document.getElementById('shopItems'), shopWallet = document.getElementById('shopWallet');
   document.getElementById('shopClose').addEventListener('click', () => toggleShop(false));
   shopEl.addEventListener('click', e => { if (e.target === shopEl) toggleShop(false); }); // clic fuera: cerrar
@@ -621,12 +699,12 @@ import { extraLineZ, saveKey, isSaveCommand, serializeSave, parseSave, advanceOn
     for (const it of SHOP) {
       if (it.group !== lastGroup) { html += `<p class="shop-group">${it.group}</p>`; lastGroup = it.group; }
       const lvl = save.levels[it.id], owned = lvl >= it.max, locked = it.needs && !save.levels[it.needs];
-      const cur = walletOf(it), cost = price(it), short = cost - save[cur];
+      const cost = costOf(it), missing = missingFor(save, cost), short = !canAfford(save, cost);
       const level = it.max === 1 ? '' : it.count ? ` · tienes ${lvl}` : ` · nivel ${lvl}`;
-      const label = owned ? (it.max > 1 ? 'Ya tienes el máximo' : 'Ya es tuyo') : locked ? `Primero: ${SHOP.find(i => i.id === it.needs).name}` : short > 0 ? `Te faltan ${amountText(short, cur)}` : `Comprar · ${amountText(cost, cur)}`;
-      const priceLine = owned ? '' : ` Cuesta ${amountText(cost, cur)}.`;
+      const label = owned ? (it.max > 1 ? 'Ya tienes el máximo' : 'Ya es tuyo') : locked ? `Primero: ${SHOP.find(i => i.id === it.needs).name}` : short ? `Te faltan ${costText(missing, ' y ')}` : `Comprar · ${costText(cost, ' + ')}`;
+      const priceLine = owned ? '' : ` Cuesta ${costText(cost, ' + ')}.`;
       html += `<div class="shop-item"><h3>${it.name}${level}</h3><p>${it.desc}${priceLine}</p>` +
-              `<button type="button" class="buy" id="buy-${it.id}" data-id="${it.id}" ${owned || locked || short > 0 ? 'disabled' : ''}>${label}</button></div>`;
+              `<button type="button" class="buy" id="buy-${it.id}" data-id="${it.id}" ${owned || locked || short ? 'disabled' : ''}>${label}</button></div>`;
     }
     const focused = document.activeElement && document.activeElement.id;
     shopItems.innerHTML = html;
@@ -639,9 +717,10 @@ import { extraLineZ, saveKey, isSaveCommand, serializeSave, parseSave, advanceOn
   function buy(id) {
     const it = SHOP.find(i => i.id === id);
     const lvl = save.levels[id];
-    const cur = walletOf(it);
-    if (lvl >= it.max || (it.needs && !save.levels[it.needs]) || save[cur] < price(it)) return;
-    save[cur] -= price(it); save.levels[id]++; it.apply(save.levels[id]);
+    const cost = costOf(it);
+    if (lvl >= it.max || (it.needs && !save.levels[it.needs]) || !canAfford(save, cost)) return;
+    for (const [c, n] of Object.entries(cost)) save[c] -= n;
+    save.levels[id]++; it.apply(save.levels[id]);
     renderCoins(); renderShop();
     showToast(it.max === 1 ? `¡Compraste: ${it.name}!` : `¡${it.name}: nivel ${save.levels[id]}!`);
   }
@@ -680,14 +759,14 @@ import { extraLineZ, saveKey, isSaveCommand, serializeSave, parseSave, advanceOn
     m.castShadow = true; return m;
   }
   // Bolsa de monedas: saco de tela con cuello atado y un "$"
-  function makeCoinBag() {
+  function makeCoinBag(gold = false) {
     const g = new THREE.Group();
-    const cloth = new THREE.MeshLambertMaterial({ color: 0xb8894a });
+    const cloth = new THREE.MeshLambertMaterial(gold ? { color: 0xffc83d, emissive: 0x7a5200 } : { color: 0xb8894a });
     const sack = new THREE.Mesh(new THREE.SphereGeometry(0.42, 20, 14), cloth); sack.scale.set(1, 0.9, 1); sack.position.y = 0.38; g.add(sack);
     const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.2, 0.22, 14), cloth); neck.position.y = 0.8; g.add(neck);
     const tie = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.035, 8, 16), new THREE.MeshLambertMaterial({ color: 0xffc400 })); tie.rotation.x = Math.PI / 2; tie.position.y = 0.74; g.add(tie);
     const c = document.createElement('canvas'); c.width = c.height = 64;
-    const x = c.getContext('2d'); x.fillStyle = '#ffc400'; x.font = 'bold 52px system-ui, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('$', 32, 36);
+    const x = c.getContext('2d'); x.fillStyle = gold ? '#7a4a00' : '#ffc400'; x.font = 'bold 52px system-ui, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('$', 32, 36);
     const sign = new THREE.Mesh(new THREE.PlaneGeometry(0.34, 0.34), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true }));
     sign.position.set(0, 0.4, 0.4); g.add(sign);
     shadowsOn(g); return g;
@@ -709,7 +788,7 @@ import { extraLineZ, saveKey, isSaveCommand, serializeSave, parseSave, advanceOn
 
   // Una línea completa: cinta + máquina + plato + (tolva) + lo que viaja
   function createLine({ x0, len, z, machineOffset, machineColor, bandColor, product, onCollect }) {
-    const L = { x0, x1: x0 + len, z, owned: false, hopperOwned: false, speed: beltSpeed(0) };
+    const L = { x0, x1: x0 + len, z, y0: 0, owned: false, hopperOwned: false, speed: beltSpeed(0) };
     L.start = x0 + 0.6; L.machineX = x0 + machineOffset; L.plateX = L.x1 + PLATE_GAP;
     const cx = (L.x0 + L.x1) / 2;
     const tex = makeBeltTex(len);
@@ -751,6 +830,12 @@ import { extraLineZ, saveKey, isSaveCommand, serializeSave, parseSave, advanceOn
       if (on) { platforms.push(...L.platforms); x = L.start; wait = 0; }
     };
     L.setHopper = on => { L.hopperOwned = on; hopper.visible = on && L.owned; };
+    // Mover la cinta a otra altura (al sótano)
+    const baseHeights = L.platforms.map(pl => [pl.top, pl.bottom]);
+    L.setBaseY = y => {
+      L.y0 = y; group.position.y = y; hopper.position.y = y;
+      L.platforms.forEach((pl, i) => { pl.top = baseHeights[i][0] + y; pl.bottom = baseHeights[i][1] + y; });
+    };
     const collect = () => { onCollect(); wait = 1.5; sinkT = 0; };   // los siguientes pedazos salen en un momento
     L.update = dt => {
       if (!L.owned) return;
@@ -760,15 +845,15 @@ import { extraLineZ, saveKey, isSaveCommand, serializeSave, parseSave, advanceOn
       x = advanceOnBelt(x, L.speed, dt, L.plateX);                    // avanza y se detiene en el plato
       const converted = beltItemIsBox(x, L.machineX);                 // dentro de la máquina los pedazos se transforman
       const onPlate = x >= L.plateX;
-      let y = beltItemY(x, L.x1, L.plateX, BELT_TOP, 0.08);           // altura de la base de lo que viaja
+      let y = L.y0 + beltItemY(x, L.x1, L.plateX, BELT_TOP, 0.08);    // altura de la base de lo que viaja
       // Con tolva: al llegar se hunde en el embudo y se recoge sola
       if (onPlate && L.hopperOwned) { sinkT += dt; y -= Math.min(1, sinkT / 0.4) * 0.6; if (sinkT >= 0.4) { collect(); return; } }
       pieces.visible = !converted; item.visible = converted;
-      if (!converted) { pieces.position.set(x, BELT_TOP, z); pieces.rotation.y += dt * 0.6; }
+      if (!converted) { pieces.position.set(x, L.y0 + BELT_TOP, z); pieces.rotation.y += dt * 0.6; }
       const bob = onPlate && !L.hopperOwned ? Math.sin(t * 4) * 0.06 : 0;
       item.position.set(x, y + itemBaseY + bob, z); item.rotation.y = onPlate ? t * 1.5 : 0;
       // Sin tolva: agarrarlo tocándolo cuando ya está en el plato
-      if (onPlate && !L.hopperOwned && Math.hypot(ps.pos.x - x, ps.pos.z - z) < 1.5 && ps.pos.y < 1.5) collect();
+      if (onPlate && !L.hopperOwned && Math.hypot(ps.pos.x - x, ps.pos.z - z) < 1.5 && Math.abs(ps.pos.y - L.y0) < 1.5) collect();
     };
     return L;
   }
@@ -796,13 +881,14 @@ import { extraLineZ, saveKey, isSaveCommand, serializeSave, parseSave, advanceOn
   // Cintas extra (se compran con monedas): cada una viene con tolva y, como mínimo, la velocidad de la Cinta 2.0
   const extraLines = [];
   const LINE_SPECS = {
-    box: { x0: -10, len: 20, machineOffset: 6, machineColor: 0x3a4658, bandColor: 0xffc400, product: 'box', onCollect: () => lines.box.onCollect() },
-    bag: { x0: -5, len: 15, machineOffset: 5, machineColor: 0x5b2a86, bandColor: 0xffffff, product: 'bag', onCollect: () => lines.bag.onCollect() },
+    box: { machineOffset: 6, machineColor: 0x3a4658, bandColor: 0xffc400, product: 'box', onCollect: () => lines.box.onCollect() },
+    bag: { machineOffset: 5, machineColor: 0x5b2a86, bandColor: 0xffffff, product: 'bag', onCollect: () => lines.bag.onCollect() },
   };
   function ensureExtraLines(type, count) {
     while (extraLines.filter(e => e.type === type).length < count) {
-      const L = createLine({ ...LINE_SPECS[type], z: extraLineZ(extraLines.length) });
-      L.extra = true; L.setOwned(true); L.setHopper(true);
+      const slot = extraLineSlot(type, extraLines.filter(e => e.type === type).length);
+      const L = createLine({ ...LINE_SPECS[type], ...slot });
+      L.extra = true; L.setOwned(true); L.setHopper(true); if (basementOpen) L.setBaseY(BASEMENT.y);
       extraLines.push({ type, L });
     }
     applyBeltSpeeds();
@@ -845,6 +931,24 @@ import { extraLineZ, saveKey, isSaveCommand, serializeSave, parseSave, advanceOn
       assistants.push(a);
     }
   }
+  // Cuerpo de un asistente: 0,8 m de ancho, 0,55 de fondo y 2,1 de alto
+  const assistantBox = a => ({ x: a.pos.x, z: a.pos.z, hw: 0.4, hd: 0.28, a: a.obj.rotation.y, y0: a.pos.y, y1: a.pos.y + 2.1 });
+  // Empuja a los dos la mitad cada uno y revisa que ningún empujón los meta en una pared
+  function separate(a, boxA, b, boxB) {
+    const hit = boxHit(boxA, boxB);
+    if (!hit) return;
+    const m = hit.depth / 2;
+    a.prevX = a.pos.x; a.prevZ = a.pos.z; b.prevX = b.pos.x; b.prevZ = b.pos.z;
+    a.pos.x -= hit.nx * m; a.pos.z -= hit.nz * m;
+    b.pos.x += hit.nx * m; b.pos.z += hit.nz * m;
+    collideWalls(a, platforms, COLL); collideWalls(b, platforms, COLL);
+  }
+  function resolveAssistants() {
+    for (let i = 0; i < assistants.length; i++) {
+      for (let j = i + 1; j < assistants.length; j++) separate(assistants[i], assistantBox(assistants[i]), assistants[j], assistantBox(assistants[j]));
+      separate(ps, boxOf(ps), assistants[i], assistantBox(assistants[i])); // tampoco te atraviesan a ti
+    }
+  }
   function updateAssistant(dt) {
     for (const a of assistants) {
       // Va por la moneda más cercana
@@ -861,6 +965,41 @@ import { extraLineZ, saveKey, isSaveCommand, serializeSave, parseSave, advanceOn
         placeCoin(c);
       }
       a.obj.children[0].position.y = 0.75 + Math.abs(Math.sin(t * 14 + a.pos.x)) * 0.05; // camina
+    }
+  }
+
+  // ---------- Bolsa dorada: cada 35–40 s aparece una en la mitad del gigante (vale 60 monedas) ----------
+  const goldBag = new THREE.Group();
+  (() => {
+    const bag = makeCoinBag(true); bag.scale.setScalar(1.8); goldBag.add(bag);
+    // Rayo de luz para verla desde lejos
+    const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 40, 16, 1, true),
+      new THREE.MeshBasicMaterial({ color: 0xffd23f, transparent: true, opacity: 0.22, depthWrite: false, side: THREE.DoubleSide }));
+    beam.position.y = 20; goldBag.add(beam);
+    goldBag.visible = false; scene.add(goldBag);
+  })();
+  const goldBanner = document.getElementById('goldBanner');
+  let goldTimer = nextGoldBagDelay(Math.random()), goldActive = false, bannerTimer = null;
+  function spawnGoldBag() {
+    const p = randomGiantHalfPoint(Math.random(), Math.random());
+    goldBag.position.set(p.x, 0, p.z); goldBag.visible = true; goldActive = true;
+    goldBanner.classList.add('show');
+    clearTimeout(bannerTimer); bannerTimer = setTimeout(() => goldBanner.classList.remove('show'), 4500);
+  }
+  function updateGoldBag(dt) {
+    if (!loginEl.hidden) return;                 // empieza a contar cuando ya estás jugando
+    goldTimer -= dt;
+    if (goldTimer <= 0) {
+      if (!goldActive) spawnGoldBag();           // si todavía no recogiste la anterior, no aparece otra
+      goldTimer = nextGoldBagDelay(Math.random());
+    }
+    if (!goldActive) return;
+    goldBag.children[0].rotation.y += dt * 1.5;
+    goldBag.children[0].position.y = 0.3 + Math.sin(t * 3) * 0.15;
+    if (Math.hypot(ps.pos.x - goldBag.position.x, ps.pos.z - goldBag.position.z) < 1.9 && ps.pos.y < 3) {
+      save.coins += GOLD_BAG_VALUE; renderCoins();
+      showToast(`¡Bolsa dorada! +${GOLD_BAG_VALUE} monedas`);
+      goldBag.visible = false; goldActive = false;
     }
   }
 
@@ -1126,7 +1265,7 @@ import { extraLineZ, saveKey, isSaveCommand, serializeSave, parseSave, advanceOn
   // ---------- Dormir en tu cama (E, de noche) ----------
   const sleepEl = document.getElementById('sleep'), bedPrompt = document.getElementById('bedPrompt');
   let sleepLeft = 0;
-  const nearMyBed = () => ps.pos.y < 3 && Math.hypot(ps.pos.x - MY_BED.x, ps.pos.z - MY_BED.z) < 3;
+  const nearMyBed = () => ps.pos.y > -1 && ps.pos.y < 3 && Math.hypot(ps.pos.x - MY_BED.x, ps.pos.z - MY_BED.z) < 3;
   function trySleep() {
     if (sleepLeft > 0 || !nearMyBed()) return;
     if (!isNight) { showToast('Solo puedes dormir de noche'); return; }
@@ -1203,6 +1342,8 @@ import { extraLineZ, saveKey, isSaveCommand, serializeSave, parseSave, advanceOn
     updateLaser(dt);
     updateBelt(dt);
     updateAssistant(dt);
+    resolveAssistants();
+    updateGoldBag(dt);
     if (boxHit(boxOf(ps), boxOf(es, ENEMY_SCALE))) die();
 
     const onGround = ps.onGround;
