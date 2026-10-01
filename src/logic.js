@@ -131,8 +131,8 @@ export const normalizeName = name => String(name).trim().replace(/\s+/g, ' ').to
 export const saveKey = name => `rectangulo-verde:partida:${normalizeName(name)}`;
 
 // Convierte la partida en texto para guardarla
-export function serializeSave({ coins, boxes, levels, dayPhase, pos }) {
-  return JSON.stringify({ v: 1, coins, boxes, levels, dayPhase, pos: { x: pos.x, y: pos.y, z: pos.z } });
+export function serializeSave({ coins, boxes, levels, dayPhase, pos, style }) {
+  return JSON.stringify({ v: 1, coins, boxes, levels, dayPhase, pos: { x: pos.x, y: pos.y, z: pos.z }, style });
 }
 
 // Lee una partida guardada. Si el texto está roto o trae valores raros, los ignora.
@@ -147,7 +147,7 @@ export function parseSave(text, knownLevels) {
   const phase = Number.isFinite(d.dayPhase) && d.dayPhase >= 0 && d.dayPhase < 1 ? d.dayPhase : null;
   const p = d.pos || {};
   const pos = [p.x, p.y, p.z].every(Number.isFinite) ? { x: p.x, y: p.y, z: p.z } : null;
-  return { coins: count(d.coins), boxes: count(d.boxes), levels, dayPhase: phase, pos };
+  return { coins: count(d.coins), boxes: count(d.boxes), levels, dayPhase: phase, pos, style: parseStyle(d.style) };
 }
 
 // ---------- Casa grande con sótano ----------
@@ -227,3 +227,46 @@ export function mountainRing(edge = 100, seed = 7) {
 export const blasterStats = v2 => (v2
   ? { speed: 25, reload: 1, color: 0xff2a2a, glow: 0xff8a8a, particles: true }
   : { speed: 30, reload: 1, color: 0x1e6bff, glow: 0x7fb2ff, particles: false });
+
+// ---------- Estilo: sombreros, colores y gafas ----------
+// Se compran en la tienda de estilo (en una esquina de tu mitad) y se ponen o quitan en el armario de tu casa.
+export const DEFAULT_COLOR = 'green';
+export const COSMETICS = [
+  { id: 'capBlue', type: 'hat', name: 'Gorra azul', price: 30, color: 0x2f7de1 },
+  { id: 'colorBlue', type: 'color', name: 'Azul', price: 20, color: 0x2f7de1 },
+  { id: 'colorYellow', type: 'color', name: 'Amarillo', price: 20, color: 0xffd23f },
+  { id: 'colorPurple', type: 'color', name: 'Morado', price: 20, color: 0x9b4de0 },
+  { id: 'colorOrange', type: 'color', name: 'Naranja', price: 20, color: 0xff8a3d },
+  { id: 'colorPink', type: 'color', name: 'Rosa', price: 20, color: 0xf15bb5 },
+  { id: 'colorBlack', type: 'color', name: 'Negro', price: 20, color: 0x2b2f35 },
+  { id: 'glassesPixel', type: 'glasses', name: 'Gafas pixel', price: 40 },
+];
+// Tu verde de siempre: no se compra, siempre lo tienes
+export const GREEN = { id: DEFAULT_COLOR, type: 'color', name: 'Verde (el tuyo)', price: 0, color: 0x2fae4e };
+export const cosmeticById = id => (id === DEFAULT_COLOR ? GREEN : COSMETICS.find(c => c.id === id));
+export const emptyStyle = () => ({ owned: [], equipped: { hat: null, color: DEFAULT_COLOR, glasses: null } });
+
+// Ponerse o quitarse algo del armario. Solo se puede usar lo que compraste.
+// Sombrero y gafas se ponen y se quitan; el color se cambia (quitarte un color te deja el verde).
+export function toggleEquip(style, id) {
+  const item = cosmeticById(id);
+  if (!item || (id !== DEFAULT_COLOR && !style.owned.includes(id))) return style;
+  const eq = { ...style.equipped };
+  if (item.type === 'color') eq.color = eq.color === id ? DEFAULT_COLOR : id;
+  else eq[item.type] = eq[item.type] === id ? null : id;
+  return { owned: [...style.owned], equipped: eq };
+}
+
+// Lee el estilo guardado; ignora cosas que no existen o que no compraste
+export function parseStyle(raw) {
+  const st = emptyStyle();
+  if (!raw || typeof raw !== 'object') return st;
+  const known = new Set(COSMETICS.map(c => c.id));
+  st.owned = Array.isArray(raw.owned) ? [...new Set(raw.owned.filter(id => known.has(id)))] : [];
+  const eq = raw.equipped || {};
+  const okFor = (type, id) => id && st.owned.includes(id) && cosmeticById(id).type === type;
+  if (okFor('hat', eq.hat)) st.equipped.hat = eq.hat;
+  if (okFor('glasses', eq.glasses)) st.equipped.glasses = eq.glasses;
+  if (okFor('color', eq.color)) st.equipped.color = eq.color;
+  return st;
+}

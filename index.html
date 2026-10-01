@@ -57,7 +57,7 @@
   #saveBtn:active { transform:translateY(3px); box-shadow:0 1px 0 #0d5a22, 0 4px 10px rgba(0,0,0,.3); }
   #saveBtn:focus-visible { outline:3px solid #1e6bff; outline-offset:3px; }
   /* Tienda (P) */
-  #shop { position:fixed; inset:0; display:grid; place-items:center; padding:16px; background:rgba(10,20,14,.55); backdrop-filter:blur(3px); z-index:20; }
+  #shop, .panel { position:fixed; inset:0; display:grid; place-items:center; padding:16px; background:rgba(10,20,14,.55); backdrop-filter:blur(3px); z-index:20; }
   .shop-card { width:min(560px, 100%); max-height:calc(100% - 32px); overflow:auto; background:#fbfaf5; color:#16301f; border-radius:14px; box-shadow:0 20px 50px rgba(0,0,0,.35); padding:18px; display:flex; flex-direction:column; gap:12px; }
   .shop-head { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
   .shop-head h2 { margin:0; font:400 30px/1 Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif; letter-spacing:.02em; color:#1f8a3b; }
@@ -71,8 +71,12 @@
   .shop-item .buy:disabled { background:#d9dfdb; color:#6b7a70; cursor:not-allowed; }
   .shop-item .buy:focus-visible, .shop-head button:focus-visible { outline:3px solid #1e6bff; outline-offset:2px; }
   @media (max-width:420px) { .shop-item { grid-template-columns:1fr; } .shop-item .buy { grid-column:1; grid-row:auto; } }
+  /* Tienda de estilo y armario */
+  .swatch { display:inline-block; width:14px; height:14px; border-radius:4px; margin-right:6px; vertical-align:-2px; box-shadow:inset 0 0 0 1px rgba(0,0,0,.25); }
+  .shop-item .buy.on { background:#c98a00; }
+  .empty-note { margin:0; padding:12px; border-radius:10px; background:#fff; box-shadow:inset 0 0 0 1px #dde5df; font:14px/1.45 system-ui, sans-serif; color:#4a5f52; }
   /* Dormir */
-  #bedPrompt { position:fixed; left:50%; top:62%; transform:translateX(-50%); margin:0; padding:8px 14px; border-radius:8px; background:rgba(22,48,31,.85); color:#fff; font:600 15px system-ui, sans-serif; pointer-events:none; white-space:nowrap; }
+  #actionPrompt, #bedPrompt { position:fixed; left:50%; top:62%; transform:translateX(-50%); margin:0; padding:8px 14px; border-radius:8px; background:rgba(22,48,31,.85); color:#fff; font:600 15px system-ui, sans-serif; pointer-events:none; white-space:nowrap; }
   #sleep { position:fixed; inset:0; display:grid; place-items:center; background:#05070f; opacity:0; pointer-events:none; transition:opacity 1s; }
   #sleep span { font:400 clamp(36px, 8vw, 72px)/1 Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif; color:#cdd8ff; letter-spacing:.04em; }
   #sleep.on { opacity:1; }
@@ -90,7 +94,7 @@
 <canvas id="game"></canvas>
 <div class="hud">
   <b>Rectángulo Verde</b> · <span id="playerName"></span><br>
-  <span class="keys">Moverse: <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> · Saltar: <kbd>Espacio</kbd><br>Girar cámara: <kbd>←</kbd><kbd>→</kbd> o arrastra · Primera persona: <kbd>V</kbd> · Disparar láser: <kbd>clic</kbd><br>Tienda: <kbd>P</kbd> · Dormir en tu cama (de noche): <kbd>E</kbd> · Guardar: botón <b>GUARDAR</b><br></span>
+  <span class="keys">Moverse: <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> · Saltar: <kbd>Espacio</kbd><br>Girar cámara: <kbd>←</kbd><kbd>→</kbd> o arrastra · Primera persona: <kbd>V</kbd> · Disparar láser: <kbd>clic</kbd><br>Tienda: <kbd>P</kbd> · Dormir en tu cama (de noche): <kbd>E</kbd> · Guardar: botón <b>GUARDAR</b><br>Tienda de estilo (esquina de tu mitad) y armario (en tu casa): acércate y pulsa <kbd>E</kbd><br></span>
   El gigante rojo <b style="color:#d0101a">no puede cruzar</b> la <span style="color:#b98a00;font-weight:700">línea amarilla</span>. Detrás de ella estás a salvo.<br>De noche el gigante <b>duerme</b>: no te acerques o se despierta.<br>Recoge <b style="color:#b07800">monedas</b> en su zona y gástalas en la <b>tienda</b> (<kbd>P</kbd>).
 </div>
 <div class="coins" aria-label="Monedas"><i></i><span id="coins">0</span></div>
@@ -118,6 +122,19 @@
     <div id="shopItems"></div>
   </div>
 </div>
+<div id="styleShop" class="panel" hidden role="dialog" aria-modal="true" aria-labelledby="styleTitle">
+  <div class="shop-card">
+    <div class="shop-head"><h2 id="styleTitle">TIENDA DE ESTILO</h2><span class="wallet" id="styleWallet">0 monedas</span><button type="button" data-close>Cerrar (E)</button></div>
+    <div id="styleItems"></div>
+  </div>
+</div>
+<div id="wardrobe" class="panel" hidden role="dialog" aria-modal="true" aria-labelledby="wardrobeTitle">
+  <div class="shop-card">
+    <div class="shop-head"><h2 id="wardrobeTitle">ARMARIO</h2><button type="button" data-close>Cerrar (E)</button></div>
+    <div id="wardrobeItems"></div>
+  </div>
+</div>
+<p id="actionPrompt" hidden></p>
 <p id="bedPrompt" hidden>Pulsa <kbd>E</kbd> para dormir hasta la mañana</p>
 <div id="sleep" aria-live="polite"><span>Zzz… durmiendo</span></div>
 <p id="lockHint" hidden>Haz clic para mirar con el ratón (Esc para soltarlo)</p>
@@ -126,8 +143,8 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module">
-import { blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, missingFor, canAfford, collideWalls, extraLineSlot, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
-         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-12'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
+import { COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, missingFor, canAfford, collideWalls, extraLineSlot, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
+         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-13'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
 (() => {
   const canvas = document.getElementById('game');
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -312,6 +329,7 @@ import { blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_
     removeParts(mediumHouse);
     const S = STAIRWELL, B = BASEMENT;
     buildHouse(BIG_HOUSE, [], S);
+    placeWardrobe(BIG_HOUSE);
     // Suelo de afuera con el hueco de la escalera
     ground.geometry.dispose(); ground.geometry = groundGeometry(S);
     // Escalera: 18 escalones de 0,39 m de alto y 0,6 m de fondo, hasta el piso del sótano
@@ -378,6 +396,28 @@ import { blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_
     player.add(eye);
   });
   scene.add(player);
+  // Gorra azul y gafas pixel (van pegadas al cuerpo para moverse con él)
+  function makeCap(color) {
+    const g = new THREE.Group(), mat = new THREE.MeshLambertMaterial({ color });
+    const crown = new THREE.Mesh(new THREE.BoxGeometry(1.06, 0.3, 0.66), mat); crown.position.y = 0.15; g.add(crown);
+    const brim = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.06, 0.42), mat); brim.position.set(0, 0.03, 0.5); g.add(brim);
+    const button = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.06, 0.12), new THREE.MeshLambertMaterial({ color: 0xffffff })); button.position.y = 0.33; g.add(button);
+    g.traverse(m => { if (m.isMesh) m.castShadow = true; });
+    return g;
+  }
+  function makePixelGlasses() {
+    const g = new THREE.Group(), black = new THREE.MeshBasicMaterial({ color: 0x0b0b0b }), white = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const px = (w, h, x, y, mat = black) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.05), mat); m.position.set(x, y, 0); g.add(m); };
+    px(1.0, 0.08, 0, 0.08);                    // barra de arriba
+    for (const sx of [-1, 1]) {                // dos lentes de "pixeles"
+      px(0.34, 0.12, sx * 0.24, 0);
+      px(0.22, 0.08, sx * 0.24 - 0.06, -0.1);
+      px(0.06, 0.06, sx * 0.24 - 0.08, 0.02, white); px(0.06, 0.06, sx * 0.24 + 0.02, -0.04, white); // brillo
+    }
+    return g;
+  }
+  const capMesh = makeCap(0x2f7de1); capMesh.position.y = H / 2; capMesh.visible = false; body.add(capMesh);
+  const glassesMesh = makePixelGlasses(); glassesMesh.position.set(0, H * 0.78 - H / 2, D / 2 + 0.06); glassesMesh.visible = false; body.add(glassesMesh);
 
   // Enemigo: rectángulo rojo con ojos enojados
   const enemy = new THREE.Group();
@@ -440,10 +480,12 @@ import { blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_
     // Tienda: P la abre y la cierra (Esc también la cierra)
     if (e.code === 'KeyP' && !e.repeat) { e.preventDefault(); toggleShop(); return; }
     if (!shopEl.hidden) { if (e.code === 'Escape') toggleShop(false); return; }
+    const openPanel = document.querySelector('.panel:not([hidden])');
+    if (openPanel) { if ((e.code === 'Escape' || e.code === 'KeyE') && !e.repeat) closePanels(); return; }
     keys[e.code] = true;
     if (e.code === 'Space' || e.code.startsWith('Arrow')) e.preventDefault();
     if (e.code === 'KeyV' && !e.repeat) setFirstPerson(!firstPerson);
-    if (e.code === 'KeyE' && !e.repeat) trySleep();
+    if (e.code === 'KeyE' && !e.repeat) { if (!tryStyleInteract()) trySleep(); }
   });
   addEventListener('keyup', e => { keys[e.code] = false; });
 
@@ -598,7 +640,7 @@ import { blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_
     clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
   }
   // Progreso de esta partida: se guarda con el botón GUARDAR, por usuario
-  const save = { coins: 0, boxes: 0, levels: { belt: 0, hopper: 0, belt2: 0, turbo: 0, bigHouse: 0, transformer: 0, hopper2: 0, lineBox: 0, lineBag: 0, assistant2: 0, assistant: 0, assistSpeed: 0, blaster: 0, blaster2: 0 } };
+  const save = { coins: 0, boxes: 0, style: emptyStyle(), levels: { belt: 0, hopper: 0, belt2: 0, turbo: 0, bigHouse: 0, transformer: 0, hopper2: 0, lineBox: 0, lineBag: 0, assistant2: 0, assistant: 0, assistSpeed: 0, blaster: 0, blaster2: 0 } };
   try { localStorage.removeItem('rectangulo-verde-tienda'); } catch (e) {} // borra el guardado de versiones anteriores
 
   function renderCoins() {
@@ -948,6 +990,131 @@ import { blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_
     }
   }
 
+  // ---------- Estilo: tienda en una esquina de tu mitad y armario en tu casa ----------
+  // Cómo te ves según lo que tienes puesto
+  function applyStyle() {
+    const eq = save.style.equipped;
+    body.material.color.setHex(cosmeticById(eq.color).color);
+    capMesh.visible = !!eq.hat; glassesMesh.visible = !!eq.glasses;
+  }
+  // Puesto de la tienda de estilo, en la esquina de atrás a la izquierda (al pie de las montañas)
+  const STYLE_STALL = { x: -84, z: 88 };
+  (() => {
+    const { x, z } = STYLE_STALL;
+    const wood = new THREE.MeshLambertMaterial({ color: 0x8a5a33 }), pink = new THREE.MeshLambertMaterial({ color: 0xf15bb5 }), white = new THREE.MeshLambertMaterial({ color: 0xffffff });
+    const piece = (w, h, d, mat, px, py, pz, solid) => {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(px, py, pz); m.castShadow = m.receiveShadow = true; scene.add(m);
+      if (solid) platforms.push({ x: px, z: pz, hw: w / 2, hd: d / 2, top: py + h / 2, bottom: py - h / 2 });
+    };
+    piece(5, 1.1, 0.8, wood, x, 0.55, z - 1, true);                    // mostrador (mira hacia el campo)
+    piece(5.02, 0.3, 0.82, pink, x, 0.9, z - 1, false);
+    piece(5, 2, 0.4, wood, x, 1, z + 1.9, true);                        // estante de atrás
+    for (const [px, pz] of [[-2.8, 2.1], [2.8, 2.1], [-2.8, -1.3], [2.8, -1.3]]) piece(0.18, 3.2, 0.18, wood, x + px, 1.6, z + pz, true);
+    piece(6.2, 0.18, 4, pink, x, 3.29, z + 0.4, false);                 // toldo rosa con rayas blancas
+    for (const sx of [-2, 0, 2]) piece(0.8, 0.2, 4.02, white, x + sx, 3.3, z + 0.4, false);
+    // En el mostrador se ven una gorra y unas gafas de muestra
+    const cap = makeCap(0x2f7de1); cap.scale.setScalar(0.8); cap.position.set(x - 1.2, 1.1, z - 1); scene.add(cap);
+    const gl = makePixelGlasses(); gl.position.set(x + 1.2, 1.2, z - 1.3); scene.add(gl);
+    // Cartel
+    const c = document.createElement('canvas'); c.width = 256; c.height = 128;
+    const g = c.getContext('2d');
+    g.fillStyle = '#fff'; g.beginPath(); g.roundRect(4, 4, 248, 120, 18); g.fill();
+    g.textAlign = 'center'; g.fillStyle = '#f15bb5'; g.font = '48px Impact, "Arial Narrow Bold", sans-serif'; g.fillText('ESTILO', 128, 60);
+    g.fillStyle = '#16301f'; g.font = 'bold 20px system-ui, sans-serif'; g.fillText('sombreros · colores · gafas', 128, 98);
+    const sign = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c) })); sign.scale.set(4, 2, 1); sign.position.set(x, 4.6, z - 1.2); scene.add(sign);
+  })();
+  const nearStall = () => ps.pos.y > -1 && ps.pos.y < 2 && Math.hypot(ps.pos.x - STYLE_STALL.x, ps.pos.z - (STYLE_STALL.z - 2.6)) < 3.4;
+
+  // Armario: en una esquina de tu casa (se muda a la casa grande cuando la compras)
+  let wardrobe = null;
+  function placeWardrobe(house) {
+    if (wardrobe) { for (const m of wardrobe.meshes) scene.remove(m); const i = platforms.indexOf(wardrobe.pl); if (i >= 0) platforms.splice(i, 1); }
+    const x0 = house.x0 + 0.35, x1 = x0 + 0.7, z1 = house.z1 - 0.35, z0 = z1 - 1.6;   // pegado a la pared de la izquierda, al fondo
+    const brown = new THREE.MeshLambertMaterial({ color: 0x7a4a2a }), dark = new THREE.MeshLambertMaterial({ color: 0x4a2c18 }), gold = new THREE.MeshLambertMaterial({ color: 0xffc400 });
+    const meshes = [];
+    const add = (w, h, d, mat, px, py, pz) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(px, py, pz); m.castShadow = m.receiveShadow = true; scene.add(m); meshes.push(m); };
+    add(x1 - x0, 2.4, z1 - z0, brown, (x0 + x1) / 2, 1.2, (z0 + z1) / 2);        // mueble
+    add(0.04, 2.2, 0.04, dark, x1 + 0.01, 1.2, (z0 + z1) / 2);                    // separación de las dos puertas
+    for (const dz of [-0.12, 0.12]) add(0.05, 0.22, 0.05, gold, x1 + 0.03, 1.25, (z0 + z1) / 2 + dz); // manijas
+    add(x1 - x0 + 0.1, 0.1, z1 - z0 + 0.1, dark, (x0 + x1) / 2, 2.45, (z0 + z1) / 2);                // remate de arriba
+    const pl = { x: (x0 + x1) / 2, z: (z0 + z1) / 2, hw: (x1 - x0) / 2, hd: (z1 - z0) / 2, top: 2.5, bottom: 0 };
+    platforms.push(pl);
+    wardrobe = { meshes, pl, spot: { x: x1 + 1, z: (z0 + z1) / 2 } };
+  }
+  placeWardrobe({ x0: 20, x1: 32, z0: 4, z1: 14 });   // casa mediana
+  const nearWardrobe = () => wardrobe && ps.pos.y > -1 && ps.pos.y < 2 && Math.hypot(ps.pos.x - wardrobe.spot.x, ps.pos.z - wardrobe.spot.z) < 2.2;
+
+  // Paneles
+  const styleShopEl = document.getElementById('styleShop'), wardrobeEl = document.getElementById('wardrobe');
+  const styleItems = document.getElementById('styleItems'), wardrobeItems = document.getElementById('wardrobeItems');
+  const actionPrompt = document.getElementById('actionPrompt');
+  for (const el of [styleShopEl, wardrobeEl]) {
+    el.addEventListener('click', e => { if (e.target === el || e.target.closest('[data-close]')) closePanels(); });
+  }
+  function openPanel(el) {
+    for (const k in keys) keys[k] = false;
+    if (isLocked()) document.exitPointerLock();
+    el.hidden = false;
+    (el === styleShopEl ? renderStyleShop : renderWardrobe)();
+  }
+  function closePanels() { styleShopEl.hidden = wardrobeEl.hidden = true; }
+  function tryStyleInteract() {
+    if (nearStall()) { openPanel(styleShopEl); return true; }
+    if (nearWardrobe()) { openPanel(wardrobeEl); return true; }
+    return false;
+  }
+  function updateStylePrompt() {
+    const txt = nearStall() ? 'Pulsa <kbd>E</kbd> para ver la tienda de estilo' : nearWardrobe() ? 'Pulsa <kbd>E</kbd> para abrir el armario' : '';
+    actionPrompt.hidden = !txt || !!document.querySelector('.panel:not([hidden])');
+    if (txt && actionPrompt.innerHTML !== txt) actionPrompt.innerHTML = txt;
+  }
+  const swatch = c => `<span class="swatch" style="background:#${c.toString(16).padStart(6, '0')}"></span>`;
+  const GROUPS = [['hat', 'Sombreros'], ['color', 'Colores para tu rectángulo'], ['glasses', 'Gafas']];
+  function renderStyleShop() {
+    document.getElementById('styleWallet').textContent = amountText(save.coins, 'coins');
+    let html = '';
+    for (const [type, title] of GROUPS) {
+      html += `<p class="shop-group">${title}</p>`;
+      for (const it of COSMETICS.filter(c => c.type === type)) {
+        const owned = save.style.owned.includes(it.id), short = it.price - save.coins;
+        const label = owned ? 'Ya es tuyo' : short > 0 ? `Te faltan ${amountText(short, 'coins')}` : `Comprar · ${amountText(it.price, 'coins')}`;
+        html += `<div class="shop-item"><h3>${it.color !== undefined && type === 'color' ? swatch(it.color) : ''}${it.name}</h3><p>${owned ? 'Póntelo en el armario de tu casa.' : `Cuesta ${amountText(it.price, 'coins')}.`}</p>` +
+                `<button type="button" class="buy" id="style-${it.id}" data-id="${it.id}" ${owned || short > 0 ? 'disabled' : ''}>${label}</button></div>`;
+      }
+    }
+    styleItems.innerHTML = html;
+  }
+  styleItems.addEventListener('click', e => {
+    const b = e.target.closest('.buy'); if (!b || b.disabled) return;
+    const it = cosmeticById(b.dataset.id);
+    if (save.style.owned.includes(it.id) || save.coins < it.price) return;
+    save.coins -= it.price; save.style.owned.push(it.id); renderCoins(); renderStyleShop();
+    showToast(`¡Compraste: ${it.name}! Póntelo en el armario de tu casa`);
+  });
+  function renderWardrobe() {
+    const eq = save.style.equipped;
+    const owned = save.style.owned.map(cosmeticById);
+    let html = '';
+    for (const [type, title] of GROUPS) {
+      const items = type === 'color' ? [cosmeticById(DEFAULT_COLOR), ...owned.filter(c => c.type === 'color')] : owned.filter(c => c.type === type);
+      if (!items.length) continue;
+      html += `<p class="shop-group">${title}</p>`;
+      for (const it of items) {
+        const on = eq[type] === it.id;
+        const label = type === 'color' ? (on ? 'Lo estás usando' : 'Usar este color') : on ? 'Quitármelo' : 'Ponérmelo';
+        html += `<div class="shop-item"><h3>${type === 'color' ? swatch(it.color) : ''}${it.name}</h3><p>${on ? 'Lo llevas puesto.' : 'Guardado en tu armario.'}</p>` +
+                `<button type="button" class="buy${on ? ' on' : ''}" id="wear-${it.id}" data-id="${it.id}" ${type === 'color' && on ? 'disabled' : ''}>${label}</button></div>`;
+      }
+    }
+    if (!save.style.owned.length) html += '<p class="empty-note">Todavía no compraste nada. La tienda de estilo está en la esquina de tu mitad, al pie de las montañas.</p>';
+    wardrobeItems.innerHTML = html;
+  }
+  wardrobeItems.addEventListener('click', e => {
+    const b = e.target.closest('.buy'); if (!b || b.disabled) return;
+    save.style = toggleEquip(save.style, b.dataset.id);
+    applyStyle(); renderWardrobe();
+  });
+
   renderCoins();
 
   // ---------- Usuario y guardado (localStorage) ----------
@@ -971,7 +1138,7 @@ import { blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_
   function saveGame() {
     if (!userName) return;
     try {
-      localStorage.setItem(saveKey(userName), serializeSave({ coins: save.coins, boxes: save.boxes, levels: save.levels, dayPhase, pos: ps.pos }));
+      localStorage.setItem(saveKey(userName), serializeSave({ coins: save.coins, boxes: save.boxes, levels: save.levels, dayPhase, pos: ps.pos, style: save.style }));
     } catch (e) {
       showToast('No se pudo guardar: este navegador no deja guardar datos', true);
       return;
@@ -994,6 +1161,7 @@ import { blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_
       if (save.levels[it.id] > 0) it.apply(save.levels[it.id]);
     }
     quietToasts = false;
+    save.style = data.style; applyStyle();
     renderCoins();
     return true;
   }
@@ -1277,6 +1445,7 @@ import { blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_
     const dt = Math.min(clock.getDelta(), 0.05);
     t += dt;
     updateSleep(dt);
+    updateStylePrompt();
 
     let fx = 0, fz = 0;
     if (keys.KeyW || keys.ArrowUp) fz -= 1;
@@ -1288,7 +1457,8 @@ import { blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_
     if (keys.ArrowLeft) camYaw += CAM_TURN * dt;
     if (keys.ArrowRight) camYaw -= CAM_TURN * dt;
     fx += joy.x; fz += joy.y;
-    if (sleepLeft > 0 || !shopEl.hidden || !loginEl.hidden) fx = fz = 0; // dormido, en la tienda o eligiendo usuario no te mueves
+    const busy = sleepLeft > 0 || !shopEl.hidden || !loginEl.hidden || !!document.querySelector('.panel:not([hidden])');
+    if (busy) fx = fz = 0; // dormido, en una tienda, en el armario o eligiendo usuario no te mueves
     const len = Math.hypot(fx, fz);
     let moving = false;
     if (len > 0.1) {
@@ -1306,7 +1476,7 @@ import { blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_
     if (warnTimer > 0 && (warnTimer -= dt) <= 0) warn.classList.remove('show');
 
     if (onTrampoline(ps) && ps.vel.y <= 0) { trampolineLaunch(ps); showToast('¡BOING! 100 metros'); }
-    physics(ps, dt, keys.Space && sleepLeft <= 0 && shopEl.hidden && loginEl.hidden, stats.jump);
+    physics(ps, dt, keys.Space && !busy, stats.jump);
 
     // Enemigo: funciona como un killbrick que te persigue
     updateEnemy(dt);

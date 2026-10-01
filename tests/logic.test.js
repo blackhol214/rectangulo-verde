@@ -7,6 +7,7 @@ import {
   BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, missingFor, canAfford,
   mountainRing, MOUNTAIN_WALL_INSET, seededRandom,
   blasterStats,
+  COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, parseStyle, cosmeticById,
 } from '../src/logic.js';
 
 // Caja de un personaje normal (1 × 0,6 × 2 m) en (x, z), girada `a` radianes
@@ -251,7 +252,8 @@ describe('guardado por usuario', () => {
   });
 
   it('lo que se guarda se recupera igual', () => {
-    const game = { coins: 130, boxes: 7, levels: { belt: 1, hopper: 1, assistant: 0, speed: 3 }, dayPhase: 0.375, pos: { x: 4, y: 0, z: 12.5 } };
+    const game = { coins: 130, boxes: 7, levels: { belt: 1, hopper: 1, assistant: 0, speed: 3 }, dayPhase: 0.375, pos: { x: 4, y: 0, z: 12.5 },
+      style: { owned: ['capBlue', 'colorPink'], equipped: { hat: 'capBlue', color: 'colorPink', glasses: null } } };
     expect(parseSave(serializeSave(game), LEVELS)).toEqual(game);
   });
 
@@ -265,7 +267,7 @@ describe('guardado por usuario', () => {
   it('ignora valores raros y mejoras que ya no existen', () => {
     const raw = JSON.stringify({ v: 1, coins: -50, boxes: 2.9, levels: { belt: 1, magnet: 4, speed: 'mucho' }, dayPhase: 3, pos: { x: 1, y: 'a', z: 2 } });
     expect(parseSave(raw, LEVELS)).toEqual({
-      coins: 0, boxes: 2, levels: { belt: 1, hopper: 0, assistant: 0, speed: 0 }, dayPhase: null, pos: null,
+      coins: 0, boxes: 2, levels: { belt: 1, hopper: 0, assistant: 0, speed: 0 }, dayPhase: null, pos: null, style: emptyStyle(),
     });
   });
 });
@@ -385,5 +387,44 @@ describe('bláster 2.0', () => {
   });
   it('el bláster normal sigue igual: azul, 30 m/s y sin partículas', () => {
     expect(blasterStats(false)).toMatchObject({ speed: 30, reload: 1, color: 0x1e6bff, particles: false });
+  });
+});
+
+describe('estilo: sombreros, colores y gafas', () => {
+  it('la tienda tiene 1 gorra azul, 6 colores y unas gafas pixel', () => {
+    expect(COSMETICS.filter(c => c.type === 'hat').map(c => c.name)).toEqual(['Gorra azul']);
+    expect(COSMETICS.filter(c => c.type === 'color')).toHaveLength(6);
+    expect(COSMETICS.filter(c => c.type === 'glasses').map(c => c.name)).toEqual(['Gafas pixel']);
+    expect(cosmeticById(DEFAULT_COLOR).name).toMatch(/Verde/);
+  });
+
+  it('se empieza con el verde y sin nada puesto', () => {
+    expect(emptyStyle().equipped).toEqual({ hat: null, color: DEFAULT_COLOR, glasses: null });
+  });
+
+  it('solo te puedes poner lo que compraste', () => {
+    expect(toggleEquip(emptyStyle(), 'capBlue').equipped.hat).toBeNull();
+    const st = { owned: ['capBlue'], equipped: emptyStyle().equipped };
+    expect(toggleEquip(st, 'capBlue').equipped.hat).toBe('capBlue');
+  });
+
+  it('ponerte algo dos veces te lo quita', () => {
+    let st = { owned: ['capBlue', 'glassesPixel'], equipped: emptyStyle().equipped };
+    st = toggleEquip(st, 'glassesPixel'); expect(st.equipped.glasses).toBe('glassesPixel');
+    st = toggleEquip(st, 'glassesPixel'); expect(st.equipped.glasses).toBeNull();
+  });
+
+  it('solo tienes un color a la vez; quitártelo te deja el verde', () => {
+    let st = { owned: ['colorBlue', 'colorPink'], equipped: emptyStyle().equipped };
+    st = toggleEquip(st, 'colorBlue'); expect(st.equipped.color).toBe('colorBlue');
+    st = toggleEquip(st, 'colorPink'); expect(st.equipped.color).toBe('colorPink');
+    st = toggleEquip(st, 'colorPink'); expect(st.equipped.color).toBe(DEFAULT_COLOR);
+  });
+
+  it('un guardado raro no rompe nada: ignora lo que no existe o no compraste', () => {
+    expect(parseStyle(null)).toEqual(emptyStyle());
+    const st = parseStyle({ owned: ['capBlue', 'capBlue', 'sombreroInventado'], equipped: { hat: 'capBlue', color: 'colorPink', glasses: 'glassesPixel' } });
+    expect(st.owned).toEqual(['capBlue']);
+    expect(st.equipped).toEqual({ hat: 'capBlue', color: DEFAULT_COLOR, glasses: null });
   });
 });
