@@ -270,3 +270,26 @@ export function parseStyle(raw) {
   if (okFor('color', eq.color)) st.equipped.color = eq.color;
   return st;
 }
+
+// ---------- Sonido ----------
+// Frecuencia de una nota ("E4" = MI 4). La4 = 440 Hz.
+export function noteFrequency(name) {
+  const m = /^([A-G])(#?)(-?\d)$/.exec(name);
+  if (!m) return NaN;
+  const semis = { C: -9, D: -7, E: -5, F: -4, G: -2, A: 0, B: 2 }[m[1]] + (m[2] ? 1 : 0) + (Number(m[3]) - 4) * 12;
+  return 440 * 2 ** (semis / 12);
+}
+// Volumen del bosque: de día normal, de noche un 15% más bajo (day: 1 = día, 0 = noche)
+export const ambientVolume = day => 0.85 + 0.15 * Math.min(1, Math.max(0, day));
+// Efecto "bitcrushed": repite cada muestra `hold` veces (menos calidad) y la redondea a `bits` bits (sonido de videojuego viejo)
+export function bitcrush(samples, bits, hold) {
+  const levels = 2 ** (bits - 1), out = new Float32Array(samples.length);
+  let held = 0;
+  for (let i = 0; i < samples.length; i++) {
+    if (i % hold === 0) held = Math.round(Math.max(-1, Math.min(1, samples[i])) * levels) / levels;
+    out[i] = held;
+  }
+  return out;
+}
+// Cada cuánto suena un paso según qué tan rápido vas (a 12 m/s, un paso cada 0,32 s)
+export const footstepInterval = speed => 0.32 * (12 / Math.max(1, speed));

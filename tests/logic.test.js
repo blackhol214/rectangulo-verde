@@ -8,6 +8,7 @@ import {
   mountainRing, MOUNTAIN_WALL_INSET, seededRandom,
   blasterStats,
   COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, parseStyle, cosmeticById,
+  noteFrequency, ambientVolume, bitcrush, footstepInterval,
 } from '../src/logic.js';
 
 // Caja de un personaje normal (1 × 0,6 × 2 m) en (x, z), girada `a` radianes
@@ -426,5 +427,32 @@ describe('estilo: sombreros, colores y gafas', () => {
     const st = parseStyle({ owned: ['capBlue', 'capBlue', 'sombreroInventado'], equipped: { hat: 'capBlue', color: 'colorPink', glasses: 'glassesPixel' } });
     expect(st.owned).toEqual(['capBlue']);
     expect(st.equipped).toEqual({ hat: 'capBlue', color: DEFAULT_COLOR, glasses: null });
+  });
+});
+
+describe('sonido', () => {
+  it('la moneda suena en MI 4 (329,63 Hz)', () => {
+    expect(noteFrequency('A4')).toBe(440);
+    expect(noteFrequency('E4')).toBeCloseTo(329.63, 2);
+    expect(noteFrequency('E5')).toBeCloseTo(659.26, 2);
+    expect(noteFrequency('nada')).toBeNaN();
+  });
+
+  it('el bosque suena normal de día y un 15% más bajo de noche', () => {
+    expect(ambientVolume(1)).toBe(1);
+    expect(ambientVolume(0)).toBeCloseTo(0.85);
+    expect(ambientVolume(0.5)).toBeCloseTo(0.925);
+  });
+
+  it('el efecto bitcrush deja pocos niveles y repite muestras', () => {
+    const wave = Float32Array.from({ length: 64 }, (_, i) => Math.sin(i / 3));
+    const out = bitcrush(wave, 3, 4);
+    expect(new Set(out).size).toBeLessThanOrEqual(2 ** 3 + 1);       // 3 bits: muy pocos niveles
+    for (let i = 0; i < 64; i += 4) expect(new Set(out.slice(i, i + 4)).size).toBe(1); // cada 4 muestras, la misma
+  });
+
+  it('los pasos van más seguido si corres más rápido', () => {
+    expect(footstepInterval(12)).toBeCloseTo(0.32);
+    expect(footstepInterval(24)).toBeCloseTo(0.16);
   });
 });

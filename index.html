@@ -76,6 +76,12 @@
   .shop-item .buy.on { background:#c98a00; }
   .empty-note { margin:0; padding:12px; border-radius:10px; background:#fff; box-shadow:inset 0 0 0 1px #dde5df; font:14px/1.45 system-ui, sans-serif; color:#4a5f52; }
   /* Dormir */
+  /* Aviso al iniciar sesión: el juego sigue en desarrollo */
+  #devAlert { position:fixed; left:50%; bottom:calc(110px + env(safe-area-inset-bottom,0px)); transform:translateX(-50%); z-index:22; width:min(640px, calc(100% - 32px)); display:flex; align-items:flex-start; gap:12px; margin:0; padding:12px 14px; border-radius:12px; background:#fff4d6; color:#5a3a00; box-shadow:0 0 0 2px #e0a800, 0 10px 26px rgba(0,0,0,.3); font:14px/1.45 system-ui, sans-serif; }
+  #devAlert strong { color:#b45309; letter-spacing:.04em; }
+  #devAlert p { margin:0; flex:1; }
+  #devAlert button { flex:none; border:0; border-radius:6px; padding:4px 9px; font:700 14px system-ui, sans-serif; background:#e0a800; color:#3a2600; cursor:pointer; }
+  #devAlert button:focus-visible { outline:3px solid #1e6bff; outline-offset:2px; }
   #actionPrompt, #bedPrompt { position:fixed; left:50%; top:62%; transform:translateX(-50%); margin:0; padding:8px 14px; border-radius:8px; background:rgba(22,48,31,.85); color:#fff; font:600 15px system-ui, sans-serif; pointer-events:none; white-space:nowrap; }
   #sleep { position:fixed; inset:0; display:grid; place-items:center; background:#05070f; opacity:0; pointer-events:none; transition:opacity 1s; }
   #sleep span { font:400 clamp(36px, 8vw, 72px)/1 Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif; color:#cdd8ff; letter-spacing:.04em; }
@@ -134,6 +140,7 @@
     <div id="wardrobeItems"></div>
   </div>
 </div>
+<div id="devAlert" role="status" hidden><p><strong>ALERTA:</strong> Este juego sigue en desarrollo. Cuando esté en su versión final, todo tu progreso se eliminará.</p><button type="button" id="devAlertClose" aria-label="Cerrar aviso">✕</button></div>
 <p id="actionPrompt" hidden></p>
 <p id="bedPrompt" hidden>Pulsa <kbd>E</kbd> para dormir hasta la mañana</p>
 <div id="sleep" aria-live="polite"><span>Zzz… durmiendo</span></div>
@@ -143,8 +150,8 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module">
-import { COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, missingFor, canAfford, collideWalls, extraLineSlot, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
-         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-13'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
+import { noteFrequency, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, missingFor, canAfford, collideWalls, extraLineSlot, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
+         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-14'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
 (() => {
   const canvas = document.getElementById('game');
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -669,7 +676,7 @@ import { COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blaste
       c.position.y = 1.2 + Math.sin(t * 2 + c.userData.phase) * 0.2;
       const d = Math.hypot(c.position.x - ps.pos.x, c.position.z - ps.pos.z);
       if (d < PICKUP && c.position.y > ps.pos.y - 0.8 && c.position.y < ps.pos.y + H + 0.8) {
-        save.coins++; renderCoins();
+        save.coins++; renderCoins(); sfxCoin();
         placeCoin(c); // aparece otra en un lugar nuevo
       }
     }
@@ -1117,6 +1124,110 @@ import { COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blaste
 
   renderCoins();
 
+  // ---------- Sonido (todo hecho con el sintetizador del navegador, sin archivos) ----------
+  const devAlert = document.getElementById('devAlert');
+  let devAlertTimer = null;
+  document.getElementById('devAlertClose').addEventListener('click', () => { devAlert.hidden = true; });
+  let audio = null;
+  const AMBIENT_LEVEL = 0.32;
+  function startAudio() {
+    if (audio) { audio.ctx.resume(); return; }
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    const ctx = new AC();
+    const master = ctx.createGain(); master.gain.value = 0.7; master.connect(ctx.destination);
+    const ambient = ctx.createGain(); ambient.gain.value = AMBIENT_LEVEL; ambient.connect(master);
+    const sfx = ctx.createGain(); sfx.gain.value = 0.8; sfx.connect(master);
+    // Ruido de 2 s que se repite (base del viento, las hojas y los pasos)
+    const noise = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+    const nd = noise.getChannelData(0); let last = 0;
+    for (let i = 0; i < nd.length; i++) { const w = Math.random() * 2 - 1; last = (last + 0.02 * w) / 1.02; nd[i] = last * 3.5 + w * 0.15; } // ruido suave ("café")
+    audio = { ctx, master, ambient, sfx, noise };
+    // Viento entre los árboles: ruido grave que sube y baja despacio
+    const wind = ctx.createBufferSource(); wind.buffer = noise; wind.loop = true;
+    const windLp = ctx.createBiquadFilter(); windLp.type = 'lowpass'; windLp.frequency.value = 700;
+    const windGain = ctx.createGain(); windGain.gain.value = 0.5;
+    const lfo = ctx.createOscillator(); lfo.frequency.value = 0.07; const lfoDepth = ctx.createGain(); lfoDepth.gain.value = 0.25;
+    lfo.connect(lfoDepth).connect(windGain.gain); lfo.start();
+    wind.connect(windLp).connect(windGain).connect(ambient); wind.start();
+    // Hojas: un susurro agudo muy bajito
+    const leaves = ctx.createBufferSource(); leaves.buffer = noise; leaves.loop = true; leaves.playbackRate.value = 1.7;
+    const leavesBp = ctx.createBiquadFilter(); leavesBp.type = 'bandpass'; leavesBp.frequency.value = 3200; leavesBp.Q.value = 0.7;
+    const leavesGain = ctx.createGain(); leavesGain.gain.value = 0.07;
+    leaves.connect(leavesBp).connect(leavesGain).connect(ambient); leaves.start();
+    // Pájaros: cantos cortos de vez en cuando
+    const bird = () => {
+      if (!audio) return;
+      const t0 = ctx.currentTime + 0.05, base = 2300 + Math.random() * 1500, notes = 2 + Math.floor(Math.random() * 3);
+      for (let i = 0; i < notes; i++) {
+        const o = ctx.createOscillator(), g = ctx.createGain(), at = t0 + i * (0.11 + Math.random() * 0.05);
+        o.type = 'sine'; o.frequency.setValueAtTime(base, at); o.frequency.exponentialRampToValueAtTime(base * (1.25 + Math.random() * 0.3), at + 0.07);
+        g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(0.09, at + 0.015); g.gain.exponentialRampToValueAtTime(0.0001, at + 0.09);
+        o.connect(g).connect(ambient); o.start(at); o.stop(at + 0.1);
+      }
+      setTimeout(bird, 2500 + Math.random() * 5500);
+    };
+    setTimeout(bird, 1500);
+    // Partes del "crash" bitcrushed, hechas una sola vez
+    const len = Math.floor(ctx.sampleRate * 0.28), raw = new Float32Array(len);
+    let ph = 0;
+    for (let i = 0; i < len; i++) {
+      const k = i / len, f = 320 * (1 - k) + 55 * k; ph += f / ctx.sampleRate;
+      raw[i] = ((ph % 1) < 0.5 ? 0.6 : -0.6) * (1 - k) ** 1.5 + (Math.random() * 2 - 1) * 0.45 * (1 - k) ** 3;
+    }
+    audio.crush = ctx.createBuffer(1, len, ctx.sampleRate);
+    audio.crush.copyToChannel(bitcrush(raw, 4, 14), 0);
+  }
+  // Si el navegador pausó el sonido, se reanuda al primer clic o tecla
+  for (const ev of ['pointerdown', 'keydown']) addEventListener(ev, () => { if (audio && audio.ctx.state === 'suspended') audio.ctx.resume(); });
+  // De noche el bosque suena un 15% más bajo
+  let lastAmbient = -1;
+  function setAmbientDay(day) {
+    if (!audio) return;
+    const v = AMBIENT_LEVEL * ambientVolume(day);
+    if (Math.abs(v - lastAmbient) < 0.002) return;
+    lastAmbient = v; audio.ambient.gain.setTargetAtTime(v, audio.ctx.currentTime, 0.5);
+  }
+  // Láser: "PIUM" (un tono que cae rápido)
+  function sfxPium() {
+    if (!audio) return;
+    const { ctx, sfx } = audio, t0 = ctx.currentTime;
+    const o = ctx.createOscillator(), lp = ctx.createBiquadFilter(), g = ctx.createGain();
+    o.type = 'square'; o.frequency.setValueAtTime(1500, t0); o.frequency.exponentialRampToValueAtTime(190, t0 + 0.2);
+    lp.type = 'lowpass'; lp.frequency.value = 3200;
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.22, t0 + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.24);
+    o.connect(lp).connect(g).connect(sfx); o.start(t0); o.stop(t0 + 0.26);
+  }
+  // Cuando el láser choca: sonido "bitcrushed"
+  function sfxCrush() {
+    if (!audio || !audio.crush) return;
+    const src = audio.ctx.createBufferSource(), g = audio.ctx.createGain(); g.gain.value = 0.55;
+    src.buffer = audio.crush; src.connect(g).connect(audio.sfx); src.start();
+  }
+  // Moneda: nota MI 4 con sintetizador, de 0,3 segundos
+  const COIN_FREQ = noteFrequency('E4');
+  function sfxCoin() {
+    if (!audio) return;
+    const { ctx, sfx } = audio, t0 = ctx.currentTime;
+    const o = ctx.createOscillator(), o2 = ctx.createOscillator(), g = ctx.createGain();
+    o.type = 'triangle'; o.frequency.value = COIN_FREQ;
+    o2.type = 'sine'; o2.frequency.value = COIN_FREQ * 2;                 // un poco de brillo arriba
+    const g2 = ctx.createGain(); g2.gain.value = 0.25;
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.3, t0 + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.3);
+    o.connect(g); o2.connect(g2).connect(g); g.connect(sfx);
+    o.start(t0); o2.start(t0); o.stop(t0 + 0.31); o2.stop(t0 + 0.31);
+  }
+  // Pasos en el pasto: un "chss" corto
+  function sfxStep() {
+    if (!audio) return;
+    const { ctx, sfx, noise } = audio, t0 = ctx.currentTime;
+    const src = ctx.createBufferSource(); src.buffer = noise; src.playbackRate.value = 1.6 + Math.random() * 0.6;
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 2400 + Math.random() * 1600; bp.Q.value = 0.9;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.35, t0 + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.09);
+    src.connect(bp).connect(g).connect(sfx); src.start(t0, Math.random() * 1.5, 0.1);
+  }
+
   // ---------- Usuario y guardado (localStorage) ----------
   const loginEl = document.getElementById('login'), loginForm = document.getElementById('loginForm');
   const loginName = document.getElementById('loginName'), loginError = document.getElementById('loginError');
@@ -1130,6 +1241,8 @@ import { COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blaste
     userName = name;
     document.getElementById('playerName').textContent = name;
     loginEl.hidden = true; loginName.blur();
+    startAudio();
+    devAlert.hidden = false; clearTimeout(devAlertTimer); devAlertTimer = setTimeout(() => { devAlert.hidden = true; }, 12000);
     const loaded = loadGame(name);
     showToast(loaded ? `¡Hola de nuevo, ${name}! Seguiste donde guardaste` : `Hola, ${name}. Para guardar, pulsa GUARDAR (abajo a la derecha)`);
   });
@@ -1318,6 +1431,7 @@ import { COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blaste
     mesh.lookAt(mesh.position.clone().add(dir));
     scene.add(mesh);
     lasers.push({ mesh, dir, travel: 0 });
+    sfxPium();
     reloadLeft = blaster.reload;
     // Pequeño retroceso del bláster
     (firstPerson ? fpBlaster : handBlaster).userData.kick = 1;
@@ -1354,6 +1468,7 @@ import { COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blaste
       // ¿Chocó con algo? El gigante, el suelo o las montañas del borde
       const hitGround = lp.y < 0, hitMountain = Math.max(Math.abs(lp.x), Math.abs(lp.z)) > EDGE - MOUNTAIN_WALL_INSET;
       if (blaster.particles && (hitEnemy || hitGround || hitMountain)) spawnSparks(new THREE.Vector3(lp.x, Math.max(lp.y, 0.1), lp.z));
+      if (hitEnemy || hitGround || hitMountain) sfxCrush();
       if (hitEnemy || hitGround || hitMountain || L.travel > LASER_RANGE) { scene.remove(L.mesh); lasers.splice(i, 1); }
     }
     updateSparks(dt);
@@ -1380,6 +1495,7 @@ import { COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blaste
     const ang = dayPhase * Math.PI * 2;
     const elev = sunElevation(dayPhase);                // -1 medianoche, 0 amanecer/atardecer, 1 mediodía
     const day = THREE.MathUtils.smoothstep(elev, -0.15, 0.25);
+    setAmbientDay(day);
     const dusk = Math.max(0, 1 - Math.abs(elev) / 0.3); // color naranja cerca del horizonte
     tmpColor.copy(SKY_NIGHT).lerp(SKY_DAY, day).lerp(SKY_SUNSET, dusk * 0.55);
     scene.background.copy(tmpColor); scene.fog.color.copy(tmpColor);
@@ -1440,7 +1556,7 @@ import { COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blaste
   addEventListener('resize', resize); resize();
 
   const clock = new THREE.Clock();
-  let t = 0;
+  let t = 0, stepTimer = 0;
   function tick() {
     const dt = Math.min(clock.getDelta(), 0.05);
     t += dt;
@@ -1491,6 +1607,9 @@ import { COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blaste
 
     // pequeño rebote al caminar
     body.position.y = H/2 + (moving && onGround ? Math.abs(Math.sin(t * 12)) * 0.08 : 0);
+    // Pasos en el pasto (solo afuera, caminando sobre el suelo)
+    stepTimer -= dt;
+    if (moving && onGround && !ps.standing && Math.abs(ps.pos.y) < 0.05 && stepTimer <= 0) { sfxStep(); stepTimer = footstepInterval(stats.speed); }
 
     // Cámara en tercera persona
     const p = player.position;
