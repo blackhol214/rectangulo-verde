@@ -4,7 +4,7 @@ import {
   upgradePrice, fmt, sunElevation, isNightPhase, clockText, hourToPhase,
   launchSpeedForHeight, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, extraLineSlot, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, productReward, BAG_VALUE, nearestIndex, assistantSpeed, ASSIST_SPEED_MAX,
   normalizeName, saveKey, serializeSave, parseSave,
-  BIG_HOUSE, BASEMENT, STAIRWELL, BASEMENT_LANES, groundHeight, slabPieces, missingFor, canAfford,
+  BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, missingFor, canAfford,
 } from '../src/logic.js';
 
 // Caja de un personaje normal (1 × 0,6 × 2 m) en (x, z), girada `a` radianes
@@ -209,8 +209,9 @@ describe('mejoras de la cinta', () => {
       }
   });
 
-  it('se pueden tener muchos más transformadores que antes', () => {
-    expect(MAX_EXTRA_BAG_LINES).toBeGreaterThan(5);
+  it('como máximo hay 5 cintas de cada tipo (la primera + 4 extra)', () => {
+    expect(1 + MAX_EXTRA_BOX_LINES).toBe(5);
+    expect(1 + MAX_EXTRA_BAG_LINES).toBe(5);
   });
 
   it('la cinta normal da cajas doradas y el transformador bolsas de 10 monedas', () => {
@@ -303,15 +304,13 @@ describe('casa grande con sótano', () => {
     expect(inside(STAIRWELL, BASEMENT)).toBe(true);
   });
 
-  it('caben 4 cintas cortas en el sótano, sin tocarse ni tocar la escalera', () => {
-    expect(BASEMENT_LANES).toHaveLength(4);
-    const areas = BASEMENT_LANES.map(laneArea);
-    for (const a of areas) {
-      expect(inside(a, BASEMENT)).toBe(true);
-      expect(overlap(a, STAIRWELL)).toBe(false);
-    }
-    for (let i = 0; i < areas.length; i++)
-      for (let j = i + 1; j < areas.length; j++) expect(overlap(areas[i], areas[j])).toBe(false);
+  it('las cintas se quedan afuera: ninguna toca el sótano', () => {
+    const slots = [
+      { x0: -10, len: 20, z: 50 }, { x0: -5, len: 15, z: 54 },
+      ...Array.from({ length: MAX_EXTRA_BOX_LINES }, (_, i) => extraLineSlot('box', i)),
+      ...Array.from({ length: MAX_EXTRA_BAG_LINES }, (_, i) => extraLineSlot('bag', i)),
+    ];
+    for (const sl of slots) expect(overlap(laneArea(sl), BASEMENT)).toBe(false);
   });
 
   it('el suelo baja al sótano solo dentro del sótano y solo si ya compraste la casa', () => {

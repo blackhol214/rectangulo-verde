@@ -90,7 +90,8 @@ export const beltSpeed = tier => 2 * [1, 1.5, 2][tier];
 // Dónde va cada cinta extra (x0 = donde empieza, z = su fila; filas cada 4 m):
 //   · cintas de cajas: detrás de las dos primeras (z = 50 y 54), en su misma columna
 //   · transformadores: en su propia zona a la izquierda, en columnas de 12 filas
-export const MAX_EXTRA_BOX_LINES = 5, MAX_EXTRA_BAG_LINES = 24;
+// Máximo 5 cintas de cada tipo: la primera (de la tienda) + 4 extra
+export const MAX_EXTRA_BOX_LINES = 4, MAX_EXTRA_BAG_LINES = 4;
 export function extraLineSlot(type, index) {
   if (type === 'box') return { x0: -10, len: 20, z: 58 + index * 4 };
   return { x0: -38 - 22 * Math.floor(index / 12), len: 15, z: 50 + (index % 12) * 4 };
@@ -150,16 +151,13 @@ export function parseSave(text, knownLevels) {
 }
 
 // ---------- Casa grande con sótano ----------
-// El sótano es casi del tamaño de la casa (2 m más largo). Su techo está 2 m bajo el suelo,
-// así que desde afuera no se ve nada. Ahí caben 4 cintas cortas (de 8 m).
+// El sótano es casi del tamaño de la casa (2 m más largo) y está vacío. Su techo está 2 m bajo el suelo,
+// así que desde afuera no se ve nada. Las cintas se quedan afuera.
 export const BIG_HOUSE = { x0: 20, x1: 36, z0: 4, z1: 18, doorZ: 9, height: 5 };
 export const BASEMENT = { x0: 19, x1: 37, z0: 4, z1: 18, y: -7, ceilingY: -2 };
 // Escalera dentro de la casa: baja 7 m en 18 escalones (de 0,39 m de alto y 0,6 m de fondo; se baja caminando)
 export const STAIRWELL = { x0: 31, x1: 34, z0: 5, steps: 18, rise: 7 / 18, run: 0.6 };
 STAIRWELL.z1 = STAIRWELL.z0 + STAIRWELL.steps * STAIRWELL.run;   // 15,8
-// Los 4 lugares para cintas en el sótano: a la izquierda de la escalera, una detrás de otra
-export const BASEMENT_LANES = [6, 9, 12, 15].map(z => ({ x0: 19.6, len: 8, z }));
-export const BASEMENT_MACHINE_OFFSET = 3;   // la máquina va a 3 m del inicio de una cinta corta
 
 // Altura del suelo en (x, z): dentro del sótano (si ya existe) es el piso del sótano; afuera, 0
 export function groundHeight(x, z, basementOpen) {

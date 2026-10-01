@@ -126,8 +126,8 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module">
-import { ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, BASEMENT_LANES, BASEMENT_MACHINE_OFFSET, groundHeight, slabPieces, missingFor, canAfford, collideWalls, extraLineSlot, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
-         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-08'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
+import { ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, missingFor, canAfford, collideWalls, extraLineSlot, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
+         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-10'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
 (() => {
   const canvas = document.getElementById('game');
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -324,8 +324,6 @@ import { ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, BASEMENT_LANES, BASEM
       const light = new THREE.PointLight(0xfff1d6, 0.9, 20, 1.5); light.position.set(lx, C - 0.4, lz); scene.add(light);
       const lamp = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.12, 1.2), new THREE.MeshBasicMaterial({ color: 0xfff1d6 })); lamp.position.set(lx, C - 0.07, lz); scene.add(lamp);
     }
-    // Las primeras 4 cintas bajan al sótano (como cintas cortas); las demás se quedan afuera
-    placeLinesInBasement();
   }
 
   // La cámara no atraviesa la casa: si una pared queda en medio, se acerca (como en Roblox)
@@ -617,27 +615,27 @@ import { ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, BASEMENT_LANES, BASEM
   // ---------- Tienda (P) ----------
   const SHOP = [
     { id: 'belt', group: 'Tu base', name: 'Cinta transportadora', desc: 'Una cinta de 20 m en medio de tu mitad. Los pedazos amarillos pasan por la máquina y salen como cajas doradas: agárralas en el plato amarillo y guárdalas para comprar al asistente.',
-      base: 100, max: 1, apply: l => { lines.box.setOwned(l > 0); document.querySelector('.boxes').hidden = !(l > 0); placeLinesInBasement(); if (l) showToast(basementOpen ? 'Tu cinta está en el sótano' : 'La cinta está en medio de tu mitad'); } },
+      base: 100, max: 1, apply: l => { lines.box.setOwned(l > 0); document.querySelector('.boxes').hidden = !(l > 0); if (l) showToast('La cinta está en medio de tu mitad'); } },
     { id: 'hopper', group: 'Tu base', name: 'Tolva (cinta de cajas)', desc: 'Va al final de tu cinta y recoge las cajas doradas sola, sin que tengas que ir por ellas.',
       currency: 'boxes', base: 5, max: 1, needs: 'belt', apply: l => { lines.box.setHopper(l > 0); if (l) showToast('La tolva recoge las cajas por ti'); } },
     { id: 'belt2', group: 'Tu base', name: 'Cinta 2.0', desc: 'Tus cintas se ven igual, pero van un 50% más rápido.',
       currency: 'boxes', base: 5, max: 1, needs: 'belt', apply: l => { applyBeltSpeeds(); if (l) showToast('Cinta 2.0: tus cintas van 50% más rápido'); } },
     { id: 'turbo', group: 'Tu base', name: 'Cintas turbo', desc: 'Todas tus cintas van un 100% más rápido que al principio (el doble).',
       base: 100, max: 1, needs: 'belt', apply: l => { applyBeltSpeeds(); if (l) showToast('¡Cintas turbo: el doble de rápido!'); } },
-    { id: 'lineBox', group: 'Más cintas', name: 'Otra cinta de cajas', desc: 'Una cinta normal más (hace cajas doradas). Viene con su tolva y la velocidad de la Cinta 2.0.',
+    { id: 'lineBox', group: 'Más cintas', name: 'Otra cinta de cajas', desc: 'Una cinta normal más (hace cajas doradas). Viene con su tolva y la velocidad de la Cinta 2.0. Máximo 5 cintas de cajas en total.',
       base: 50, flat: true, max: MAX_EXTRA_BOX_LINES, count: true, needs: 'belt', apply: l => { ensureExtraLines('box', l); if (l) showToast('Nueva cinta de cajas, con tolva y Cinta 2.0'); } },
     { id: 'transformer', group: 'Tu base', name: 'Transformador', desc: 'Otra cinta de 15 m, aparte, al lado de la tuya. Sus pedazos amarillos se vuelven bolsas de monedas: cada bolsa vale 10 monedas.',
-      currency: 'boxes', base: 20, max: 1, needs: 'belt', apply: l => { lines.bag.setOwned(l > 0); placeLinesInBasement(); if (l) showToast('Transformador listo: sus pedazos se vuelven bolsas de 10 monedas'); } },
+      currency: 'boxes', base: 20, max: 1, needs: 'belt', apply: l => { lines.bag.setOwned(l > 0); if (l) showToast('Transformador listo: sus pedazos se vuelven bolsas de 10 monedas'); } },
     { id: 'hopper2', group: 'Tu base', name: 'Tolva (transformador)', desc: 'Va al final del transformador y recoge las bolsas de monedas sola.',
       currency: 'boxes', base: 5, max: 1, needs: 'transformer', apply: l => { lines.bag.setHopper(l > 0); if (l) showToast('La tolva recoge las bolsas de monedas por ti'); } },
-    { id: 'lineBag', group: 'Más cintas', name: 'Otro transformador', desc: 'Un transformador más (hace bolsas de 10 monedas). Viene con su tolva y la velocidad de la Cinta 2.0. Van en su propia zona, a la izquierda de tus cintas.',
+    { id: 'lineBag', group: 'Más cintas', name: 'Otro transformador', desc: 'Un transformador más (hace bolsas de 10 monedas). Viene con su tolva y la velocidad de la Cinta 2.0. Van en su propia zona, a la izquierda de tus cintas. Máximo 5 transformadores en total.',
       base: 50, flat: true, max: MAX_EXTRA_BAG_LINES, count: true, needs: 'transformer', apply: l => { ensureExtraLines('bag', l); if (l) showToast('Nuevo transformador, con tolva y Cinta 2.0'); } },
-    { id: 'bigHouse', group: 'Tu base', name: 'Casa grande con sótano', desc: 'Tu casa crece y le sale un sótano enorme. Tus cintas se mudan al sótano; baja por la escalera de la casa.',
-      cost: { boxes: 100, coins: 200 }, max: 1, apply: l => { if (l) { buildBigHouse(); showToast('¡Casa grande! Tus cintas están en el sótano: baja por la escalera'); } } },
+    { id: 'bigHouse', group: 'Tu base', name: 'Casa grande con sótano', desc: 'Tu casa crece y le sale un sótano debajo; baja por la escalera de la casa.',
+      cost: { boxes: 100, coins: 200 }, max: 1, apply: l => { if (l) { buildBigHouse(); showToast('¡Casa grande! Baja al sótano por la escalera'); } } },
     { id: 'assistant', group: 'Tu base', name: 'Asistente', desc: 'Un robot que va por las monedas por ti. Se paga con cajas doradas de la cinta.',
       currency: 'boxes', base: 10, max: 1, apply: l => { ensureAssistants(); if (l) showToast('¡Tu asistente ya está buscando monedas!'); } },
-    { id: 'assistant2', group: 'Mejoras del asistente', name: 'Otro asistente', desc: 'Un asistente más que también va por las monedas.',
-      currency: 'boxes', base: 15, flat: true, max: 5, count: true, needs: 'assistant', apply: l => { ensureAssistants(); if (l) showToast('¡Otro asistente más!'); } },
+    { id: 'assistant2', group: 'Mejoras del asistente', name: 'Otro asistente', desc: 'Un segundo asistente que también va por las monedas (máximo 2 asistentes).',
+      currency: 'boxes', base: 15, flat: true, max: 1, count: true, needs: 'assistant', apply: l => { ensureAssistants(); if (l) showToast('¡Otro asistente más!'); } },
     { id: 'assistSpeed', group: 'Mejoras del asistente', name: 'Velocidad de los asistentes', desc: 'Tus asistentes corren 2 m/s más rápido por nivel (hasta el nivel 5).',
       base: 20, max: ASSIST_SPEED_MAX, needs: 'assistant', apply: l => { for (const a of assistants) a.speed = assistantSpeed(l); } },
     { id: 'blaster', group: 'Mejoras para ti', name: 'Bláster láser', desc: 'Dispara con clic. Aturde al gigante 2 segundos.',
@@ -800,12 +798,6 @@ import { ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, BASEMENT_LANES, BASEM
       if (on) { platforms.push(...L.platforms); x = L.start; wait = 0; }
     };
     L.setHopper = on => { L.hopperOwned = on; hopper.visible = on && L.owned; };
-    // Quitar la cinta del mundo (cuando se muda al sótano se construye otra más corta)
-    L.destroy = () => {
-      scene.remove(group, hopper, pieces, item);
-      for (const pl of L.platforms) { const i = platforms.indexOf(pl); if (i >= 0) platforms.splice(i, 1); }
-      L.owned = false;
-    };
     const collect = () => { onCollect(); wait = 1.5; sinkT = 0; };   // los siguientes pedazos salen en un momento
     L.update = dt => {
       if (!L.owned) return;
@@ -856,29 +848,9 @@ import { ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, BASEMENT_LANES, BASEM
       L.extra = true; L.setOwned(true); L.setHopper(true);
       extraLines.push({ type, L });
     }
-    placeLinesInBasement();
     applyBeltSpeeds();
   }
   const allLines = () => [lines.box, lines.bag, ...extraLines.map(e => e.L)];
-  // Con la casa grande, las primeras 4 cintas que tengas viven en el sótano como cintas cortas (8 m)
-  const basementLane = [null, null, null, null];
-  function placeLinesInBasement() {
-    if (!basementOpen) return;
-    for (const L of allLines()) {
-      if (!L.owned || L.inBasement) continue;
-      const lane = basementLane.indexOf(null);
-      if (lane < 0) return;                       // ya no caben más: las demás se quedan afuera
-      const N = createLine({ ...L.spec, ...BASEMENT_LANES[lane], y0: BASEMENT.y, machineOffset: BASEMENT_MACHINE_OFFSET });
-      N.extra = L.extra; N.inBasement = true;
-      N.setOwned(true); N.setHopper(L.hopperOwned);
-      L.destroy();
-      if (lines.box === L) lines.box = N;
-      else if (lines.bag === L) lines.bag = N;
-      else extraLines.find(e => e.L === L).L = N;
-      basementLane[lane] = N;
-    }
-    applyBeltSpeeds();
-  }
   // Velocidad de todas las cintas: normal, Cinta 2.0 (+50%) o turbo (+100%)
   function applyBeltSpeeds() {
     const tier = save.levels.turbo ? 2 : save.levels.belt2 ? 1 : 0;
