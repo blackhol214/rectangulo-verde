@@ -2,9 +2,9 @@ import { describe, it, expect } from 'vitest';
 import {
   collideWalls, moveAndCollide, boxHit,
   upgradePrice, fmt, sunElevation, isNightPhase, clockText, hourToPhase,
-  parseSetHour, launchSpeedForHeight, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, extraLineSlot, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, productReward, BAG_VALUE, nearestIndex, assistantSpeed,
-  normalizeName, saveKey, isSaveCommand, serializeSave, parseSave,
-  BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, missingFor, canAfford,
+  launchSpeedForHeight, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, extraLineSlot, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, productReward, BAG_VALUE, nearestIndex, assistantSpeed, ASSIST_SPEED_MAX,
+  normalizeName, saveKey, serializeSave, parseSave,
+  BIG_HOUSE, BASEMENT, STAIRWELL, BASEMENT_LANES, groundHeight, slabPieces, missingFor, canAfford,
 } from '../src/logic.js';
 
 // Caja de un personaje normal (1 × 0,6 × 2 m) en (x, z), girada `a` radianes
@@ -47,29 +47,6 @@ describe('boxHit (hitboxes exactas)', () => {
     expect(ab.depth).toBeCloseTo(ba.depth);
     expect(ab.nx).toBeCloseTo(-ba.nx);
     expect(ab.nz).toBeCloseTo(-ba.nz);
-  });
-});
-
-describe('parseSetHour (comando T → set hour)', () => {
-  it.each([
-    ['set hour 21', 21, 0],
-    ['set hour 21:30', 21, 30],
-    ['set hour 9 pm', 21, 0],
-    ['set hour 9:30am', 9, 30],
-    ['SET HOUR 7', 7, 0],
-    ['set hour 12 am', 0, 0],
-    ['set hour 12 pm', 12, 0],
-    ['  set   hour  0  ', 0, 0],
-  ])('"%s" → %i:%i', (text, h, min) => {
-    expect(parseSetHour(text)).toEqual({ h, min });
-  });
-
-  it.each(['set hour 25', 'set hour 13 pm', 'set hour 0 am', 'set hour 10:60'])('"%s" es una hora que no existe', text => {
-    expect(parseSetHour(text)).toEqual({ error: 'range' });
-  });
-
-  it.each(['', 'hola', 'set hour', 'set hour nueve', 'set hour 9:5'])('"%s" no se entiende', text => {
-    expect(parseSetHour(text)).toEqual({ error: 'format' });
   });
 });
 
@@ -254,8 +231,10 @@ describe('asistente', () => {
     expect(nearestIndex({ x: 0, z: 0 }, [])).toBe(-1);
   });
 
-  it('cada mejora de velocidad le suma 2', () => {
+  it('cada mejora de velocidad le suma 2, hasta el nivel 5', () => {
+    expect(ASSIST_SPEED_MAX).toBe(5);
     expect([0, 1, 2, 5].map(assistantSpeed)).toEqual([6, 8, 10, 16]);
+    expect(assistantSpeed(9)).toBe(16); // un guardado viejo con más nivel no pasa del máximo
   });
 });
 
@@ -266,13 +245,6 @@ describe('guardado por usuario', () => {
     expect(normalizeName('  El   Humano ')).toBe('el humano');
     expect(saveKey('El Humano')).toBe(saveKey('el humano'));
     expect(saveKey('el humano')).not.toBe(saveKey('otro'));
-  });
-
-  it('reconoce el comando save_changes', () => {
-    expect(isSaveCommand('save_changes')).toBe(true);
-    expect(isSaveCommand('  SAVE_CHANGES ')).toBe(true);
-    expect(isSaveCommand('save changes')).toBe(false);
-    expect(isSaveCommand('set hour 9')).toBe(false);
   });
 
   it('lo que se guarda se recupera igual', () => {
@@ -297,18 +269,32 @@ describe('guardado por usuario', () => {
 
 describe('casa grande con sótano', () => {
   const inside = (p, r) => p.x0 >= r.x0 && p.x1 <= r.x1 && p.z0 >= r.z0 && p.z1 <= r.z1;
+  const overlap = (a, b) => a.x0 < b.x1 && b.x0 < a.x1 && a.z0 < b.z1 && b.z0 < a.z1;
+  // Lo que ocupa una cinta en el suelo: marco, plato y tolva (radio 1,3 m)
+  const laneArea = ({ x0, len, z }) => ({ x0: x0 - 0.3, x1: x0 + len + 1.6 + 1.3, z0: z - 1.3, z1: z + 1.3 });
+
+  it('el sótano es casi del tamaño de la casa: 2 m más largo', () => {
+    const house = { w: BIG_HOUSE.x1 - BIG_HOUSE.x0, d: BIG_HOUSE.z1 - BIG_HOUSE.z0 };
+    const base = { w: BASEMENT.x1 - BASEMENT.x0, d: BASEMENT.z1 - BASEMENT.z0 };
+    expect(base.w - house.w).toBe(2);
+    expect(base.d).toBe(house.d);
+  });
+
+  it('el techo del sótano está 2 m bajo el suelo y hay altura para saltar', () => {
+    expect(BASEMENT.ceilingY).toBe(-2);
+    expect(BASEMENT.ceilingY - BASEMENT.y).toBeGreaterThanOrEqual(2 + 2.6); // tu altura + tu salto
+  });
 
   it('la escalera baja justo hasta el piso del sótano y se baja caminando', () => {
     expect(STAIRWELL.steps * STAIRWELL.rise).toBeCloseTo(-BASEMENT.y);
     expect(STAIRWELL.rise).toBeLessThanOrEqual(0.45);
-    expect(STAIRWELL.z1 - STAIRWELL.z0).toBeCloseTo(STAIRWELL.steps * STAIRWELL.run); // el hueco mide justo lo que la escalera
+    expect(STAIRWELL.z1 - STAIRWELL.z0).toBeCloseTo(STAIRWELL.steps * STAIRWELL.run);
   });
 
   it('la casa grande es más chica que antes, pero la cama y la escalera caben sin tocarse', () => {
     expect((BIG_HOUSE.x1 - BIG_HOUSE.x0) * (BIG_HOUSE.z1 - BIG_HOUSE.z0)).toBeLessThan(26 * 22);
     const bed = { x0: 28.5 - 0.75, x1: 28.5 + 0.75, z0: 9 - 1.25, z1: 9 + 1.25 };
-    const touches = bed.x0 < STAIRWELL.x1 + 0.5 && STAIRWELL.x0 - 0.5 < bed.x1 && bed.z0 < STAIRWELL.z1 && STAIRWELL.z0 < bed.z1;
-    expect(touches).toBe(false);
+    expect(overlap(bed, { ...STAIRWELL, x0: STAIRWELL.x0 - 0.5, x1: STAIRWELL.x1 + 0.5 })).toBe(false);
   });
 
   it('la escalera está dentro de la casa y dentro del sótano', () => {
@@ -317,32 +303,29 @@ describe('casa grande con sótano', () => {
     expect(inside(STAIRWELL, BASEMENT)).toBe(true);
   });
 
-  it('todas las cintas posibles caben en el sótano', () => {
-    const slots = [
-      { x0: -10, len: 20, z: 50 }, { x0: -5, len: 15, z: 54 },
-      ...Array.from({ length: MAX_EXTRA_BOX_LINES }, (_, i) => extraLineSlot('box', i)),
-      ...Array.from({ length: MAX_EXTRA_BAG_LINES }, (_, i) => extraLineSlot('bag', i)),
-    ];
-    for (const { x0, len, z } of slots)
-      expect(inside({ x0: x0 - 0.3, x1: x0 + len + 1.6 + 1.3, z0: z - 1.3, z1: z + 1.3 }, BASEMENT)).toBe(true);
+  it('caben 4 cintas cortas en el sótano, sin tocarse ni tocar la escalera', () => {
+    expect(BASEMENT_LANES).toHaveLength(4);
+    const areas = BASEMENT_LANES.map(laneArea);
+    for (const a of areas) {
+      expect(inside(a, BASEMENT)).toBe(true);
+      expect(overlap(a, STAIRWELL)).toBe(false);
+    }
+    for (let i = 0; i < areas.length; i++)
+      for (let j = i + 1; j < areas.length; j++) expect(overlap(areas[i], areas[j])).toBe(false);
   });
 
-  it('el suelo baja al sótano solo cuando ya compraste la casa grande', () => {
-    expect(groundHeight(0, 50, false)).toBe(0);
-    expect(groundHeight(0, 50, true)).toBe(BASEMENT.y);
-    expect(groundHeight(0, -20, true)).toBe(0);  // la mitad del gigante no tiene sótano
-    expect(groundHeight(80, 80, true)).toBe(0);  // ni el trampolín
+  it('el suelo baja al sótano solo dentro del sótano y solo si ya compraste la casa', () => {
+    expect(groundHeight(25, 11, false)).toBe(0);
+    expect(groundHeight(25, 11, true)).toBe(BASEMENT.y);
+    expect(groundHeight(0, 50, true)).toBe(0);   // donde están las cintas de afuera no hay sótano
+    expect(groundHeight(0, -20, true)).toBe(0);  // ni en la mitad del gigante
   });
 
   it('el techo del sótano cubre todo menos el hueco de la escalera', () => {
     const pieces = slabPieces();
     const area = r => (r.x1 - r.x0) * (r.z1 - r.z0);
-    const total = pieces.reduce((a, r) => a + area(r), 0);
-    expect(total).toBeCloseTo(area(BASEMENT) - area(STAIRWELL));
-    for (const r of pieces) {
-      const overlapsHole = r.x0 < STAIRWELL.x1 && STAIRWELL.x0 < r.x1 && r.z0 < STAIRWELL.z1 && STAIRWELL.z0 < r.z1;
-      expect(overlapsHole).toBe(false);
-    }
+    expect(pieces.reduce((a, r) => a + area(r), 0)).toBeCloseTo(area(BASEMENT) - area(STAIRWELL));
+    for (const r of pieces) expect(overlap(r, STAIRWELL)).toBe(false);
   });
 });
 

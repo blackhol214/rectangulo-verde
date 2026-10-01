@@ -76,19 +76,6 @@ export function clockText(phase) {
 export const hourToPhase = (h, min = 0) => (h * 60 + min) / (24 * 60);
 
 
-// Comando "set hour": acepta 21, 21:30, 9 pm, 9:30am.
-// Devuelve { h, min } o { error: 'format' | 'range' }.
-export function parseSetHour(text) {
-  const m = String(text).trim().match(/^set\s+hour\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/i);
-  if (!m) return { error: 'format' };
-  let h = +m[1];
-  const min = m[2] ? +m[2] : 0, ap = m[3] && m[3].toLowerCase();
-  if (min > 59 || (ap ? (h < 1 || h > 12) : h > 23)) return { error: 'range' };
-  if (ap === 'pm' && h < 12) h += 12;
-  if (ap === 'am' && h === 12) h = 0;
-  return { h, min };
-}
-
 // ---------- Física ----------
 // Velocidad inicial para subir `height` metros con la gravedad `grav`
 export const launchSpeedForHeight = (height, grav) => Math.sqrt(2 * grav * height);
@@ -133,16 +120,14 @@ export function nearestIndex(from, points) {
   return best;
 }
 
-// Velocidad del asistente según el nivel de su mejora
-export const assistantSpeed = level => 6 + level * 2;
+// Velocidad del asistente según el nivel de su mejora (hasta el nivel 5)
+export const ASSIST_SPEED_MAX = 5;
+export const assistantSpeed = level => 6 + Math.min(level, ASSIST_SPEED_MAX) * 2;
 
 // ---------- Guardado por usuario (localStorage) ----------
 // "El Humano", " el   humano " y "el humano" son el mismo usuario
 export const normalizeName = name => String(name).trim().replace(/\s+/g, ' ').toLowerCase();
 export const saveKey = name => `rectangulo-verde:partida:${normalizeName(name)}`;
-
-// El comando que guarda (se escribe con T)
-export const isSaveCommand = text => /^save_changes$/i.test(String(text).trim());
 
 // Convierte la partida en texto para guardarla
 export function serializeSave({ coins, boxes, levels, dayPhase, pos }) {
@@ -165,12 +150,16 @@ export function parseSave(text, knownLevels) {
 }
 
 // ---------- Casa grande con sótano ----------
-// La casa grande ocupa donde estaba la mediana y más. Debajo hay un sótano enorme (a 6 m de profundidad)
-// que llega hasta tus cintas; al comprar la casa, las cintas bajan al sótano.
+// El sótano es casi del tamaño de la casa (2 m más largo). Su techo está 2 m bajo el suelo,
+// así que desde afuera no se ve nada. Ahí caben 4 cintas cortas (de 8 m).
 export const BIG_HOUSE = { x0: 20, x1: 36, z0: 4, z1: 18, doorZ: 9, height: 5 };
-export const BASEMENT = { x0: -64, x1: 38, z0: 2, z1: 98, y: -6 };
-// Escalera dentro de la casa: baja 6 m en 15 escalones de 0,4 m de alto y 0,6 m de fondo (se baja caminando)
-export const STAIRWELL = { x0: 31, x1: 34, z0: 6, z1: 15, steps: 15, rise: 0.4, run: 0.6 };
+export const BASEMENT = { x0: 19, x1: 37, z0: 4, z1: 18, y: -7, ceilingY: -2 };
+// Escalera dentro de la casa: baja 7 m en 18 escalones (de 0,39 m de alto y 0,6 m de fondo; se baja caminando)
+export const STAIRWELL = { x0: 31, x1: 34, z0: 5, steps: 18, rise: 7 / 18, run: 0.6 };
+STAIRWELL.z1 = STAIRWELL.z0 + STAIRWELL.steps * STAIRWELL.run;   // 15,8
+// Los 4 lugares para cintas en el sótano: a la izquierda de la escalera, una detrás de otra
+export const BASEMENT_LANES = [6, 9, 12, 15].map(z => ({ x0: 19.6, len: 8, z }));
+export const BASEMENT_MACHINE_OFFSET = 3;   // la máquina va a 3 m del inicio de una cinta corta
 
 // Altura del suelo en (x, z): dentro del sótano (si ya existe) es el piso del sótano; afuera, 0
 export function groundHeight(x, z, basementOpen) {
