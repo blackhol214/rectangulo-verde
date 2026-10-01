@@ -5,6 +5,8 @@ import {
   launchSpeedForHeight, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, extraLineSlot, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, productReward, BAG_VALUE, nearestIndex, assistantSpeed, ASSIST_SPEED_MAX,
   normalizeName, saveKey, serializeSave, parseSave,
   BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, missingFor, canAfford,
+  mountainRing, MOUNTAIN_WALL_INSET, seededRandom,
+  blasterStats,
 } from '../src/logic.js';
 
 // Caja de un personaje normal (1 × 0,6 × 2 m) en (x, z), girada `a` radianes
@@ -339,5 +341,49 @@ describe('precios con cajas y monedas a la vez', () => {
   it('dice cuánto falta de cada una', () => {
     expect(missingFor({ boxes: 80, coins: 250 }, cost)).toEqual({ boxes: 20, coins: 0 });
     expect(missingFor({ boxes: 0, coins: 0 }, cost)).toEqual({ boxes: 100, coins: 200 });
+  });
+});
+
+describe('montañas alrededor del mapa', () => {
+  const EDGE = 100, cones = mountainRing(EDGE);
+  // Altura de la cordillera en un punto (el cono más alto que lo cubre)
+  const heightAt = (x, z) => Math.max(0, ...cones.map(c => c.h * (1 - Math.hypot(x - c.x, z - c.z) / c.r)));
+
+  it('siempre salen las mismas montañas', () => {
+    expect(mountainRing(EDGE)).toEqual(cones);
+    const a = seededRandom(3), b = seededRandom(3);
+    expect([a(), a(), a()]).toEqual([b(), b(), b()]);
+  });
+
+  it('son muy altas', () => {
+    expect(Math.max(...cones.map(c => c.h))).toBeGreaterThan(150);
+    expect(Math.min(...cones.map(c => c.h))).toBeGreaterThanOrEqual(70);
+  });
+
+  it('cubren todo el borde: no hay huecos por donde ver el final del mapa', () => {
+    for (let t = -EDGE; t <= EDGE; t += 1)
+      for (const [x, z] of [[EDGE, t], [-EDGE, t], [t, EDGE], [t, -EDGE]])
+        expect(heightAt(x, z)).toBeGreaterThan(2);
+  });
+
+  it('casi no se meten al campo: terminan antes de la pared invisible que te detiene', () => {
+    for (const c of cones) {
+      const inside = Math.min(Math.abs(c.x), Math.abs(c.z)) < EDGE ? Math.max(Math.abs(c.x), Math.abs(c.z)) : EDGE + 999;
+      // Lo que entra al campo cada cono (desde el borde hacia adentro)
+      expect(c.r - (inside - EDGE)).toBeLessThanOrEqual(MOUNTAIN_WALL_INSET + 0.5);
+    }
+  });
+});
+
+describe('bláster 2.0', () => {
+  it('dispara a 25 m/s, recarga en 1 segundo y sus láseres son rojos con partículas', () => {
+    const v2 = blasterStats(true);
+    expect(v2.speed).toBe(25);
+    expect(v2.reload).toBe(1);
+    expect(v2.color).toBe(0xff2a2a);
+    expect(v2.particles).toBe(true);
+  });
+  it('el bláster normal sigue igual: azul, 30 m/s y sin partículas', () => {
+    expect(blasterStats(false)).toMatchObject({ speed: 30, reload: 1, color: 0x1e6bff, particles: false });
   });
 });

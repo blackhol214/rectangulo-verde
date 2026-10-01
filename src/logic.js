@@ -184,3 +184,46 @@ export function missingFor(wallet, cost) {
   return out;
 }
 export const canAfford = (wallet, cost) => Object.values(missingFor(wallet, cost)).every(n => n === 0);
+
+// ---------- Montañas alrededor del mapa ----------
+// El mapa sigue siendo un cuadrado; en vez del borde invisible con trampolín, lo rodean montañas muy altas.
+// Generador de números al azar con semilla (siempre salen las mismas montañas)
+export function seededRandom(seed) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+// Conos { x, z, r (radio de la base), h (alto) }. Fila de adelante pegada al borde (casi sin meterse al campo)
+// y una fila de atrás más grande, para que se vea una cordillera.
+export const MOUNTAIN_WALL_INSET = 2; // la pared invisible que te detiene está 2 m antes del borde, al pie de las montañas
+export function mountainRing(edge = 100, seed = 7) {
+  const rnd = seededRandom(seed), out = [];
+  const rows = [
+    { r: 24, out: 0.9, step: 8, hMin: 70, hMax: 120 },   // al pie: casi no entra al campo
+    { r: 40, out: 1.4, step: 28, hMin: 110, hMax: 180 }, // atrás, más grandes
+  ];
+  for (const row of rows) {
+    for (const side of [0, 1, 2, 3]) {
+      for (let t = -edge - row.r; t <= edge + row.r; t += row.step) {
+        const r = row.r * (0.9 + rnd() * 0.1), h = row.hMin + rnd() * (row.hMax - row.hMin);
+        const d = edge + r * row.out;                // distancia del centro del mapa al centro del cono
+        const along = t + (rnd() - 0.5) * row.step * 0.3;
+        const [x, z] = side === 0 ? [d, along] : side === 1 ? [-d, along] : side === 2 ? [along, d] : [along, -d];
+        out.push({ x, z, r, h });
+      }
+    }
+  }
+  return out;
+}
+
+// ---------- Bláster ----------
+// El normal dispara láseres azules a 30 m/s; el Bláster 2.0, láseres rojos a 25 m/s que estallan en partículas rojas.
+// Los dos recargan en 1 segundo.
+export const blasterStats = v2 => (v2
+  ? { speed: 25, reload: 1, color: 0xff2a2a, glow: 0xff8a8a, particles: true }
+  : { speed: 30, reload: 1, color: 0x1e6bff, glow: 0x7fb2ff, particles: false });

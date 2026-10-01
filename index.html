@@ -96,7 +96,7 @@
 <div class="coins" aria-label="Monedas"><i></i><span id="coins">0</span></div>
 <div class="boxes" aria-label="Cajas doradas" hidden><i></i><span id="boxes">0</span></div>
 <div class="clock" aria-label="Hora del juego"><span id="clockIcon">DÍA</span><span id="clockTime">08:00</span></div>
-<p id="warn" aria-live="assertive">NO TE SALGAS</p>
+<p id="warn" aria-live="assertive"></p>
 <p id="toast" aria-live="polite"></p>
 <div id="cross"></div>
 <div id="reload" hidden><span id="reloadText">LÁSER LISTO</span><div class="bar"><div id="reloadFill"></div></div></div>
@@ -126,8 +126,8 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module">
-import { ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, missingFor, canAfford, collideWalls, extraLineSlot, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
-         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-10'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
+import { blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, missingFor, canAfford, collideWalls, extraLineSlot, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
+         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-12'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
 (() => {
   const canvas = document.getElementById('game');
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -137,13 +137,13 @@ import { ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPie
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0xbfe3f2);
-  scene.fog = new THREE.Fog(0xbfe3f2, 50, 180);
+  scene.fog = new THREE.Fog(0xbfe3f2, 60, 320);
 
   const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 900);
   scene.add(camera); // para que el bláster de primera persona (hijo de la cámara) se dibuje
 
   // Luces
-  const hemi = new THREE.HemisphereLight(0xffffff, 0x7a5230, 0.75);
+  const hemi = new THREE.HemisphereLight(0xffffff, 0x3f6b2a, 0.75);
   scene.add(hemi);
   const moon = new THREE.DirectionalLight(0x9fb4ff, 0);
   scene.add(moon, moon.target);
@@ -165,14 +165,17 @@ import { ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPie
   Object.assign(sun.shadow.camera, { left:-30, right:30, top:30, bottom:-30, near:1, far:120 });
   scene.add(sun, sun.target);
 
+  // Todo lo sólido (paredes, pisos, muebles) y lo que tapa la cámara
+  const platforms = [];
+  const cameraBlockers = [];
   // Gran zona plana con textura de cuadrícula
   const SIZE = 200;
   const tex = (() => {
     const c = document.createElement('canvas'); c.width = c.height = 128;
     const g = c.getContext('2d');
-    g.fillStyle = '#8b5a2b'; g.fillRect(0,0,128,128);
-    g.fillStyle = '#7f5226'; g.fillRect(0,0,64,64); g.fillRect(64,64,64,64);
-    g.strokeStyle = 'rgba(50,28,10,.22)'; g.lineWidth = 2; g.strokeRect(0,0,128,128);
+    g.fillStyle = '#5fa83a'; g.fillRect(0,0,128,128);
+    g.fillStyle = '#56a034'; g.fillRect(0,0,64,64); g.fillRect(64,64,64,64);
+    g.strokeStyle = 'rgba(20,60,10,.18)'; g.lineWidth = 2; g.strokeRect(0,0,128,128);
     const t = new THREE.CanvasTexture(c);
     t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(1/8, 1/8); // un cuadro cada 8 m
     t.anisotropy = renderer.capabilities.getMaxAnisotropy();
@@ -180,7 +183,7 @@ import { ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPie
   })();
   // El suelo es una figura plana; cuando compras la casa grande se le abre el hueco de la escalera del sótano
   function groundGeometry(hole) {
-    const h = SIZE / 2, shape = new THREE.Shape([new THREE.Vector2(-h, -h), new THREE.Vector2(h, -h), new THREE.Vector2(h, h), new THREE.Vector2(-h, h)]);
+    const h = 350, shape = new THREE.Shape([new THREE.Vector2(-h, -h), new THREE.Vector2(h, -h), new THREE.Vector2(h, h), new THREE.Vector2(-h, h)]);
     // La figura se acuesta con rotation.x = -90°, así que su "y" es -z en el mundo
     if (hole) shape.holes.push(new THREE.Path([new THREE.Vector2(hole.x0, -hole.z1), new THREE.Vector2(hole.x1, -hole.z1), new THREE.Vector2(hole.x1, -hole.z0), new THREE.Vector2(hole.x0, -hole.z0)]));
     return new THREE.ShapeGeometry(shape);
@@ -190,8 +193,26 @@ import { ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPie
   ground.receiveShadow = true;
   scene.add(ground);
 
-  // Sin plataformas: la física las sigue admitiendo, pero la lista está vacía
-  const platforms = [];
+  // ---------- Montañas muy altas alrededor del mapa (en vez del borde invisible con trampolín) ----------
+  (() => {
+    const cone = new THREE.ConeGeometry(1, 1, 9); cone.translate(0, 0.5, 0);   // cono de 1 × 1, con la base en y = 0
+    const rock = new THREE.MeshLambertMaterial({ color: 0x7d7468, flatShading: true });
+    const snow = new THREE.MeshLambertMaterial({ color: 0xf4f6fa, flatShading: true });
+    for (const c of mountainRing(SIZE / 2)) {
+      const m = new THREE.Mesh(cone, rock); m.position.set(c.x, 0, c.z); m.scale.set(c.r, c.h, c.r); m.rotation.y = c.x * 0.37 + c.z;
+      scene.add(m);
+      // Nieve en la punta
+      const cap = new THREE.Mesh(cone, snow); cap.position.set(c.x, c.h * 0.72, c.z); cap.scale.set(c.r * 0.29, c.h * 0.285, c.r * 0.29); cap.rotation.y = m.rotation.y;
+      scene.add(cap);
+      if (Math.max(Math.abs(c.x), Math.abs(c.z)) < SIZE / 2 + 30) cameraBlockers.push(m); // la cámara no se mete en las de adelante
+    }
+    // Paredes invisibles al pie de las montañas: no se pueden atravesar ni saltar
+    const e = SIZE / 2 - MOUNTAIN_WALL_INSET, T = 10, big = SIZE / 2 + T;
+    platforms.push(
+      { x: e + T / 2, z: 0, hw: T / 2, hd: big, top: 500, bottom: -50 }, { x: -e - T / 2, z: 0, hw: T / 2, hd: big, top: 500, bottom: -50 },
+      { x: 0, z: e + T / 2, hw: big, hd: T / 2, top: 500, bottom: -50 }, { x: 0, z: -e - T / 2, hw: big, hd: T / 2, top: 500, bottom: -50 });
+  })();
+
   // ---------- Trampolín gigante (esquina de tu mitad) ----------
   const TRAMP = { x: 82, z: 82, r: 3 };
   const TRAMP_UP = launchSpeedForHeight(100, 30); // velocidad para subir 100 m con la gravedad del juego
@@ -388,6 +409,7 @@ import { ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPie
     const dark = new THREE.MeshLambertMaterial({ color: 0x2b2f35 });
     const metal = new THREE.MeshLambertMaterial({ color: 0xa7b0ba });
     const blue = new THREE.MeshBasicMaterial({ color: 0x3d8bff });
+    g.userData.accent = blue; // las partes azules (en el Bláster 2.0 se vuelven rojas)
     const add = (geo, mat, x, y, z, rx = 0) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.rotation.x = rx; m.castShadow = true; g.add(m); return m; };
     add(new THREE.BoxGeometry(0.26, 0.3, 0.9), grey, 0, 0, 0);              // cuerpo
     add(new THREE.BoxGeometry(0.12, 0.07, 0.62), blue, 0, 0.18, 0.02);      // franja azul de arriba
@@ -499,7 +521,6 @@ import { ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPie
   // Tus estadísticas: empiezan en lo básico y suben con las mejoras de la tienda
   const stats = { speed: SPEED, jump: JUMP, blaster: false };
   const PICKUP = 1.3; // distancia para recoger una moneda
-  const BOUNCE_UP = 16, BOUNCE_IN = 26;
   const PR = 0.45; // radio de colisión de los personajes contra paredes y pisos
   const STEP_UP = 0.45; // altura máxima que se sube sin saltar
   const COLL = { PR, H, STEP_UP };
@@ -577,7 +598,7 @@ import { ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPie
     clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
   }
   // Progreso de esta partida: se guarda con el botón GUARDAR, por usuario
-  const save = { coins: 0, boxes: 0, levels: { belt: 0, hopper: 0, belt2: 0, turbo: 0, bigHouse: 0, transformer: 0, hopper2: 0, lineBox: 0, lineBag: 0, assistant2: 0, assistant: 0, assistSpeed: 0, blaster: 0 } };
+  const save = { coins: 0, boxes: 0, levels: { belt: 0, hopper: 0, belt2: 0, turbo: 0, bigHouse: 0, transformer: 0, hopper2: 0, lineBox: 0, lineBag: 0, assistant2: 0, assistant: 0, assistSpeed: 0, blaster: 0, blaster2: 0 } };
   try { localStorage.removeItem('rectangulo-verde-tienda'); } catch (e) {} // borra el guardado de versiones anteriores
 
   function renderCoins() {
@@ -640,6 +661,8 @@ import { ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPie
       base: 20, max: ASSIST_SPEED_MAX, needs: 'assistant', apply: l => { for (const a of assistants) a.speed = assistantSpeed(l); } },
     { id: 'blaster', group: 'Mejoras para ti', name: 'Bláster láser', desc: 'Dispara con clic. Aturde al gigante 2 segundos.',
       base: 20, max: 1, apply: l => { stats.blaster = l > 0; canvas.classList.toggle('aim', l > 0); handBlaster.visible = l > 0; document.getElementById('reload').hidden = !(l > 0); } },
+    { id: 'blaster2', group: 'Mejoras para ti', name: 'Bláster 2.0', desc: 'Igual al bláster, pero con las partes rojas. Dispara láseres rojos a 25 m/s (recarga en 1 s) que estallan en partículas rojas al chocar.',
+      currency: 'boxes', base: 20, max: 1, needs: 'blaster', apply: l => setBlasterV2(l > 0) },
   ];
   const price = it => it.flat ? it.base : upgradePrice(it.base, save.levels[it.id]); // flat: siempre cuesta lo mismo
   // Con qué se paga cada artículo: monedas (casi todo) o cajas doradas (el asistente)
@@ -1058,15 +1081,44 @@ import { ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPie
 
   // ---------- Bláster láser ----------
   // Varios láseres a la vez; después de cada disparo la barra tiene que recargarse
-  const LASER_SPEED = 30;    // metros por segundo
+  let blaster = blasterStats(false);  // velocidad, recarga y color del bláster que tienes
   const LASER_RANGE = 120;   // se apaga después de recorrer esta distancia
-  const RELOAD = 1;          // segundos para recargar
   const raycaster = new THREE.Raycaster();
   const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
   const laserGeo = new THREE.BoxGeometry(0.2, 0.5, 1);
-  const laserMat = new THREE.MeshBasicMaterial({ color: 0x1e6bff });
+  const laserMat = new THREE.MeshBasicMaterial({ color: blaster.color });
   const glowGeo = new THREE.BoxGeometry(0.45, 0.75, 1.25);
-  const glowMat = new THREE.MeshBasicMaterial({ color: 0x7fb2ff, transparent: true, opacity: 0.35, depthWrite: false });
+  const glowMat = new THREE.MeshBasicMaterial({ color: blaster.glow, transparent: true, opacity: 0.35, depthWrite: false });
+  // Bláster 2.0: partes rojas, láseres rojos y partículas al chocar
+  function setBlasterV2(on) {
+    blaster = blasterStats(on);
+    laserMat.color.setHex(blaster.color); glowMat.color.setHex(blaster.glow);
+    for (const b of [handBlaster, fpBlaster]) b.userData.accent.color.setHex(on ? 0xff2a2a : 0x3d8bff);
+    if (on) showToast('¡Bláster 2.0! Láseres rojos');
+  }
+  // Partículas rojas cuando un láser del Bláster 2.0 choca
+  const sparkGeo = new THREE.BoxGeometry(0.16, 0.16, 0.16);
+  const sparkMat = new THREE.MeshBasicMaterial({ color: 0xff2a2a });
+  const sparks = [];
+  function spawnSparks(pos) {
+    for (let i = 0; i < 22; i++) {
+      const m = new THREE.Mesh(sparkGeo, sparkMat);
+      m.position.copy(pos);
+      const a = Math.random() * Math.PI * 2, up = Math.random();
+      const v = new THREE.Vector3(Math.cos(a) * (2 + Math.random() * 5), 3 + up * 7, Math.sin(a) * (2 + Math.random() * 5));
+      scene.add(m); sparks.push({ mesh: m, vel: v, life: 0.5 + Math.random() * 0.4 });
+    }
+  }
+  function updateSparks(dt) {
+    for (let i = sparks.length - 1; i >= 0; i--) {
+      const p = sparks[i]; p.life -= dt;
+      p.vel.y -= 25 * dt;
+      p.mesh.position.addScaledVector(p.vel, dt);
+      if (p.mesh.position.y < 0.08 && p.mesh.position.y > -1) { p.mesh.position.y = 0.08; p.vel.multiplyScalar(0.4); }
+      p.mesh.scale.setScalar(Math.max(0.01, Math.min(1, p.life / 0.4)));
+      if (p.life <= 0) { scene.remove(p.mesh); sparks.splice(i, 1); }
+    }
+  }
   const lasers = [];
   let reloadLeft = 0;
   const reloadEl = document.getElementById('reload'), reloadFill = document.getElementById('reloadFill'), reloadText = document.getElementById('reloadText');
@@ -1098,7 +1150,7 @@ import { ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPie
     mesh.lookAt(mesh.position.clone().add(dir));
     scene.add(mesh);
     lasers.push({ mesh, dir, travel: 0 });
-    reloadLeft = RELOAD;
+    reloadLeft = blaster.reload;
     // Pequeño retroceso del bláster
     (firstPerson ? fpBlaster : handBlaster).userData.kick = 1;
   }
@@ -1106,7 +1158,7 @@ import { ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPie
     // Barra de recarga
     reloadLeft = Math.max(0, reloadLeft - dt);
     const ready = reloadLeft === 0;
-    reloadFill.style.width = `${(1 - reloadLeft / RELOAD) * 100}%`;
+    reloadFill.style.width = `${(1 - reloadLeft / blaster.reload) * 100}%`;
     reloadEl.classList.toggle('ready', ready);
     reloadText.textContent = ready ? 'LÁSER LISTO' : 'RECARGANDO…';
     fpBlaster.visible = stats.blaster && firstPerson;
@@ -1118,7 +1170,7 @@ import { ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPie
 
     for (let i = lasers.length - 1; i >= 0; i--) {
       const L = lasers[i];
-      const step = LASER_SPEED * dt;
+      const step = blaster.speed * dt;
       L.mesh.position.addScaledVector(L.dir, step);
       L.travel += step;
       const lp = L.mesh.position;
@@ -1127,12 +1179,16 @@ import { ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPie
       const hitEnemy = !!boxHit(laserBox, boxOf(es, ENEMY_SCALE));
       if (hitEnemy) {
         stunTime = 2;
-        const bm = new THREE.Mesh(burstGeo, new THREE.MeshBasicMaterial({ color: 0x4d8dff, transparent: true, opacity: 0.8, depthWrite: false }));
+        const bm = new THREE.Mesh(burstGeo, new THREE.MeshBasicMaterial({ color: blaster.particles ? 0xff4d4d : 0x4d8dff, transparent: true, opacity: 0.8, depthWrite: false }));
         bm.position.copy(lp); scene.add(bm); bursts.push({ mesh: bm, life: 0.4 });
         showToast('¡Gigante aturdido 2 segundos!');
       }
-      if (hitEnemy || lp.y < 0 || L.travel > LASER_RANGE) { scene.remove(L.mesh); lasers.splice(i, 1); }
+      // ¿Chocó con algo? El gigante, el suelo o las montañas del borde
+      const hitGround = lp.y < 0, hitMountain = Math.max(Math.abs(lp.x), Math.abs(lp.z)) > EDGE - MOUNTAIN_WALL_INSET;
+      if (blaster.particles && (hitEnemy || hitGround || hitMountain)) spawnSparks(new THREE.Vector3(lp.x, Math.max(lp.y, 0.1), lp.z));
+      if (hitEnemy || hitGround || hitMountain || L.travel > LASER_RANGE) { scene.remove(L.mesh); lasers.splice(i, 1); }
     }
+    updateSparks(dt);
     for (let i = bursts.length - 1; i >= 0; i--) {
       const B = bursts[i]; B.life -= dt;
       const k = 1 - B.life / 0.4;
@@ -1247,14 +1303,6 @@ import { ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPie
       turnTo(ps, mx, mz, dt);
     }
 
-    // Trampolín invisible en los bordes: donde ya no hay suelo
-    const px = ps.pos.x, pz = ps.pos.z;
-    if (Math.abs(px) > EDGE || Math.abs(pz) > EDGE) {
-      if (Math.abs(px) > EDGE) { ps.pos.x = Math.sign(px) * EDGE; ps.vel.x = -Math.sign(px) * BOUNCE_IN; }
-      if (Math.abs(pz) > EDGE) { ps.pos.z = Math.sign(pz) * EDGE; ps.vel.z = -Math.sign(pz) * BOUNCE_IN; }
-      ps.vel.y = BOUNCE_UP; ps.onGround = false;
-      flashWarn('NO TE SALGAS', 2);
-    }
     if (warnTimer > 0 && (warnTimer -= dt) <= 0) warn.classList.remove('show');
 
     if (onTrampoline(ps) && ps.vel.y <= 0) { trampolineLaunch(ps); showToast('¡BOING! 100 metros'); }
@@ -1289,7 +1337,7 @@ import { ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPie
       const head = new THREE.Vector3(p.x, p.y + 1.2, p.z);
       const back = new THREE.Vector3(Math.sin(camYaw) * Math.cos(camPitch), Math.sin(camPitch), Math.cos(camYaw) * Math.cos(camPitch));
       camRay.set(head, back); camRay.far = 9;
-      const block = camRay.intersectObjects(houseParts, false)[0];
+      const block = camRay.intersectObjects([...houseParts, ...cameraBlockers], false)[0];
       // Si una pared queda en medio la cámara se acerca enseguida; cuando ya no, se aleja suavemente (sin saltos)
       const want = block ? Math.max(0.6, block.distance - 0.3) : 9;
       camDist = want < camDist ? want : camDist + (want - camDist) * Math.min(1, dt * 4);
