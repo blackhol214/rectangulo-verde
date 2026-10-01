@@ -150,8 +150,8 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module">
-import { noteFrequency, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, missingFor, canAfford, collideWalls, extraLineSlot, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
-         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-14'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
+import { noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, missingFor, canAfford, collideWalls, extraLineSlot, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
+         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-15'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
 (() => {
   const canvas = document.getElementById('game');
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -1204,18 +1204,18 @@ import { noteFrequency, ambientVolume, bitcrush, footstepInterval, COSMETICS, DE
     const src = audio.ctx.createBufferSource(), g = audio.ctx.createGain(); g.gain.value = 0.55;
     src.buffer = audio.crush; src.connect(g).connect(audio.sfx); src.start();
   }
-  // Moneda: nota MI 4 con sintetizador, de 0,3 segundos
-  const COIN_FREQ = noteFrequency('E4');
+  // Moneda al estilo Mario: SI 5 cortita y MI 6 que se apaga, con onda cuadrada (sonido de consola)
   function sfxCoin() {
     if (!audio) return;
     const { ctx, sfx } = audio, t0 = ctx.currentTime;
-    const o = ctx.createOscillator(), o2 = ctx.createOscillator(), g = ctx.createGain();
-    o.type = 'triangle'; o.frequency.value = COIN_FREQ;
-    o2.type = 'sine'; o2.frequency.value = COIN_FREQ * 2;                 // un poco de brillo arriba
-    const g2 = ctx.createGain(); g2.gain.value = 0.25;
-    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.3, t0 + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.3);
-    o.connect(g); o2.connect(g2).connect(g); g.connect(sfx);
-    o.start(t0); o2.start(t0); o.stop(t0 + 0.31); o2.stop(t0 + 0.31);
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 6000; lp.connect(sfx); // suaviza lo más chillón
+    for (const n of COIN_NOTES) {
+      const o = ctx.createOscillator(), g = ctx.createGain(), at = t0 + n.start, end = at + n.length;
+      o.type = 'square'; o.frequency.value = noteFrequency(n.note);
+      g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(0.13, at + 0.005);
+      g.gain.setValueAtTime(0.13, end - n.length * 0.6); g.gain.exponentialRampToValueAtTime(0.0001, end);
+      o.connect(g).connect(lp); o.start(at); o.stop(end + 0.01);
+    }
   }
   // Pasos en el pasto: un "chss" corto
   function sfxStep() {

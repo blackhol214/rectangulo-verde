@@ -279,6 +279,8 @@ export function noteFrequency(name) {
   const semis = { C: -9, D: -7, E: -5, F: -4, G: -2, A: 0, B: 2 }[m[1]] + (m[2] ? 1 : 0) + (Number(m[3]) - 4) * 12;
   return 440 * 2 ** (semis / 12);
 }
+// Sonido de moneda al estilo Mario: dos notas agudas de onda cuadrada, SI 5 cortita y luego MI 6 que se apaga
+export const COIN_NOTES = [{ note: 'B5', start: 0, length: 0.07 }, { note: 'E6', start: 0.07, length: 0.38 }];
 // Volumen del bosque: de día normal, de noche un 15% más bajo (day: 1 = día, 0 = noche)
 export const ambientVolume = day => 0.85 + 0.15 * Math.min(1, Math.max(0, day));
 // Efecto "bitcrushed": repite cada muestra `hold` veces (menos calidad) y la redondea a `bits` bits (sonido de videojuego viejo)

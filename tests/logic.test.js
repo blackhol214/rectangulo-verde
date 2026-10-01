@@ -8,7 +8,7 @@ import {
   mountainRing, MOUNTAIN_WALL_INSET, seededRandom,
   blasterStats,
   COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, parseStyle, cosmeticById,
-  noteFrequency, ambientVolume, bitcrush, footstepInterval,
+  noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval,
 } from '../src/logic.js';
 
 // Caja de un personaje normal (1 × 0,6 × 2 m) en (x, z), girada `a` radianes
@@ -431,11 +431,19 @@ describe('estilo: sombreros, colores y gafas', () => {
 });
 
 describe('sonido', () => {
-  it('la moneda suena en MI 4 (329,63 Hz)', () => {
+  it('calcula bien la frecuencia de las notas', () => {
     expect(noteFrequency('A4')).toBe(440);
     expect(noteFrequency('E4')).toBeCloseTo(329.63, 2);
-    expect(noteFrequency('E5')).toBeCloseTo(659.26, 2);
+    expect(noteFrequency('B5')).toBeCloseTo(987.77, 2);
+    expect(noteFrequency('E6')).toBeCloseTo(1318.51, 2);
     expect(noteFrequency('nada')).toBeNaN();
+  });
+
+  it('la moneda suena como la de Mario: SI 5 corta y luego MI 6, mucho más agudo que antes', () => {
+    expect(COIN_NOTES.map(n => n.note)).toEqual(['B5', 'E6']);
+    expect(COIN_NOTES[0].length).toBeLessThan(COIN_NOTES[1].length);       // la primera es cortita
+    expect(COIN_NOTES[1].start).toBeCloseTo(COIN_NOTES[0].length);         // la segunda empieza justo después
+    for (const n of COIN_NOTES) expect(noteFrequency(n.note)).toBeGreaterThan(noteFrequency('E4') * 2.5);
   });
 
   it('el bosque suena normal de día y un 15% más bajo de noche', () => {
