@@ -308,7 +308,11 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, cla
     PORTAL.glow.material.opacity = 0.45 + Math.sin(t * 4) * 0.15;
     if (MG.active) return;
     if (!inPortal()) { portalArmed = true; return; }
-    if (portalArmed) { portalArmed = false; startMinigame(INVERTED_K); }
+    if (portalArmed) {
+      portalArmed = false; startMinigame(INVERTED_K);
+      // Al volver apareces afuera, frente a la puerta y mirando la cámara (adentro la vista quedaba toda morada y parecía que seguías en el mundo al revés)
+      MG.back.set(PORTAL.x - 4, 0, PORTAL.z); MG.yaw = -Math.PI / 2;
+    }
   }
   const onTrampoline = st => st.pos.y < 1.2 && Math.hypot(st.pos.x - TRAMP.x, st.pos.z - TRAMP.z) < TRAMP.r;
   // Te lanza 100 m hacia arriba
