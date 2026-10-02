@@ -131,8 +131,8 @@ export const normalizeName = name => String(name).trim().replace(/\s+/g, ' ').to
 export const saveKey = name => `rectangulo-verde:partida:${normalizeName(name)}`;
 
 // Convierte la partida en texto para guardarla
-export function serializeSave({ coins, boxes, levels, dayPhase, pos, style }) {
-  return JSON.stringify({ v: 1, coins, boxes, levels, dayPhase, pos: { x: pos.x, y: pos.y, z: pos.z }, style });
+export function serializeSave({ coins, boxes, levels, dayPhase, pos, style, trophies = [] }) {
+  return JSON.stringify({ v: 1, coins, boxes, levels, dayPhase, pos: { x: pos.x, y: pos.y, z: pos.z }, style, trophies });
 }
 
 // Lee una partida guardada. Si el texto está roto o trae valores raros, los ignora.
@@ -147,7 +147,8 @@ export function parseSave(text, knownLevels) {
   const phase = Number.isFinite(d.dayPhase) && d.dayPhase >= 0 && d.dayPhase < 1 ? d.dayPhase : null;
   const p = d.pos || {};
   const pos = [p.x, p.y, p.z].every(Number.isFinite) ? { x: p.x, y: p.y, z: p.z } : null;
-  return { coins: count(d.coins), boxes: count(d.boxes), levels, dayPhase: phase, pos, style: parseStyle(d.style) };
+  const trophies = Array.isArray(d.trophies) ? d.trophies.filter(t => typeof t === 'string') : [];   // las partidas viejas no tienen trofeos
+  return { coins: count(d.coins), boxes: count(d.boxes), levels, dayPhase: phase, pos, style: parseStyle(d.style), trophies };
 }
 
 // ---------- Casa grande con sótano ----------
@@ -547,3 +548,30 @@ export function clampToArea(x, z, area) {
   return { x: Math.min(area.x1, Math.max(area.x0, x)), z: Math.min(area.z1, Math.max(area.z0, z)) };
 }
 export function meteorSpot(r1, r2) { const a = r1 * Math.PI * 2, d = Math.sqrt(r2) * (METEORS.radius - 1.5); return { x: Math.cos(a) * d, z: Math.sin(a) * d }; }
+
+// ---------- Mundo al revés: tú eres el gigante y el bot es "el jugador" ----------
+// El jugador pasea por tu mitad recogiendo monedas; si te acercas huye hacia monedas lejos de ti,
+// y con unas monedas vuelve a su zona segura a comprar una mejora (corre un poco más).
+// Tú lo atrapas con tu salto de gigante, que avanza mucho más que correr.
+export const INVERTED = {
+  id: 'inverted', bot: 'jugador', intro: 'Mundo al revés', name: 'Mundo al revés',
+  goal: 'Eres el gigante: atrapa 10 veces al jugador (salta para alcanzarlo)', reward: { coins: 10, boxes: 10 }, trophy: 'diamante',
+  half: 50, lineW: 3, catches: 10, catchDist: 2.6, giantR: 1.5, giantJump: 16, lunge: 1.7,
+  botSpeed: 10, botMaxSpeed: 12.5, speedPerUpgrade: 0.5, coinsPerUpgrade: 3, coinCount: 8,
+  fleeDist: 16, panicDist: 7, braveAfter: 6, shopTime: 2.5, shop: { x: 0, z: 38 }, home: { x: 0, z: 30 }, caughtPause: 2,
+};
+export const INVERTED_K = MINIGAMES.length;   // su "número de minijuego" (para minigameOrigin)
+export const minigameDef = k => (k < MINIGAMES.length ? MINIGAMES[k] : INVERTED);
+// Colores invertidos: cada canal de color pasa a 255 − valor (blanco ↔ negro, amarillo ↔ azul…)
+export const invertColor = hex => 0xffffff ^ hex;
+// A qué moneda corre el jugador: la que está cerca de él y lejos del gigante
+export function fleeCoin(bot, giant, coins) {
+  let best = -1, bestScore = -Infinity;
+  coins.forEach((c, i) => {
+    const score = Math.hypot(c.x - giant.x, c.z - giant.z) - 0.6 * Math.hypot(c.x - bot.x, c.z - bot.z);
+    if (score > bestScore) { bestScore = score; best = i; }
+  });
+  return best;
+}
+// Velocidad del jugador después de comprar mejoras (con un tope)
+export const botSpeedAfter = upgrades => Math.min(INVERTED.botMaxSpeed, INVERTED.botSpeed + upgrades * INVERTED.speedPerUpgrade);

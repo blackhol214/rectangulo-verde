@@ -179,8 +179,8 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module">
-import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinX, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, missingFor, canAfford, collideWalls, extraLineSlot, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
-         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-28'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
+import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, invertColor, fleeCoin, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinX, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, missingFor, canAfford, collideWalls, extraLineSlot, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
+         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-30'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
 (() => {
   const canvas = document.getElementById('game');
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -284,6 +284,32 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, cla
     g.position.set(TRAMP.x, 0, TRAMP.z);
     scene.add(g);
   })();
+  // ---------- Cámara de teletransportación (junto al trampolín): te lleva al mundo al revés ----------
+  const PORTAL = { x: 73.5, z: 82 };
+  function buildPortal() {   // se arma más abajo, cuando ya existe la lista de paredes (houseParts)
+    const frame = new THREE.MeshLambertMaterial({ color: 0x5b2a86 }), P = PORTAL;
+    // Tres paredes y techo; la entrada mira hacia el centro del mapa (-x)
+    addBox(P.x - 1.6, P.x + 1.6, 0, 0.2, P.z - 1.6, P.z + 1.6, frame);
+    addBox(P.x + 1.3, P.x + 1.6, 0.2, 4, P.z - 1.6, P.z + 1.6, frame);
+    addBox(P.x - 1.6, P.x + 1.3, 0.2, 4, P.z - 1.6, P.z - 1.3, frame);
+    addBox(P.x - 1.6, P.x + 1.3, 0.2, 4, P.z + 1.3, P.z + 1.6, frame);
+    addBox(P.x - 1.6, P.x + 1.6, 4, 4.3, P.z - 1.6, P.z + 1.6, frame);
+    const glow = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 3.6), new THREE.MeshBasicMaterial({ color: 0xc77dff, transparent: true, opacity: 0.55, side: THREE.DoubleSide, depthWrite: false }));
+    glow.rotation.y = Math.PI / 2; glow.position.set(P.x + 1.25, 2.1, P.z); scene.add(glow);
+    const light = new THREE.PointLight(0xc77dff, 1.2, 10, 1.5); light.position.set(P.x, 2.5, P.z); scene.add(light);
+    const c = document.createElement('canvas'); c.width = 512; c.height = 128; const g = c.getContext('2d');
+    g.fillStyle = '#2a1240'; g.fillRect(0, 0, 512, 128); g.fillStyle = '#e8c7ff'; g.font = '800 54px system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('MUNDO AL REVÉS', 256, 66);
+    const sign = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c) })); sign.scale.set(5, 1.25, 1); sign.position.set(P.x, 5.2, P.z); scene.add(sign);
+    PORTAL.glow = glow;
+  }
+  let portalArmed = true;   // después de volver estás parado en la cámara: se vuelve a activar cuando sales
+  const inPortal = () => ps.pos.y < 1 && Math.abs(ps.pos.x - PORTAL.x) < 1.1 && Math.abs(ps.pos.z - PORTAL.z) < 1.1;
+  function updatePortal() {
+    PORTAL.glow.material.opacity = 0.45 + Math.sin(t * 4) * 0.15;
+    if (MG.active) return;
+    if (!inPortal()) { portalArmed = true; return; }
+    if (portalArmed) { portalArmed = false; startMinigame(INVERTED_K); }
+  }
   const onTrampoline = st => st.pos.y < 1.2 && Math.hypot(st.pos.x - TRAMP.x, st.pos.z - TRAMP.z) < TRAMP.r;
   // Te lanza 100 m hacia arriba
   function trampolineLaunch(st) {
@@ -499,6 +525,17 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, cla
     eye.position.y -= H/2; brow.position.y -= H/2;
     enemyEyes.push(eye);
   });
+  // Un gigante con ojos enojados, del material que quieras (rojo para jugar, diamante para el trofeo). Mide H de alto antes de escalarlo.
+  function makeGiantFigure(mat) {
+    const g = new THREE.Group(), b = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), mat);
+    b.position.y = H / 2; b.castShadow = true; g.add(b);
+    for (const x of [-0.22, 0.22]) {
+      const eye = new THREE.Mesh(eyeGeo, eyeMat); eye.scale.z = 0.5; eye.position.set(x, H * 0.78, D / 2 + 0.02);
+      const brow = new THREE.Mesh(browGeo, eyeMat); brow.position.set(x * 0.95, H * 0.78 + 0.17, D / 2 + 0.03); brow.rotation.z = x < 0 ? -0.5 : 0.5;
+      g.add(eye, brow);
+    }
+    return g;
+  }
   const ENEMY_SCALE = 3;
   enemy.scale.setScalar(ENEMY_SCALE); // gigante: 3 veces más grande
   scene.add(enemy);
@@ -715,7 +752,7 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, cla
     clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
   }
   // Progreso de esta partida: se guarda con el botón GUARDAR, por usuario
-  const save = { coins: 0, boxes: 0, style: emptyStyle(), levels: { belt: 0, hopper: 0, belt2: 0, turbo: 0, bigHouse: 0, transformer: 0, hopper2: 0, lineBox: 0, lineBag: 0, assistant2: 0, assistant: 0, assistSpeed: 0, blaster: 0, blaster2: 0 } };
+  const save = { coins: 0, boxes: 0, style: emptyStyle(), trophies: [], levels: { belt: 0, hopper: 0, belt2: 0, turbo: 0, bigHouse: 0, transformer: 0, hopper2: 0, lineBox: 0, lineBag: 0, assistant2: 0, assistant: 0, assistSpeed: 0, blaster: 0, blaster2: 0 } };
   try { localStorage.removeItem('rectangulo-verde-tienda'); } catch (e) {} // borra el guardado de versiones anteriores
 
   function renderCoins() {
@@ -1710,6 +1747,101 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, cla
       },
       end() { for (const m of MG.built.meteors) { scene.remove(m.shadow); scene.remove(m.rock); } MG.built.meteors = []; },
     },
+    // Mundo al revés: eres el gigante rojo y tienes que atrapar 10 veces al jugador
+    inverted: {
+      giant: true, jump: INVERTED.giantJump, lunge: INVERTED.lunge, sky: invertColor(0xbfe3f2),
+      area: { x0: -INVERTED.half + 2, x1: INVERTED.half - 2, z0: -INVERTED.half + 2, z1: -INVERTED.lineW / 2 - INVERTED.giantR },   // no puedes cruzar la línea
+      look(o) { return { x: o.x, z: o.z + 30 }; },
+      build(o) {
+        const I = INVERTED, h = I.half, inv = hex => '#' + invertColor(hex).toString(16).padStart(6, '0');
+        // Suelo con los cuadros del mundo normal, pero con los colores al revés
+        const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d');
+        g.fillStyle = inv(0x5fa83a); g.fillRect(0, 0, 128, 128); g.fillStyle = inv(0x56a034); g.fillRect(0, 0, 64, 64); g.fillRect(64, 64, 64, 64);
+        const tx = new THREE.CanvasTexture(c); tx.wrapS = tx.wrapT = THREE.RepeatWrapping; tx.repeat.set(h / 4, h / 4);
+        const floor = new THREE.Mesh(new THREE.PlaneGeometry(h * 2, h * 2), new THREE.MeshLambertMaterial({ map: tx }));
+        floor.rotation.x = -Math.PI / 2; floor.position.set(o.x, 0.01, o.z); floor.receiveShadow = true; scene.add(floor);
+        // La línea: azul en vez de amarilla, con su pared transparente
+        const blue = invertColor(0xffd400);
+        const line = new THREE.Mesh(new THREE.PlaneGeometry(h * 2, I.lineW), new THREE.MeshBasicMaterial({ color: blue })); line.rotation.x = -Math.PI / 2; line.position.set(o.x, 0.03, o.z); scene.add(line);
+        const lw = new THREE.Mesh(new THREE.PlaneGeometry(h * 2, 8), new THREE.MeshBasicMaterial({ color: blue, transparent: true, opacity: 0.15, side: THREE.DoubleSide, depthWrite: false })); lw.position.set(o.x, 4, o.z); scene.add(lw);
+        // Montañas alrededor
+        const rock = mgMat(invertColor(0x8a7a62));
+        mgBox(o.x - h - 4, o.x - h, 0, 30, o.z - h - 4, o.z + h + 4, rock); mgBox(o.x + h, o.x + h + 4, 0, 30, o.z - h - 4, o.z + h + 4, rock);
+        mgBox(o.x - h, o.x + h, 0, 30, o.z - h - 4, o.z - h, rock); mgBox(o.x - h, o.x + h, 0, 30, o.z + h, o.z + h + 4, rock);
+        // La casa del jugador (como la tuya, al revés) y su tienda de mejoras, en su zona segura
+        mgBox(o.x + 20, o.x + 32, 0, 4, o.z + 4, o.z + 14, mgMat(invertColor(0xe8d9b5)));
+        const roof = new THREE.Mesh(new THREE.ConeGeometry(8.8, 3, 4), mgMat(invertColor(0xb5452f))); roof.rotation.y = Math.PI / 4; roof.scale.z = 0.8; roof.position.set(o.x + 26, 5.5, o.z + 9); scene.add(roof);
+        const S = I.shop;
+        mgBox(o.x + S.x - 2, o.x + S.x + 2, 0, 1.1, o.z + S.z + 1, o.z + S.z + 2.4, mgMat(invertColor(0x8a5a33)));
+        const sc = document.createElement('canvas'); sc.width = 256; sc.height = 96; const sg = sc.getContext('2d');
+        sg.fillStyle = inv(0xffd400); sg.fillRect(0, 0, 256, 96); sg.fillStyle = '#fff'; sg.font = '800 44px system-ui, sans-serif'; sg.textAlign = 'center'; sg.textBaseline = 'middle'; sg.fillText('MEJORAS', 128, 50);
+        const sign = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(sc) })); sign.scale.set(4, 1.5, 1); sign.position.set(o.x + S.x, 3.2, o.z + S.z + 1.7); scene.add(sign);
+        // Monedas azules (el dorado al revés)
+        const coinM = new THREE.MeshLambertMaterial({ color: invertColor(0xffc400), emissive: 0x001a66 });
+        MG.built.invCoins = Array.from({ length: I.coinCount }, () => { const m = new THREE.Mesh(coinGeo, coinM); m.castShadow = true; scene.add(m); return m; });
+        // Tú (el gigante rojo) y el jugador (el rectángulo verde)
+        MG.built.giant = makeGiantFigure(new THREE.MeshLambertMaterial({ color: 0xd4161b })); MG.built.giant.scale.setScalar(ENEMY_SCALE); MG.built.giant.visible = false; scene.add(MG.built.giant);
+        const bot = new THREE.Group(), bb = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), mgMat(0x2fae4e)); bb.position.y = H / 2; bb.castShadow = true; bot.add(bb);
+        for (const ex of [-0.22, 0.22]) { const e = new THREE.Mesh(eyeGeo, eyeMat); e.scale.z = 0.5; e.position.set(ex, H * 0.78, D / 2 + 0.02); bot.add(e); }
+        bot.visible = false; scene.add(bot); MG.built.bot = makeState(bot);
+      },
+      start(o) {
+        const I = INVERTED, st = MG.state, b = MG.built.bot;
+        Object.assign(st, { catches: 0, held: 0, upgrades: 0, pause: 1.5, shopping: 0, speed: botSpeedAfter(0), bold: 0, goal: -1 });
+        MG.built.coinSpots = MG.built.invCoins.map(m => { const q = invCoinSpot(); m.position.set(o.x + q.x, 1.2, o.z + q.z); return q; });
+        b.pos.set(o.x + I.home.x, 0, o.z + I.home.z); b.vel.set(0, 0, 0);
+        placePlayer(o.x, 0, o.z - 25);
+        MG.built.giant.visible = true; b.obj.visible = true;
+      },
+      update(dt, o) {
+        const I = INVERTED, st = MG.state, b = MG.built.bot, g = MG.built.giant;
+        g.position.copy(ps.pos); g.rotation.y = ps.facing;   // tu cuerpo de gigante
+        for (const m of MG.built.invCoins) m.rotation.y += dt * 3;
+        const rx = b.pos.x - o.x, rz = b.pos.z - o.z, gx = ps.pos.x - o.x, gz = ps.pos.z - o.z, dG = Math.hypot(rx - gx, rz - gz);
+        // Qué hace el jugador (tu diseño): pasear y juntar monedas, huir si te acercas, y con 3 monedas ir a comprar una mejora
+        let tx = rx, tz = rz, sp = 0;
+        if (st.pause > 0) st.pause -= dt;
+        else if (st.shopping > 0) {
+          st.shopping -= dt;
+          if (st.shopping <= 0) { st.upgrades++; st.held = 0; st.speed = botSpeedAfter(st.upgrades); showToast(`El jugador compró una mejora: ahora corre a ${st.speed.toFixed(1)} m/s`); }
+        } else if (st.held >= I.coinsPerUpgrade) {
+          tx = I.shop.x; tz = I.shop.z; sp = st.speed;
+          if (Math.hypot(rx - tx, rz - tz) < 1.5) st.shopping = I.shopTime;
+        } else {
+          // Valentía: mientras más tiempo pasa sin monedas, menos miedo te tiene (quiere sus mejoras)
+          st.bold += dt;
+          const scared = dG < I.panicDist * Math.max(0, 1 - st.bold / I.braveAfter);
+          if (scared) { tz = 10; sp = st.speed; st.goal = -1; }   // ¡muy cerca!: corre a su zona segura
+          else {
+            if (st.goal < 0) st.goal = fleeCoin({ x: rx, z: rz }, { x: gx, z: gz }, MG.built.coinSpots);   // elige una moneda lejos de ti y va por ella
+            tx = MG.built.coinSpots[st.goal].x; tz = MG.built.coinSpots[st.goal].z;
+            sp = dG < I.fleeDist ? st.speed : st.speed * 0.5;   // lejos de ti pasea; cerca, corre a toda velocidad
+          }
+        }
+        if (sp > 0) {
+          const w = detourAround(rx, rz, tx, tz, { x0: 20, x1: 32, z0: 4, z1: 14 });   // rodea su casa
+          const dx = w.x - rx, dz = w.z - rz, dist = Math.hypot(dx, dz);
+          if (dist > 0.05) { const step = Math.min(sp * dt, dist); b.walkX += dx / dist * step; b.walkZ += dz / dist * step; turnTo(b, dx, dz, dt); }
+        }
+        physics(b, dt, false);
+        const c = clampToArea(b.pos.x - o.x, b.pos.z - o.z, { x0: -I.half + 1.5, x1: I.half - 1.5, z0: -I.half + 1.5, z1: I.half - 1.5 }); b.pos.x = o.x + c.x; b.pos.z = o.z + c.z;
+        // Recoge monedas (y aparece otra en tu mitad)
+        MG.built.coinSpots.forEach((q, i) => {
+          if (Math.hypot(b.pos.x - o.x - q.x, b.pos.z - o.z - q.z) >= PICKUP) return;
+          st.held++; st.bold = 0; st.goal = -1; const n = invCoinSpot(); MG.built.coinSpots[i] = n; MG.built.invCoins[i].position.set(o.x + n.x, 1.2, o.z + n.z);
+        });
+        // ¿Lo atrapaste? Solo vale en tu mitad
+        if (st.pause <= 0 && b.pos.z - o.z < 0 && Math.hypot(b.pos.x - ps.pos.x, b.pos.z - ps.pos.z) < I.catchDist && Math.abs(b.pos.y - ps.pos.y) < 5) {
+          st.catches++; st.held = 0; st.shopping = 0; st.pause = I.caughtPause; st.bold = 0; st.goal = -1;
+          b.pos.set(o.x + I.home.x, 0, o.z + I.home.z); b.vel.set(0, 0, 0);
+          sfxCrush(ps.pos);
+          if (st.catches < I.catches) flashWarn(`¡ATRAPADO! ${st.catches}/${I.catches}`, 1);
+        }
+        mgHud.innerHTML = `Eres el <b>gigante</b>: atrapa al <b style="color:#5fe07a">jugador</b> · <b>${st.catches}/${I.catches}</b> · tiene ${st.held} 🪙 · corre a ${st.speed.toFixed(1)} m/s · ¡salta para alcanzarlo!`;
+        if (st.catches >= I.catches) return { won: true, msg: '¡Atrapaste 10 veces al jugador! +10 monedas y +10 cajas doradas' };
+      },
+      end() { MG.built.giant.visible = false; MG.built.bot.obj.visible = false; },
+    },
     // Coral (mezcla): nubes que suben + lava + bot que te sigue
     mix: {
       build(o) {
@@ -1731,6 +1863,8 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, cla
       },
     },
   };
+  // Dónde aparece una moneda del mundo al revés: siempre en tu mitad (la del gigante)
+  const invCoinSpot = () => ({ x: (Math.random() * 2 - 1) * (INVERTED.half - 6), z: -6 - Math.random() * (INVERTED.half - 12) });
   // Nubes: plataformas esponjosas; en la última, la casita del bot
   function buildClouds(o, path, roofColor) {
     const white = mgMat(0xffffff);
@@ -1745,32 +1879,35 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, cla
   }
 
   function startMinigame(k) {
-    const def = MINIGAMES[k], mode = MODES[def.id], o = minigameOrigin(k);
+    const def = minigameDef(k), mode = MODES[def.id], o = minigameOrigin(k);
     if (!MG.done.has(def.id)) { mode.build(o); MG.done.add(def.id); }
     MG.back = ps.pos.clone(); MG.active = mode; MG.k = k; MG.t = 0; MG.state = {};
     for (const f of MG.followers) scene.remove(f);
     // En la mezcla te siguen tres: celeste, turquesa y coral
-    const team = def.id === 'mix' ? [5, 6, 9] : [k];
+    const team = def.id === 'mix' ? [5, 6, 9] : k < MINIGAMES.length ? [k] : [];
     MG.followers = team.map((c, i) => {
       const f = makeMiniBot(BOT_COLORS[c]);
       f.visible = ['maze', 'clouds', 'lava', 'mix'].includes(def.id);
       return f;
     });
-    MG.follower = MG.followers[0];
+    MG.follower = MG.followers[0] || null;
     mode.start(o);
     // La cámara mira hacia el objetivo (por defecto, hacia adelante en +z)
     const look = mode.look ? mode.look(o) : { x: o.x, z: o.z + 30 };
     MG.yaw = camYaw; camYaw = Math.atan2(ps.pos.x - look.x, ps.pos.z - look.z);
     mgHud.hidden = false;
-    showToast(`Bot ${def.bot}: ${def.goal}`);
+    showToast(`${def.intro || 'Bot ' + def.bot}: ${def.goal}`);
   }
   function endMinigame(won, msg) {
-    const def = MINIGAMES[MG.k], mode = MG.active;
+    const def = minigameDef(MG.k), mode = MG.active;
     if (mode.end) mode.end();
     MG.active = null; for (const f of MG.followers) f.visible = false; mgHud.hidden = true;
     ps.pos.copy(MG.back); ps.vel.set(0, 0, 0); ps.carrying = null; camYaw = MG.yaw;
     if (won) { save.coins += def.reward.coins || 0; save.boxes += def.reward.boxes || 0; renderCoins(); }
-    flashWarn(won ? '¡LO LOGRASTE!' : '¡CASI!', 2);
+    // Un trofeo la primera vez que ganas (el de diamante va sobre tu armario)
+    const newTrophy = won && def.trophy && !save.trophies.includes(def.trophy);
+    if (newTrophy) { save.trophies.push(def.trophy); refreshWardrobe(); msg += ' · ¡Y el TROFEO DE DIAMANTE! Míralo sobre tu armario'; }
+    flashWarn(newTrophy ? '¡TROFEO DE DIAMANTE!' : won ? '¡LO LOGRASTE!' : '¡CASI!', newTrophy ? 3 : 2);
     showToast(msg, !won);
   }
   function updateMinigame(dt) {
@@ -1834,9 +1971,19 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, cla
     add(x1 - x0 + 0.1, 0.1, z1 - z0 + 0.1, dark, (x0 + x1) / 2, 2.45, (z0 + z1) / 2);                // remate de arriba
     const pl = { x: (x0 + x1) / 2, z: (z0 + z1) / 2, hw: (x1 - x0) / 2, hd: (z1 - z0) / 2, top: 2.5, bottom: 0 };
     platforms.push(pl);
+    // Trofeo de diamante (si ya ganaste el mundo al revés): el gigante, pero azul diamante, sobre un pedestal
+    if (save.trophies.includes(INVERTED.trophy)) {
+      const cx = (x0 + x1) / 2, cz = (z0 + z1) / 2;
+      add(0.6, 0.12, 0.6, gold, cx, 2.56, cz);
+      const diamond = new THREE.MeshPhongMaterial({ color: 0x7fe3ff, emissive: 0x0a4a6a, specular: 0xffffff, shininess: 120, transparent: true, opacity: 0.92 });
+      const fig = makeGiantFigure(diamond); fig.scale.setScalar(0.4); fig.position.set(cx, 2.62, cz); fig.rotation.y = Math.PI / 2; scene.add(fig); meshes.push(fig);
+      const glow = new THREE.PointLight(0x7fe3ff, 0.6, 4, 2); glow.position.set(cx + 0.6, 3.1, cz); scene.add(glow); meshes.push(glow);
+    }
     wardrobe = { meshes, pl, spot: { x: x1 + 1, z: (z0 + z1) / 2 } };
   }
+  const refreshWardrobe = () => placeWardrobe(save.levels.bigHouse ? BIG_HOUSE : MEDIUM_HOUSE);
   placeWardrobe(MEDIUM_HOUSE);   // casa mediana
+  buildPortal();
   const nearWardrobe = () => wardrobe && ps.pos.y > -1 && ps.pos.y < 2 && Math.hypot(ps.pos.x - wardrobe.spot.x, ps.pos.z - wardrobe.spot.z) < 2.2;
 
   // Paneles
@@ -2069,7 +2216,7 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, cla
   function saveGame() {
     if (!userName) return;
     try {
-      localStorage.setItem(saveKey(userName), serializeSave({ coins: save.coins, boxes: save.boxes, levels: save.levels, dayPhase, pos: MG.active ? MG.back : ps.pos, style: save.style }));
+      localStorage.setItem(saveKey(userName), serializeSave({ coins: save.coins, boxes: save.boxes, levels: save.levels, dayPhase, pos: MG.active ? MG.back : ps.pos, style: save.style, trophies: save.trophies }));
     } catch (e) {
       showToast('No se pudo guardar: este navegador no deja guardar datos', true);
       return;
@@ -2094,6 +2241,7 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, cla
     }
     quietToasts = false;
     save.style = data.style; applyStyle();
+    save.trophies = data.trophies; refreshWardrobe();
     renderCoins();
     return true;
   }
@@ -2317,6 +2465,7 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, cla
     setAmbientDay(day);
     const dusk = Math.max(0, 1 - Math.abs(elev) / 0.3); // color naranja cerca del horizonte
     tmpColor.copy(SKY_NIGHT).lerp(SKY_DAY, day).lerp(SKY_SUNSET, dusk * 0.55);
+    if (MG.active && MG.active.sky !== undefined) tmpColor.setHex(MG.active.sky);   // el mundo al revés tiene su propio cielo
     scene.background.copy(tmpColor); scene.fog.color.copy(tmpColor);
     hemi.intensity = 0.18 + 0.57 * day;
     sun.intensity = 0.85 * day;
@@ -2406,15 +2555,18 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, cla
       // relativo a la cámara
       const s = Math.sin(camYaw), c = Math.cos(camYaw);
       const mx = fx * c + fz * s, mz = -fx * s + fz * c;
-      ps.walkX += mx * stats.speed * dt;
-      ps.walkZ += mz * stats.speed * dt;
+      // De gigante, en el aire avanzas mucho más (tu salto de gigante)
+      const lunge = MG.active && MG.active.lunge && !ps.onGround ? MG.active.lunge : 1;
+      ps.walkX += mx * stats.speed * lunge * dt;
+      ps.walkZ += mz * stats.speed * lunge * dt;
       turnTo(ps, mx, mz, dt);
     }
 
     if (warnTimer > 0 && (warnTimer -= dt) <= 0) warn.classList.remove('show');
 
     if (onTrampoline(ps) && ps.vel.y <= 0) { trampolineLaunch(ps); showToast('¡BOING! 100 metros'); }
-    physics(ps, dt, keys.Space && !busy && !(MG.active && MG.active.noJump), stats.jump);
+    updatePortal();
+    physics(ps, dt, keys.Space && !busy && !(MG.active && MG.active.noJump), (MG.active && MG.active.jump) || stats.jump);
 
     // Enemigo: funciona como un killbrick que te persigue
     updateEnemy(dt);
@@ -2447,16 +2599,17 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, cla
         p.z - Math.cos(camYaw) * Math.cos(fpPitch)
       );
     } else {
-      const head = new THREE.Vector3(p.x, p.y + 1.2, p.z);
+      const giant = !!(MG.active && MG.active.giant), far = giant ? 20 : 9;   // de gigante la cámara se aleja para verte entero
+      const head = new THREE.Vector3(p.x, p.y + (giant ? 4.5 : 1.2), p.z);
       const back = new THREE.Vector3(Math.sin(camYaw) * Math.cos(camPitch), Math.sin(camPitch), Math.cos(camYaw) * Math.cos(camPitch));
-      camRay.set(head, back); camRay.far = 9;
+      camRay.set(head, back); camRay.far = far;
       const block = camRay.intersectObjects([...houseParts, ...cameraBlockers], false)[0];
       // Si una pared queda en medio la cámara se acerca enseguida; cuando ya no, se aleja suavemente (sin saltos)
-      const want = block ? Math.max(0.6, block.distance - 0.3) : 9;
+      const want = block ? Math.max(0.6, block.distance - 0.3) : far;
       camDist = want < camDist ? want : camDist + (want - camDist) * Math.min(1, dt * 4);
       camera.position.copy(head).addScaledVector(back, camDist);
       // Si la cámara queda pegada a ti (por ejemplo contra una pared del sótano), te ocultas para que no tape la vista
-      player.visible = camDist > 1.3;
+      player.visible = camDist > 1.3 && !giant;   // de gigante, se ve el gigante en vez de ti
       // En el sótano la cámara se queda debajo del techo, aunque saltes
       if (basementOpen && p.y < BASEMENT.ceilingY) camera.position.y = Math.min(camera.position.y, BASEMENT.ceilingY - 0.3);
       camera.lookAt(head);

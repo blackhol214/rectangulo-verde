@@ -12,7 +12,7 @@ import {
   distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, botCanGo, randomBotTarget,
   SWINGS, swingAngle, SLIDE, slidePoint,
   HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail,
-  MINIGAMES, minigameOrigin, MAZE, generateMaze, mazePathLength, pickMaze, pickLemon, clampToArea, flowerTired, MEDIUM_HOUSE, insideRect, segmentHitsRect, detourAround, CRATES, crateOutside, GARDEN, DROPPER, dropperLayers, dropperPad,
+  MINIGAMES, minigameOrigin, MAZE, generateMaze, mazePathLength, pickMaze, pickLemon, clampToArea, flowerTired, MEDIUM_HOUSE, insideRect, segmentHitsRect, detourAround, INVERTED, INVERTED_K, minigameDef, invertColor, fleeCoin, botSpeedAfter, CRATES, crateOutside, GARDEN, DROPPER, dropperLayers, dropperPad,
   DOLPHINS, dolphinX, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot,
 } from '../src/logic.js';
 
@@ -259,7 +259,7 @@ describe('guardado por usuario', () => {
 
   it('lo que se guarda se recupera igual', () => {
     const game = { coins: 130, boxes: 7, levels: { belt: 1, hopper: 1, assistant: 0, speed: 3 }, dayPhase: 0.375, pos: { x: 4, y: 0, z: 12.5 },
-      style: { owned: ['capBlue', 'colorPink'], equipped: { hat: 'capBlue', color: 'colorPink', glasses: null } } };
+      style: { owned: ['capBlue', 'colorPink'], equipped: { hat: 'capBlue', color: 'colorPink', glasses: null } }, trophies: ['diamante'] };
     expect(parseSave(serializeSave(game), LEVELS)).toEqual(game);
   });
 
@@ -273,7 +273,7 @@ describe('guardado por usuario', () => {
   it('ignora valores raros y mejoras que ya no existen', () => {
     const raw = JSON.stringify({ v: 1, coins: -50, boxes: 2.9, levels: { belt: 1, magnet: 4, speed: 'mucho' }, dayPhase: 3, pos: { x: 1, y: 'a', z: 2 } });
     expect(parseSave(raw, LEVELS)).toEqual({
-      coins: 0, boxes: 2, levels: { belt: 1, hopper: 0, assistant: 0, speed: 0 }, dayPhase: null, pos: null, style: emptyStyle(),
+      coins: 0, boxes: 2, levels: { belt: 1, hopper: 0, assistant: 0, speed: 0 }, dayPhase: null, pos: null, style: emptyStyle(), trophies: [],
     });
   });
 });
@@ -788,5 +788,37 @@ describe('los asistentes rodean tu casa', () => {
     expect(w).not.toEqual({ x: 26, z: -20 });
     expect(insideRect(w.x, w.z, H)).toBe(false);
     expect(segmentHitsRect(26, 25, w.x, w.z, H)).toBe(false);
+  });
+});
+
+describe('mundo al revés', () => {
+  it('es un modo aparte de los 10 minijuegos de los bots', () => {
+    expect(MINIGAMES).toHaveLength(10);
+    expect(minigameDef(INVERTED_K)).toBe(INVERTED);
+    expect(minigameDef(0)).toBe(MINIGAMES[0]);
+    expect(INVERTED.catches).toBe(10);
+    expect(INVERTED.reward).toEqual({ coins: 10, boxes: 10 });
+  });
+  it('los colores se invierten (y dos veces vuelven a ser los mismos)', () => {
+    expect(invertColor(0xffffff)).toBe(0x000000);
+    expect(invertColor(0xffd400)).toBe(0x002bff);   // la línea amarilla se vuelve azul
+    expect(invertColor(invertColor(0x5fa83a))).toBe(0x5fa83a);
+  });
+  it('el jugador huye hacia la moneda que está lejos del gigante', () => {
+    const coins = [{ x: 0, z: -5 }, { x: 0, z: -40 }];
+    expect(fleeCoin({ x: 0, z: -20 }, { x: 0, z: -8 }, coins)).toBe(1);
+    expect(fleeCoin({ x: 0, z: -20 }, { x: 0, z: -38 }, coins)).toBe(0);
+  });
+  it('con las mejoras corre más, pero nunca demasiado', () => {
+    expect(botSpeedAfter(0)).toBe(INVERTED.botSpeed);
+    expect(botSpeedAfter(1)).toBeGreaterThan(botSpeedAfter(0));
+    expect(botSpeedAfter(100)).toBe(INVERTED.botMaxSpeed);
+  });
+  it('con tu salto de gigante avanzas más rápido que él aunque tenga todas las mejoras', () => {
+    expect(12 * INVERTED.lunge).toBeGreaterThan(INVERTED.botMaxSpeed);
+  });
+  it('las partidas viejas (sin trofeos) se cargan sin problema', () => {
+    const old = JSON.stringify({ v: 1, coins: 1, boxes: 0, levels: {}, dayPhase: 0.5, pos: { x: 0, y: 0, z: 0 } });
+    expect(parseSave(old, []).trophies).toEqual([]);
   });
 });
