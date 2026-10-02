@@ -154,6 +154,36 @@ export function parseSave(text, knownLevels) {
 // El sótano es casi del tamaño de la casa (2 m más largo) y está vacío. Su techo está 2 m bajo el suelo,
 // así que desde afuera no se ve nada. Las cintas se quedan afuera.
 export const BIG_HOUSE = { x0: 20, x1: 36, z0: 4, z1: 18, doorZ: 9, height: 5 };
+export const MEDIUM_HOUSE = { x0: 20, x1: 32, z0: 4, z1: 14 };
+
+// ---------- Rodear la casa (para que los asistentes no se metan) ----------
+// ¿Está el punto dentro del rectángulo?
+export const insideRect = (x, z, r) => x > r.x0 && x < r.x1 && z > r.z0 && z < r.z1;
+// ¿La línea recta de a hasta b atraviesa el rectángulo?
+export function segmentHitsRect(ax, az, bx, bz, r) {
+  let t0 = 0, t1 = 1;
+  for (const [p, d, lo, hi] of [[ax, bx - ax, r.x0, r.x1], [az, bz - az, r.z0, r.z1]]) {
+    if (Math.abs(d) < 1e-9) { if (p <= lo || p >= hi) return false; continue; }
+    let u = (lo - p) / d, v = (hi - p) / d;
+    if (u > v) [u, v] = [v, u];
+    t0 = Math.max(t0, u); t1 = Math.min(t1, v);
+    if (t0 >= t1) return false;
+  }
+  return true;
+}
+// A dónde caminar para ir de a hasta b sin cruzar la casa: si la casa estorba, primero a la esquina más conveniente
+export function detourAround(ax, az, bx, bz, r, margin = 1.2) {
+  const grow = m => ({ x0: r.x0 - m, x1: r.x1 + m, z0: r.z0 - m, z1: r.z1 + m });
+  if (!segmentHitsRect(ax, az, bx, bz, grow(margin / 2))) return { x: bx, z: bz };
+  const g = grow(margin);
+  let best = null, bestLen = Infinity;
+  for (const [x, z] of [[g.x0, g.z0], [g.x1, g.z0], [g.x0, g.z1], [g.x1, g.z1]]) {
+    if (Math.hypot(x - ax, z - az) < 0.3 || segmentHitsRect(ax, az, x, z, r)) continue;
+    const len = Math.hypot(x - ax, z - az) + Math.hypot(bx - x, bz - z);
+    if (len < bestLen) { bestLen = len; best = { x, z }; }
+  }
+  return best || { x: bx, z: bz };
+}
 export const BASEMENT = { x0: 19, x1: 37, z0: 4, z1: 18, y: -7, ceilingY: -2 };
 // Escalera dentro de la casa: baja 7 m en 18 escalones (de 0,39 m de alto y 0,6 m de fondo; se baja caminando)
 export const STAIRWELL = { x0: 31, x1: 34, z0: 5, steps: 18, rise: 7 / 18, run: 0.6 };
@@ -313,6 +343,8 @@ export const STYLE_STALL = { x: 27, z: 28 };
 // ---------- Bots tontos: juegan solo en tu mitad ----------
 export const BOT_COLORS = [0xffd60a, 0xff8c00, 0xff2d95, 0xaf52de, 0x0a84ff, 0x64d2ff, 0x30d5c8, 0xa4e400, 0xe040fb, 0xff6b6b];
 export const BOT_SCALE = 0.5;                       // la mitad de tu tamaño
+// Bots de los minijuegos: tu mismo ancho y grosor, pero un 20 % más bajitos (100 % − 20 % = 80 %)
+export const MINIGAME_BOT_SCALE = { width: 1, height: 0.8, depth: 1 };
 export const BOT_MIN_Z = 4;                         // nunca bajan de aquí: la línea amarilla está en z 0–1,5
 // ¿Puede un bot ir a (x, z)? Solo en tu mitad, lejos de las montañas, de la casa y de la tienda de estilo
 export function botCanGo(x, z) {
@@ -389,15 +421,15 @@ export const MINIGAMES = [
   { id: 'dolphins', bot: 'azul',       name: 'Delfines',              goal: 'Salta entre los delfines y recoge la gorra sobre la ballena dormida', reward: { coins: 80 } },
   { id: 'clouds',   bot: 'celeste',    name: 'Nubes',                 goal: 'Salta por las 10 nubes y lleva al bot celeste a su casa', reward: { coins: 60 } },
   { id: 'lava',     bot: 'turquesa',   name: '50 escalones con lava', goal: 'Sube los 50 escalones con el bot turquesa antes de que llegue la lava', reward: { coins: 100 } },
-  { id: 'trees',    bot: 'verde lima', name: 'Los 5 árboles',         goal: 'Busca el círculo amarillo entre los rojos (E junto a cada árbol)', reward: { coins: 40 } },
+  { id: 'trees',    bot: 'verde lima', name: 'Los 20 árboles',        goal: 'Busca el círculo amarillo entre los rojos: pulsa E junto a cada árbol', reward: { coins: 40 } },
   { id: 'meteors',  bot: 'magenta',    name: 'Lluvia de meteoritos',  goal: 'Sobrevive 30 segundos: aléjate de las sombras rojas', reward: { coins: 70 } },
-  { id: 'mix',      bot: 'coral',      name: 'Nubes y lava',          goal: 'Sube por las nubes con el bot coral mientras sube la lava', reward: { coins: 120 } },
+  { id: 'mix',      bot: 'coral',      name: 'Nubes y lava',          goal: 'Sube por las nubes con los bots celeste, turquesa y coral mientras sube la lava', reward: { coins: 120 } },
 ];
 // Cada minijuego vive lejos del mapa, en su propia zona
 export const minigameOrigin = k => ({ x: 2000 + k * 1000, z: 3000 });
 
 // ----- Amarillo: laberinto -----
-export const MAZE = { cols: 9, rows: 9, cell: 4, wallH: 3, seed: 2026 };
+export const MAZE = { cols: 9, rows: 9, cell: 4, wallH: 3, seed: 2026, minPath: 24 };
 // Laberinto "perfecto" (un solo camino entre dos celdas). walls[r][c] = { n, e, s, w } (true = hay pared)
 export function generateMaze(cols, rows, seed) {
   const rnd = seededRandom(seed);
@@ -414,6 +446,13 @@ export function generateMaze(cols, rows, seed) {
     stack.push([r + dr, c + dc]);
   }
   return { cols, rows, walls };
+}
+// Un laberinto nuevo cada vez, pero nunca uno demasiado fácil (el camino a la casa da al menos minPath pasos)
+export function pickMaze(rnd = Math.random) {
+  for (;;) {
+    const maze = generateMaze(MAZE.cols, MAZE.rows, Math.floor(rnd() * 1e9));
+    if (mazePathLength(maze, [0, 0], [MAZE.rows - 1, MAZE.cols - 1]) >= MAZE.minPath) return maze;
+  }
 }
 // Largo del camino (en celdas) entre dos celdas; -1 si no hay camino
 export function mazePathLength(maze, [r0, c0], [r1, c1]) {
@@ -437,7 +476,11 @@ export const CRATES = { house: { x0: -8, x1: 8, z0: -6, z1: 6 }, doorHalf: 2, si
 export const crateOutside = (x, z) => x < CRATES.house.x0 || x > CRATES.house.x1 || z < CRATES.house.z0 || z > CRATES.house.z1;
 
 // ----- Rosa: jardín donde corre la flor -----
-export const GARDEN = { half: 18, flowerSpeed: 8, waterRange: 7, waterSpeed: 16 };
+// La flor corre más rápido que tú (14 contra 12), pero se cansa: corre 2,5 s y descansa 1,2 s
+export const GARDEN = { half: 7.5, flowerSpeed: 14, sprint: 2.5, rest: 1.2, restSpeed: 4, waterRange: 4.5, waterSpeed: 14, leapAt: 4.8, leapTime: 0.45, leapEvery: 0.5 };
+// Si te acercas, salta por encima de ti al otro lado del jardín (pero cansada no puede)
+// ¿Está cansada la flor en el segundo t?
+export const flowerTired = t => t % (GARDEN.sprint + GARDEN.rest) >= GARDEN.sprint;   // jardín de 15 × 15 m
 
 // ----- Morado: dropper -----
 export const DROPPER = { top: 205, half: 6, hole: 3.6, layers: 8, firstLayer: 175, gap: 21, pad: 3.4, maxFall: 18, seed: 77 };
@@ -473,8 +516,18 @@ export function cloudPath(n, seed, rise) {
 }
 export const CLOUD_SIZE = 3.4;
 
-// ----- Verde lima: 5 árboles con círculos -----
-export const TREES = { spots: [[-12, 8], [12, 8], [0, 18], [-14, 24], [14, 24]], circlesPerTree: 8, seed: 5 };
+// ----- Verde lima: 20 árboles con círculos -----
+// Una cuadrícula de 5 × 4 árboles, cada uno movido un poquito para que no se vea tan ordenado
+function treeSpots() {
+  const rnd = seededRandom(41), spots = [];
+  for (let r = 0; r < 4; r++) for (let c = 0; c < 5; c++) spots.push([(c - 2) * 10 + (rnd() - 0.5) * 4, 8 + r * 10 + (rnd() - 0.5) * 4]);
+  return spots;
+}
+export const TREES = { spots: treeSpots(), circlesPerTree: 8, seed: 5 };
+// Dónde está el limón (el círculo amarillo): cambia en cada partida
+export function pickLemon(rnd = Math.random) {
+  return { tree: Math.floor(rnd() * TREES.spots.length), slot: Math.floor(rnd() * TREES.circlesPerTree) };
+}
 export function treeCircles() {
   const rnd = seededRandom(TREES.seed), yellowTree = Math.floor(rnd() * TREES.spots.length), yellowSlot = Math.floor(rnd() * TREES.circlesPerTree);
   return TREES.spots.map((_, ti) => Array.from({ length: TREES.circlesPerTree }, (__, k) => ({
@@ -483,5 +536,14 @@ export function treeCircles() {
 }
 
 // ----- Magenta: lluvia de meteoritos -----
-export const METEORS = { radius: 14, warn: 1.2, every: 0.75, blast: 2.2, survive: 30 };
+export const METEORS = { radius: 14, wall: 13.4, warn: 1.2, every: 0.75, blast: 2.2, survive: 30 };
+
+// Que nadie se salga de la zona de un minijuego. area: { r } (círculo) o { x0, x1, z0, z1 } (rectángulo), relativa al centro
+export function clampToArea(x, z, area) {
+  if (area.r !== undefined) {
+    const d = Math.hypot(x, z);
+    return d <= area.r ? { x, z } : { x: x / d * area.r, z: z / d * area.r };
+  }
+  return { x: Math.min(area.x1, Math.max(area.x0, x)), z: Math.min(area.z1, Math.max(area.z0, z)) };
+}
 export function meteorSpot(r1, r2) { const a = r1 * Math.PI * 2, d = Math.sqrt(r2) * (METEORS.radius - 1.5); return { x: Math.cos(a) * d, z: Math.sin(a) * d }; }

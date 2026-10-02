@@ -95,16 +95,31 @@
   #reloadFill { height:100%; width:100%; background:#8fa6c8; }
   #reload.ready #reloadFill { background:#1e6bff; }
   @media (prefers-reduced-motion: reduce) { #warn, #toast, #saved { transition:none; } }
-  @media (pointer:coarse) { #stick, #jump { display:block; } .hud .keys { display:none; } #saveBtn { bottom:calc(130px + env(safe-area-inset-bottom,0px)); } }
+  /* Ayuda: se puede cerrar con × y volver a abrir con ? */
+  .hud { padding-right:36px; }
+  #helpClose { position:absolute; right:6px; top:6px; width:26px; height:26px; border:0; border-radius:6px; background:rgba(0,0,0,.08); color:inherit; font:700 16px/1 system-ui, sans-serif; cursor:pointer; }
+  #helpOpen { position:fixed; left:16px; top:calc(16px + env(safe-area-inset-top,0px)); width:40px; height:40px; border:0; border-radius:10px; background:var(--panel); color:var(--accent); font:800 20px/1 system-ui, sans-serif; backdrop-filter:blur(6px); cursor:pointer; }
+  /* Botones de acción para el celular (no hay teclado) */
+  #touchActions { position:fixed; right:16px; bottom:calc(190px + env(safe-area-inset-bottom,0px)); z-index:15; display:none; flex-direction:column-reverse; align-items:flex-end; gap:10px; }
+  #touchActions button { min-width:64px; border:2px solid rgba(255,255,255,.75); border-radius:14px; padding:8px 12px; font:700 14px/1.1 system-ui, sans-serif; color:#fff; background:rgba(22,48,31,.82); touch-action:manipulation; }
+  #touchActions button[hidden] { display:none; }
+  #touchActions .red { background:rgba(200,16,26,.88); }
+  #touchActions .shop { background:rgba(176,120,0,.9); }
+  @media (pointer:coarse) { #stick, #jump { display:block; } .hud .keys { display:none; } #saveBtn { bottom:calc(130px + env(safe-area-inset-bottom,0px)); }
+    #touchActions { display:flex; } #actionPrompt, #bedPrompt { display:none; }
+    #toast { bottom:auto; top:calc(196px + env(safe-area-inset-top,0px)); } }
+  /* Pantallas angostas: la ayuda deja sitio a las monedas y el reloj; los avisos pueden ocupar 2 líneas */
+  @media (max-width:600px) { .hud { max-width:calc(100% - 150px); font-size:12px; } #parkourHud { top:calc(108px + env(safe-area-inset-top,0px)); white-space:normal; font-size:13px; border-radius:14px; width:max-content; } #toast { white-space:normal; text-align:center; width:max-content; max-width:calc(100% - 32px); border-radius:14px; } }
 </style>
 </head>
 <body>
 
 <canvas id="game"></canvas>
-<div class="hud">
+<div class="hud" id="help">
+  <button type="button" id="helpClose" aria-label="Cerrar la ayuda">×</button>
   <b>Rectángulo Verde</b> · <span id="playerName"></span><br>
   <span class="keys">Moverse: <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> · Saltar: <kbd>Espacio</kbd><br>Girar cámara: <kbd>←</kbd><kbd>→</kbd> o arrastra · Primera persona: <kbd>V</kbd> · Disparar láser: <kbd>clic</kbd><br>Tienda: <kbd>P</kbd> · Dormir en tu cama (de noche): <kbd>E</kbd> · Guardar: botón <b>GUARDAR</b><br>Tienda de estilo (detrás de tu casa) y armario (en tu casa): acércate y pulsa <kbd>E</kbd><br></span>
-  El gigante rojo <b style="color:#d0101a">no puede cruzar</b> la <span style="color:#b98a00;font-weight:700">línea amarilla</span>. Detrás de ella estás a salvo.<br>De noche el gigante <b>duerme</b>: no te acerques o se despierta.<br>Recoge <b style="color:#b07800">monedas</b> en su zona y gástalas en la <b>tienda</b> (<kbd>P</kbd>).
+  El gigante rojo <b style="color:#d0101a">no puede cruzar</b> la <span style="color:#b98a00;font-weight:700">línea amarilla</span>. Detrás de ella estás a salvo.<br>De noche el gigante <b>duerme</b>: no te acerques o se despierta.<br>Recoge <b style="color:#b07800">monedas</b> en su zona y gástalas en la <b>tienda</b><span class="keys"> (<kbd>P</kbd>)</span>.
 </div>
 <div class="coins" aria-label="Monedas"><i></i><span id="coins">0</span></div>
 <div class="boxes" aria-label="Cajas doradas" hidden><i></i><span id="boxes">0</span></div>
@@ -124,7 +139,17 @@
   </form>
 </div>
 <p id="saved" aria-live="polite">CAMBIOS GUARDADOS</p>
+<button type="button" id="helpOpen" aria-label="Ver cómo se juega" hidden>?</button>
 <button type="button" id="saveBtn">GUARDAR</button>
+<div id="touchActions">
+  <button type="button" class="shop" data-act="shop">🛒 Tienda</button>
+  <button type="button" data-act="wardrobe" hidden>👕 Armario</button>
+  <button type="button" data-act="stall" hidden>🎩 Tienda de estilo</button>
+  <button type="button" class="red" data-act="red" hidden>🔴 Botón rojo</button>
+  <button type="button" data-act="sleep" hidden>🛏️ Dormir</button>
+  <button type="button" data-act="mgE" hidden>✋ Buscar</button>
+  <button type="button" data-act="mgF" hidden>💧 Agua</button>
+</div>
 <div id="shop" hidden role="dialog" aria-modal="true" aria-labelledby="shopTitle">
   <div class="shop-card">
     <div class="shop-head"><h2 id="shopTitle">TIENDA</h2><span class="wallet" id="shopWallet">0 monedas</span><button type="button" id="shopClose">Cerrar (P)</button></div>
@@ -154,8 +179,8 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module">
-import { MINIGAMES, minigameOrigin, MAZE, generateMaze, CRATES, crateOutside, GARDEN, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinX, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, missingFor, canAfford, collideWalls, extraLineSlot, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
-         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-20'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
+import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinX, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, missingFor, canAfford, collideWalls, extraLineSlot, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
+         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-28'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
 (() => {
   const canvas = document.getElementById('game');
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -594,6 +619,16 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, CRATES, crateOutside, GA
   jumpBtn.addEventListener('pointerdown', e => { keys.Space = true; e.stopPropagation(); });
   jumpBtn.addEventListener('pointerup', () => keys.Space = false);
 
+  // Ayuda: × la cierra, ? la vuelve a abrir (se recuerda en este navegador)
+  const helpEl = document.getElementById('help'), helpOpen = document.getElementById('helpOpen');
+  function showHelp(on) {
+    helpEl.hidden = !on; helpOpen.hidden = on;
+    try { localStorage.setItem('rectangulo-verde:ayuda', on ? 'si' : 'no'); } catch (e) {}
+  }
+  document.getElementById('helpClose').addEventListener('click', () => showHelp(false));
+  helpOpen.addEventListener('click', () => showHelp(true));
+  try { if (localStorage.getItem('rectangulo-verde:ayuda') === 'no') { helpEl.hidden = true; helpOpen.hidden = false; } } catch (e) {}
+
   // Física simple (compartida por el jugador y el enemigo)
   const SPEED = 12, GRAV = 30, JUMP = 12.5, EDGE = SIZE/2;
   const ENEMY_SPEED = 12, ENEMY_JUMP = 16; // el enemigo corre a tu velocidad inicial y salta más alto
@@ -671,9 +706,12 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, CRATES, crateOutside, GA
   const coinsEl = document.getElementById('coins'), toast = document.getElementById('toast');
   let toastTimer = null;
   let quietToasts = false; // al cargar una partida no se muestran los avisos de cada compra
+  // En el celular no hay teclas: los textos nombran los botones
+  const IS_TOUCH = matchMedia('(pointer:coarse)').matches;
+  const touchText = s => !IS_TOUCH ? s : s.replace(/pulsa E/g, 'toca ✋ Buscar').replace(/<b>E<\/b>/g, '<b>✋ Buscar</b>').replace(/con (<b>)?F(<\/b>)?/g, 'con $1💧 Agua$2');
   function showToast(text, bad) {
     if (quietToasts) return;
-    toast.textContent = text; toast.classList.toggle('bad', !!bad); toast.classList.add('show');
+    toast.textContent = touchText(text); toast.classList.toggle('bad', !!bad); toast.classList.add('show');
     clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
   }
   // Progreso de esta partida: se guarda con el botón GUARDAR, por usuario
@@ -1014,7 +1052,11 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, CRATES, crateOutside, GA
     for (const a of assistants) {
       // Va por la moneda más cercana
       const c = coins[nearestIndex(a.pos, coins.map(k => k.position))];
-      const dx = c.position.x - a.pos.x, dz = c.position.z - a.pos.z, dist = Math.hypot(dx, dz);
+      // No se meten a tu casa: si están adentro salen por la puerta, y si la casa estorba, la rodean
+      const house = save.levels.bigHouse ? BIG_HOUSE : MEDIUM_HOUSE;
+      if (insideRect(a.pos.x, a.pos.z, house)) a.pos.set(HOUSE_VISIT.outside.x, 0, HOUSE_VISIT.outside.z);
+      const goal = detourAround(a.pos.x, a.pos.z, c.position.x, c.position.z, house);
+      const dx = goal.x - a.pos.x, dz = goal.z - a.pos.z, dist = Math.hypot(dx, dz);
       if (dist > 0.05) {
         const step = Math.min(a.speed * dt, dist);
         a.walkX += dx / dist * step; a.walkZ += dz / dist * step;
@@ -1159,7 +1201,7 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, CRATES, crateOutside, GA
           if (V.step === 3) {                                   // ya está adentro: se queda
             V.wait = 6 + Math.random() * 6;
             const def = MINIGAMES[dumbBots.indexOf(b)];
-            showToast(`¡El bot ${def.bot} entró a tu casa! Aprieta el botón rojo del sótano: ${def.name}`);
+            if (redButton) showToast(`¡El bot ${def.bot} entró a tu casa! Aprieta el botón rojo del sótano: ${def.name}`);   // solo si ya tienes sótano
           }
         }
         if (V.step >= V.route.length || b.timer < -45) { b.visit = null; houseVisitor = null; b.timer = 0; }
@@ -1217,7 +1259,7 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, CRATES, crateOutside, GA
   }
 
   // ---------- Minijuegos: uno por cada bot tonto (se elige según quién está en tu casa) ----------
-  const MG = { active: null, k: -1, t: 0, back: null, trail: [], trailT: 0, follower: null, built: {}, done: new Set(), state: {} };
+  const MG = { active: null, k: -1, t: 0, back: null, trail: [], trailT: 0, follower: null, followers: [], built: {}, done: new Set(), state: {} };
   // built: las cosas de cada nivel · done: qué niveles ya se construyeron
   const mgHud = document.getElementById('parkourHud');
   const mgMat = c => new THREE.MeshLambertMaterial({ color: c });
@@ -1230,17 +1272,43 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, CRATES, crateOutside, GA
     if (blockCam) cameraBlockers.push(m);
     return { mesh: m, pl };
   }
+  // Quita piezas hechas con mgBox (para volver a armar un nivel, como el laberinto)
+  function mgRemove(parts) {
+    for (const { mesh, pl } of parts) {
+      scene.remove(mesh); mesh.geometry.dispose();
+      const i = platforms.indexOf(pl); if (i >= 0) platforms.splice(i, 1);
+      const j = cameraBlockers.indexOf(mesh); if (j >= 0) cameraBlockers.splice(j, 1);
+    }
+    parts.length = 0;
+  }
   function mgFloor(o, half, color, y = 0.01) {
     const f = new THREE.Mesh(new THREE.PlaneGeometry(half * 2, half * 2), mgMat(color));
     f.rotation.x = -Math.PI / 2; f.position.set(o.x, y, o.z); f.receiveShadow = true; scene.add(f); return f;
   }
   // Bot chiquito que te acompaña (sigue tu camino, saltos incluidos)
   function makeMiniBot(color) {
-    const g = new THREE.Group();
-    const b = new THREE.Mesh(new THREE.BoxGeometry(W * BOT_SCALE, H * BOT_SCALE, D * BOT_SCALE), mgMat(color));
-    b.position.y = H * BOT_SCALE / 2; b.castShadow = true; g.add(b);
-    for (const ex of [-0.11, 0.11]) { const e = new THREE.Mesh(eyeGeo, eyeMat); e.scale.set(0.5, 0.5, 0.25); e.position.set(ex, H * BOT_SCALE * 0.78, D * BOT_SCALE / 2 + 0.01); g.add(e); }
+    const g = new THREE.Group(), inner = new THREE.Group(); g.add(inner); g.userData.inner = inner;   // inner: el cuerpo, que se puede correr un poco a un lado
+    const S = MINIGAME_BOT_SCALE, bw = W * S.width, bh = H * S.height, bd = D * S.depth;
+    const b = new THREE.Mesh(new THREE.BoxGeometry(bw, bh, bd), mgMat(color));
+    b.position.y = bh / 2; b.castShadow = true; inner.add(b);
+    for (const ex of [-0.22, 0.22]) { const e = new THREE.Mesh(eyeGeo, eyeMat); e.scale.z = 0.5; e.position.set(ex, bh * 0.78, bd / 2 + 0.01); inner.add(e); }
     g.visible = false; scene.add(g); return g;
+  }
+  // Un delfín: cuerpo gris azulado, panza clara, hocico, aleta en la espalda, aletas a los lados y cola de dos puntas (mira hacia +x)
+  function makeDolphin() {
+    const g = new THREE.Group(), skin = mgMat(0x4f86b0), dark = mgMat(0x3d6f96), belly = mgMat(0xe6eef3);
+    const body = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 16), skin); body.scale.set(1.45, 0.5, 0.55); body.position.set(0, 0.6, 0); g.add(body);
+    const tummy = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 12), belly); tummy.scale.set(1.25, 0.32, 0.45); tummy.position.set(0.1, 0.45, 0); g.add(tummy);
+    const melon = new THREE.Mesh(new THREE.SphereGeometry(0.42, 16, 12), skin); melon.position.set(1.15, 0.7, 0); g.add(melon);
+    const beak = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.17, 0.55, 12), skin); beak.rotation.z = -Math.PI / 2; beak.position.set(1.65, 0.55, 0); g.add(beak);
+    const dorsal = new THREE.Mesh(new THREE.ConeGeometry(0.24, 0.7, 4), dark); dorsal.scale.z = 0.3; dorsal.rotation.z = 0.55; dorsal.position.set(-0.15, 1.2, 0); g.add(dorsal);
+    for (const s of [-1, 1]) {
+      const flipper = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.05, 0.22), dark); flipper.position.set(0.45, 0.35, s * 0.55); flipper.rotation.set(s * 0.5, s * 0.6, -0.3); g.add(flipper);
+      const fluke = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.05, 0.32), dark); fluke.position.set(-2.05, 0.6, s * 0.28); fluke.rotation.y = s * 0.6; g.add(fluke);
+      const eye = new THREE.Mesh(eyeGeo, eyeMat); eye.scale.setScalar(0.5); eye.position.set(1.25, 0.72, s * 0.36); g.add(eye);
+    }
+    const stock = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.3, 0.7, 12), skin); stock.rotation.z = Math.PI / 2; stock.position.set(-1.6, 0.6, 0); g.add(stock);
+    return g;
   }
   function makeLittleHouse(x, y, z, wallColor, roofColor) {
     const h = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.9, 2.2), mgMat(wallColor)); h.position.set(x, y + 0.95, z); h.castShadow = true; scene.add(h);
@@ -1258,37 +1326,60 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, CRATES, crateOutside, GA
     return { mesh: m, tex: tx };
   }
   // Lo que comparten los modos que llevan un bot: dónde está el bot según tu camino
+  // Cada bot va por tu mismo camino, un poco más atrás que el anterior
   function moveFollower(dt) {
     MG.trailT += dt;
     if (MG.trailT >= 0.05) { MG.trailT = 0; MG.trail.push({ t: MG.t, x: ps.pos.x, y: ps.pos.y, z: ps.pos.z }); }
-    const p = followTrail(MG.trail, MG.t, 0.9), f = MG.follower;
-    if (!p) return;
-    const dx = p.x - f.position.x, dz = p.z - f.position.z;
-    if (Math.hypot(dx, dz) > 0.01) f.rotation.y = Math.atan2(dx, dz);
-    f.position.set(p.x, p.y, p.z);
+    MG.followers.forEach((f, i) => {
+      const p = followTrail(MG.trail, MG.t, 0.9 + i * 0.8);
+      if (!p) return;
+      const dx = p.x - f.position.x, dz = p.z - f.position.z;
+      if (Math.hypot(dx, dz) > 0.01) f.rotation.y = Math.atan2(dx, dz);
+      f.position.set(p.x, p.y, p.z);
+      // Si quedó encima de ti (porque te detuviste), su cuerpo se pone detrás de ti, en fila, sin meterse en tu cuerpo
+      const near = Math.max(0, 1.4 - Math.hypot(ps.pos.x - p.x, ps.pos.z - p.z)) / 1.4;
+      const a = ps.facing + Math.PI + (i - (MG.followers.length - 1) / 2) * 0.8, r = (1.2 + i * 0.15) * near;
+      const wx = Math.sin(a) * r, wz = Math.cos(a) * r, c = Math.cos(-f.rotation.y), s = Math.sin(-f.rotation.y);
+      f.userData.inner.position.set(wx * c + wz * s, 0, -wx * s + wz * c);
+      // Si el bot queda entre la cámara y tú, se vuelve transparente para no taparte
+      const body = f.userData.inner.children[0], blocks = camera.position.distanceTo(f.position) < camera.position.distanceTo(ps.pos) - 0.3;
+      body.material.transparent = true; body.material.opacity = blocks ? 0.3 : 1;
+      for (const e of f.userData.inner.children.slice(1)) e.visible = !blocks;
+    });
   }
   function placePlayer(x, y, z) { ps.pos.set(x, y, z); ps.vel.set(0, 0, 0); ps.onGround = true; ps.carrying = null; }
-  function resetFollower(x, y, z) { MG.trail = [{ t: MG.t, x, y, z }]; MG.trailT = 0; MG.follower.position.set(x, y, z); }
+  function resetFollower(x, y, z) { MG.trail = [{ t: MG.t, x, y, z }]; MG.trailT = 0; for (const f of MG.followers) f.position.set(x, y, z); }
 
   // ===== Los 10 modos =====
   const MODES = {
     // Amarillo: laberinto. El bot te sigue hasta su casa (la última esquina).
     maze: {
+      noJump: true,   // en el laberinto no se salta: hay que encontrar el camino
+      area: { x0: 0.4, x1: MAZE.cols * MAZE.cell - 0.4, z0: 0.4, z1: MAZE.rows * MAZE.cell - 0.4 },
       build(o) {
-        const M = generateMaze(MAZE.cols, MAZE.rows, MAZE.seed), C = MAZE.cell, hedge = mgMat(0x2f7d32);
-        mgFloor({ x: o.x + MAZE.cols * C / 2, z: o.z + MAZE.rows * C / 2 }, Math.max(MAZE.cols, MAZE.rows) * C / 2 + 6, 0x6cbf4a);
-        const T = 0.4;
-        for (let r = 0; r < MAZE.rows; r++) for (let c = 0; c < MAZE.cols; c++) {
-          const x0 = o.x + c * C, z0 = o.z + r * C, w = M.walls[r][c];
-          if (w.n && !(r === 0 && c === 0)) mgBox(x0 - T / 2, x0 + C + T / 2, 0, MAZE.wallH, z0 - T / 2, z0 + T / 2, hedge, true, true);
-          if (w.w) mgBox(x0 - T / 2, x0 + T / 2, 0, MAZE.wallH, z0 - T / 2, z0 + C + T / 2, hedge, true, true);
-          if (r === MAZE.rows - 1 && w.s) mgBox(x0 - T / 2, x0 + C + T / 2, 0, MAZE.wallH, z0 + C - T / 2, z0 + C + T / 2, hedge, true, true);
-          if (c === MAZE.cols - 1 && w.e) mgBox(x0 + C - T / 2, x0 + C + T / 2, 0, MAZE.wallH, z0 - T / 2, z0 + C + T / 2, hedge, true, true);
-        }
+        const C = MAZE.cell;
+        // El suelo es justo del tamaño del laberinto: todo el terreno es laberinto
+        mgFloor({ x: o.x + MAZE.cols * C / 2, z: o.z + MAZE.rows * C / 2 }, Math.max(MAZE.cols, MAZE.rows) * C / 2, 0x6cbf4a);
         const hx = o.x + (MAZE.cols - 0.5) * C, hz = o.z + (MAZE.rows - 0.5) * C;
         makeLittleHouse(hx + 0.6, 0, hz + 0.6, 0xfff3b0, 0xffd60a);
+        MG.built.mazeWalls = [];
       },
-      start(o) { placePlayer(o.x + MAZE.cell / 2, 0, o.z - 2); resetFollower(o.x + MAZE.cell / 2, 0, o.z - 3); },
+      look(o) { return { x: o.x + MAZE.cell / 2, z: o.z + 30 }; },
+      start(o) {
+        // Un laberinto nuevo cada vez
+        mgRemove(MG.built.mazeWalls);
+        const M = MG.built.maze = pickMaze(), C = MAZE.cell, hedge = mgMat(0x2f7d32), T = 0.4, wall = (...a) => MG.built.mazeWalls.push(mgBox(...a, hedge, true, true));
+        for (let r = 0; r < MAZE.rows; r++) for (let c = 0; c < MAZE.cols; c++) {
+          const x0 = o.x + c * C, z0 = o.z + r * C, w = M.walls[r][c];
+          if (w.n) wall(x0 - T / 2, x0 + C + T / 2, 0, MAZE.wallH, z0 - T / 2, z0 + T / 2);
+          if (w.w) wall(x0 - T / 2, x0 + T / 2, 0, MAZE.wallH, z0 - T / 2, z0 + C + T / 2);
+          if (r === MAZE.rows - 1 && w.s) wall(x0 - T / 2, x0 + C + T / 2, 0, MAZE.wallH, z0 + C - T / 2, z0 + C + T / 2);
+          if (c === MAZE.cols - 1 && w.e) wall(x0 + C - T / 2, x0 + C + T / 2, 0, MAZE.wallH, z0 - T / 2, z0 + C + T / 2);
+        }
+        placePlayer(o.x + C / 2, 0, o.z + C / 2 + 0.6); resetFollower(o.x + C / 2 + 1.1, 0, o.z + C / 2);
+        MG.state.pitch = camPitch; camPitch = 0.85;   // la cámara mira más desde arriba para ver los pasillos
+      },
+      end() { camPitch = MG.state.pitch; },
       update(dt, o) {
         moveFollower(dt);
         const C = MAZE.cell, inEnd = p => p.x > o.x + (MAZE.cols - 1) * C && p.z > o.z + (MAZE.rows - 1) * C;
@@ -1314,6 +1405,7 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, CRATES, crateOutside, GA
         MG.built.crates.forEach((m, i) => m.position.set(o.x + CRATES.start[i][0], CRATES.size / 2, o.z + CRATES.start[i][1]));
         placePlayer(o.x, 0, o.z + CRATES.house.z0 - 4);
       },
+      area: { x0: -29, x1: 29, z0: -29, z1: 29 },
       update(dt, o) {
         const cs = MG.built.crates, h = CRATES.size / 2;
         const hits = (x, z, wl) => Math.abs(x - wl.x) < h + wl.hw && Math.abs(z - wl.z) < h + wl.hd;
@@ -1334,23 +1426,36 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, CRATES, crateOutside, GA
     },
     // Rosa: la flor con patas huye; con F le echas agua
     flower: {
+      area: { x0: -GARDEN.half + 0.5, x1: GARDEN.half - 0.5, z0: -GARDEN.half + 0.5, z1: GARDEN.half - 0.5 },
+      look(o) { return MG.built.flower.position; },
       build(o) {
         mgFloor(o, GARDEN.half + 4, 0x7ccf5a);
         const G = GARDEN.half, fence = mgMat(0xffffff);
         mgBox(o.x - G, o.x + G, 0, 1.2, o.z - G - 0.2, o.z - G, fence); mgBox(o.x - G, o.x + G, 0, 1.2, o.z + G, o.z + G + 0.2, fence);
         mgBox(o.x - G - 0.2, o.x - G, 0, 1.2, o.z - G, o.z + G, fence); mgBox(o.x + G, o.x + G + 0.2, 0, 1.2, o.z - G, o.z + G, fence);
-        const f = new THREE.Group();
-        const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.2, 8), mgMat(0x2e8b3a)); stem.position.y = 1.0; f.add(stem);
-        for (let i = 0; i < 6; i++) { const pt = new THREE.Mesh(new THREE.SphereGeometry(0.28, 10, 8), mgMat(0xff6fb5)); const a = i / 6 * Math.PI * 2; pt.position.set(Math.cos(a) * 0.38, 1.75, Math.sin(a) * 0.38 * 0.3); pt.scale.set(1, 1, 0.5); f.add(pt); }
-        const face = new THREE.Mesh(new THREE.SphereGeometry(0.26, 12, 10), mgMat(0xffd23f)); face.position.y = 1.75; face.scale.z = 0.6; f.add(face);
-        for (const ex of [-0.09, 0.09]) { const e = new THREE.Mesh(eyeGeo, eyeMat); e.scale.setScalar(0.4); e.position.set(ex, 1.8, 0.15); f.add(e); }
-        f.userData.legs = [-0.15, 0.15].map(lx => { const l = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.5, 0.08), mgMat(0x2e8b3a)); l.position.set(lx, 0.25, 0); f.add(l); return l; });
+        const f = new THREE.Group(), green = mgMat(0x2e8b3a);
+        // Tallo con dos hojas
+        const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, 1.3, 8), green); stem.position.y = 1.15; f.add(stem);
+        for (const side of [-1, 1]) {
+          const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.3, 10, 8), mgMat(0x45b649));
+          leaf.scale.set(1, 0.18, 0.45); leaf.position.set(side * 0.3, 0.95 + (side > 0 ? 0.2 : 0), 0); leaf.rotation.z = side * 0.5; f.add(leaf);
+        }
+        // La cabeza: centro amarillo con 10 pétalos alrededor (mira hacia adelante)
+        const head = new THREE.Group(); head.position.y = 2.0; head.rotation.x = -0.25; f.add(head);
+        for (let i = 0; i < 10; i++) {
+          const a = i / 10 * Math.PI * 2, pt = new THREE.Mesh(new THREE.SphereGeometry(0.2, 10, 8), mgMat(i % 2 ? 0xff8cc6 : 0xff4fa3));
+          pt.scale.set(0.75, 1.9, 0.35); pt.position.set(Math.cos(a) * 0.5, Math.sin(a) * 0.5, i % 2 ? -0.03 : 0); pt.rotation.z = a - Math.PI / 2; head.add(pt);
+        }
+        const face = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.14, 20), mgMat(0xffd23f)); face.rotation.x = Math.PI / 2; face.position.z = 0.05; head.add(face);
+        for (const ex of [-0.1, 0.1]) { const e = new THREE.Mesh(eyeGeo, eyeMat); e.scale.setScalar(0.5); e.position.set(ex, 0.06, 0.13); head.add(e); }
+        const smile = new THREE.Mesh(new THREE.TorusGeometry(0.09, 0.02, 6, 12, Math.PI), eyeMat); smile.rotation.z = Math.PI; smile.position.set(0, -0.06, 0.13); head.add(smile);
+        f.userData.legs = [-0.15, 0.15].map(lx => { const l = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.5, 0.09), green); l.position.set(lx, 0.25, 0); f.add(l); return l; });
         f.traverse(m => { if (m.isMesh) m.castShadow = true; });
         scene.add(f); MG.built.flower = f; MG.built.drops = [];
       },
       start(o) {
-        MG.built.flower.position.set(o.x + 6, 0, o.z + 8); MG.built.wander = 0;
-        placePlayer(o.x - 8, 0, o.z - 8);
+        MG.built.flower.position.set(o.x + 1, 0, o.z + 2); MG.built.wander = 0; MG.built.leap = null; MG.built.leapCd = 0; MG.built.goal = null; MG.built.flower.position.y = 0;
+        placePlayer(o.x - 6, 0, o.z - 6);
       },
       onF() {   // F: echar agua hacia donde miras
         const dir = new THREE.Vector3(Math.sin(ps.facing), 0, Math.cos(ps.facing));
@@ -1363,26 +1468,61 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, CRATES, crateOutside, GA
         sfxStep();
       },
       update(dt, o) {
-        const f = MG.built.flower, G = GARDEN.half - 1;
+        const f = MG.built.flower, G = GARDEN.half - 0.6;
         // La flor huye de ti (y camina un poco al azar)
         const away = new THREE.Vector3(f.position.x - ps.pos.x, 0, f.position.z - ps.pos.z);
         const d = away.length();
         MG.built.wander += dt;
-        const dir = d < 14 ? away.normalize() : new THREE.Vector3(Math.sin(MG.built.wander * 0.7), 0, Math.cos(MG.built.wander * 0.5));
-        dir.x += Math.sin(MG.t * 2.3) * 0.4; dir.z += Math.cos(MG.t * 1.9) * 0.4; dir.normalize();
-        const sp = d < 14 ? GARDEN.flowerSpeed : 2;
-        f.position.x = Math.max(o.x - G, Math.min(o.x + G, f.position.x + dir.x * sp * dt));
-        f.position.z = Math.max(o.z - G, Math.min(o.z + G, f.position.z + dir.z * sp * dt));
-        f.rotation.y = Math.atan2(dir.x, dir.z);
-        f.userData.legs.forEach((l, i) => { l.rotation.x = Math.sin(MG.t * 14 + i * Math.PI) * 0.6; });
+        away.normalize();
+        const rx = f.position.x - o.x, rz = f.position.z - o.z, px = ps.pos.x - o.x, pz = ps.pos.z - o.z;
+        // Cada poquito elige a dónde correr: un punto lejos de ti al que pueda llegar SIN pasar cerca de ti
+        MG.built.retarget = (MG.built.retarget || 0) - dt;
+        if (MG.built.retarget <= 0 || !MG.built.goal) {
+          MG.built.retarget = 0.35;
+          let best = -Infinity;
+          for (let i = 0; i < 24; i++) {
+            const a = i < 16 ? i / 16 * Math.PI * 2 : (i - 16) / 8 * Math.PI * 2, R = i < 16 ? G - 1 : (G - 1) * 0.35, gx = Math.sin(a) * R, gz = Math.cos(a) * R;
+            // Qué tan cerca de ti pasaría por el camino (distancia de tu punto al segmento flor → meta)
+            const sx = gx - rx, sz = gz - rz, L2 = sx * sx + sz * sz;
+            if (L2 < 4) continue;   // tiene que ser un lugar nuevo, no donde ya está
+            const u = Math.max(0, Math.min(1, ((px - rx) * sx + (pz - rz) * sz) / L2));
+            const pass = Math.hypot(rx + sx * u - px, rz + sz * u - pz);
+            const score = Math.hypot(gx - px, gz - pz) + Math.min(pass, 4) * 1.5 - (pass < Math.min(2.5, d * 0.8) ? 12 : 0);
+            if (score > best) { best = score; MG.built.goal = { x: gx, z: gz }; }
+          }
+        }
+        const gl = MG.built.goal, dir = new THREE.Vector3(gl.x - rx, 0, gl.z - rz);
+        if (dir.length() < 0.6) dir.copy(away); dir.normalize();
+        if (d > 13) dir.set(Math.sin(MG.built.wander * 0.7), 0, Math.cos(MG.built.wander * 0.5));   // muy lejos de ti: pasea tranquila
+        // Si te acercas mucho, salta por encima de ti al lugar del jardín más lejos de ti
+        MG.built.leapCd = (MG.built.leapCd || 0) - dt;
+        if (!MG.built.leap && d < GARDEN.leapAt && MG.built.leapCd <= 0 && !flowerTired(MG.t)) {
+          let to = null, far = -1;
+          for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2, gx = Math.sin(a) * (G - 1), gz = Math.cos(a) * (G - 1), dd = Math.hypot(gx - px, gz - pz); if (dd > far) { far = dd; to = { x: gx, z: gz }; } }
+          MG.built.leap = { x0: rx, z0: rz, x1: to.x, z1: to.z, u: 0 }; MG.built.leapCd = GARDEN.leapEvery; MG.built.goal = null;
+        }
+        const tired = flowerTired(MG.t);
+        let sp = d > 13 ? 3 : tired ? GARDEN.restSpeed : GARDEN.flowerSpeed;
+        const lp = MG.built.leap;
+        if (lp) {   // en pleno salto: va en arco de un lado al otro
+          lp.u = Math.min(1, lp.u + dt / GARDEN.leapTime);
+          f.position.set(o.x + lp.x0 + (lp.x1 - lp.x0) * lp.u, Math.sin(lp.u * Math.PI) * 3, o.z + lp.z0 + (lp.z1 - lp.z0) * lp.u);
+          f.rotation.y = Math.atan2(lp.x1 - lp.x0, lp.z1 - lp.z0);
+          if (lp.u >= 1) { f.position.y = 0; MG.built.leap = null; }
+        } else {
+          f.position.x = Math.max(o.x - G, Math.min(o.x + G, f.position.x + dir.x * sp * dt));
+          f.position.z = Math.max(o.z - G, Math.min(o.z + G, f.position.z + dir.z * sp * dt));
+          f.rotation.y = Math.atan2(dir.x, dir.z);
+        }
+        f.userData.legs.forEach((l, i) => { l.rotation.x = Math.sin(MG.t * (tired ? 6 : 16) + i * Math.PI) * 0.6; });
         // Las gotas de agua
         let watered = false;
         for (let i = MG.built.drops.length - 1; i >= 0; i--) {
           const q = MG.built.drops[i]; q.life -= dt; q.v.y -= 20 * dt; q.m.position.addScaledVector(q.v, dt);
-          if (Math.hypot(q.m.position.x - f.position.x, q.m.position.z - f.position.z) < 1.2 && q.m.position.y < 2.4) watered = true;
+          if (!MG.built.leap && Math.hypot(q.m.position.x - f.position.x, q.m.position.z - f.position.z) < 0.9 && q.m.position.y < 2.6) watered = true;
           if (q.life <= 0 || q.m.position.y < 0) { scene.remove(q.m); MG.built.drops.splice(i, 1); }
         }
-        mgHud.innerHTML = `Alcanza a la <b>flor rosada</b> y riégala con <b>F</b> · distancia: ${d.toFixed(0)} m`;
+        mgHud.innerHTML = `Alcanza a la <b>flor rosada</b> y riégala con <b>F</b> · ${tired ? '<b style="color:#7cf">¡la flor está cansada!</b>' : 'corre más rápido que tú…'} · ${d.toFixed(0)} m`;
         if (watered) { for (const q of MG.built.drops) scene.remove(q.m); MG.built.drops = []; return { won: true, msg: '¡Regaste la flor rosada! +20 monedas' }; }
       },
     },
@@ -1436,9 +1576,7 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, CRATES, crateOutside, GA
         const zz = new THREE.Sprite(zzz.material); zz.scale.set(3, 1.5, 1); zz.position.set(o.x + 2, wh + 2.2, o.z + Dl.whaleZ); scene.add(zz);
         const cap = makeCap(0x0a84ff); cap.position.set(o.x - 1, wh + 0.05, o.z + Dl.whaleZ); scene.add(cap); MG.built.cap = cap;
         MG.built.dolphins = Dl.lanes.map(z => {
-          const g = new THREE.Group(), body = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 10), mgMat(0x8fb3c9)); body.scale.set(Dl.length / 2, 0.5, Dl.width / 2); body.position.y = 0.55; g.add(body);
-          const fin = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.6, 6), mgMat(0x6f93a9)); fin.position.set(0, 1.1, 0); g.add(fin);
-          const tail = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.1, 0.9), mgMat(0x6f93a9)); tail.position.set(-Dl.length / 2 - 0.1, 0.6, 0); g.add(tail);
+          const g = makeDolphin();
           g.traverse(m => { if (m.isMesh) m.castShadow = true; }); scene.add(g);
           const pl = { x: o.x, z: o.z + z, hw: Dl.length / 2, hd: Dl.width / 2, top: 1, bottom: 0, move: true, dx: 0, dy: 0, dz: 0 };
           platforms.push(pl); return { g, pl };
@@ -1502,19 +1640,27 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, CRATES, crateOutside, GA
       build(o) {
         mgFloor({ x: o.x, z: o.z + 15 }, 30, 0x7ccf5a);
         const circles = treeCircles();
+        MG.built.red = new THREE.MeshLambertMaterial({ color: 0xe0302f }); MG.built.yellow = new THREE.MeshLambertMaterial({ color: 0xffd60a });
         MG.built.trees = TREES.spots.map(([tx, tz], ti) => {
           const x = o.x + tx, z = o.z + tz;
           mgBox(x - 0.4, x + 0.4, 0, 3.4, z - 0.4, z + 0.4, mgMat(0x7a4a2a));
           const crown = new THREE.Mesh(new THREE.SphereGeometry(2.7, 18, 14), mgMat(0x2e7d32)); crown.position.set(x, 5.2, z); crown.castShadow = true; scene.add(crown);
-          for (const c of circles[ti]) {
+          const balls = circles[ti].map(c => {
             const a = c.theta, up = c.up, r = 2.72;
-            const m = new THREE.Mesh(new THREE.SphereGeometry(0.32, 12, 10), new THREE.MeshLambertMaterial({ color: c.yellow ? 0xffd60a : 0xe0302f }));
+            const m = new THREE.Mesh(new THREE.SphereGeometry(0.32, 12, 10), MG.built.red);
             m.position.set(x + Math.cos(a) * r * Math.sqrt(1 - up * up), 5.2 + up * r, z + Math.sin(a) * r * Math.sqrt(1 - up * up)); scene.add(m);
-          }
-          return { x, z, yellow: circles[ti].some(c => c.yellow) };
+            return m;
+          });
+          return { x, z, balls, yellow: false };
         });
       },
-      start(o) { placePlayer(o.x, 0, o.z - 4); MG.state.checked = new Set(); },
+      area: { x0: -29, x1: 29, z0: -14, z1: 44 },
+      start(o) {
+        // El limón (círculo amarillo) cambia de árbol cada vez
+        const L = pickLemon();
+        MG.built.trees.forEach((t, ti) => { t.yellow = ti === L.tree; t.balls.forEach((m, k) => { m.material = t.yellow && k === L.slot ? MG.built.yellow : MG.built.red; }); });
+        placePlayer(o.x, 0, o.z - 4); MG.state.checked = new Set();
+      },
       onE() {
         const tr = MG.built.trees.find(t => Math.hypot(ps.pos.x - t.x, ps.pos.z - t.z) < 4.2);
         if (!tr) { showToast('Acércate a un árbol y pulsa E para buscar'); return; }
@@ -1522,7 +1668,7 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, CRATES, crateOutside, GA
         else { MG.state.checked.add(tr); showToast('En este árbol no está… busca en otro', true); }
       },
       update() {
-        mgHud.innerHTML = `Busca el <b style="color:#ffd60a">círculo amarillo</b> entre los rojos · <b>E</b> junto a un árbol · revisados: ${MG.state.checked.size}/5`;
+        mgHud.innerHTML = `Busca el <b style="color:#ffd60a">círculo amarillo</b> entre los rojos · <b>E</b> junto a un árbol · revisados: ${MG.state.checked.size}/${TREES.spots.length}`;
         if (MG.state.found) return { won: true, msg: '¡Encontraste el círculo amarillo! +40 monedas' };
       },
     },
@@ -1534,6 +1680,7 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, CRATES, crateOutside, GA
         for (let i = 0; i < 28; i++) { const a = i / 28 * Math.PI * 2; const x = o.x + Math.cos(a) * (M.radius + 0.6), z = o.z + Math.sin(a) * (M.radius + 0.6); mgBox(x - 0.9, x + 0.9, 0, 1.4, z - 0.9, z + 0.9, mgMat(0xe040fb)); }
         MG.built.meteors = [];
       },
+      area: { r: METEORS.wall },   // no te puedes salir de la arena
       start(o) { placePlayer(o.x, 0, o.z); MG.state.next = 1.2; for (const m of MG.built.meteors) { scene.remove(m.shadow); scene.remove(m.rock); } MG.built.meteors = []; },
       update(dt, o) {
         const M = METEORS;
@@ -1575,11 +1722,12 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, CRATES, crateOutside, GA
         moveFollower(dt);
         const cs = MG.built.mixClouds, first = cs[0], last = cs[cs.length - 1];
         const lavaY = first.y - 10 + 0.6 * MG.t; MG.built.mixLava.mesh.position.y = lavaY; MG.built.mixLava.tex.offset.x += dt * 0.03;
-        mgHud.innerHTML = `Sube por las nubes con el <b>bot coral</b> · Lava: <b>${(lavaY - first.y + 10).toFixed(0)} m</b> · ¡no te quedes atrás!`;
+        mgHud.innerHTML = `Sube por las nubes con los bots <b style="color:#64d2ff">celeste</b>, <b style="color:#30d5c8">turquesa</b> y <b>coral</b> · Lava: <b>${(lavaY - first.y + 10).toFixed(0)} m</b> · ¡no te quedes atrás!`;
         if (ps.pos.y < lavaY + 0.05) return { won: false, msg: '¡Te alcanzó la lava! Vuelve a intentarlo' };
-        if (MG.follower.position.y < lavaY + 0.05) return { won: false, msg: '¡La lava alcanzó al bot coral! Vuelve a intentarlo' };
+        const NAMES = ['celeste', 'turquesa', 'coral'], burnt = MG.followers.findIndex(f => f.position.y < lavaY + 0.05);
+        if (burnt >= 0) return { won: false, msg: `¡La lava alcanzó al bot ${NAMES[burnt]}! Vuelve a intentarlo` };
         const on = p => Math.hypot(p.x - (o.x + last.x), p.z - (o.z + last.z)) < CLOUD_SIZE / 2 + 0.3 && p.y > last.y - 0.3;
-        if (on(ps.pos) && on(MG.follower.position)) return { won: true, msg: '¡Llevaste al bot coral arriba! +120 monedas' };
+        if (on(ps.pos) && MG.followers.every(f => on(f.position))) return { won: true, msg: '¡Llevaste a los bots celeste, turquesa y coral arriba! +120 monedas' };
       },
     },
   };
@@ -1600,9 +1748,15 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, CRATES, crateOutside, GA
     const def = MINIGAMES[k], mode = MODES[def.id], o = minigameOrigin(k);
     if (!MG.done.has(def.id)) { mode.build(o); MG.done.add(def.id); }
     MG.back = ps.pos.clone(); MG.active = mode; MG.k = k; MG.t = 0; MG.state = {};
-    if (MG.follower) scene.remove(MG.follower);
-    MG.follower = makeMiniBot(BOT_COLORS[k]);
-    MG.follower.visible = ['maze', 'clouds', 'lava', 'mix'].includes(def.id);
+    for (const f of MG.followers) scene.remove(f);
+    // En la mezcla te siguen tres: celeste, turquesa y coral
+    const team = def.id === 'mix' ? [5, 6, 9] : [k];
+    MG.followers = team.map((c, i) => {
+      const f = makeMiniBot(BOT_COLORS[c]);
+      f.visible = ['maze', 'clouds', 'lava', 'mix'].includes(def.id);
+      return f;
+    });
+    MG.follower = MG.followers[0];
     mode.start(o);
     // La cámara mira hacia el objetivo (por defecto, hacia adelante en +z)
     const look = mode.look ? mode.look(o) : { x: o.x, z: o.z + 30 };
@@ -1613,7 +1767,7 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, CRATES, crateOutside, GA
   function endMinigame(won, msg) {
     const def = MINIGAMES[MG.k], mode = MG.active;
     if (mode.end) mode.end();
-    MG.active = null; MG.follower.visible = false; mgHud.hidden = true;
+    MG.active = null; for (const f of MG.followers) f.visible = false; mgHud.hidden = true;
     ps.pos.copy(MG.back); ps.vel.set(0, 0, 0); ps.carrying = null; camYaw = MG.yaw;
     if (won) { save.coins += def.reward.coins || 0; save.boxes += def.reward.boxes || 0; renderCoins(); }
     flashWarn(won ? '¡LO LOGRASTE!' : '¡CASI!', 2);
@@ -1622,7 +1776,12 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, CRATES, crateOutside, GA
   function updateMinigame(dt) {
     if (!MG.active) return;
     MG.t += dt;
-    const r = MG.active.update(dt, minigameOrigin(MG.k));
+    const o = minigameOrigin(MG.k), mode = MG.active;
+    // No salirse de la zona del minijuego (ni caerse a los backrooms)
+    if (mode.area) { const c = clampToArea(ps.pos.x - o.x, ps.pos.z - o.z, mode.area); ps.pos.x = o.x + c.x; ps.pos.z = o.z + c.z; }
+    if (ps.pos.y < -30) { endMinigame(false, '¡Te caíste del mapa! Vuelve a intentarlo'); return; }
+    const r = mode.update(dt, o);
+    if (IS_TOUCH) mgHud.innerHTML = touchText(mgHud.innerHTML);
     if (r) endMinigame(r.won, r.msg);
   }
 
@@ -1677,7 +1836,7 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, CRATES, crateOutside, GA
     platforms.push(pl);
     wardrobe = { meshes, pl, spot: { x: x1 + 1, z: (z0 + z1) / 2 } };
   }
-  placeWardrobe({ x0: 20, x1: 32, z0: 4, z1: 14 });   // casa mediana
+  placeWardrobe(MEDIUM_HOUSE);   // casa mediana
   const nearWardrobe = () => wardrobe && ps.pos.y > -1 && ps.pos.y < 2 && Math.hypot(ps.pos.x - wardrobe.spot.x, ps.pos.z - wardrobe.spot.z) < 2.2;
 
   // Paneles
@@ -1703,6 +1862,33 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, CRATES, crateOutside, GA
     const txt = nearRedButton() ? (botInsideHouse() ? `Pulsa <kbd>E</kbd>: el bot ${MINIGAMES[dumbBots.indexOf(houseVisitor)].bot} te espera (${MINIGAMES[dumbBots.indexOf(houseVisitor)].name})` : 'Pulsa <kbd>E</kbd> para apretar el botón rojo') : nearStall() ? 'Pulsa <kbd>E</kbd> para ver la tienda de estilo' : nearWardrobe() ? 'Pulsa <kbd>E</kbd> para abrir el armario' : '';
     actionPrompt.hidden = !txt || !!document.querySelector('.panel:not([hidden])');
     if (txt && actionPrompt.innerHTML !== txt) actionPrompt.innerHTML = txt;
+  }
+  // Botones del celular: cada uno hace lo mismo que su tecla
+  const touchBtns = {};
+  for (const b of document.querySelectorAll('#touchActions button')) {
+    touchBtns[b.dataset.act] = b;
+    b.addEventListener('click', () => {
+      const act = b.dataset.act;
+      if (act === 'shop') toggleShop();
+      else if (act === 'red') tryRedButton();
+      else if (act === 'stall' || act === 'wardrobe') tryStyleInteract();
+      else if (act === 'sleep') trySleep();
+      else if (act === 'mgE' && MG.active && MG.active.onE) MG.active.onE();
+      else if (act === 'mgF' && MG.active && MG.active.onF) MG.active.onF();
+    });
+  }
+  function updateTouchButtons() {
+    const panelOpen = !shopEl.hidden || !!document.querySelector('.panel:not([hidden])');
+    const show = {
+      shop: !MG.active && !panelOpen,
+      red: !MG.active && !panelOpen && nearRedButton(),
+      stall: !MG.active && !panelOpen && nearStall(),
+      wardrobe: !MG.active && !panelOpen && nearWardrobe(),
+      sleep: !MG.active && !panelOpen && isNight && sleepLeft <= 0 && nearMyBed(),
+      mgE: !!(MG.active && MG.active.onE),
+      mgF: !!(MG.active && MG.active.onF),
+    };
+    for (const k in show) if (touchBtns[k].hidden === show[k]) touchBtns[k].hidden = !show[k];
   }
   const swatch = c => `<span class="swatch" style="background:#${c.toString(16).padStart(6, '0')}"></span>`;
   const GROUPS = [['hat', 'Sombreros'], ['color', 'Colores para tu rectángulo'], ['glasses', 'Gafas']];
@@ -2195,6 +2381,7 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, CRATES, crateOutside, GA
     t += dt;
     updateSleep(dt);
     updateStylePrompt();
+    updateTouchButtons();
 
     // Si estás parado en algo que se mueve (un delfín), te lleva
     if (ps.carrying) { ps.pos.x += ps.carrying.dx; ps.pos.y += ps.carrying.dy; ps.pos.z += ps.carrying.dz; }
@@ -2227,7 +2414,7 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, CRATES, crateOutside, GA
     if (warnTimer > 0 && (warnTimer -= dt) <= 0) warn.classList.remove('show');
 
     if (onTrampoline(ps) && ps.vel.y <= 0) { trampolineLaunch(ps); showToast('¡BOING! 100 metros'); }
-    physics(ps, dt, keys.Space && !busy, stats.jump);
+    physics(ps, dt, keys.Space && !busy && !(MG.active && MG.active.noJump), stats.jump);
 
     // Enemigo: funciona como un killbrick que te persigue
     updateEnemy(dt);

@@ -9,10 +9,10 @@ import {
   blasterStats,
   COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, parseStyle, cosmeticById,
   noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval,
-  distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, BOT_MIN_Z, botCanGo, randomBotTarget,
+  distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, botCanGo, randomBotTarget,
   SWINGS, swingAngle, SLIDE, slidePoint,
   HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail,
-  MINIGAMES, minigameOrigin, MAZE, generateMaze, mazePathLength, CRATES, crateOutside, GARDEN, DROPPER, dropperLayers, dropperPad,
+  MINIGAMES, minigameOrigin, MAZE, generateMaze, mazePathLength, pickMaze, pickLemon, clampToArea, flowerTired, MEDIUM_HOUSE, insideRect, segmentHitsRect, detourAround, CRATES, crateOutside, GARDEN, DROPPER, dropperLayers, dropperPad,
   DOLPHINS, dolphinX, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot,
 } from '../src/logic.js';
 
@@ -508,6 +508,12 @@ describe('bots tontos', () => {
     expect(new Set(BOT_COLORS).size).toBe(10);
     expect(BOT_SCALE).toBe(0.5);
   });
+  it('en los minijuegos son de tu ancho, pero un 20 % más bajitos', () => {
+    expect(MINIGAME_BOT_SCALE.height).toBeCloseTo(1 - 0.2);
+    expect(MINIGAME_BOT_SCALE.width).toBe(1);
+    expect(MINIGAME_BOT_SCALE.depth).toBe(1);
+    expect(BOT_SCALE).toBe(0.5);   // los del parque siguen igual de chiquitos
+  });
   it('nunca van a la mitad del gigante ni a la línea amarilla', () => {
     expect(botCanGo(0, -10)).toBe(false);
     expect(botCanGo(0, 1)).toBe(false);
@@ -635,6 +641,16 @@ describe('amarillo: laberinto', () => {
     const len = mazePathLength(maze, [0, 0], [MAZE.rows - 1, MAZE.cols - 1]);
     expect(len).toBeGreaterThan((MAZE.rows + MAZE.cols) * 1.3);  // bastante más que el camino directo (16)
   });
+  it('cada vez sale uno distinto, pero nunca demasiado fácil', () => {
+    const rnd = seededRandom(9), seen = new Set();
+    for (let i = 0; i < 30; i++) {
+      const m = pickMaze(rnd);
+      seen.add(JSON.stringify(m.walls));
+      expect(mazePathLength(m, [0, 0], [MAZE.rows - 1, MAZE.cols - 1])).toBeGreaterThanOrEqual(MAZE.minPath);
+      for (let r = 0; r < MAZE.rows; r++) for (let c = 0; c < MAZE.cols; c++) expect(mazePathLength(m, [0, 0], [r, c])).toBeGreaterThanOrEqual(0);
+    }
+    expect(seen.size).toBe(30);
+  });
 });
 
 describe('naranja: cajas grandes', () => {
@@ -701,11 +717,27 @@ describe('celeste y coral: nubes', () => {
 });
 
 describe('verde lima: árboles', () => {
-  it('5 árboles y un solo círculo amarillo entre los rojos', () => {
+  it('20 árboles con sus círculos', () => {
     const t = treeCircles();
-    expect(t).toHaveLength(5);
-    expect(t.flat().filter(c => c.yellow)).toHaveLength(1);
-    expect(t.flat().length).toBe(5 * TREES.circlesPerTree);
+    expect(t).toHaveLength(20);
+    expect(t.flat().length).toBe(20 * TREES.circlesPerTree);
+  });
+  it('los árboles no se chocan entre sí ni con el punto de inicio', () => {
+    const S = TREES.spots;
+    for (let i = 0; i < S.length; i++) {
+      expect(Math.hypot(S[i][0], S[i][1] + 4)).toBeGreaterThan(6);
+      for (let j = i + 1; j < S.length; j++) expect(Math.hypot(S[i][0] - S[j][0], S[i][1] - S[j][1])).toBeGreaterThan(5.5);
+    }
+  });
+  it('el limón cambia de lugar, pero siempre está en un árbol que existe', () => {
+    const rnd = seededRandom(3), places = new Set();
+    for (let i = 0; i < 50; i++) {
+      const L = pickLemon(rnd);
+      expect(L.tree).toBeGreaterThanOrEqual(0); expect(L.tree).toBeLessThan(20);
+      expect(L.slot).toBeGreaterThanOrEqual(0); expect(L.slot).toBeLessThan(TREES.circlesPerTree);
+      places.add(L.tree);
+    }
+    expect(places.size).toBeGreaterThan(10);
   });
 });
 
@@ -717,11 +749,44 @@ describe('magenta: meteoritos', () => {
     }
     expect(METEORS.survive).toBe(30);
   });
+  it('no te puedes salir de la arena (ni a los backrooms)', () => {
+    const p = clampToArea(100, 0, { r: METEORS.wall });
+    expect(Math.hypot(p.x, p.z)).toBeCloseTo(METEORS.wall);
+    expect(clampToArea(3, 4, { r: METEORS.wall })).toEqual({ x: 3, z: 4 });
+    expect(METEORS.wall).toBeLessThan(METEORS.radius);
+  });
+  it('en un rectángulo te quedas dentro', () => {
+    expect(clampToArea(-50, 50, { x0: -7, x1: 7, z0: -7, z1: 7 })).toEqual({ x: -7, z: 7 });
+  });
 });
 
 describe('rosa: la flor', () => {
   it('tú eres más rápido que la flor, así que se puede alcanzar', () => {
-    expect(GARDEN.flowerSpeed).toBeLessThan(12);
+    expect(GARDEN.flowerSpeed).toBeGreaterThan(12);   // corriendo es más rápida que tú…
+    const avg = (GARDEN.flowerSpeed * GARDEN.sprint + GARDEN.restSpeed * GARDEN.rest) / (GARDEN.sprint + GARDEN.rest);
+    expect(avg).toBeLessThan(12);                       // …pero se cansa, y en promedio eres más rápido
+    expect(flowerTired(0)).toBe(false);
+    expect(flowerTired(GARDEN.sprint + 0.1)).toBe(true);
+    expect(flowerTired(GARDEN.sprint + GARDEN.rest + 0.1)).toBe(false);
+    expect(GARDEN.half * 2).toBe(15);   // jardín de 15 × 15 m
     expect(GARDEN.waterRange).toBeGreaterThan(3);
+  });
+});
+
+describe('los asistentes rodean tu casa', () => {
+  const H = MEDIUM_HOUSE;   // x 20–32, z 4–14
+  it('sabe si una línea cruza la casa', () => {
+    expect(segmentHitsRect(15, 9, 40, 9, H)).toBe(true);    // la atraviesa de lado a lado
+    expect(segmentHitsRect(15, 20, 40, 20, H)).toBe(false); // pasa por detrás
+    expect(segmentHitsRect(15, 9, 18, 9, H)).toBe(false);   // se queda antes de llegar
+  });
+  it('si la casa no estorba, va directo', () => {
+    expect(detourAround(10, 20, 10, -20, H)).toEqual({ x: 10, z: -20 });
+  });
+  it('si la casa estorba, va primero a una esquina y desde ahí ya no la cruza', () => {
+    const w = detourAround(26, 25, 26, -20, H);   // detrás de la casa y la moneda adelante
+    expect(w).not.toEqual({ x: 26, z: -20 });
+    expect(insideRect(w.x, w.z, H)).toBe(false);
+    expect(segmentHitsRect(26, 25, w.x, w.z, H)).toBe(false);
   });
 });
