@@ -232,14 +232,19 @@ export const blasterStats = v2 => (v2
 // Se compran en la tienda de estilo (en una esquina de tu mitad) y se ponen o quitan en el armario de tu casa.
 export const DEFAULT_COLOR = 'green';
 export const COSMETICS = [
-  { id: 'capBlue', type: 'hat', name: 'Gorra azul', price: 30, color: 0x2f7de1 },
+  { id: 'capBlue', type: 'hat', name: 'Gorra azul', price: 30, color: 0x2f7de1, model: 'cap' },
+  { id: 'topHat', type: 'hat', name: 'Sombrero de copa', price: 50, color: 0x1a1a1a, model: 'topHat' },
+  { id: 'capRedBack', type: 'hat', name: 'Gorra roja (visera hacia atrás)', price: 30, color: 0xe0302f, model: 'capBack' },
   { id: 'colorBlue', type: 'color', name: 'Azul', price: 20, color: 0x2f7de1 },
   { id: 'colorYellow', type: 'color', name: 'Amarillo', price: 20, color: 0xffd23f },
   { id: 'colorPurple', type: 'color', name: 'Morado', price: 20, color: 0x9b4de0 },
   { id: 'colorOrange', type: 'color', name: 'Naranja', price: 20, color: 0xff8a3d },
   { id: 'colorPink', type: 'color', name: 'Rosa', price: 20, color: 0xf15bb5 },
   { id: 'colorBlack', type: 'color', name: 'Negro', price: 20, color: 0x2b2f35 },
-  { id: 'glassesPixel', type: 'glasses', name: 'Gafas pixel', price: 40 },
+  { id: 'glassesPixel', type: 'glasses', name: 'Gafas pixel', price: 40, model: 'pixel' },
+  { id: 'glassesRound1', type: 'glasses', name: 'Gafas 1 (redondas azules)', price: 35, color: 0x2f7de1, model: 'round' },
+  { id: 'glassesRound2', type: 'glasses', name: 'Gafas 2 (redondas verdes)', price: 35, color: 0x2fae4e, model: 'round' },
+  { id: 'glassesRound3', type: 'glasses', name: 'Gafas 3 (redondas negras)', price: 35, color: 0x1a1a1a, model: 'round' },
 ];
 // Tu verde de siempre: no se compra, siempre lo tienes
 export const GREEN = { id: DEFAULT_COLOR, type: 'color', name: 'Verde (el tuyo)', price: 0, color: 0x2fae4e };
@@ -295,3 +300,46 @@ export function bitcrush(samples, bits, hold) {
 }
 // Cada cuánto suena un paso según qué tan rápido vas (a 12 m/s, un paso cada 0,32 s)
 export const footstepInterval = speed => 0.32 * (12 / Math.max(1, speed));
+
+// Sonidos a distancia: lo que pasa lejos suena más bajo y más apagado (como en la vida real)
+export function distanceGain(d, ref = 6) {
+  return ref / (ref + Math.max(0, d - ref));          // 1 de cerca; a 60 m, una décima parte
+}
+export const distanceCutoff = d => 600 + 11400 * Math.max(0, 1 - d / 90); // filtro: de 12 000 Hz (cerca) a 600 Hz (muy lejos)
+
+// ---------- Tienda de estilo: frente a la ventana de atrás de tu casa (la que mira hacia tu mitad) ----------
+export const STYLE_STALL = { x: 27, z: 28 };
+
+// ---------- Bots tontos: juegan solo en tu mitad ----------
+export const BOT_COLORS = [0xffd60a, 0xff8c00, 0xff2d95, 0xaf52de, 0x0a84ff, 0x64d2ff, 0x30d5c8, 0xa4e400, 0xe040fb, 0xff6b6b];
+export const BOT_SCALE = 0.5;                       // la mitad de tu tamaño
+export const BOT_MIN_Z = 4;                         // nunca bajan de aquí: la línea amarilla está en z 0–1,5
+// ¿Puede un bot ir a (x, z)? Solo en tu mitad, lejos de las montañas, de la casa y de la tienda de estilo
+export function botCanGo(x, z) {
+  if (z < BOT_MIN_Z || z > 92 || Math.abs(x) > 92) return false;
+  if (x > 17 && x < 39 && z > 1 && z < 21) return false;                               // casa (y su alrededor)
+  if (Math.abs(x - STYLE_STALL.x) < 5 && Math.abs(z - STYLE_STALL.z) < 4.5) return false; // tienda de estilo
+  return true;
+}
+// Un lugar al azar al que un bot puede ir (rnd: función que da números entre 0 y 1)
+export function randomBotTarget(rnd) {
+  for (let i = 0; i < 50; i++) {
+    const x = (rnd() * 2 - 1) * 90, z = BOT_MIN_Z + rnd() * (92 - BOT_MIN_Z);
+    if (botCanGo(x, z)) return { x, z };
+  }
+  return { x: 0, z: 30 };
+}
+
+// ---------- Parque: 2 columpios y un tobogán con escalera (los bots suben, bajan y juegan) ----------
+// Columpios: un marco con 2 asientos que se mecen hacia adelante y atrás (a lo largo de z)
+export const SWINGS = { x: -28, z: 22, barY: 3.2, rope: 2.4, seats: [-1, 1] };   // seats: desplazamiento en x de cada asiento
+// Ángulo del columpio (radianes) a los t segundos de mecerse: sube poco a poco hasta ±0,6
+export const swingAngle = t => 0.6 * Math.min(1, t / 2) * Math.sin(Math.sqrt(30 / SWINGS.rope) * t);
+// Tobogán: escalera en x0, plataforma arriba y bajada hasta x0 + 6 (a lo largo de x)
+export const SLIDE = { x0: -18, z: 18, top: 2.2, platform: 1.2, chute: 4.4, endY: 0.3 };
+// Dónde está alguien que se tira por el tobogán (p de 0 = arriba a 1 = abajo); baja más rápido al final
+export function slidePoint(p) {
+  const k = Math.min(1, Math.max(0, p)), s = SLIDE;
+  const start = s.x0 + s.platform;
+  return { x: start + k * s.chute, y: s.top + (s.endY - s.top) * k };
+}

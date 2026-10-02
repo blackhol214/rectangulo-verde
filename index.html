@@ -100,7 +100,7 @@
 <canvas id="game"></canvas>
 <div class="hud">
   <b>Rectángulo Verde</b> · <span id="playerName"></span><br>
-  <span class="keys">Moverse: <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> · Saltar: <kbd>Espacio</kbd><br>Girar cámara: <kbd>←</kbd><kbd>→</kbd> o arrastra · Primera persona: <kbd>V</kbd> · Disparar láser: <kbd>clic</kbd><br>Tienda: <kbd>P</kbd> · Dormir en tu cama (de noche): <kbd>E</kbd> · Guardar: botón <b>GUARDAR</b><br>Tienda de estilo (esquina de tu mitad) y armario (en tu casa): acércate y pulsa <kbd>E</kbd><br></span>
+  <span class="keys">Moverse: <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> · Saltar: <kbd>Espacio</kbd><br>Girar cámara: <kbd>←</kbd><kbd>→</kbd> o arrastra · Primera persona: <kbd>V</kbd> · Disparar láser: <kbd>clic</kbd><br>Tienda: <kbd>P</kbd> · Dormir en tu cama (de noche): <kbd>E</kbd> · Guardar: botón <b>GUARDAR</b><br>Tienda de estilo (detrás de tu casa) y armario (en tu casa): acércate y pulsa <kbd>E</kbd><br></span>
   El gigante rojo <b style="color:#d0101a">no puede cruzar</b> la <span style="color:#b98a00;font-weight:700">línea amarilla</span>. Detrás de ella estás a salvo.<br>De noche el gigante <b>duerme</b>: no te acerques o se despierta.<br>Recoge <b style="color:#b07800">monedas</b> en su zona y gástalas en la <b>tienda</b> (<kbd>P</kbd>).
 </div>
 <div class="coins" aria-label="Monedas"><i></i><span id="coins">0</span></div>
@@ -150,8 +150,8 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module">
-import { noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, missingFor, canAfford, collideWalls, extraLineSlot, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
-         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-15'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
+import { SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, missingFor, canAfford, collideWalls, extraLineSlot, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
+         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-17'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
 (() => {
   const canvas = document.getElementById('game');
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -423,8 +423,32 @@ import { noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, C
     }
     return g;
   }
-  const capMesh = makeCap(0x2f7de1); capMesh.position.y = H / 2; capMesh.visible = false; body.add(capMesh);
-  const glassesMesh = makePixelGlasses(); glassesMesh.position.set(0, H * 0.78 - H / 2, D / 2 + 0.06); glassesMesh.visible = false; body.add(glassesMesh);
+  function makeTopHat() {
+    const g = new THREE.Group(), black = new THREE.MeshLambertMaterial({ color: 0x1a1a1a });
+    const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 0.05, 28), black); brim.position.y = 0.025; g.add(brim);
+    const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.4, 0.62, 28), black); crown.position.y = 0.36; g.add(crown);
+    const band = new THREE.Mesh(new THREE.CylinderGeometry(0.405, 0.405, 0.1, 28), new THREE.MeshLambertMaterial({ color: 0xc0141a })); band.position.y = 0.12; g.add(band);
+    g.traverse(m => { if (m.isMesh) m.castShadow = true; });
+    return g;
+  }
+  function makeRoundGlasses(color) {
+    const g = new THREE.Group(), frame = new THREE.MeshLambertMaterial({ color });
+    const lens = new THREE.MeshBasicMaterial({ color: 0x223344, transparent: true, opacity: 0.45 });
+    for (const sx of [-1, 1]) {
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.14, 0.03, 8, 24), frame); ring.position.x = sx * 0.22; g.add(ring);
+      const glass = new THREE.Mesh(new THREE.CircleGeometry(0.13, 20), lens); glass.position.set(sx * 0.22, 0, -0.005); g.add(glass);
+    }
+    const bridge = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.035, 0.035), frame); bridge.position.y = 0.04; g.add(bridge);
+    return g;
+  }
+  // Todo lo que te puedes poner: se crea una vez y solo se muestra lo que llevas puesto
+  const HAT_MODELS = { cap: c => makeCap(c.color), capBack: c => { const g = makeCap(c.color); g.rotation.y = Math.PI; return g; }, topHat: () => makeTopHat() };
+  const GLASSES_MODELS = { pixel: () => makePixelGlasses(), round: c => makeRoundGlasses(c.color) };
+  const wearMeshes = {};
+  for (const c of COSMETICS) {
+    if (c.type === 'hat') { const m = HAT_MODELS[c.model](c); m.position.y = H / 2; m.visible = false; body.add(m); wearMeshes[c.id] = m; }
+    if (c.type === 'glasses') { const m = GLASSES_MODELS[c.model](c); m.position.set(0, H * 0.78 - H / 2, D / 2 + 0.06); m.visible = false; body.add(m); wearMeshes[c.id] = m; }
+  }
 
   // Enemigo: rectángulo rojo con ojos enojados
   const enemy = new THREE.Group();
@@ -972,11 +996,13 @@ import { noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, C
     b.pos.x += hit.nx * m; b.pos.z += hit.nz * m;
     collideWalls(a, platforms, COLL); collideWalls(b, platforms, COLL);
   }
-  function resolveAssistants() {
-    for (let i = 0; i < assistants.length; i++) {
-      for (let j = i + 1; j < assistants.length; j++) separate(assistants[i], assistantBox(assistants[i]), assistants[j], assistantBox(assistants[j]));
-      separate(ps, boxOf(ps), assistants[i], assistantBox(assistants[i])); // tampoco te atraviesan a ti
-    }
+  // Tú, los asistentes y los bots tontos son sólidos: nadie atraviesa a nadie
+  const botBox = b => ({ x: b.pos.x, z: b.pos.z, hw: 0.25, hd: 0.15, a: b.obj.rotation.y, y0: b.pos.y, y1: b.pos.y + 1 });
+  function resolveBodies() {
+    // Los bots que están en un columpio o en el tobogán no se empujan (van en su camino fijo)
+    const bodies = [[ps, boxOf], ...assistants.map(a => [a, assistantBox]), ...dumbBots.filter(b => !(b.play && b.play.active)).map(b => [b, botBox])];
+    for (let i = 0; i < bodies.length; i++)
+      for (let j = i + 1; j < bodies.length; j++) separate(bodies[i][0], bodies[i][1](bodies[i][0]), bodies[j][0], bodies[j][1](bodies[j][0]));
   }
   function updateAssistant(dt) {
     for (const a of assistants) {
@@ -997,15 +1023,156 @@ import { noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, C
     }
   }
 
-  // ---------- Estilo: tienda en una esquina de tu mitad y armario en tu casa ----------
+  // ---------- Bots tontos: 10 de colores, la mitad de tu tamaño, juegan solo en tu mitad ----------
+  const dumbBots = BOT_COLORS.map(color => {
+    const g = new THREE.Group();
+    const b = new THREE.Mesh(new THREE.BoxGeometry(W * BOT_SCALE, H * BOT_SCALE, D * BOT_SCALE), new THREE.MeshLambertMaterial({ color }));
+    b.position.y = H * BOT_SCALE / 2; b.castShadow = true; g.add(b);
+    for (const ex of [-0.11, 0.11]) {
+      const eye = new THREE.Mesh(eyeGeo, eyeMat); eye.scale.set(0.5, 0.5, 0.25);
+      eye.position.set(ex, H * BOT_SCALE * 0.78 - H * BOT_SCALE / 2, D * BOT_SCALE / 2 + 0.01); b.add(eye);
+    }
+    scene.add(g);
+    const st = makeState(g);
+    st.body = b; st.target = randomBotTarget(Math.random); st.timer = 0;
+    const p0 = randomBotTarget(Math.random); st.pos.set(p0.x, 0, p0.z);
+    return st;
+  });
+  // ---------- Parque: 2 columpios y un tobogán con escalera ----------
+  const swingPivots = [], swingSeatBot = [null, null];
+  let slideBot = null;
+  (() => {
+    const steel = new THREE.MeshLambertMaterial({ color: 0x2f7de1 }), red = new THREE.MeshLambertMaterial({ color: 0xe0302f });
+    const yellow = new THREE.MeshLambertMaterial({ color: 0xffd23f }), rope = new THREE.MeshLambertMaterial({ color: 0x6b4a2a });
+    const add = (geo, mat, x, y, z, rot) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); if (rot) m.rotation.set(rot[0], rot[1], rot[2]); m.castShadow = m.receiveShadow = true; scene.add(m); return m; };
+    // Columpios: marco con forma de A a cada lado y una barra arriba
+    const W2 = SWINGS, legGeo = new THREE.CylinderGeometry(0.08, 0.08, 3.5, 8);
+    for (const sx of [-2.3, 2.3]) for (const sz of [-1, 1]) {
+      add(legGeo, steel, W2.x + sx, 1.6, W2.z + sz * 0.55, [sz * 0.3, 0, 0]);
+      platforms.push({ x: W2.x + sx, z: W2.z + sz * 0.55, hw: 0.12, hd: 0.12, top: 3.2, bottom: 0 });
+    }
+    add(new THREE.CylinderGeometry(0.09, 0.09, 4.9, 10), steel, W2.x, W2.barY, W2.z, [0, 0, Math.PI / 2]);
+    for (const off of W2.seats) {
+      const pivot = new THREE.Group(); pivot.position.set(W2.x + off, W2.barY, W2.z); scene.add(pivot);
+      for (const rx of [-0.27, 0.27]) { const r = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, W2.rope, 6), rope); r.position.set(rx, -W2.rope / 2, 0); pivot.add(r); }
+      const seat = new THREE.Mesh(new THREE.BoxGeometry(0.64, 0.08, 0.36), red); seat.position.y = -W2.rope; seat.castShadow = true; pivot.add(seat);
+      swingPivots.push(pivot);
+    }
+    // Tobogán: escalera, plataforma arriba y bajada
+    const S = SLIDE, zc = S.z;
+    for (const [px, pz] of [[S.x0, -0.6], [S.x0 + S.platform, -0.6], [S.x0, 0.6], [S.x0 + S.platform, 0.6]]) add(new THREE.BoxGeometry(0.14, S.top + 0.9, 0.14), steel, px, (S.top + 0.9) / 2, zc + pz);
+    add(new THREE.BoxGeometry(S.platform, 0.15, 1.3), yellow, S.x0 + S.platform / 2, S.top - 0.075, zc);
+    platforms.push({ x: S.x0 + S.platform / 2, z: zc, hw: S.platform / 2, hd: 0.65, top: S.top, bottom: S.top - 0.15 });
+    for (const pz of [-0.62, 0.62]) add(new THREE.BoxGeometry(S.platform, 0.08, 0.06), steel, S.x0 + S.platform / 2, S.top + 0.85, zc + pz); // baranda de arriba
+    // Escalera (del lado de atrás)
+    for (const pz of [-0.32, 0.32]) add(new THREE.BoxGeometry(0.08, S.top + 0.5, 0.08), steel, S.x0 - 0.25, (S.top + 0.5) / 2, zc + pz, [0, 0, -0.12]);
+    for (let y = 0.35; y < S.top; y += 0.36) add(new THREE.BoxGeometry(0.06, 0.06, 0.64), yellow, S.x0 - 0.25 + y * 0.12, y, zc);
+    // Bajada inclinada con bordes
+    const a = slidePoint(0), b = slidePoint(1), len = Math.hypot(b.x - a.x, b.y - a.y), ang = Math.atan2(a.y - b.y, b.x - a.x);
+    add(new THREE.BoxGeometry(len, 0.08, 0.9), red, (a.x + b.x) / 2, (a.y + b.y) / 2, zc, [0, 0, -ang]);
+    for (const pz of [-0.47, 0.47]) add(new THREE.BoxGeometry(len, 0.22, 0.06), red, (a.x + b.x) / 2, (a.y + b.y) / 2 + 0.11, zc + pz, [0, 0, -ang]);
+    // Para ti, la bajada es una rampa de escaloncitos (puedes subirla caminando o bajarla)
+    const n = 6;
+    for (let i = 0; i < n; i++) {
+      const p0 = slidePoint(i / n), p1 = slidePoint((i + 1) / n);
+      platforms.push({ x: (p0.x + p1.x) / 2, z: zc, hw: (p1.x - p0.x) / 2, hd: 0.45, top: p1.y, bottom: 0 });
+    }
+  })();
+  // Las tablas de los columpios vacíos se van quedando quietas
+  function idleSwings(dt) {
+    swingPivots.forEach((pv, i) => { if (!swingSeatBot[i]) pv.rotation.x *= Math.exp(-1.5 * dt); });
+  }
+  // Un bot empieza a jugar en el columpio o el tobogán
+  function startPlay(b) {
+    const free = swingSeatBot.indexOf(null);
+    if (Math.random() < 0.5 && free >= 0) {
+      swingSeatBot[free] = b; b.play = { kind: 'swing', seat: free, t: 0, until: 6 + Math.random() * 6 };
+      b.target = { x: SWINGS.x + SWINGS.seats[free], z: SWINGS.z + 0.6 };
+    } else if (!slideBot) {
+      slideBot = b; b.play = { kind: 'slide', phase: 'climb', t: 0 };
+      b.target = { x: SLIDE.x0 - 0.9, z: SLIDE.z };
+    }
+  }
+  function endPlay(b) {
+    if (b.play.kind === 'swing') swingSeatBot[b.play.seat] = null; else slideBot = null;
+    b.play = null; b.vel.set(0, 0, 0); b.onGround = false; b.body.rotation.set(0, 0, 0);
+    b.target = randomBotTarget(Math.random); b.timer = 4 + Math.random() * 6;
+  }
+  // Mientras juega, el bot sigue un camino fijo (no lo mueve la física)
+  function playing(b, dt) {
+    const P = b.play;
+    if (P.kind === 'swing') {
+      P.t += dt;
+      const pv = swingPivots[P.seat], a = swingAngle(P.t);
+      pv.rotation.x = a;
+      b.pos.set(pv.position.x, SWINGS.barY - SWINGS.rope * Math.cos(a) + 0.04, pv.position.z - SWINGS.rope * Math.sin(a));
+      b.obj.rotation.y = 0; b.facing = 0;
+      if (P.t > P.until) { b.pos.z += 1.2; endPlay(b); }
+      return;
+    }
+    const S = SLIDE;
+    P.t += dt;
+    if (P.phase === 'climb') {                       // sube la escalera
+      const k = Math.min(1, P.t / 1.6);
+      b.pos.set(S.x0 - 0.45 + 0.35 * k, S.top * k, S.z); b.obj.rotation.y = b.facing = Math.PI / 2;
+      if (k >= 1) { P.phase = 'top'; P.t = 0; }
+    } else if (P.phase === 'top') {                  // camina por la plataforma
+      const k = Math.min(1, P.t / 0.5);
+      b.pos.set(S.x0 - 0.1 + (S.platform + 0.1) * k, S.top, S.z);
+      if (k >= 1) { P.phase = 'slide'; P.t = 0; }
+    } else if (P.phase === 'slide') {                // ¡se tira!
+      const k = Math.min(1, P.t / 1.1), pt = slidePoint(k * k);
+      b.pos.set(pt.x, pt.y + 0.05, S.z); b.body.rotation.z = -0.35;
+      if (k >= 1) { b.pos.x += 0.8; b.pos.y = 0; endPlay(b); }
+    }
+  }
+
+  const BOT_SPEED = 5;
+  function updateDumbBots(dt) {
+    idleSwings(dt);
+    for (const b of dumbBots) {
+      // Ya está en el columpio o en el tobogán
+      if (b.play && b.play.active) { playing(b, dt); continue; }
+      // Cada tanto eligen otro lugar para ir a jugar (a veces, al parque)
+      b.timer -= dt;
+      const arrived = Math.hypot(b.target.x - b.pos.x, b.target.z - b.pos.z) < (b.play ? 0.5 : 1);
+      if (b.play && arrived) {
+        b.play.active = true; if (b.play.kind === 'slide') b.play.phase = 'climb';  // llegó: empieza a jugar
+        playing(b, dt);
+        continue;
+      }
+      if (!b.play && (b.timer <= 0 || arrived)) {
+        b.target = randomBotTarget(Math.random); b.timer = 4 + Math.random() * 6;
+        if (Math.random() < 0.4) startPlay(b);
+      }
+      if (b.play && b.timer <= -15) endPlay(b);  // si no logra llegar, se olvida del juego
+      const dx = b.target.x - b.pos.x, dz = b.target.z - b.pos.z, dist = Math.hypot(dx, dz);
+      if (dist > 0.05) {
+        const step = Math.min(BOT_SPEED * dt, dist);
+        b.walkX += dx / dist * step; b.walkZ += dz / dist * step;
+        turnTo(b, dx, dz, dt);
+      }
+      // Saltan porque sí, y si chocan con algo lo saltan o se van a otro lado
+      let jump = b.onGround && Math.random() < dt * 0.7;
+      if (b.onGround && b.hitWall) { jump = true; if (Math.random() < 0.3) b.timer = 0; }
+      physics(b, dt, jump, JUMP * 0.75);
+      // Nunca cruzan a la mitad del gigante (ni pisan la línea amarilla)
+      if (b.pos.z < BOT_MIN_Z - 1.5) { b.pos.z = BOT_MIN_Z - 1.5; b.timer = 0; }
+      // Si alguno se cae al sótano, reaparece afuera
+      if (b.pos.y < -1) { const p = randomBotTarget(Math.random); b.pos.set(p.x, 0, p.z); b.vel.set(0, 0, 0); }
+      b.body.position.y = H * BOT_SCALE / 2 + (b.onGround ? Math.abs(Math.sin(t * 14 + b.pos.x)) * 0.05 : 0);
+    }
+  }
+
+  // ---------- Estilo: tienda detrás de tu casa y armario en tu casa ----------
   // Cómo te ves según lo que tienes puesto
   function applyStyle() {
     const eq = save.style.equipped;
     body.material.color.setHex(cosmeticById(eq.color).color);
-    capMesh.visible = !!eq.hat; glassesMesh.visible = !!eq.glasses;
+    for (const [id, m] of Object.entries(wearMeshes)) m.visible = eq.hat === id || eq.glasses === id;
   }
-  // Puesto de la tienda de estilo, en la esquina de atrás a la izquierda (al pie de las montañas)
-  const STYLE_STALL = { x: -84, z: 88 };
+  // Puesto de la tienda de estilo: frente a la ventana de atrás de tu casa (la que mira hacia tu mitad).
+  // El mostrador mira hacia la casa: te paras entre la casa y la tienda.
   (() => {
     const { x, z } = STYLE_STALL;
     const wood = new THREE.MeshLambertMaterial({ color: 0x8a5a33 }), pink = new THREE.MeshLambertMaterial({ color: 0xf15bb5 }), white = new THREE.MeshLambertMaterial({ color: 0xffffff });
@@ -1113,7 +1280,7 @@ import { noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, C
                 `<button type="button" class="buy${on ? ' on' : ''}" id="wear-${it.id}" data-id="${it.id}" ${type === 'color' && on ? 'disabled' : ''}>${label}</button></div>`;
       }
     }
-    if (!save.style.owned.length) html += '<p class="empty-note">Todavía no compraste nada. La tienda de estilo está en la esquina de tu mitad, al pie de las montañas.</p>';
+    if (!save.style.owned.length) html += '<p class="empty-note">Todavía no compraste nada. La tienda de estilo está detrás de tu casa, frente a la ventana de atrás.</p>';
     wardrobeItems.innerHTML = html;
   }
   wardrobeItems.addEventListener('click', e => {
@@ -1198,11 +1365,14 @@ import { noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, C
     g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.22, t0 + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.24);
     o.connect(lp).connect(g).connect(sfx); o.start(t0); o.stop(t0 + 0.26);
   }
-  // Cuando el láser choca: sonido "bitcrushed"
-  function sfxCrush() {
+  // Cuando el láser choca: sonido "bitcrushed". Si choca lejos de ti, suena más bajo y más apagado.
+  function sfxCrush(where) {
     if (!audio || !audio.crush) return;
-    const src = audio.ctx.createBufferSource(), g = audio.ctx.createGain(); g.gain.value = 0.55;
-    src.buffer = audio.crush; src.connect(g).connect(audio.sfx); src.start();
+    const d = where ? where.distanceTo(ps.pos) : 0;
+    const src = audio.ctx.createBufferSource(), lp = audio.ctx.createBiquadFilter(), g = audio.ctx.createGain();
+    lp.type = 'lowpass'; lp.frequency.value = distanceCutoff(d);
+    g.gain.value = 0.55 * distanceGain(d);
+    src.buffer = audio.crush; src.connect(lp).connect(g).connect(audio.sfx); src.start();
   }
   // Moneda al estilo Mario: SI 5 cortita y MI 6 que se apaga, con onda cuadrada (sonido de consola)
   function sfxCoin() {
@@ -1468,7 +1638,7 @@ import { noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, C
       // ¿Chocó con algo? El gigante, el suelo o las montañas del borde
       const hitGround = lp.y < 0, hitMountain = Math.max(Math.abs(lp.x), Math.abs(lp.z)) > EDGE - MOUNTAIN_WALL_INSET;
       if (blaster.particles && (hitEnemy || hitGround || hitMountain)) spawnSparks(new THREE.Vector3(lp.x, Math.max(lp.y, 0.1), lp.z));
-      if (hitEnemy || hitGround || hitMountain) sfxCrush();
+      if (hitEnemy || hitGround || hitMountain) sfxCrush(lp);
       if (hitEnemy || hitGround || hitMountain || L.travel > LASER_RANGE) { scene.remove(L.mesh); lasers.splice(i, 1); }
     }
     updateSparks(dt);
@@ -1600,7 +1770,8 @@ import { noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, C
     updateLaser(dt);
     updateBelt(dt);
     updateAssistant(dt);
-    resolveAssistants();
+    updateDumbBots(dt);
+    resolveBodies();
     if (boxHit(boxOf(ps), boxOf(es, ENEMY_SCALE))) die();
 
     const onGround = ps.onGround;

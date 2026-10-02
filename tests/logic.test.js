@@ -9,6 +9,8 @@ import {
   blasterStats,
   COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, parseStyle, cosmeticById,
   noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval,
+  distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, BOT_MIN_Z, botCanGo, randomBotTarget,
+  SWINGS, swingAngle, SLIDE, slidePoint,
 } from '../src/logic.js';
 
 // Caja de un personaje normal (1 × 0,6 × 2 m) en (x, z), girada `a` radianes
@@ -392,11 +394,19 @@ describe('bláster 2.0', () => {
 });
 
 describe('estilo: sombreros, colores y gafas', () => {
-  it('la tienda tiene 1 gorra azul, 6 colores y unas gafas pixel', () => {
-    expect(COSMETICS.filter(c => c.type === 'hat').map(c => c.name)).toEqual(['Gorra azul']);
+  it('la tienda tiene 3 sombreros, 6 colores y 4 gafas', () => {
+    expect(COSMETICS.filter(c => c.type === 'hat').map(c => c.name)).toEqual(['Gorra azul', 'Sombrero de copa', 'Gorra roja (visera hacia atrás)']);
     expect(COSMETICS.filter(c => c.type === 'color')).toHaveLength(6);
-    expect(COSMETICS.filter(c => c.type === 'glasses').map(c => c.name)).toEqual(['Gafas pixel']);
+    expect(COSMETICS.filter(c => c.type === 'glasses').map(c => c.name)).toEqual(['Gafas pixel', 'Gafas 1 (redondas azules)', 'Gafas 2 (redondas verdes)', 'Gafas 3 (redondas negras)']);
     expect(cosmeticById(DEFAULT_COLOR).name).toMatch(/Verde/);
+  });
+
+  it('cambiar de sombrero o de gafas reemplaza el anterior', () => {
+    let st = { owned: ['capBlue', 'topHat', 'glassesRound1', 'glassesRound3'], equipped: emptyStyle().equipped };
+    st = toggleEquip(st, 'capBlue'); st = toggleEquip(st, 'topHat');
+    expect(st.equipped.hat).toBe('topHat');
+    st = toggleEquip(st, 'glassesRound1'); st = toggleEquip(st, 'glassesRound3');
+    expect(st.equipped.glasses).toBe('glassesRound3');
   });
 
   it('se empieza con el verde y sin nada puesto', () => {
@@ -462,5 +472,75 @@ describe('sonido', () => {
   it('los pasos van más seguido si corres más rápido', () => {
     expect(footstepInterval(12)).toBeCloseTo(0.32);
     expect(footstepInterval(24)).toBeCloseTo(0.16);
+  });
+});
+
+describe('sonido a distancia', () => {
+  it('cerca suena fuerte y lejos suena bajito', () => {
+    expect(distanceGain(2)).toBe(1);
+    expect(distanceGain(6)).toBe(1);
+    expect(distanceGain(60)).toBeCloseTo(0.1);
+    expect(distanceGain(30)).toBeGreaterThan(distanceGain(80));
+  });
+  it('lejos suena más apagado', () => {
+    expect(distanceCutoff(0)).toBe(12000);
+    expect(distanceCutoff(90)).toBe(600);
+    expect(distanceCutoff(200)).toBe(600);
+    expect(distanceCutoff(20)).toBeGreaterThan(distanceCutoff(60));
+  });
+});
+
+describe('tienda de estilo frente a la ventana de atrás', () => {
+  it('queda detrás de la casa, frente a su ventana, sin tocarla', () => {
+    const windowX = (BIG_HOUSE.x0 + BIG_HOUSE.x1) / 2;
+    expect(Math.abs(STYLE_STALL.x - windowX)).toBeLessThan(2.5);          // alineada con la ventana
+    expect(STYLE_STALL.z - BIG_HOUSE.z1).toBeGreaterThan(6);             // con espacio para pararte entre las dos
+    expect(STYLE_STALL.z - BIG_HOUSE.z1).toBeLessThan(14);               // pero cerca
+  });
+});
+
+describe('bots tontos', () => {
+  it('son 10, de colores distintos y la mitad de tu tamaño', () => {
+    expect(BOT_COLORS).toHaveLength(10);
+    expect(new Set(BOT_COLORS).size).toBe(10);
+    expect(BOT_SCALE).toBe(0.5);
+  });
+  it('nunca van a la mitad del gigante ni a la línea amarilla', () => {
+    expect(botCanGo(0, -10)).toBe(false);
+    expect(botCanGo(0, 1)).toBe(false);
+    expect(botCanGo(0, 30)).toBe(true);
+    const rnd = seededRandom(42);
+    for (let i = 0; i < 500; i++) {
+      const p = randomBotTarget(rnd);
+      expect(p.z).toBeGreaterThanOrEqual(BOT_MIN_Z);
+      expect(botCanGo(p.x, p.z)).toBe(true);
+    }
+  });
+  it('no van a meterse a la casa ni a la tienda de estilo', () => {
+    expect(botCanGo(28, 10)).toBe(false);
+    expect(botCanGo(STYLE_STALL.x, STYLE_STALL.z)).toBe(false);
+  });
+});
+
+describe('parque: columpios y tobogán', () => {
+  it('hay 2 columpios', () => {
+    expect(SWINGS.seats).toHaveLength(2);
+  });
+  it('el columpio empieza quieto y se mece cada vez más, sin pasarse de 0,6 rad', () => {
+    expect(swingAngle(0)).toBe(0);
+    let max = 0; for (let t = 0; t < 20; t += 0.01) max = Math.max(max, Math.abs(swingAngle(t)));
+    expect(max).toBeLessThanOrEqual(0.6 + 1e-9);
+    expect(max).toBeGreaterThan(0.55);
+  });
+  it('el tobogán empieza arriba y termina casi en el suelo', () => {
+    expect(slidePoint(0).y).toBe(SLIDE.top);
+    expect(slidePoint(1).y).toBeCloseTo(SLIDE.endY);
+    expect(slidePoint(1).x - slidePoint(0).x).toBeCloseTo(SLIDE.chute);
+    expect(slidePoint(0.5).y).toBeLessThan(slidePoint(0.2).y);
+  });
+  it('el parque está en tu mitad, donde los bots pueden ir', () => {
+    expect(botCanGo(SWINGS.x, SWINGS.z + 2)).toBe(true);
+    expect(botCanGo(SLIDE.x0 - 1, SLIDE.z)).toBe(true);
+    expect(SWINGS.z - 2).toBeGreaterThan(BOT_MIN_Z);
   });
 });
