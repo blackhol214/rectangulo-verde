@@ -343,3 +343,39 @@ export function slidePoint(p) {
   const start = s.x0 + s.platform;
   return { x: start + k * s.chute, y: s.top + (s.endY - s.top) * k };
 }
+
+// ---------- Bots que entran a tu casa (1 de cada 5 veces que eligen a dónde ir) ----------
+export const HOUSE_VISIT_CHANCE = 1 / 5;
+// Ruta: frente a la puerta (afuera) → adentro → (se queda un rato) → puerta → afuera. Sirve para la casa mediana y la grande.
+export const HOUSE_VISIT = { outside: { x: 16.5, z: 9 }, door: { x: 21.5, z: 9 }, inside: { x: 24.5, z: 12.5 } };
+
+// ---------- Botón rojo del sótano ----------
+export const RED_BUTTON = { x: 35.6, z: 9 };   // contra la pared derecha del sótano
+
+// ---------- Minijuego de parkour con lava ----------
+// Una torre lejos del mapa: 40 escalones en espiral; en la cima está la casita del bot rojo.
+export const PARKOUR = { cx: 0, cz: 600, steps: 40, radius: 9, turn: 0.55, rise: 1.4, firstY: 1, size: 3, topSize: 6, topPush: 4 };
+// La cima es más grande y está un poco hacia afuera, para que no quede encima del escalón anterior
+export function parkourStep(i) {
+  const P = PARKOUR, a = i * P.turn, r = i === P.steps - 1 ? P.radius + P.topPush : P.radius;
+  return { x: P.cx + Math.sin(a) * r, y: P.firstY + i * P.rise, z: P.cz + Math.cos(a) * r };
+}
+export const parkourSize = i => (i === PARKOUR.steps - 1 ? PARKOUR.topSize : PARKOUR.size);
+// La lava empieza 5 m por debajo del primer escalón y sube 1 m por segundo
+export const LAVA = { start: -5, speed: 1 };
+export const lavaHeight = t => LAVA.start + LAVA.speed * Math.max(0, t);
+
+// El bot rojo te sigue por el mismo camino que hiciste, un poco atrás (lag segundos).
+// trail: [{ t, x, y, z }] ordenado por tiempo. Devuelve dónde debería estar el bot en el momento `now`.
+export function followTrail(trail, now, lag) {
+  if (!trail.length) return null;
+  const want = now - lag;
+  if (want <= trail[0].t) return { ...trail[0] };
+  for (let i = 1; i < trail.length; i++) {
+    if (trail[i].t >= want) {
+      const a = trail[i - 1], b = trail[i], k = (want - a.t) / (b.t - a.t || 1);
+      return { t: want, x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k, z: a.z + (b.z - a.z) * k };
+    }
+  }
+  return { ...trail[trail.length - 1] };
+}

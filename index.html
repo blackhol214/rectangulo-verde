@@ -77,6 +77,9 @@
   .empty-note { margin:0; padding:12px; border-radius:10px; background:#fff; box-shadow:inset 0 0 0 1px #dde5df; font:14px/1.45 system-ui, sans-serif; color:#4a5f52; }
   /* Dormir */
   /* Aviso al iniciar sesión: el juego sigue en desarrollo */
+  /* Minijuego de parkour */
+  #parkourHud { position:fixed; left:50%; top:calc(16px + env(safe-area-inset-top,0px)); transform:translateX(-50%); z-index:21; margin:0; padding:8px 16px; border-radius:999px; background:rgba(60,8,0,.82); color:#ffd9b0; font:700 15px/1.3 system-ui, sans-serif; text-align:center; white-space:nowrap; max-width:calc(100% - 32px); overflow:hidden; text-overflow:ellipsis; font-variant-numeric:tabular-nums; }
+  #parkourHud b { color:#ff7a1a; }
   #devAlert { position:fixed; left:50%; bottom:calc(110px + env(safe-area-inset-bottom,0px)); transform:translateX(-50%); z-index:22; width:min(640px, calc(100% - 32px)); display:flex; align-items:flex-start; gap:12px; margin:0; padding:12px 14px; border-radius:12px; background:#fff4d6; color:#5a3a00; box-shadow:0 0 0 2px #e0a800, 0 10px 26px rgba(0,0,0,.3); font:14px/1.45 system-ui, sans-serif; }
   #devAlert strong { color:#b45309; letter-spacing:.04em; }
   #devAlert p { margin:0; flex:1; }
@@ -142,6 +145,7 @@
 </div>
 <div id="devAlert" role="status" hidden><p><strong>ALERTA:</strong> Este juego sigue en desarrollo. Cuando esté en su versión final, todo tu progreso se eliminará.</p><button type="button" id="devAlertClose" aria-label="Cerrar aviso">✕</button></div>
 <p id="actionPrompt" hidden></p>
+<p id="parkourHud" hidden></p>
 <p id="bedPrompt" hidden>Pulsa <kbd>E</kbd> para dormir hasta la mañana</p>
 <div id="sleep" aria-live="polite"><span>Zzz… durmiendo</span></div>
 <p id="lockHint" hidden>Haz clic para mirar con el ratón (Esc para soltarlo)</p>
@@ -150,8 +154,8 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module">
-import { SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, missingFor, canAfford, collideWalls, extraLineSlot, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
-         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-17'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
+import { HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, missingFor, canAfford, collideWalls, extraLineSlot, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
+         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-19'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
 (() => {
   const canvas = document.getElementById('game');
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -337,6 +341,7 @@ import { SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, ST
     const S = STAIRWELL, B = BASEMENT;
     buildHouse(BIG_HOUSE, [], S);
     placeWardrobe(BIG_HOUSE);
+    buildRedButton();
     // Suelo de afuera con el hueco de la escalera
     ground.geometry.dispose(); ground.geometry = groundGeometry(S);
     // Escalera: 18 escalones de 0,39 m de alto y 0,6 m de fondo, hasta el piso del sótano
@@ -516,7 +521,7 @@ import { SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, ST
     keys[e.code] = true;
     if (e.code === 'Space' || e.code.startsWith('Arrow')) e.preventDefault();
     if (e.code === 'KeyV' && !e.repeat) setFirstPerson(!firstPerson);
-    if (e.code === 'KeyE' && !e.repeat) { if (!tryStyleInteract()) trySleep(); }
+    if (e.code === 'KeyE' && !e.repeat) { if (!tryRedButton() && !tryStyleInteract()) trySleep(); }
   });
   addEventListener('keyup', e => { keys[e.code] = false; });
 
@@ -1128,6 +1133,9 @@ import { SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, ST
   }
 
   const BOT_SPEED = 5;
+  let houseVisitor = null;   // el bot que está de visita en tu casa (solo uno a la vez)
+  // ¿Hay un bot dentro de tu casa ahora mismo?
+  const botInsideHouse = () => houseVisitor && houseVisitor.pos.x > 20.3 && houseVisitor.pos.x < 35.7 && houseVisitor.pos.z > 4.3 && houseVisitor.pos.z < 17.7 && houseVisitor.pos.y > -1;
   function updateDumbBots(dt) {
     idleSwings(dt);
     for (const b of dumbBots) {
@@ -1141,9 +1149,25 @@ import { SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, ST
         playing(b, dt);
         continue;
       }
-      if (!b.play && (b.timer <= 0 || arrived)) {
+      // De visita en tu casa: puerta → adentro (se queda un rato) → puerta → afuera
+      if (b.visit) {
+        const V = b.visit;
+        if (V.wait > 0) { V.wait -= dt; if (V.wait <= 0) V.step++; }
+        else if (arrived) {
+          V.step++;
+          if (V.step === 3) { V.wait = 6 + Math.random() * 6; }   // ya está adentro: se queda
+        }
+        if (V.step >= V.route.length || b.timer < -45) { b.visit = null; houseVisitor = null; b.timer = 0; }
+        else b.target = V.route[V.step];
+      }
+      if (!b.play && !b.visit && (b.timer <= 0 || arrived)) {
         b.target = randomBotTarget(Math.random); b.timer = 4 + Math.random() * 6;
-        if (Math.random() < 0.4) startPlay(b);
+        if (!houseVisitor && Math.random() < HOUSE_VISIT_CHANCE) {
+          // 1 de cada 5: entra a tu casa
+          const H_ = HOUSE_VISIT;
+          b.visit = { step: 0, wait: 0, route: [H_.outside, H_.door, H_.inside, H_.inside, H_.door, H_.outside] };
+          houseVisitor = b; b.target = H_.outside; b.timer = 0;
+        } else if (Math.random() < 0.4) startPlay(b);
       }
       if (b.play && b.timer <= -15) endPlay(b);  // si no logra llegar, se olvida del juego
       const dx = b.target.x - b.pos.x, dz = b.target.z - b.pos.z, dist = Math.hypot(dx, dz);
@@ -1153,8 +1177,8 @@ import { SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, ST
         turnTo(b, dx, dz, dt);
       }
       // Saltan porque sí, y si chocan con algo lo saltan o se van a otro lado
-      let jump = b.onGround && Math.random() < dt * 0.7;
-      if (b.onGround && b.hitWall) { jump = true; if (Math.random() < 0.3) b.timer = 0; }
+      let jump = !b.visit && b.onGround && Math.random() < dt * 0.7;   // dentro de tu casa no saltan
+      if (b.onGround && b.hitWall) { jump = true; if (!b.visit && Math.random() < 0.3) b.timer = 0; }
       physics(b, dt, jump, JUMP * 0.75);
       // Nunca cruzan a la mitad del gigante (ni pisan la línea amarilla)
       if (b.pos.z < BOT_MIN_Z - 1.5) { b.pos.z = BOT_MIN_Z - 1.5; b.timer = 0; }
@@ -1162,6 +1186,111 @@ import { SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, ST
       if (b.pos.y < -1) { const p = randomBotTarget(Math.random); b.pos.set(p.x, 0, p.z); b.vel.set(0, 0, 0); }
       b.body.position.y = H * BOT_SCALE / 2 + (b.onGround ? Math.abs(Math.sin(t * 14 + b.pos.x)) * 0.05 : 0);
     }
+  }
+
+  // ---------- Botón rojo del sótano ----------
+  let redButton = null;
+  function buildRedButton() {
+    const y = BASEMENT.y, { x, z } = RED_BUTTON;
+    const base = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1, 0.7), new THREE.MeshLambertMaterial({ color: 0x3a3f46 }));
+    base.position.set(x, y + 0.5, z); base.castShadow = true; scene.add(base);
+    const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.28, 0.16, 24), new THREE.MeshLambertMaterial({ color: 0xe0141a, emissive: 0x5a0000 }));
+    cap.position.set(x, y + 1.08, z); scene.add(cap);
+    platforms.push({ x, z, hw: 0.35, hd: 0.35, top: y + 1, bottom: y });
+    redButton = { cap, press: 0 };
+  }
+  const nearRedButton = () => redButton && ps.pos.y < BASEMENT.y + 1 && Math.hypot(ps.pos.x - RED_BUTTON.x, ps.pos.z - RED_BUTTON.z) < 1.9;
+  function tryRedButton() {
+    if (!nearRedButton()) return false;
+    redButton.press = 0.25; redButton.cap.position.y = BASEMENT.y + 1.03;
+    setTimeout(() => { if (redButton) redButton.cap.position.y = BASEMENT.y + 1.08; }, 250);
+    if (parkour.active) return true;
+    if (botInsideHouse()) startParkour();
+    else showToast('El botón hace "clic"… pero no pasa nada. ¿Y si alguien estuviera dentro de tu casa?');
+    return true;
+  }
+
+  // ---------- Minijuego: parkour súper alto con lava que sube ----------
+  const parkour = { active: false, built: false, t: 0, trail: [], trailT: 0, back: null };
+  const parkourHud = document.getElementById('parkourHud');
+  let lavaMesh = null, lavaTex = null, redBot = null;
+  function buildParkour() {
+    if (parkour.built) return;
+    parkour.built = true;
+    const P = PARKOUR;
+    // Piso de roca (la lava lo va tapando)
+    const rock = new THREE.Mesh(new THREE.PlaneGeometry(160, 160), new THREE.MeshLambertMaterial({ color: 0x3b2a22 }));
+    rock.rotation.x = -Math.PI / 2; rock.position.set(P.cx, 0.01, P.cz); scene.add(rock);
+    // 40 escalones de colores (del más bajo al más alto) y la plataforma de la cima
+    for (let i = 0; i < P.steps; i++) {
+      const s = parkourStep(i), size = parkourSize(i);
+      const col = new THREE.Color().setHSL(i / P.steps * 0.8, 0.75, 0.55);
+      const m = new THREE.Mesh(new THREE.BoxGeometry(size, 0.5, size), new THREE.MeshLambertMaterial({ color: col }));
+      m.position.set(s.x, s.y - 0.25, s.z); m.castShadow = m.receiveShadow = true; scene.add(m);
+      platforms.push({ x: s.x, z: s.z, hw: size / 2, hd: size / 2, top: s.y, bottom: s.y - 0.5 });
+    }
+    // La casita del bot rojo en la cima
+    const top = parkourStep(P.steps - 1);
+    const house = new THREE.Mesh(new THREE.BoxGeometry(2.6, 2, 2.2), new THREE.MeshLambertMaterial({ color: 0xffe3d6 }));
+    house.position.set(top.x + 1.6, top.y + 1, top.z + 1.6); house.castShadow = true; scene.add(house);
+    const roof = new THREE.Mesh(new THREE.ConeGeometry(2.1, 1.3, 4), new THREE.MeshLambertMaterial({ color: 0xe0302f }));
+    roof.position.set(top.x + 1.6, top.y + 2.65, top.z + 1.6); roof.rotation.y = Math.PI / 4; scene.add(roof);
+    const door = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.2, 0.05), new THREE.MeshLambertMaterial({ color: 0x7a3a1a }));
+    door.position.set(top.x + 1.6, top.y + 0.6, top.z + 0.48); scene.add(door);
+    // Lava: brilla y se mueve
+    const c = document.createElement('canvas'); c.width = c.height = 64;
+    const g = c.getContext('2d');
+    for (let yy = 0; yy < 64; yy += 4) for (let xx = 0; xx < 64; xx += 4) { g.fillStyle = `hsl(${12 + Math.random() * 22}, 100%, ${45 + Math.random() * 15}%)`; g.fillRect(xx, yy, 4, 4); }
+    lavaTex = new THREE.CanvasTexture(c); lavaTex.wrapS = lavaTex.wrapT = THREE.RepeatWrapping; lavaTex.repeat.set(20, 20); lavaTex.magFilter = THREE.NearestFilter;
+    lavaMesh = new THREE.Mesh(new THREE.PlaneGeometry(160, 160), new THREE.MeshBasicMaterial({ map: lavaTex }));
+    lavaMesh.rotation.x = -Math.PI / 2; lavaMesh.position.set(P.cx, LAVA.start, P.cz); scene.add(lavaMesh);
+    const lavaLight = new THREE.PointLight(0xff5a1a, 1.2, 40, 1.5); lavaMesh.add(lavaLight); lavaLight.position.set(0, 0, 3);
+    // El bot rojo (chiquito, sin cejas: no es el gigante)
+    redBot = new THREE.Group();
+    const rb = new THREE.Mesh(new THREE.BoxGeometry(W * BOT_SCALE, H * BOT_SCALE, D * BOT_SCALE), new THREE.MeshLambertMaterial({ color: 0xff3b30 }));
+    rb.position.y = H * BOT_SCALE / 2; rb.castShadow = true; redBot.add(rb);
+    for (const ex of [-0.11, 0.11]) { const e = new THREE.Mesh(eyeGeo, eyeMat); e.scale.set(0.5, 0.5, 0.25); e.position.set(ex, H * BOT_SCALE * 0.78, D * BOT_SCALE / 2 + 0.01); redBot.add(e); }
+    redBot.visible = false; scene.add(redBot);
+  }
+  function startParkour() {
+    buildParkour();
+    parkour.back = ps.pos.clone();
+    const s0 = parkourStep(0);
+    ps.pos.set(s0.x, s0.y, s0.z); ps.vel.set(0, 0, 0); ps.onGround = true;
+    parkour.active = true; parkour.t = 0; parkour.trail = [{ t: 0, x: s0.x + 1, y: s0.y, z: s0.z }]; parkour.trailT = 0;
+    redBot.visible = true; redBot.position.set(s0.x + 1, s0.y, s0.z);
+    lavaMesh.position.y = LAVA.start;
+    parkourHud.hidden = false;
+    showToast('¡Lleva al bot rojo hasta su casa en la cima! La lava sube…');
+  }
+  function endParkour(won, msg) {
+    parkour.active = false; redBot.visible = false; parkourHud.hidden = true;
+    ps.pos.copy(parkour.back); ps.vel.set(0, 0, 0);
+    if (won) { save.coins += 100; renderCoins(); }
+    flashWarn(won ? '¡LO LOGRASTE!' : '¡LAVA!', 2);
+    showToast(msg, !won);
+  }
+  function updateParkour(dt) {
+    if (!parkour.active) return;
+    const P = PARKOUR;
+    parkour.t += dt;
+    const lavaY = lavaHeight(parkour.t);
+    lavaMesh.position.y = lavaY; lavaTex.offset.x += dt * 0.03; lavaTex.offset.y += dt * 0.02;
+    // El bot rojo sigue el camino que vas haciendo, 0,9 s atrás (salta donde tú saltas)
+    parkour.trailT += dt;
+    if (parkour.trailT >= 0.05) { parkour.trailT = 0; parkour.trail.push({ t: parkour.t, x: ps.pos.x, y: ps.pos.y, z: ps.pos.z }); }
+    const bp = followTrail(parkour.trail, parkour.t, 0.9);
+    if (bp) {
+      const dx = bp.x - redBot.position.x, dz = bp.z - redBot.position.z;
+      if (Math.hypot(dx, dz) > 0.01) redBot.rotation.y = Math.atan2(dx, dz);
+      redBot.position.set(bp.x, bp.y, bp.z);
+    }
+    const top = parkourStep(P.steps - 1);
+    const onTop = p => Math.abs(p.x - top.x) < P.topSize / 2 && Math.abs(p.z - top.z) < P.topSize / 2 && p.y > top.y - 0.3;
+    parkourHud.innerHTML = `Lleva al <b>bot rojo</b> a su casa · Lava: <b>${Math.max(0, lavaY).toFixed(0)} m</b> · Tú: ${ps.pos.y.toFixed(0)} m · Cima: ${top.y.toFixed(0)} m`;
+    if (ps.pos.y < lavaY + 0.05) return endParkour(false, '¡Te alcanzó la lava! Vuelve a intentarlo con el botón rojo');
+    if (redBot.position.y < lavaY + 0.05) return endParkour(false, '¡La lava alcanzó al bot rojo! Vuelve a intentarlo');
+    if (onTop(ps.pos) && onTop(redBot.position)) endParkour(true, '¡Llevaste al bot rojo a su casa! +100 monedas');
   }
 
   // ---------- Estilo: tienda detrás de tu casa y armario en tu casa ----------
@@ -1238,7 +1367,7 @@ import { SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, ST
     return false;
   }
   function updateStylePrompt() {
-    const txt = nearStall() ? 'Pulsa <kbd>E</kbd> para ver la tienda de estilo' : nearWardrobe() ? 'Pulsa <kbd>E</kbd> para abrir el armario' : '';
+    const txt = nearRedButton() ? 'Pulsa <kbd>E</kbd> para apretar el botón rojo' : nearStall() ? 'Pulsa <kbd>E</kbd> para ver la tienda de estilo' : nearWardrobe() ? 'Pulsa <kbd>E</kbd> para abrir el armario' : '';
     actionPrompt.hidden = !txt || !!document.querySelector('.panel:not([hidden])');
     if (txt && actionPrompt.innerHTML !== txt) actionPrompt.innerHTML = txt;
   }
@@ -1421,7 +1550,7 @@ import { SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, ST
   function saveGame() {
     if (!userName) return;
     try {
-      localStorage.setItem(saveKey(userName), serializeSave({ coins: save.coins, boxes: save.boxes, levels: save.levels, dayPhase, pos: ps.pos, style: save.style }));
+      localStorage.setItem(saveKey(userName), serializeSave({ coins: save.coins, boxes: save.boxes, levels: save.levels, dayPhase, pos: parkour.active ? parkour.back : ps.pos, style: save.style }));
     } catch (e) {
       showToast('No se pudo guardar: este navegador no deja guardar datos', true);
       return;
@@ -1434,7 +1563,8 @@ import { SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, ST
     try { raw = localStorage.getItem(saveKey(name)); } catch (e) { return false; }
     const data = raw && parseSave(raw, SHOP.map(it => it.id));
     if (!data) return false;
-    if (data.pos) ps.pos.set(data.pos.x, data.pos.y, data.pos.z);
+    // Si el guardado quedó fuera del mapa (por ejemplo, en el parkour), vuelves a donde apareces
+    if (data.pos && Math.abs(data.pos.x) < 100 && Math.abs(data.pos.z) < 100) ps.pos.set(data.pos.x, data.pos.y, data.pos.z);
     if (data.dayPhase !== null) { dayPhase = data.dayPhase; lastMinute = -1; }
     save.coins = data.coins; save.boxes = data.boxes;
     // Vuelve a aplicar cada compra en el orden de la tienda (primero la cinta, luego su tolva, etc.)
@@ -1771,6 +1901,7 @@ import { SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, ST
     updateBelt(dt);
     updateAssistant(dt);
     updateDumbBots(dt);
+    updateParkour(dt);
     resolveBodies();
     if (boxHit(boxOf(ps), boxOf(es, ENEMY_SCALE))) die();
 

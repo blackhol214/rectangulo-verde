@@ -11,6 +11,7 @@ import {
   noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval,
   distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, BOT_MIN_Z, botCanGo, randomBotTarget,
   SWINGS, swingAngle, SLIDE, slidePoint,
+  HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail,
 } from '../src/logic.js';
 
 // Caja de un personaje normal (1 × 0,6 × 2 m) en (x, z), girada `a` radianes
@@ -542,5 +543,61 @@ describe('parque: columpios y tobogán', () => {
     expect(botCanGo(SWINGS.x, SWINGS.z + 2)).toBe(true);
     expect(botCanGo(SLIDE.x0 - 1, SLIDE.z)).toBe(true);
     expect(SWINGS.z - 2).toBeGreaterThan(BOT_MIN_Z);
+  });
+});
+
+describe('bots que entran a tu casa y el botón rojo', () => {
+  const inHouse = (p, h) => p.x > h.x0 + 0.3 && p.x < h.x1 - 0.3 && p.z > h.z0 + 0.3 && p.z < h.z1 - 0.3;
+  it('entran 1 de cada 5 veces', () => { expect(HOUSE_VISIT_CHANCE).toBe(0.2); });
+  it('el lugar donde se quedan está dentro de las dos casas, lejos de la cama y de la escalera', () => {
+    expect(inHouse(HOUSE_VISIT.inside, { x0: 20, x1: 32, z0: 4, z1: 14 })).toBe(true);
+    expect(inHouse(HOUSE_VISIT.inside, BIG_HOUSE)).toBe(true);
+    const far = (p, r, m) => p.x < r.x0 - m || p.x > r.x1 + m || p.z < r.z0 - m || p.z > r.z1 + m;
+    expect(far(HOUSE_VISIT.inside, { x0: 27.75, x1: 29.25, z0: 7.75, z1: 10.25 }, 0.5)).toBe(true); // la cama
+    expect(far(HOUSE_VISIT.inside, STAIRWELL, 1)).toBe(true);
+    expect(Math.abs(HOUSE_VISIT.door.z - BIG_HOUSE.doorZ)).toBeLessThan(0.5);                     // entran por la puerta
+  });
+  it('el botón rojo está dentro del sótano y lejos de la escalera', () => {
+    expect(RED_BUTTON.x > BASEMENT.x0 && RED_BUTTON.x < BASEMENT.x1 && RED_BUTTON.z > BASEMENT.z0 && RED_BUTTON.z < BASEMENT.z1).toBe(true);
+    expect(RED_BUTTON.x > STAIRWELL.x1 + 1 || RED_BUTTON.z > STAIRWELL.z1 + 1).toBe(true);
+  });
+});
+
+describe('parkour con lava', () => {
+  const steps = Array.from({ length: PARKOUR.steps }, (_, i) => parkourStep(i));
+  it('tiene 40 escalones y es súper alto', () => {
+    expect(steps).toHaveLength(40);
+    expect(steps[39].y).toBeGreaterThan(50);
+  });
+  it('cada escalón se alcanza de un salto (tu salto llega a unos 2,6 m)', () => {
+    for (let i = 1; i < steps.length; i++) {
+      const a = steps[i - 1], b = steps[i];
+      expect(b.y - a.y).toBeLessThanOrEqual(1.5);
+      const half = (parkourSize(i - 1) + parkourSize(i)) / 2;
+      const gap = Math.max(Math.abs(b.x - a.x), Math.abs(b.z - a.z)) - half; // espacio entre los bordes
+      expect(gap).toBeLessThan(2.5);
+    }
+  });
+  it('ningún escalón (ni la cima, que es más grande) queda encima de otro: no te pegas en la cabeza', () => {
+    for (let i = 0; i < steps.length; i++) for (let j = i + 1; j < steps.length; j++) {
+      const a = steps[i], b = steps[j], half = (parkourSize(i) + parkourSize(j)) / 2 + 0.45; // + tu ancho
+      const overlapXZ = Math.abs(a.x - b.x) < half && Math.abs(a.z - b.z) < half;
+      if (overlapXZ) expect(b.y - a.y).toBeGreaterThan(4);
+    }
+  });
+  it('la lava sube 1 m por segundo y da tiempo de escapar (más de 1,2 s por escalón)', () => {
+    expect(lavaHeight(0)).toBe(LAVA.start);
+    expect(lavaHeight(10) - lavaHeight(5)).toBe(5);
+    for (const s of steps) {
+      const t = (s.y - LAVA.start) / LAVA.speed;                    // cuándo llega la lava a ese escalón
+      expect(t / (steps.indexOf(s) + 1)).toBeGreaterThan(1.2);
+    }
+  });
+  it('el bot rojo sigue tu camino un poco atrás', () => {
+    const trail = [{ t: 0, x: 0, y: 1, z: 0 }, { t: 1, x: 4, y: 1, z: 0 }, { t: 2, x: 4, y: 3, z: 4 }];
+    expect(followTrail(trail, 1, 1)).toMatchObject({ x: 0, y: 1, z: 0 });
+    expect(followTrail(trail, 1.5, 1)).toMatchObject({ x: 2, y: 1, z: 0 });
+    expect(followTrail(trail, 9, 1)).toMatchObject({ x: 4, y: 3, z: 4 });
+    expect(followTrail([], 1, 1)).toBeNull();
   });
 });
