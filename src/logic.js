@@ -352,13 +352,13 @@ export const HOUSE_VISIT = { outside: { x: 16.5, z: 9 }, door: { x: 21.5, z: 9 }
 // ---------- Botón rojo del sótano ----------
 export const RED_BUTTON = { x: 35.6, z: 9 };   // contra la pared derecha del sótano
 
-// ---------- Minijuego de parkour con lava ----------
-// Una torre lejos del mapa: 40 escalones en espiral; en la cima está la casita del bot rojo.
-export const PARKOUR = { cx: 0, cz: 600, steps: 40, radius: 9, turn: 0.55, rise: 1.4, firstY: 1, size: 3, topSize: 6, topPush: 4 };
+// ---------- Parkour con lava (modo turquesa) ----------
+// Torre de 50 escalones en espiral (coordenadas relativas al centro de su zona); en la cima está la casita del bot.
+export const PARKOUR = { steps: 50, radius: 9, turn: 0.55, rise: 1.4, firstY: 1, size: 3, topSize: 6, topPush: 4 };
 // La cima es más grande y está un poco hacia afuera, para que no quede encima del escalón anterior
 export function parkourStep(i) {
   const P = PARKOUR, a = i * P.turn, r = i === P.steps - 1 ? P.radius + P.topPush : P.radius;
-  return { x: P.cx + Math.sin(a) * r, y: P.firstY + i * P.rise, z: P.cz + Math.cos(a) * r };
+  return { x: Math.sin(a) * r, y: P.firstY + i * P.rise, z: Math.cos(a) * r };
 }
 export const parkourSize = i => (i === PARKOUR.steps - 1 ? PARKOUR.topSize : PARKOUR.size);
 // La lava empieza 5 m por debajo del primer escalón y sube 1 m por segundo
@@ -379,3 +379,109 @@ export function followTrail(trail, now, lag) {
   }
   return { ...trail[trail.length - 1] };
 }
+
+// ---------- Los 10 minijuegos: uno por cada bot tonto (mismo orden que BOT_COLORS) ----------
+export const MINIGAMES = [
+  { id: 'maze',     bot: 'amarillo',   name: 'Laberinto',             goal: 'Lleva al bot amarillo a su casa por el laberinto', reward: { coins: 60 } },
+  { id: 'crates',   bot: 'naranja',    name: 'Cajas grandes',         goal: 'Saca las 5 cajas grandes de la casa del bot naranja (empújalas)', reward: { boxes: 5 } },
+  { id: 'flower',   bot: 'rosa',       name: 'La flor que corre',     goal: 'Alcanza a la flor rosada y riégala con F', reward: { coins: 20 } },
+  { id: 'dropper',  bot: 'morado',     name: 'Dropper',               goal: 'Cae 200 m sin tocar lo rojo y aterriza en lo verde', reward: { coins: 150 } },
+  { id: 'dolphins', bot: 'azul',       name: 'Delfines',              goal: 'Salta entre los delfines y recoge la gorra sobre la ballena dormida', reward: { coins: 80 } },
+  { id: 'clouds',   bot: 'celeste',    name: 'Nubes',                 goal: 'Salta por las 10 nubes y lleva al bot celeste a su casa', reward: { coins: 60 } },
+  { id: 'lava',     bot: 'turquesa',   name: '50 escalones con lava', goal: 'Sube los 50 escalones con el bot turquesa antes de que llegue la lava', reward: { coins: 100 } },
+  { id: 'trees',    bot: 'verde lima', name: 'Los 5 árboles',         goal: 'Busca el círculo amarillo entre los rojos (E junto a cada árbol)', reward: { coins: 40 } },
+  { id: 'meteors',  bot: 'magenta',    name: 'Lluvia de meteoritos',  goal: 'Sobrevive 30 segundos: aléjate de las sombras rojas', reward: { coins: 70 } },
+  { id: 'mix',      bot: 'coral',      name: 'Nubes y lava',          goal: 'Sube por las nubes con el bot coral mientras sube la lava', reward: { coins: 120 } },
+];
+// Cada minijuego vive lejos del mapa, en su propia zona
+export const minigameOrigin = k => ({ x: 2000 + k * 1000, z: 3000 });
+
+// ----- Amarillo: laberinto -----
+export const MAZE = { cols: 9, rows: 9, cell: 4, wallH: 3, seed: 2026 };
+// Laberinto "perfecto" (un solo camino entre dos celdas). walls[r][c] = { n, e, s, w } (true = hay pared)
+export function generateMaze(cols, rows, seed) {
+  const rnd = seededRandom(seed);
+  const walls = Array.from({ length: rows }, () => Array.from({ length: cols }, () => ({ n: true, e: true, s: true, w: true })));
+  const seen = Array.from({ length: rows }, () => Array(cols).fill(false));
+  const stack = [[0, 0]]; seen[0][0] = true;
+  const dirs = [[-1, 0, 'n', 's'], [0, 1, 'e', 'w'], [1, 0, 's', 'n'], [0, -1, 'w', 'e']];
+  while (stack.length) {
+    const [r, c] = stack[stack.length - 1];
+    const opts = dirs.filter(([dr, dc]) => { const R = r + dr, C = c + dc; return R >= 0 && R < rows && C >= 0 && C < cols && !seen[R][C]; });
+    if (!opts.length) { stack.pop(); continue; }
+    const [dr, dc, a, b] = opts[Math.floor(rnd() * opts.length)];
+    walls[r][c][a] = false; walls[r + dr][c + dc][b] = false; seen[r + dr][c + dc] = true;
+    stack.push([r + dr, c + dc]);
+  }
+  return { cols, rows, walls };
+}
+// Largo del camino (en celdas) entre dos celdas; -1 si no hay camino
+export function mazePathLength(maze, [r0, c0], [r1, c1]) {
+  const dist = Array.from({ length: maze.rows }, () => Array(maze.cols).fill(-1));
+  const q = [[r0, c0]]; dist[r0][c0] = 0;
+  const step = { n: [-1, 0], e: [0, 1], s: [1, 0], w: [0, -1] };
+  while (q.length) {
+    const [r, c] = q.shift();
+    for (const k of ['n', 'e', 's', 'w']) {
+      if (maze.walls[r][c][k]) continue;
+      const R = r + step[k][0], C = c + step[k][1];
+      if (dist[R][C] < 0) { dist[R][C] = dist[r][c] + 1; q.push([R, C]); }
+    }
+  }
+  return dist[r1][c1];
+}
+
+// ----- Naranja: 5 cajas grandes dentro de su casa -----
+export const CRATES = { house: { x0: -8, x1: 8, z0: -6, z1: 6 }, doorHalf: 2, size: 1.8,
+  start: [[-4, -2.5], [0, -2.5], [4, -2.5], [-2, 2], [2, 2]] };   // la puerta está en la pared de z = -6
+export const crateOutside = (x, z) => x < CRATES.house.x0 || x > CRATES.house.x1 || z < CRATES.house.z0 || z > CRATES.house.z1;
+
+// ----- Rosa: jardín donde corre la flor -----
+export const GARDEN = { half: 18, flowerSpeed: 8, waterRange: 7, waterSpeed: 16 };
+
+// ----- Morado: dropper -----
+export const DROPPER = { top: 205, half: 6, hole: 3.6, layers: 8, firstLayer: 175, gap: 21, pad: 3.4, maxFall: 18, seed: 77 };
+// Cada piso rojo tapa todo el tubo menos un hueco; el último es el suelo rojo con el cuadro verde
+export function dropperLayers() {
+  const D = DROPPER, rnd = seededRandom(D.seed), lim = D.half - D.hole / 2 - 0.3, out = [];
+  let prev = { x: 0, z: 0 };
+  for (let i = 0; i < D.layers; i++) {
+    let h;
+    do { h = { x: (rnd() * 2 - 1) * lim, z: (rnd() * 2 - 1) * lim }; } while (Math.hypot(h.x - prev.x, h.z - prev.z) < 3); // que cada hueco esté en otro lugar
+    out.push({ y: D.firstLayer - i * D.gap, hole: h }); prev = h;
+  }
+  return out;
+}
+export const dropperPad = () => { const r = seededRandom(DROPPER.seed + 1); const lim = DROPPER.half - DROPPER.pad / 2 - 0.3; return { x: (r() * 2 - 1) * lim, z: (r() * 2 - 1) * lim }; };
+
+// ----- Azul: delfines y ballena -----
+// Cada delfín nada de un lado a otro (a lo largo de x) en su carril z; el muelle está en z = 0 y la ballena al final.
+export const DOLPHINS = { lanes: [5, 9.5, 14, 18.5, 23, 27.5], halfRange: 4, speed: 1.1, length: 3, width: 1.4, whaleZ: 34, whaleSize: [8, 2.4, 6] };
+export const dolphinX = (i, t) => Math.sin(t * DOLPHINS.speed + i * 1.7) * DOLPHINS.halfRange;
+
+// ----- Celeste y coral: nubes -----
+// Nubes una detrás de otra, subiendo un poco; se alcanzan de un salto
+export function cloudPath(n, seed, rise) {
+  const rnd = seededRandom(seed), out = [{ x: 0, y: 30, z: 0 }];
+  let ang = 0;
+  for (let i = 1; i < n; i++) {
+    ang += (rnd() - 0.5) * 1.2;
+    const d = 5.2 + rnd() * 0.8, p = out[i - 1];
+    out.push({ x: p.x + Math.sin(ang) * d, y: p.y + rise, z: p.z + Math.cos(ang) * d });
+  }
+  return out;
+}
+export const CLOUD_SIZE = 3.4;
+
+// ----- Verde lima: 5 árboles con círculos -----
+export const TREES = { spots: [[-12, 8], [12, 8], [0, 18], [-14, 24], [14, 24]], circlesPerTree: 8, seed: 5 };
+export function treeCircles() {
+  const rnd = seededRandom(TREES.seed), yellowTree = Math.floor(rnd() * TREES.spots.length), yellowSlot = Math.floor(rnd() * TREES.circlesPerTree);
+  return TREES.spots.map((_, ti) => Array.from({ length: TREES.circlesPerTree }, (__, k) => ({
+    yellow: ti === yellowTree && k === yellowSlot, theta: k / TREES.circlesPerTree * Math.PI * 2 + rnd() * 0.4, up: 0.2 + rnd() * 0.6,
+  })));
+}
+
+// ----- Magenta: lluvia de meteoritos -----
+export const METEORS = { radius: 14, warn: 1.2, every: 0.75, blast: 2.2, survive: 30 };
+export function meteorSpot(r1, r2) { const a = r1 * Math.PI * 2, d = Math.sqrt(r2) * (METEORS.radius - 1.5); return { x: Math.cos(a) * d, z: Math.sin(a) * d }; }

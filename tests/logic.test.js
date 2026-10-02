@@ -12,6 +12,8 @@ import {
   distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, BOT_MIN_Z, botCanGo, randomBotTarget,
   SWINGS, swingAngle, SLIDE, slidePoint,
   HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail,
+  MINIGAMES, minigameOrigin, MAZE, generateMaze, mazePathLength, CRATES, crateOutside, GARDEN, DROPPER, dropperLayers, dropperPad,
+  DOLPHINS, dolphinX, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot,
 } from '../src/logic.js';
 
 // Caja de un personaje normal (1 × 0,6 × 2 m) en (x, z), girada `a` radianes
@@ -563,11 +565,11 @@ describe('bots que entran a tu casa y el botón rojo', () => {
   });
 });
 
-describe('parkour con lava', () => {
+describe('parkour con lava (modo turquesa)', () => {
   const steps = Array.from({ length: PARKOUR.steps }, (_, i) => parkourStep(i));
-  it('tiene 40 escalones y es súper alto', () => {
-    expect(steps).toHaveLength(40);
-    expect(steps[39].y).toBeGreaterThan(50);
+  it('tiene 50 escalones y es súper alto', () => {
+    expect(steps).toHaveLength(50);
+    expect(steps[49].y).toBeGreaterThan(60);
   });
   it('cada escalón se alcanza de un salto (tu salto llega a unos 2,6 m)', () => {
     for (let i = 1; i < steps.length; i++) {
@@ -599,5 +601,127 @@ describe('parkour con lava', () => {
     expect(followTrail(trail, 1.5, 1)).toMatchObject({ x: 2, y: 1, z: 0 });
     expect(followTrail(trail, 9, 1)).toMatchObject({ x: 4, y: 3, z: 4 });
     expect(followTrail([], 1, 1)).toBeNull();
+  });
+});
+
+describe('los 10 minijuegos', () => {
+  it('hay uno por cada bot, en el mismo orden de colores', () => {
+    expect(MINIGAMES).toHaveLength(BOT_COLORS.length);
+    expect(MINIGAMES.map(m => m.bot)).toEqual(['amarillo', 'naranja', 'rosa', 'morado', 'azul', 'celeste', 'turquesa', 'verde lima', 'magenta', 'coral']);
+    expect(new Set(MINIGAMES.map(m => m.id)).size).toBe(10);
+  });
+  it('los premios que pediste', () => {
+    const r = id => MINIGAMES.find(m => m.id === id).reward;
+    expect(r('crates')).toEqual({ boxes: 5 });
+    expect(r('flower')).toEqual({ coins: 20 });
+    expect(r('dropper')).toEqual({ coins: 150 });
+  });
+  it('cada minijuego está lejos del mapa y de los demás', () => {
+    for (let k = 0; k < 10; k++) {
+      const o = minigameOrigin(k);
+      expect(Math.hypot(o.x, o.z)).toBeGreaterThan(1500);
+      if (k) expect(o.x - minigameOrigin(k - 1).x).toBeGreaterThanOrEqual(1000);
+    }
+  });
+});
+
+describe('amarillo: laberinto', () => {
+  const maze = generateMaze(MAZE.cols, MAZE.rows, MAZE.seed);
+  it('siempre es el mismo y se puede llegar a cualquier lado', () => {
+    expect(generateMaze(MAZE.cols, MAZE.rows, MAZE.seed)).toEqual(maze);
+    for (let r = 0; r < MAZE.rows; r++) for (let c = 0; c < MAZE.cols; c++) expect(mazePathLength(maze, [0, 0], [r, c])).toBeGreaterThanOrEqual(0);
+  });
+  it('es más o menos difícil: el camino a la casa da muchas vueltas', () => {
+    const len = mazePathLength(maze, [0, 0], [MAZE.rows - 1, MAZE.cols - 1]);
+    expect(len).toBeGreaterThan((MAZE.rows + MAZE.cols) * 1.3);  // bastante más que el camino directo (16)
+  });
+});
+
+describe('naranja: cajas grandes', () => {
+  it('las 5 cajas empiezan adentro, sin encimarse, y caben por la puerta', () => {
+    expect(CRATES.start).toHaveLength(5);
+    for (const [x, z] of CRATES.start) expect(crateOutside(x, z)).toBe(false);
+    for (let i = 0; i < 5; i++) for (let j = i + 1; j < 5; j++) {
+      const [a, b] = [CRATES.start[i], CRATES.start[j]];
+      expect(Math.max(Math.abs(a[0] - b[0]), Math.abs(a[1] - b[1]))).toBeGreaterThan(CRATES.size);
+    }
+    expect(CRATES.doorHalf * 2).toBeGreaterThan(CRATES.size + 0.3);
+  });
+});
+
+describe('morado: dropper', () => {
+  const layers = dropperLayers();
+  it('caes 200 m: empieza arriba y los pisos rojos están por todo el camino', () => {
+    expect(DROPPER.top).toBeGreaterThanOrEqual(200);
+    expect(layers).toHaveLength(DROPPER.layers);
+    expect(layers[layers.length - 1].y).toBeGreaterThan(10);
+  });
+  it('cada hueco está dentro del tubo y en otro lugar que el anterior', () => {
+    for (let i = 0; i < layers.length; i++) {
+      const h = layers[i].hole;
+      expect(Math.abs(h.x) + DROPPER.hole / 2).toBeLessThan(DROPPER.half);
+      expect(Math.abs(h.z) + DROPPER.hole / 2).toBeLessThan(DROPPER.half);
+      if (i) expect(Math.hypot(h.x - layers[i - 1].hole.x, h.z - layers[i - 1].hole.z)).toBeGreaterThanOrEqual(3);
+    }
+  });
+  it('da tiempo de moverte al siguiente hueco mientras caes (con caída máxima de 18 m/s)', () => {
+    const secondsBetweenLayers = DROPPER.gap / DROPPER.maxFall;
+    const worstMove = Math.hypot(2 * (DROPPER.half - DROPPER.hole / 2), 2 * (DROPPER.half - DROPPER.hole / 2));
+    expect(secondsBetweenLayers * 12).toBeGreaterThan(worstMove); // a 12 m/s llegas aunque esté en la otra punta
+    const pad = dropperPad();
+    expect(Math.abs(pad.x) + DROPPER.pad / 2).toBeLessThan(DROPPER.half);
+  });
+});
+
+describe('azul: delfines', () => {
+  it('los delfines van en carriles que se alcanzan de un salto, del muelle a la ballena', () => {
+    const lanes = [0, ...DOLPHINS.lanes, DOLPHINS.whaleZ - DOLPHINS.whaleSize[2] / 2];
+    for (let i = 1; i < lanes.length; i++) expect(lanes[i] - lanes[i - 1]).toBeLessThanOrEqual(6.5);
+  });
+  it('cada delfín nada de un lado a otro sin salirse de su zona', () => {
+    for (let i = 0; i < DOLPHINS.lanes.length; i++) for (let t = 0; t < 20; t += 0.1)
+      expect(Math.abs(dolphinX(i, t))).toBeLessThanOrEqual(DOLPHINS.halfRange);
+  });
+});
+
+describe('celeste y coral: nubes', () => {
+  it('10 nubes que se alcanzan de un salto', () => {
+    const c = cloudPath(10, 3, 0.6);
+    expect(c).toHaveLength(10);
+    for (let i = 1; i < c.length; i++) {
+      const gap = Math.hypot(c[i].x - c[i - 1].x, c[i].z - c[i - 1].z) - CLOUD_SIZE;
+      expect(gap).toBeLessThan(3);
+      expect(c[i].y - c[i - 1].y).toBeLessThanOrEqual(1.5);
+    }
+  });
+  it('las nubes que suben (coral) también se alcanzan', () => {
+    const c = cloudPath(16, 9, 1.3);
+    for (let i = 1; i < c.length; i++) expect(c[i].y - c[i - 1].y).toBeLessThanOrEqual(1.5);
+  });
+});
+
+describe('verde lima: árboles', () => {
+  it('5 árboles y un solo círculo amarillo entre los rojos', () => {
+    const t = treeCircles();
+    expect(t).toHaveLength(5);
+    expect(t.flat().filter(c => c.yellow)).toHaveLength(1);
+    expect(t.flat().length).toBe(5 * TREES.circlesPerTree);
+  });
+});
+
+describe('magenta: meteoritos', () => {
+  it('caen siempre dentro de la arena', () => {
+    for (const r1 of [0, 0.3, 0.99]) for (const r2 of [0, 0.5, 0.999]) {
+      const p = meteorSpot(r1, r2);
+      expect(Math.hypot(p.x, p.z)).toBeLessThan(METEORS.radius);
+    }
+    expect(METEORS.survive).toBe(30);
+  });
+});
+
+describe('rosa: la flor', () => {
+  it('tú eres más rápido que la flor, así que se puede alcanzar', () => {
+    expect(GARDEN.flowerSpeed).toBeLessThan(12);
+    expect(GARDEN.waterRange).toBeGreaterThan(3);
   });
 });
