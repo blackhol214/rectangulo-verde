@@ -92,9 +92,12 @@ export const beltSpeed = tier => 2 * [1, 1.5, 2][tier];
 //   · transformadores: en su propia zona a la izquierda, en columnas de 12 filas
 // Máximo 5 cintas de cada tipo: la primera (de la tienda) + 4 extra
 export const MAX_EXTRA_BOX_LINES = 4, MAX_EXTRA_BAG_LINES = 4;
+// Las cintas están a la derecha de tu casa (x desde 42), lejos del pueblo, del parque y de la tienda de estilo.
+// Primero la cinta normal y el transformador; detrás, las cintas extra que compres.
+export const MAIN_LINES = { box: { x0: 42, len: 20, z: 8 }, bag: { x0: 42, len: 15, z: 12 } };
 export function extraLineSlot(type, index) {
-  if (type === 'box') return { x0: -10, len: 20, z: 58 + index * 4 };
-  return { x0: -38 - 22 * Math.floor(index / 12), len: 15, z: 50 + (index % 12) * 4 };
+  if (type === 'box') return { x0: 42, len: 20, z: 16 + index * 4 };
+  return { x0: 42, len: 15, z: 32 + index * 4 };
 }
 
 // Lo que ganas al recoger lo que llega al plato: una caja dorada (cinta normal) o una bolsa de 10 monedas (transformador)

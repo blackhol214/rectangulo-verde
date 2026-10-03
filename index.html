@@ -185,8 +185,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module">
-import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, invertColor, fleeCoin, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, missingFor, canAfford, collideWalls, extraLineSlot, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
-         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-11-03'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
+import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, invertColor, fleeCoin, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
+         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-11-04'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
+import { PUERTO, ENVIOS_POR_SEGUNDO, acercar, piezasExplosion } from './src/red.js?v=2026-10-03';
 (() => {
   const canvas = document.getElementById('game');
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -1024,8 +1025,8 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, cla
     bag: { machineOffset: 5, machineColor: 0x5b2a86, bandColor: 0xffffff, product: 'bag', onCollect: REWARD.bag },
   };
   const lines = {
-    box: createLine({ ...LINE_SPECS.box, x0: -10, len: 20, z: 50 }),
-    bag: createLine({ ...LINE_SPECS.bag, x0: -5, len: 15, z: 54 }),
+    box: createLine({ ...LINE_SPECS.box, ...MAIN_LINES.box }),
+    bag: createLine({ ...LINE_SPECS.bag, ...MAIN_LINES.bag }),
   };
   // Cintas extra (se compran con monedas): cada una viene con tolva y, como mínimo, la velocidad de la Cinta 2.0
   const extraLines = [];
@@ -2265,7 +2266,7 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, cla
   const loginEl = document.getElementById('login'), loginForm = document.getElementById('loginForm');
   const loginName = document.getElementById('loginName'), loginError = document.getElementById('loginError');
   const savedEl = document.getElementById('saved');
-  let userName = null, savedTimer = null;
+  let userName = null, savedTimer = null, loadedLocal = false;
   loginName.focus();
   loginForm.addEventListener('submit', e => {
     e.preventDefault();
@@ -2277,7 +2278,9 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, cla
     startAudio();
     devAlert.hidden = false; clearTimeout(devAlertTimer); devAlertTimer = setTimeout(() => { devAlert.hidden = true; }, 12000);
     const loaded = loadGame(name);
+    loadedLocal = loaded;
     showToast(loaded ? `¡Hola de nuevo, ${name}! Seguiste donde guardaste` : `Hola, ${name}. Para guardar, pulsa GUARDAR (abajo a la derecha)`);
+    conectarRed(name);
   });
   const saveBtn = document.getElementById('saveBtn');
   saveBtn.addEventListener('click', () => { saveGame(); saveBtn.blur(); }); // blur: que Espacio siga siendo saltar
@@ -2724,6 +2727,102 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, cla
   }
   buildVillage();
 
+  // ---------- Multijugador: tus amigos en tiempo real ----------
+  // Solo se conecta si el juego viene del servidor multijugador (bun server.js o el link de Cloudflare)
+  const ONLINE = location.port === String(PUERTO) || location.hostname.endsWith('.trycloudflare.com');
+  const red = { ws: null, otros: new Map(), envio: 0, pedazos: [] };   // otros: id → { obj, label, x, y, z, rot }
+  // Cartelito con el nombre encima de la cabeza
+  function makeLabel(text) {
+    const c = document.createElement('canvas'); c.width = 256; c.height = 64;
+    const g = c.getContext('2d');
+    g.fillStyle = 'rgba(0,0,0,.55)'; g.fillRect(0, 8, 256, 48);
+    g.fillStyle = '#fff'; g.font = 'bold 34px system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText(text, 128, 33);
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false }));
+    s.scale.set(2.4, 0.6, 1); s.position.y = H + 0.6;
+    return s;
+  }
+  // Un amigo: rectángulo de su color con ojos, igual que tú
+  function addFriend(j) {
+    const obj = new THREE.Group();
+    const b = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), new THREE.MeshLambertMaterial({ color: j.color }));
+    b.position.y = H/2; b.castShadow = true; obj.add(b);
+    [-0.22, 0.22].forEach(x => { const e = new THREE.Mesh(eyeGeo, eyeMat); e.scale.z = 0.5; e.position.set(x, H*0.78, D/2 + 0.02); obj.add(e); });
+    obj.add(makeLabel(j.nombre));
+    obj.position.set(j.x, j.y, j.z); obj.rotation.y = j.rot || 0;
+    scene.add(obj);
+    red.otros.set(j.id, { obj, body: b, nombre: j.nombre, x: j.x, y: j.y, z: j.z, rot: j.rot || 0 });
+  }
+  // ¡BOOM! El rectángulo se rompe en pedacitos de su color que salen volando
+  function explode(f) {
+    const mat = f.body.material, p = f.obj.position;
+    const geo = new THREE.BoxGeometry(0.25, 0.25, 0.25);
+    for (const q of piezasExplosion(40)) {
+      const m = new THREE.Mesh(geo, mat.clone());
+      m.material.transparent = true;
+      m.position.set(p.x, p.y + q.y, p.z);
+      scene.add(m);
+      red.pedazos.push({ m, ...q, vida: 1.6 });
+    }
+    scene.remove(f.obj);
+  }
+  function conectarRed(name) {
+    if (!ONLINE || red.ws) return;
+    const ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`);
+    red.ws = ws;
+    ws.onopen = () => ws.send(JSON.stringify({ tipo: 'hola', nombre: name, color: body.material.color.getHex(), monedas: save.coins }));
+    ws.onmessage = e => {
+      const m = JSON.parse(e.data);
+      if (m.tipo === 'bienvenida') {
+        for (const j of m.jugadores) addFriend(j);
+        // En una compu nueva (sin guardado en el navegador) apareces donde te dejó la base de datos
+        if (m.guardado && !loadedLocal && Math.abs(m.guardado.x) < 100 && Math.abs(m.guardado.z) < 100) ps.pos.set(m.guardado.x, m.guardado.y, m.guardado.z);
+        const n = m.jugadores.length;
+        showToast(n ? `¡Conectado! Hay ${n} amigo${n > 1 ? 's' : ''} jugando` : '¡Conectado! Eres el primero en llegar', false, 3000);
+      } else if (m.tipo === 'entra') {
+        addFriend(m); showToast(`${m.nombre} entró al juego`);
+      } else if (m.tipo === 'pos') {
+        const f = red.otros.get(m.id);
+        if (f) { f.x = m.x; f.y = m.y; f.z = m.z; f.rot = m.rot; f.body.material.color.setHex(m.color); }
+      } else if (m.tipo === 'sale') {
+        const f = red.otros.get(m.id);
+        if (f) { explode(f); red.otros.delete(m.id); }
+        showToast(`💥 ${m.nombre} se desconectó`, true, 3000);
+      } else if (m.tipo === 'error') {
+        showToast(m.texto, true, 5000);
+      }
+    };
+    ws.onclose = () => {
+      for (const f of red.otros.values()) scene.remove(f.obj);
+      red.otros.clear(); red.ws = null;
+      showToast('Se cortó la conexión con el servidor', true, 4000);
+    };
+  }
+  function updateRed(dt) {
+    // Mandar tu posición unas 10 veces por segundo
+    if (red.ws && red.ws.readyState === WebSocket.OPEN && (red.envio -= dt) <= 0) {
+      red.envio = 1 / ENVIOS_POR_SEGUNDO;
+      red.ws.send(JSON.stringify({ tipo: 'pos', x: ps.pos.x, y: ps.pos.y, z: ps.pos.z, rot: ps.facing, color: body.material.color.getHex(), monedas: save.coins }));
+    }
+    // Los amigos se deslizan suave hacia donde dijo el servidor
+    const k = dt * 12;
+    for (const f of red.otros.values()) {
+      const o = f.obj;
+      o.position.set(acercar(o.position.x, f.x, k), acercar(o.position.y, f.y, k), acercar(o.position.z, f.z, k));
+      o.rotation.y = f.rot;
+    }
+    // Pedacitos de la explosión: vuelan, caen, giran y se desvanecen
+    for (let i = red.pedazos.length - 1; i >= 0; i--) {
+      const q = red.pedazos[i];
+      q.vy -= 20 * dt;
+      q.m.position.x += q.vx * dt; q.m.position.y += q.vy * dt; q.m.position.z += q.vz * dt;
+      if (q.m.position.y < 0.12) { q.m.position.y = 0.12; q.vy *= -0.4; q.vx *= 0.7; q.vz *= 0.7; }   // rebota en el piso
+      q.m.rotation.x += q.giro * dt; q.m.rotation.z += q.giro * dt;
+      q.vida -= dt; q.m.material.opacity = Math.min(1, q.vida);
+      if (q.vida <= 0) { scene.remove(q.m); red.pedazos.splice(i, 1); }
+    }
+  }
+
   let t = 0, stepTimer = 0;
   function tick() {
     const dt = Math.min(clock.getDelta(), 0.05);
@@ -2777,6 +2876,7 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, cla
     updateDumbBots(dt);
     updateVillage(dt);
     updateMinigame(dt);
+    updateRed(dt);
     resolveBodies();
     if (boxHit(boxOf(ps), boxOf(es, ENEMY_SCALE))) die();
 

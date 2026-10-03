@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   collideWalls, moveAndCollide, boxHit,
   upgradePrice, fmt, sunElevation, isNightPhase, clockText, hourToPhase,
-  launchSpeedForHeight, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, extraLineSlot, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, productReward, BAG_VALUE, nearestIndex, assistantSpeed, ASSIST_SPEED_MAX,
+  launchSpeedForHeight, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, productReward, BAG_VALUE, nearestIndex, assistantSpeed, ASSIST_SPEED_MAX,
   normalizeName, saveKey, serializeSave, parseSave,
   BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, missingFor, canAfford,
   mountainRing, MOUNTAIN_WALL_INSET, seededRandom,
@@ -201,7 +201,7 @@ describe('mejoras de la cinta', () => {
     // Rectángulo que ocupa cada cinta con su plato y su tolva (radio 1,3 m)
     const area = ({ x0, len, z }) => ({ xa: x0 - 0.3, xb: x0 + len + 1.6 + 1.3, za: z - 1.3, zb: z + 1.3 });
     const all = [
-      { x0: -10, len: 20, z: 50 }, { x0: -5, len: 15, z: 54 },          // las dos primeras
+      MAIN_LINES.box, MAIN_LINES.bag,          // las dos primeras
       ...Array.from({ length: MAX_EXTRA_BOX_LINES }, (_, i) => extraLineSlot('box', i)),
       ...Array.from({ length: MAX_EXTRA_BAG_LINES }, (_, i) => extraLineSlot('bag', i)),
     ].map(area);
@@ -216,6 +216,21 @@ describe('mejoras de la cinta', () => {
         const overlap = a.xa < b.xb && b.xa < a.xb && a.za < b.zb && b.za < a.zb;
         expect(overlap).toBe(false);
       }
+  });
+
+  it('ninguna cinta se mete en las casas del pueblo, tu casa, el parque, la tienda de estilo, el trampolín ni la cámara', () => {
+    const area = ({ x0, len, z }) => ({ x0: x0 - 0.3, x1: x0 + len + 1.6 + 1.3, z0: z - 1.3, z1: z + 1.3 });
+    const slots = [MAIN_LINES.box, MAIN_LINES.bag,
+      ...Array.from({ length: MAX_EXTRA_BOX_LINES }, (_, i) => extraLineSlot('box', i)),
+      ...Array.from({ length: MAX_EXTRA_BAG_LINES }, (_, i) => extraLineSlot('bag', i))].map(area);
+    const S = VILLAGE.size / 2 + 1;
+    const blocked = [...VILLAGE.houses.map(h => ({ x0: h.x - S, x1: h.x + S, z0: h.z - S, z1: h.z + S })),
+      { x0: BIG_HOUSE.x0 - 1, x1: BIG_HOUSE.x1 + 1, z0: BIG_HOUSE.z0 - 1, z1: BIG_HOUSE.z1 + 1 },   // tu casa (la grande)
+      { x0: STYLE_STALL.x - 5, x1: STYLE_STALL.x + 5, z0: STYLE_STALL.z - 4.5, z1: STYLE_STALL.z + 4.5 },
+      { x0: -34, x1: -10, z0: 14, z1: 28 },                                                      // parque
+      { x0: 69, x1: 86, z0: 77, z1: 87 }];                                                       // trampolín y cámara
+    for (const a of slots) for (const b of blocked) expect(a.x0 < b.x1 && b.x0 < a.x1 && a.z0 < b.z1 && b.z0 < a.z1).toBe(false);
+    for (const a of slots) expect(a.x1).toBeLessThan(92);
   });
 
   it('como máximo hay 5 cintas de cada tipo (la primera + 4 extra)', () => {
@@ -316,7 +331,7 @@ describe('casa grande con sótano', () => {
 
   it('las cintas se quedan afuera: ninguna toca el sótano', () => {
     const slots = [
-      { x0: -10, len: 20, z: 50 }, { x0: -5, len: 15, z: 54 },
+      MAIN_LINES.box, MAIN_LINES.bag,          // las dos primeras
       ...Array.from({ length: MAX_EXTRA_BOX_LINES }, (_, i) => extraLineSlot('box', i)),
       ...Array.from({ length: MAX_EXTRA_BAG_LINES }, (_, i) => extraLineSlot('bag', i)),
     ];
