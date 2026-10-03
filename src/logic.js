@@ -347,11 +347,20 @@ export const BOT_SCALE = 0.5;                       // la mitad de tu tamaño
 // Bots de los minijuegos: tu mismo ancho y grosor, pero un 20 % más bajitos (100 % − 20 % = 80 %)
 export const MINIGAME_BOT_SCALE = { width: 1, height: 0.8, depth: 1 };
 export const BOT_MIN_Z = 4;                         // nunca bajan de aquí: la línea amarilla está en z 0–1,5
+// ---------- Pueblo: una casa por cada color de bot, con un bot grande (de tu altura) que vive ahí ----------
+// Dos filas de 5 casas al fondo de tu mitad. La puerta mira hacia ti (hacia z más chico).
+export const VILLAGE = {
+  size: 7, doorOut: 5,   // la casa mide 7 × 7 m; el bot grande espera 5 m delante de su casa
+  houses: [-80, -56, -32, -8, 16].flatMap(x => [{ x, z: 48 }, { x, z: 70 }]).sort((a, b) => a.z - b.z || a.x - b.x),
+};
+export const villageDoor = i => ({ x: VILLAGE.houses[i].x, z: VILLAGE.houses[i].z - VILLAGE.doorOut });
+export const nearVillageHouse = (x, z, margin = 2) => VILLAGE.houses.some(h => Math.abs(x - h.x) < VILLAGE.size / 2 + margin && Math.abs(z - h.z) < VILLAGE.size / 2 + margin);
 // ¿Puede un bot ir a (x, z)? Solo en tu mitad, lejos de las montañas, de la casa y de la tienda de estilo
 export function botCanGo(x, z) {
   if (z < BOT_MIN_Z || z > 92 || Math.abs(x) > 92) return false;
   if (x > 17 && x < 39 && z > 1 && z < 21) return false;                               // casa (y su alrededor)
   if (Math.abs(x - STYLE_STALL.x) < 5 && Math.abs(z - STYLE_STALL.z) < 4.5) return false; // tienda de estilo
+  if (nearVillageHouse(x, z)) return false;                                               // casas del pueblo
   return true;
 }
 // Un lugar al azar al que un bot puede ir (rnd: función que da números entre 0 y 1)
@@ -500,18 +509,18 @@ export const dropperPad = () => { const r = seededRandom(DROPPER.seed + 1); cons
 
 // ----- Azul: delfines y ballena -----
 // Cada delfín nada de un lado a otro (a lo largo de x) en su carril z; el muelle está en z = 0 y la ballena al final.
-// 10 delfines, uno por fila. No nadan: salen del agua, hacen un arco y se vuelven a meter.
-// leap: segundos fuera del agua · under: segundos escondidos · span: metros que avanzan de lado en el salto
-// peak: qué tan alto suben · wave: retraso entre un delfín y el siguiente (salen en ola)
-export const DOLPHINS = { count: 10, firstZ: 5, gap: 4.4, leap: 2.6, under: 1.0, span: 5, peak: 2.2, wave: 0.85, length: 3, width: 1.4, whaleZ: 51, whaleSize: [7.2, 2.4, 3.4] };   // whaleSize: la parte de arriba de su espalda, donde se puede pisar
+// 10 delfines en fila, como en Mario World: salen del agua, saltan HACIA ADELANTE (hacia la ballena) y se vuelven a meter.
+// leap: segundos fuera del agua · under: segundos escondidos · span: metros que avanzan en el salto
+// peak: qué tan alto suben · wave: retraso entre un delfín y el siguiente (salen en ola, al ritmo de tus saltos)
+export const DOLPHINS = { count: 10, firstZ: 5, gap: 5, leap: 1.5, under: 0.6, span: 4, peak: 2, wave: 0.8, length: 3, width: 1.4, whaleZ: 56, whaleSize: [7.2, 2.4, 3.4] };   // whaleSize: la parte de arriba de su espalda, donde se puede pisar
 export const dolphinLane = i => DOLPHINS.firstZ + i * DOLPHINS.gap;
-// Dónde está el delfín i en el segundo t (x relativo a su fila; y = cuánto subió)
+// Dónde está el delfín i en el segundo t (along: cuánto avanzó en su fila; y: cuánto subió)
 export function dolphinLeap(i, t) {
   const D = DOLPHINS, cycle = D.leap + D.under, local = (((t - i * D.wave) % cycle) + cycle) % cycle;
-  if (local >= D.leap) return { up: false, u: 1, x: 0, y: -2, pitch: 0, dir: 1 };
-  const u = local / D.leap, dir = i % 2 ? -1 : 1;   // uno salta hacia la derecha, el siguiente hacia la izquierda
-  return { up: true, u, dir, x: dir * (u - 0.5) * D.span, y: Math.sin(u * Math.PI) * D.peak,
-    pitch: Math.atan2(Math.PI * D.peak * Math.cos(u * Math.PI), D.span) };   // la nariz apunta hacia donde va el arco
+  if (local >= D.leap) return { up: false, u: 1, along: 0, y: -2, pitch: 0 };
+  const u = local / D.leap;
+  return { up: true, u, along: (u - 0.5) * D.span, y: Math.sin(u * Math.PI) * D.peak,
+    pitch: 0.7 * Math.atan2(Math.PI * D.peak * Math.cos(u * Math.PI), D.span) };   // la nariz sube al salir y baja al meterse
 }
 
 // ----- Celeste y coral: nubes -----
@@ -586,3 +595,33 @@ export function fleeCoin(bot, giant, coins) {
 }
 // Velocidad del jugador después de comprar mejoras (con un tope)
 export const botSpeedAfter = upgrades => Math.min(INVERTED.botMaxSpeed, INVERTED.botSpeed + upgrades * INVERTED.speedPerUpgrade);
+
+// ---------- Misiones del pueblo: cada día, cada bot grande necesita ayuda con algo ----------
+// fetch: traer UNA cosa (la llevas encima; si el gigante te atrapa, se te cae) · collect: juntar varias cosas
+// where: 'giant' = en la mitad del gigante (más peligroso, mejor premio) · 'mine' = en tu mitad
+export const TASKS = [
+  { id: 'rock', kind: 'fetch', item: 'rock', name: 'la roca mascota', ask: '¡Mi roca mascota se perdió en la mitad del gigante! ¿Me la traes?', where: 'giant', reward: { coins: 30 } },
+  { id: 'ball', kind: 'fetch', item: 'ball', name: 'la pelota', ask: 'Pateé mi pelota muy fuerte y cayó del otro lado de la línea… ¿me la traes?', where: 'giant', reward: { coins: 25 } },
+  { id: 'teddy', kind: 'fetch', item: 'teddy', name: 'el osito', ask: 'No puedo dormir sin mi osito… ¡y el gigante se lo llevó a su mitad!', where: 'giant', reward: { coins: 30 } },
+  { id: 'key', kind: 'fetch', item: 'key', name: 'la llave dorada', ask: 'Perdí la llave de mi casa paseando por el pueblo. ¿Me ayudas a buscarla?', where: 'mine', reward: { coins: 15 } },
+  { id: 'apples', kind: 'collect', item: 'apple', count: 5, name: 'manzanas', ask: 'Se me rompió la canasta y se me cayeron 5 manzanas por el pueblo. ¿Me ayudas a juntarlas?', where: 'mine', reward: { coins: 20 } },
+  { id: 'planks', kind: 'collect', item: 'plank', count: 4, name: 'tablas', ask: '¡El viento se llevó el techo de mi casa! Necesito 4 tablas para arreglarlo.', where: 'mine', reward: { boxes: 2 } },
+  { id: 'flowers', kind: 'collect', item: 'flower', count: 6, name: 'flores', ask: 'Hoy es el cumpleaños de mi mamá. ¿Me juntas 6 flores para un ramo?', where: 'mine', reward: { coins: 20 } },
+  { id: 'gems', kind: 'collect', item: 'gem', count: 3, name: 'gemas', ask: 'Se me escaparon 3 gemas de mi colección… ¡y cayeron en la mitad del gigante!', where: 'giant', reward: { boxes: 3 } },
+];
+// Qué misión tiene cada uno de los 10 bots grandes ese día (cambia cada día; nunca dos bots seguidos con la misma)
+export function tasksForDay(day) {
+  const rnd = seededRandom(day * 97 + 13), out = [];
+  for (let i = 0; i < VILLAGE.houses.length; i++) {
+    let k; do k = Math.floor(rnd() * TASKS.length); while (i > 0 && TASKS[k].id === out[i - 1].id);
+    out.push(TASKS[k]);
+  }
+  return out;
+}
+// Dónde aparece una cosa perdida: en la mitad del gigante o en tu mitad (nunca dentro de una casa)
+export function taskSpot(where, rnd) {
+  if (where === 'giant') return { x: (rnd() * 2 - 1) * 80, z: -10 - rnd() * 75 };
+  return randomBotTarget(rnd);
+}
+// ¿Ya está lista la misión para entregar?
+export const taskReady = (task, got) => (task.kind === 'fetch' ? got >= 1 : got >= task.count);

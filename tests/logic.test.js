@@ -13,7 +13,7 @@ import {
   SWINGS, swingAngle, SLIDE, slidePoint,
   HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail,
   MINIGAMES, minigameOrigin, MAZE, generateMaze, mazePathLength, pickMaze, pickLemon, clampToArea, flowerTired, MEDIUM_HOUSE, insideRect, segmentHitsRect, detourAround, INVERTED, INVERTED_K, minigameDef, invertColor, fleeCoin, botSpeedAfter, CRATES, crateOutside, GARDEN, DROPPER, dropperLayers, dropperPad,
-  DOLPHINS, dolphinLane, dolphinLeap, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot,
+  DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, nearVillageHouse, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot,
 } from '../src/logic.js';
 
 // Caja de un personaje normal (1 × 0,6 × 2 m) en (x, z), girada `a` radianes
@@ -689,23 +689,33 @@ describe('morado: dropper', () => {
   });
 });
 
-describe('azul: delfines que saltan', () => {
+describe('azul: delfines que saltan en fila', () => {
   const D = DOLPHINS;
   it('son 10 y las filas se alcanzan de un salto, del muelle a la ballena', () => {
     expect(D.count).toBe(10);
     const rows = [1.4, ...Array.from({ length: D.count }, (_, i) => dolphinLane(i)), D.whaleZ - D.whaleSize[2] / 2];
     for (let i = 1; i < rows.length; i++) expect(rows[i] - rows[i - 1]).toBeLessThanOrEqual(6.5);
   });
-  it('cada delfín sale del agua, salta y se vuelve a esconder', () => {
+  it('cada delfín sale del agua, salta hacia adelante y se vuelve a esconder', () => {
     let up = 0, down = 0;
-    for (let t = 0; t < 36; t += 0.05) { const L = dolphinLeap(3, t); if (L.up) { up++; expect(L.y).toBeGreaterThanOrEqual(0); expect(L.y).toBeLessThanOrEqual(D.peak); expect(Math.abs(L.x)).toBeLessThanOrEqual(D.span / 2); } else down++; }
+    for (let t = 0; t < 20; t += 0.05) {
+      const L = dolphinLeap(3, t);
+      if (L.up) { up++; expect(L.y).toBeGreaterThanOrEqual(0); expect(L.y).toBeLessThanOrEqual(D.peak); expect(Math.abs(L.along)).toBeLessThanOrEqual(D.span / 2); } else down++;
+    }
     expect(up).toBeGreaterThan(0); expect(down).toBeGreaterThan(0);
   });
-  it('siempre hay un momento en que el siguiente delfín también está afuera (para saltar de uno a otro)', () => {
+  it('saltan más rápido que antes (menos de 2 segundos en el aire)', () => {
+    expect(D.leap).toBeLessThan(2);
+  });
+  it('siempre hay un momento en que el siguiente delfín también está afuera, y cerca (para saltar de uno a otro)', () => {
     for (let i = 0; i + 1 < D.count; i++) {
       let both = 0;
-      for (let t = 0; t < D.leap + D.under; t += 0.05) if (dolphinLeap(i, t).up && dolphinLeap(i + 1, t).up) both += 0.05;
-      expect(both).toBeGreaterThan(1);
+      for (let t = 0; t < D.leap + D.under; t += 0.05) {
+        const a = dolphinLeap(i, t), b = dolphinLeap(i + 1, t);
+        // el siguiente va detrás en la misma ola
+        if (a.up && b.up && b.u < a.u) { both += 0.05; expect((dolphinLane(i + 1) + b.along) - (dolphinLane(i) + a.along)).toBeLessThan(6); }
+      }
+      expect(both).toBeGreaterThan(0.5);
     }
   });
 });
@@ -830,5 +840,43 @@ describe('mundo al revés', () => {
   it('las partidas viejas (sin trofeos) se cargan sin problema', () => {
     const old = JSON.stringify({ v: 1, coins: 1, boxes: 0, levels: {}, dayPhase: 0.5, pos: { x: 0, y: 0, z: 0 } });
     expect(parseSave(old, []).trophies).toEqual([]);
+  });
+});
+
+describe('pueblo y misiones', () => {
+  it('hay 10 casas, una por cada color de bot, en tu mitad y sin chocar entre sí', () => {
+    const H = VILLAGE.houses;
+    expect(H).toHaveLength(BOT_COLORS.length);
+    for (let i = 0; i < H.length; i++) {
+      expect(H[i].z).toBeGreaterThan(BOT_MIN_Z + 10);
+      expect(Math.abs(H[i].x) + VILLAGE.size / 2).toBeLessThan(92);
+      for (let j = i + 1; j < H.length; j++) expect(Math.abs(H[i].x - H[j].x) > VILLAGE.size + 4 || Math.abs(H[i].z - H[j].z) > VILLAGE.size + 4).toBe(true);
+    }
+  });
+  it('las casas no tapan tu casa, el parque, la tienda de estilo, el trampolín ni la cámara del mundo al revés', () => {
+    for (const [x, z] of [[28, 11], [STYLE_STALL.x, STYLE_STALL.z], [-28, 22], [-18, 18], [82, 82], [73.5, 82]]) expect(nearVillageHouse(x, z, 3)).toBe(false);
+  });
+  it('los bots tontos no se meten a las casas del pueblo, y la puerta del bot grande queda afuera', () => {
+    for (let i = 0; i < 10; i++) { const h = VILLAGE.houses[i]; expect(botCanGo(h.x, h.z)).toBe(false); const d = villageDoor(i); expect(nearVillageHouse(d.x, d.z, 0.5)).toBe(false); }
+  });
+  it('cada día cada bot tiene una misión, y cambian de un día a otro', () => {
+    const a = tasksForDay(1), b = tasksForDay(2);
+    expect(a).toHaveLength(10);
+    for (let i = 1; i < 10; i++) expect(a[i].id).not.toBe(a[i - 1].id);
+    expect(a.map(t => t.id).join()).not.toBe(b.map(t => t.id).join());
+    expect(tasksForDay(1)).toEqual(a);
+  });
+  it('las cosas perdidas aparecen donde dice la misión (y nunca dentro de una casa)', () => {
+    const rnd = seededRandom(4);
+    for (let i = 0; i < 100; i++) {
+      const g = taskSpot('giant', rnd); expect(g.z).toBeLessThan(-1.5); expect(Math.abs(g.x)).toBeLessThanOrEqual(80);
+      const m = taskSpot('mine', rnd); expect(m.z).toBeGreaterThan(1.5); expect(nearVillageHouse(m.x, m.z, 0)).toBe(false);
+    }
+  });
+  it('una misión está lista cuando tienes lo que el bot necesita', () => {
+    const rock = TASKS.find(t => t.id === 'rock'), apples = TASKS.find(t => t.id === 'apples');
+    expect(taskReady(rock, 0)).toBe(false); expect(taskReady(rock, 1)).toBe(true);
+    expect(taskReady(apples, 4)).toBe(false); expect(taskReady(apples, 5)).toBe(true);
+    for (const t of TASKS) expect((t.reward.coins || 0) + (t.reward.boxes || 0)).toBeGreaterThan(0);
   });
 });

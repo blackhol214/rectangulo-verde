@@ -80,6 +80,8 @@
   /* Minijuego de parkour */
   #parkourHud { position:fixed; left:50%; top:calc(16px + env(safe-area-inset-top,0px)); transform:translateX(-50%); z-index:21; margin:0; padding:8px 16px; border-radius:999px; background:rgba(60,8,0,.82); color:#ffd9b0; font:700 15px/1.3 system-ui, sans-serif; text-align:center; white-space:nowrap; max-width:calc(100% - 32px); overflow:hidden; text-overflow:ellipsis; font-variant-numeric:tabular-nums; }
   #parkourHud b { color:#ff7a1a; }
+  #questHud { position:fixed; left:50%; top:calc(16px + env(safe-area-inset-top,0px)); transform:translateX(-50%); z-index:19; margin:0; padding:7px 14px; border-radius:999px; background:rgba(28,30,70,.86); color:#e9ecff; font:700 14px/1.3 system-ui, sans-serif; text-align:center; white-space:nowrap; max-width:calc(100% - 300px); overflow:hidden; text-overflow:ellipsis; pointer-events:none; }
+  #questHud b { color:#ffd60a; }
   #devAlert { position:fixed; left:50%; bottom:calc(110px + env(safe-area-inset-bottom,0px)); transform:translateX(-50%); z-index:22; width:min(640px, calc(100% - 32px)); display:flex; align-items:flex-start; gap:12px; margin:0; padding:12px 14px; border-radius:12px; background:#fff4d6; color:#5a3a00; box-shadow:0 0 0 2px #e0a800, 0 10px 26px rgba(0,0,0,.3); font:14px/1.45 system-ui, sans-serif; }
   #devAlert strong { color:#b45309; letter-spacing:.04em; }
   #devAlert p { margin:0; flex:1; }
@@ -109,7 +111,8 @@
     #touchActions { display:flex; } #actionPrompt, #bedPrompt { display:none; }
     #toast { bottom:auto; top:calc(196px + env(safe-area-inset-top,0px)); } }
   /* Pantallas angostas: la ayuda deja sitio a las monedas y el reloj; los avisos pueden ocupar 2 líneas */
-  @media (max-width:600px) { .hud { max-width:calc(100% - 150px); font-size:12px; } #parkourHud { top:calc(108px + env(safe-area-inset-top,0px)); white-space:normal; font-size:13px; border-radius:14px; width:max-content; } #toast { white-space:normal; text-align:center; width:max-content; max-width:calc(100% - 32px); border-radius:14px; } }
+  @media (max-width:600px) { .hud { max-width:calc(100% - 150px); font-size:12px; } #parkourHud { top:calc(108px + env(safe-area-inset-top,0px)); white-space:normal; font-size:13px; border-radius:14px; width:max-content; }
+    #questHud { top:calc(108px + env(safe-area-inset-top,0px)); white-space:normal; font-size:12px; border-radius:14px; width:max-content; max-width:calc(100% - 32px); } #toast { white-space:normal; text-align:center; width:max-content; max-width:calc(100% - 32px); border-radius:14px; } }
 </style>
 </head>
 <body>
@@ -148,6 +151,8 @@
   <button type="button" class="red" data-act="red" hidden>🔴 Botón rojo</button>
   <button type="button" data-act="sleep" hidden>🛏️ Dormir</button>
   <button type="button" data-act="mgE" hidden>✋ Buscar</button>
+  <button type="button" data-act="talk" hidden>💬 Hablar</button>
+  <button type="button" data-act="grab" hidden>✋ Agarrar</button>
   <button type="button" data-act="mgF" hidden>💧 Agua</button>
 </div>
 <div id="shop" hidden role="dialog" aria-modal="true" aria-labelledby="shopTitle">
@@ -170,6 +175,7 @@
 </div>
 <div id="devAlert" role="status" hidden><p><strong>ALERTA:</strong> Este juego sigue en desarrollo. Cuando esté en su versión final, todo tu progreso se eliminará.</p><button type="button" id="devAlertClose" aria-label="Cerrar aviso">✕</button></div>
 <p id="actionPrompt" hidden></p>
+<p id="questHud" hidden></p>
 <p id="parkourHud" hidden></p>
 <p id="bedPrompt" hidden>Pulsa <kbd>E</kbd> para dormir hasta la mañana</p>
 <div id="sleep" aria-live="polite"><span>Zzz… durmiendo</span></div>
@@ -179,8 +185,8 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module">
-import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, invertColor, fleeCoin, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, missingFor, canAfford, collideWalls, extraLineSlot, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
-         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-11-02'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
+import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, invertColor, fleeCoin, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, missingFor, canAfford, collideWalls, extraLineSlot, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
+         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-11-03'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
 (() => {
   const canvas = document.getElementById('game');
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -587,7 +593,7 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, cla
     keys[e.code] = true;
     if (e.code === 'Space' || e.code.startsWith('Arrow')) e.preventDefault();
     if (e.code === 'KeyV' && !e.repeat) setFirstPerson(!firstPerson);
-    if (e.code === 'KeyE' && !e.repeat) { if (MG.active) { if (MG.active.onE) MG.active.onE(); } else if (!tryRedButton() && !tryStyleInteract()) trySleep(); }
+    if (e.code === 'KeyE' && !e.repeat) { if (MG.active) { if (MG.active.onE) MG.active.onE(); } else if (!tryRedButton() && !tryStyleInteract() && !tryVillage()) trySleep(); }
     if (e.code === 'KeyF' && !e.repeat && MG.active && MG.active.onF) MG.active.onF();
   });
   addEventListener('keyup', e => { keys[e.code] = false; });
@@ -732,6 +738,7 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, cla
   function flashWarn(text, secs) { warn.textContent = text; warn.classList.add('show'); warnTimer = secs; }
 
   function die() {
+    dropTaskItem();
     ps.pos.set(spawn.x, spawn.y, spawn.z);
     ps.vel.set(0, 0, 0); ps.carrying = null; ps.onGround = true;
     es.pos.set(ENEMY_SPAWN.x, ENEMY_SPAWN.y, ENEMY_SPAWN.z);
@@ -750,10 +757,10 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, cla
   // En el celular no hay teclas: los textos nombran los botones
   const IS_TOUCH = matchMedia('(pointer:coarse)').matches;
   const touchText = s => !IS_TOUCH ? s : s.replace(/pulsa E/g, 'toca ✋ Buscar').replace(/<b>E<\/b>/g, '<b>✋ Buscar</b>').replace(/con (<b>)?F(<\/b>)?/g, 'con $1💧 Agua$2');
-  function showToast(text, bad) {
+  function showToast(text, bad, ms = 1800) {
     if (quietToasts) return;
     toast.textContent = touchText(text); toast.classList.toggle('bad', !!bad); toast.classList.add('show');
-    clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('show'), ms);
   }
   // Progreso de esta partida: se guarda con el botón GUARDAR, por usuario
   const save = { coins: 0, boxes: 0, style: emptyStyle(), trophies: [], levels: { belt: 0, hopper: 0, belt2: 0, turbo: 0, bigHouse: 0, transformer: 0, hopper2: 0, lineBox: 0, lineBag: 0, assistant2: 0, assistant: 0, assistSpeed: 0, blaster: 0, blaster2: 0 } };
@@ -1085,7 +1092,7 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, cla
   const botBox = b => ({ x: b.pos.x, z: b.pos.z, hw: 0.25, hd: 0.15, a: b.obj.rotation.y, y0: b.pos.y, y1: b.pos.y + 1 });
   function resolveBodies() {
     // Los bots que están en un columpio o en el tobogán no se empujan (van en su camino fijo)
-    const bodies = [[ps, boxOf], ...assistants.map(a => [a, assistantBox]), ...dumbBots.filter(b => !(b.play && b.play.active)).map(b => [b, botBox])];
+    const bodies = [[ps, boxOf], ...assistants.map(a => [a, assistantBox]), ...dumbBots.filter(b => !(b.play && b.play.active) && !b.asleep).map(b => [b, botBox])];
     for (let i = 0; i < bodies.length; i++)
       for (let j = i + 1; j < bodies.length; j++) separate(bodies[i][0], bodies[i][1](bodies[i][0]), bodies[j][0], bodies[j][1](bodies[j][0]));
   }
@@ -1223,6 +1230,7 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, cla
   function updateDumbBots(dt) {
     idleSwings(dt);
     for (const b of dumbBots) {
+      if ((isNight || b.asleep) && goToBed(b, dumbBots.indexOf(b), dt)) continue;   // de noche se van a dormir a su casa
       // Ya está en el columpio o en el tobogán
       if (b.play && b.play.active) { playing(b, dt); continue; }
       // Cada tanto eligen otro lugar para ir a jugar (a veces, al parque)
@@ -1274,6 +1282,21 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, cla
       if (b.pos.y < -1) { const p = randomBotTarget(Math.random); b.pos.set(p.x, 0, p.z); b.vel.set(0, 0, 0); }
       b.body.position.y = H * BOT_SCALE / 2 + (b.onGround ? Math.abs(Math.sin(t * 14 + b.pos.x)) * 0.05 : 0);
     }
+  }
+
+  // De noche cada bot tonto camina a la puerta de la casa de su color y entra a dormir; en la mañana sale
+  function goToBed(b, i, dt) {
+    const door = villageDoor(i);
+    if (!isNight) { b.asleep = false; b.obj.visible = true; b.pos.set(door.x, 0, door.z); b.vel.set(0, 0, 0); b.timer = 0; b.nightT = 0; return false; }
+    if (b.play) endPlay(b);
+    if (b.visit) { b.visit = null; if (houseVisitor === b) houseVisitor = null; }
+    if (b.asleep) return true;
+    b.nightT = (b.nightT || 0) + dt;
+    const dx = door.x - b.pos.x, dz = door.z - b.pos.z, dist = Math.hypot(dx, dz);
+    if (dist < 1.2 || b.nightT > 25) { b.asleep = true; b.obj.visible = false; return true; }   // llegó (o se tardó mucho: ya entró)
+    const step = Math.min(BOT_SPEED * dt, dist); b.walkX += dx / dist * step; b.walkZ += dz / dist * step; turnTo(b, dx, dz, dt);
+    physics(b, dt, b.onGround && b.hitWall, JUMP * 0.75);
+    return true;
   }
 
   // ---------- Botón rojo del sótano ----------
@@ -1646,7 +1669,7 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, cla
         // 10 delfines, uno por fila. Su "piso" solo existe mientras están fuera del agua
         MG.built.dolphins = Array.from({ length: Dl.count }, (_, i) => {
           const g = makeDolphin(); g.traverse(m => { if (m.isMesh) m.castShadow = true; }); g.visible = false; scene.add(g);
-          const pl = { x: o.x, z: o.z + dolphinLane(i), hw: Dl.length / 2, hd: Dl.width / 2, top: -5, bottom: -6, move: true, dx: 0, dy: 0, dz: 0 };
+          const pl = { x: o.x, z: o.z + dolphinLane(i), hw: Dl.width / 2, hd: Dl.length / 2, top: -5, bottom: -6, move: true, dx: 0, dy: 0, dz: 0 };   // en fila: largos hacia la ballena
           platforms.push(pl); return { g, pl, wasUp: false };
         });
         MG.built.splash = [];
@@ -1654,14 +1677,14 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, cla
       start(o) { placePlayer(o.x, 1, o.z - 2); MG.built.cap.visible = true; MG.t = 0; },
       update(dt, o) {
         MG.built.dolphins.forEach((d, i) => {
-          const L = dolphinLeap(i, MG.t), { g, pl } = d, z = o.z + dolphinLane(i);
-          if (L.up !== d.wasUp) splash(o.x + (L.up ? -L.dir : L.dir) * DOLPHINS.span / 2, 0.4, z, MG.built.splash);   // ¡splash! al salir y al meterse
+          const L = dolphinLeap(i, MG.t), { g, pl } = d, lane = o.z + dolphinLane(i);
+          if (L.up !== d.wasUp) splash(o.x, 0.4, lane + (L.up ? -1 : 1) * DOLPHINS.span / 2, MG.built.splash);   // ¡splash! al salir y al meterse
           d.wasUp = L.up;
           g.visible = L.up;
-          if (!L.up) { pl.dx = pl.dy = 0; pl.top = -5; pl.bottom = -6; return; }   // bajo el agua: no se puede pisar
-          const nx = o.x + L.x, top = L.y + 1;
-          pl.dx = nx - pl.x; pl.dy = pl.top > -5 ? top - pl.top : 0; pl.x = nx; pl.top = top; pl.bottom = L.y;
-          g.position.set(nx, L.y - 0.05, z); g.rotation.set(0, L.dir > 0 ? 0 : Math.PI, L.pitch);
+          if (!L.up) { pl.dx = pl.dy = pl.dz = 0; pl.top = -5; pl.bottom = -6; return; }   // bajo el agua: no se puede pisar
+          const nz = lane + L.along, top = L.y + 1;
+          pl.dz = pl.top > -5 ? nz - pl.z : 0; pl.dy = pl.top > -5 ? top - pl.top : 0; pl.dx = 0; pl.z = nz; pl.top = top; pl.bottom = L.y;   // te lleva hacia adelante
+          g.position.set(o.x, L.y - 0.05, nz); g.rotation.set(0, -Math.PI / 2, L.pitch);   // todos miran hacia la ballena
         });
         for (let k = MG.built.splash.length - 1; k >= 0; k--) {
           const q = MG.built.splash[k]; q.v.y -= 20 * dt; q.m.position.addScaledVector(q.v, dt);
@@ -2047,7 +2070,8 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, cla
     return false;
   }
   function updateStylePrompt() {
-    const txt = nearRedButton() ? (botInsideHouse() ? `Pulsa <kbd>E</kbd>: el bot ${MINIGAMES[dumbBots.indexOf(houseVisitor)].bot} te espera (${MINIGAMES[dumbBots.indexOf(houseVisitor)].name})` : 'Pulsa <kbd>E</kbd> para apretar el botón rojo') : nearStall() ? 'Pulsa <kbd>E</kbd> para ver la tienda de estilo' : nearWardrobe() ? 'Pulsa <kbd>E</kbd> para abrir el armario' : '';
+    const vt = villagePrompt();
+    const txt = vt ? vt : nearRedButton() ? (botInsideHouse() ? `Pulsa <kbd>E</kbd>: el bot ${MINIGAMES[dumbBots.indexOf(houseVisitor)].bot} te espera (${MINIGAMES[dumbBots.indexOf(houseVisitor)].name})` : 'Pulsa <kbd>E</kbd> para apretar el botón rojo') : nearStall() ? 'Pulsa <kbd>E</kbd> para ver la tienda de estilo' : nearWardrobe() ? 'Pulsa <kbd>E</kbd> para abrir el armario' : '';
     actionPrompt.hidden = !txt || !!document.querySelector('.panel:not([hidden])');
     if (txt && actionPrompt.innerHTML !== txt) actionPrompt.innerHTML = txt;
   }
@@ -2062,6 +2086,7 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, cla
       else if (act === 'stall' || act === 'wardrobe') tryStyleInteract();
       else if (act === 'sleep') trySleep();
       else if (act === 'mgE' && MG.active && MG.active.onE) MG.active.onE();
+      else if (act === 'talk' || act === 'grab') tryVillage();
       else if (act === 'mgF' && MG.active && MG.active.onF) MG.active.onF();
     });
   }
@@ -2074,6 +2099,8 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, cla
       wardrobe: !MG.active && !panelOpen && nearWardrobe(),
       sleep: !MG.active && !panelOpen && isNight && sleepLeft <= 0 && nearMyBed(),
       mgE: !!(MG.active && MG.active.onE),
+      talk: !MG.active && !panelOpen && nearBigBot() >= 0 && !nearTaskItem(),
+      grab: !MG.active && !panelOpen && !!nearTaskItem(),
       mgF: !!(MG.active && MG.active.onF),
     };
     for (const k in show) if (touchBtns[k].hidden === show[k]) touchBtns[k].hidden = !show[k];
@@ -2524,7 +2551,7 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, cla
     const wasNight = isNight;
     isNight = elev < -0.05;
     if (isNight && !wasNight) { enemyAwake = false; showToast('Se hizo de noche: el gigante se durmió'); }
-    if (!isNight && wasNight) showToast('¡Amaneció! El gigante despertó', true);
+    if (!isNight && wasNight) { showToast('¡Amaneció! El gigante despertó. Los bots del pueblo necesitan ayuda', true); newVillageDay(); }
     // Reloj
     const mins = Math.floor(dayPhase * 24 * 60);
     if (mins !== lastMinute) {
@@ -2565,6 +2592,138 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, cla
   addEventListener('resize', resize); resize();
 
   const clock = new THREE.Clock();
+  // ---------- Pueblo: una casa por color, con un bot grande que te pide ayuda cada día ----------
+  const village = { day: Math.floor(Math.random() * 1000), tasks: [], done: new Set(), active: null, bots: [], zzz: [] };
+  const markerTex = ch => {
+    const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d');
+    g.font = '900 104px system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineWidth = 12; g.strokeStyle = '#3a2a00'; g.strokeText(ch, 64, 70); g.fillStyle = '#ffd60a'; g.fillText(ch, 64, 70);
+    return new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false });
+  };
+  const MARK = { '!': markerTex('!'), '?': markerTex('?') };
+  function buildVillage() {
+    VILLAGE.houses.forEach((h, i) => {
+      const color = new THREE.Color(BOT_COLORS[i]), S = VILLAGE.size / 2;
+      addBox(h.x - S, h.x + S, 0, 3.6, h.z - S, h.z + S, new THREE.MeshLambertMaterial({ color: color.clone().lerp(new THREE.Color(0xffffff), 0.45) }));
+      const roof = new THREE.Mesh(new THREE.ConeGeometry(S * 1.55, 2.8, 4), new THREE.MeshLambertMaterial({ color: color.clone().multiplyScalar(0.7) }));
+      roof.rotation.y = Math.PI / 4; roof.position.set(h.x, 3.6 + 1.4, h.z); roof.castShadow = true; scene.add(roof);
+      const door = new THREE.Mesh(new THREE.BoxGeometry(1.4, 2.3, 0.1), new THREE.MeshLambertMaterial({ color: 0x5a3820 })); door.position.set(h.x, 1.15, h.z - S - 0.05); scene.add(door);
+      for (const wx of [-2.2, 2.2]) { const w = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1, 0.1), new THREE.MeshLambertMaterial({ color: 0x9fd3ff, emissive: 0x000000 })); w.position.set(h.x + wx, 2, h.z - S - 0.05); scene.add(w); }
+      // El bot grande (de tu altura) que vive ahí
+      const g = new THREE.Group(), body = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), new THREE.MeshLambertMaterial({ color: BOT_COLORS[i] }));
+      body.position.y = H / 2; body.castShadow = true; g.add(body);
+      for (const ex of [-0.22, 0.22]) { const e = new THREE.Mesh(eyeGeo, eyeMat); e.scale.z = 0.5; e.position.set(ex, H * 0.78, D / 2 + 0.02); g.add(e); }
+      const d = villageDoor(i); g.position.set(d.x, 0, d.z); g.rotation.y = Math.PI; scene.add(g);
+      const mark = new THREE.Sprite(MARK['!']); mark.scale.set(1, 1, 1); mark.position.y = H + 0.9; g.add(mark);
+      village.bots.push({ g, body, mark });
+      const z = new THREE.Sprite(zzz.material); z.scale.set(3, 1.5, 1); z.position.set(h.x + 1.5, 7.4, h.z); z.visible = false; scene.add(z); village.zzz.push(z);
+    });
+    newVillageDay();
+  }
+  function newVillageDay() { village.day++; village.tasks = tasksForDay(village.day); village.done.clear(); }
+  const botName = i => MINIGAMES[i].bot;
+  // Las cosas perdidas de las misiones
+  function makeTaskItem(kind) {
+    const g = new THREE.Group(), M = c => new THREE.MeshLambertMaterial({ color: c });
+    if (kind === 'rock') {
+      const r = new THREE.Mesh(new THREE.DodecahedronGeometry(0.45), M(0x8a8f96)); r.position.y = 0.45; g.add(r);
+      for (const ex of [-0.13, 0.13]) { const e = new THREE.Mesh(eyeGeo, eyeMat); e.scale.setScalar(0.7); e.position.set(ex, 0.55, 0.4); g.add(e); }   // ¡tiene ojitos!
+    } else if (kind === 'ball') { const b = new THREE.Mesh(new THREE.SphereGeometry(0.45, 16, 12), M(0xff3b30)); b.position.y = 0.45; g.add(b); const st = new THREE.Mesh(new THREE.TorusGeometry(0.45, 0.06, 6, 20), M(0xffffff)); st.position.y = 0.45; g.add(st); }
+    else if (kind === 'teddy') { for (const [r, y, x] of [[0.4, 0.4, 0], [0.28, 0.95, 0], [0.12, 1.2, -0.2], [0.12, 1.2, 0.2]]) { const p = new THREE.Mesh(new THREE.SphereGeometry(r, 12, 10), M(0x9c6b3d)); p.position.set(x, y, 0); g.add(p); } }
+    else if (kind === 'key') { const ring = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.07, 8, 16), M(0xffc400)); ring.position.set(0, 0.6, 0); g.add(ring); const bar = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.6, 0.08), M(0xffc400)); bar.position.set(0, 0.15, 0); g.add(bar); }
+    else if (kind === 'apple') { const a = new THREE.Mesh(new THREE.SphereGeometry(0.3, 14, 10), M(0xe0302f)); a.position.y = 0.3; g.add(a); const l = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 6), M(0x3fae4a)); l.scale.set(1, 0.4, 2); l.position.set(0.08, 0.62, 0); g.add(l); }
+    else if (kind === 'plank') { const pl = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.12, 0.35), M(0xb07a45)); pl.position.y = 0.1; g.add(pl); }
+    else if (kind === 'flower') { const st = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.6, 6), M(0x3fae4a)); st.position.y = 0.3; g.add(st); const f = new THREE.Mesh(new THREE.SphereGeometry(0.16, 10, 8), M(0xff6fb5)); f.position.y = 0.65; g.add(f); }
+    else { const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.35), new THREE.MeshLambertMaterial({ color: 0x5ce1ff, emissive: 0x0a4a6a })); gem.position.y = 0.45; g.add(gem); }
+    g.traverse(m => { if (m.isMesh) m.castShadow = true; });
+    // Un rayo de luz encima, para encontrarla desde lejos
+    const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 30, 8, 1, true), new THREE.MeshBasicMaterial({ color: 0xffd60a, transparent: true, opacity: 0.28, depthWrite: false }));
+    beam.position.y = 15; g.add(beam); g.userData.beam = beam;
+    scene.add(g); return g;
+  }
+  // ¿Estás junto a un bot grande despierto? (devuelve su número o -1)
+  function nearBigBot() {
+    if (isNight || ps.pos.y > 2 || ps.pos.y < -1) return -1;
+    for (let i = 0; i < village.bots.length; i++) { const d = villageDoor(i); if (Math.hypot(ps.pos.x - d.x, ps.pos.z - d.z) < 3.2) return i; }
+    return -1;
+  }
+  // ¿Estás junto a la cosa que tienes que traer (y todavía no la llevas)?
+  function nearTaskItem() {
+    const A = village.active;
+    if (!A || A.task.kind !== 'fetch' || A.carrying) return null;
+    const it = A.items[0];
+    return Math.hypot(ps.pos.x - it.mesh.position.x, ps.pos.z - it.mesh.position.z) < 2 && Math.abs(ps.pos.y - it.spot.y) < 2 ? it : null;
+  }
+  function villagePrompt() {
+    if (MG.active) return '';
+    const it = nearTaskItem(); if (it) return `Pulsa <kbd>E</kbd> para agarrar ${village.active.task.name}`;
+    const i = nearBigBot(); if (i >= 0) return `Pulsa <kbd>E</kbd> para hablar con el bot ${botName(i)}`;
+    return '';
+  }
+  // E: agarrar la cosa perdida o hablar con un bot grande
+  function tryVillage() {
+    if (MG.active) return false;
+    const it = nearTaskItem();
+    if (it) { village.active.carrying = true; it.mesh.userData.beam.visible = false; showToast(`¡Agarraste ${village.active.task.name}! Ahora ve a la casa del bot ${botName(village.active.i)}`, false, 3000); return true; }
+    const i = nearBigBot(); if (i < 0) return false;
+    const A = village.active, task = village.tasks[i];
+    if (A && A.i === i) { showToast(taskReady(A.task, A.got) ? '¡Gracias!' : `Bot ${botName(i)}: ${A.task.kind === 'fetch' ? `¿Ya encontraste ${A.task.name}?` : `Llevas ${A.got} de ${A.task.count} ${A.task.name}`}`, false, 3000); return true; }
+    if (village.done.has(i)) { showToast(`Bot ${botName(i)}: ¡Gracias otra vez! Mañana seguro necesito ayuda con otra cosa 😊`, false, 3000); return true; }
+    if (A) { showToast(`Bot ${botName(i)}: Primero termina de ayudar al bot ${botName(A.i)} 😉`, false, 3000); return true; }
+    // Empieza la misión: aparecen las cosas perdidas
+    const n = task.kind === 'fetch' ? 1 : task.count;
+    const items = Array.from({ length: n }, () => { const p = taskSpot(task.where, Math.random), mesh = makeTaskItem(task.item); const spot = { x: p.x, y: 0, z: p.z }; mesh.position.set(spot.x, 0, spot.z); return { mesh, spot, taken: false }; });
+    village.active = { i, task, got: 0, items, carrying: false };
+    showToast(`Bot ${botName(i)}: ${task.ask}`, false, 5500);
+    return true;
+  }
+  // Si el gigante te atrapa mientras llevas algo, se te cae y vuelve a donde estaba
+  function dropTaskItem() {
+    const A = village.active;
+    if (!A || !A.carrying) return;
+    A.carrying = false; const it = A.items[0];
+    it.mesh.position.set(it.spot.x, 0, it.spot.z); it.mesh.rotation.set(0, 0, 0); it.mesh.userData.beam.visible = true;
+    setTimeout(() => showToast(`¡Se te cayó ${A.task.name}! Volvió a donde estaba`, true, 3000), 1300);
+  }
+  const questHud = document.getElementById('questHud');
+  function updateVillage(dt) {
+    const A = village.active;
+    village.bots.forEach((b, i) => {
+      b.g.visible = !isNight;   // de noche están dentro de su casa, durmiendo
+      village.zzz[i].visible = isNight; if (isNight) village.zzz[i].position.y = 7.4 + Math.sin(t * 2 + i) * 0.3;
+      if (isNight) return;
+      b.mark.visible = !village.done.has(i) && (!A || A.i === i);
+      b.mark.material = A && A.i === i ? MARK['?'] : MARK['!'];
+      b.mark.position.y = H + 0.9 + Math.sin(t * 3 + i) * 0.12;
+      // Te mira si estás cerca
+      const d = villageDoor(i), dx = ps.pos.x - d.x, dz = ps.pos.z - d.z;
+      b.g.rotation.y = Math.hypot(dx, dz) < 10 ? Math.atan2(dx, dz) : Math.PI;
+      b.body.position.y = H / 2 + Math.abs(Math.sin(t * 2 + i)) * 0.04;
+    });
+    if (!A) { questHud.hidden = true; return; }
+    for (const it of A.items) {
+      if (it.taken) continue;
+      if (A.carrying) { it.mesh.position.set(ps.pos.x, ps.pos.y + H + 0.15, ps.pos.z); it.mesh.rotation.y = ps.facing; continue; }   // la llevas encima de tu cabeza
+      it.mesh.rotation.y += dt * 1.5;
+      if (A.task.kind === 'collect' && Math.hypot(ps.pos.x - it.spot.x, ps.pos.z - it.spot.z) < 1.6 && Math.abs(ps.pos.y - it.spot.y) < 2) {
+        it.taken = true; scene.remove(it.mesh); A.got++; sfxCoin(); showToast(`${A.task.name}: ${A.got}/${A.task.count}`);
+      }
+    }
+    const got = A.task.kind === 'fetch' ? (A.carrying ? 1 : 0) : A.got;
+    const ready = taskReady(A.task, got), door = villageDoor(A.i);
+    questHud.hidden = !!MG.active;
+    questHud.innerHTML = ready ? `Misión: llévale ${A.task.kind === 'fetch' ? A.task.name : 'las ' + A.task.name} al <b>bot ${botName(A.i)}</b>` + (isNight ? ' (está durmiendo: espera a que amanezca)' : '')
+      : A.task.kind === 'fetch' ? `Misión del <b>bot ${botName(A.i)}</b>: encuentra ${A.task.name} (sigue el rayo de luz)` : `Misión del <b>bot ${botName(A.i)}</b>: junta ${A.task.name} · <b>${A.got}/${A.task.count}</b>`;
+    // Llegaste a su casa con lo que necesita: ¡misión cumplida!
+    if (ready && !isNight && !MG.active && Math.hypot(ps.pos.x - door.x, ps.pos.z - door.z) < 4.5) {
+      for (const it of A.items) scene.remove(it.mesh);
+      save.coins += A.task.reward.coins || 0; save.boxes += A.task.reward.boxes || 0; renderCoins(); sfxCoin();
+      village.done.add(A.i); village.active = null;
+      const prize = [A.task.reward.coins && `+${A.task.reward.coins} monedas`, A.task.reward.boxes && `+${A.task.reward.boxes} cajas doradas`].filter(Boolean).join(' y ');
+      flashWarn('¡MISIÓN CUMPLIDA!', 2); showToast(`Bot ${botName(A.i)}: ¡Muchas gracias! ${prize}`, false, 3500);
+    }
+  }
+  buildVillage();
+
   let t = 0, stepTimer = 0;
   function tick() {
     const dt = Math.min(clock.getDelta(), 0.05);
@@ -2616,6 +2775,7 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, cla
     updateBelt(dt);
     updateAssistant(dt);
     updateDumbBots(dt);
+    updateVillage(dt);
     updateMinigame(dt);
     resolveBodies();
     if (boxHit(boxOf(ps), boxOf(es, ENEMY_SCALE))) die();
