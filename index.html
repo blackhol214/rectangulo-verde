@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Rectángulo Verde</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -26,12 +26,22 @@
   #saved { position:fixed; left:50%; top:40%; transform:translate(-50%,-50%) scale(.7); margin:0; z-index:25; font:400 clamp(34px, 8vw, 84px)/1.1 "ADLaM Display", Impact, "Arial Narrow Bold", sans-serif; color:#2fd158; text-shadow:0 4px 0 #0d5a22, 0 8px 18px rgba(0,0,0,.35); white-space:nowrap; opacity:0; pointer-events:none; transition:opacity .25s, transform .25s; }
   #saved.show { opacity:1; transform:translate(-50%,-50%) scale(1); }
   #game { position:fixed; inset:0; display:block; width:100%; height:100%; touch-action:none; }
+  /* Celular: que tocar dos veces rápido (o con dos dedos) no haga zoom en la pantalla */
+  html, body { touch-action:manipulation; overscroll-behavior:none; -webkit-user-select:none; user-select:none; -webkit-text-size-adjust:100%; }
+  input { -webkit-user-select:text; user-select:text; }
   .hud { position:fixed; left:16px; top:calc(16px + env(safe-area-inset-top,0px)); background:var(--panel); padding:10px 14px; border-radius:10px; font-size:13px; line-height:1.5; backdrop-filter:blur(6px); max-width:calc(100% - 32px); }
   .hud b { color:var(--accent); }
   kbd { font:600 11px ui-monospace, Menlo, monospace; background:#fff; border:1px solid #cfd8d2; border-bottom-width:2px; border-radius:4px; padding:0 5px; }
   #stick { position:fixed; left:24px; bottom:calc(24px + env(safe-area-inset-bottom,0px)); width:110px; height:110px; border-radius:50%; background:rgba(255,255,255,.35); border:2px solid rgba(255,255,255,.7); display:none; touch-action:none; }
   #knob { position:absolute; left:35px; top:35px; width:40px; height:40px; border-radius:50%; background:rgba(255,255,255,.9); }
-  #jump { position:fixed; right:24px; bottom:calc(34px + env(safe-area-inset-bottom,0px)); width:80px; height:80px; border-radius:50%; border:2px solid rgba(255,255,255,.7); background:rgba(47,174,78,.75); color:#fff; font:700 14px system-ui; display:none; touch-action:none; }
+  #jump { position:fixed; right:150px; bottom:calc(34px + env(safe-area-inset-bottom,0px)); width:80px; height:80px; border-radius:50%; border:2px solid rgba(255,255,255,.7); background:rgba(47,174,78,.75); color:#fff; font:700 14px system-ui; display:none; touch-action:none; }
+  /* Celular: joystick de la cámara (a la derecha), botón de disparar y botón de primera persona */
+  #camStick { position:fixed; right:24px; bottom:calc(24px + env(safe-area-inset-bottom,0px)); width:110px; height:110px; border-radius:50%; background:rgba(255,255,255,.25); border:2px dashed rgba(255,255,255,.7); display:none; touch-action:none; }
+  #camStick .knob { position:absolute; left:35px; top:35px; width:40px; height:40px; border-radius:50%; background:rgba(255,255,255,.9); }
+  #camStick span { position:absolute; left:0; right:0; bottom:-18px; text-align:center; font:700 11px system-ui; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.6); pointer-events:none; }
+  #shootBtn { position:fixed; right:150px; bottom:calc(126px + env(safe-area-inset-bottom,0px)); width:80px; height:80px; border-radius:50%; border:2px solid rgba(255,255,255,.7); background:rgba(30,107,255,.8); color:#fff; font:700 11px/1.2 system-ui; display:none; touch-action:none; }
+  #fpBtn { position:fixed; left:24px; bottom:calc(150px + env(safe-area-inset-bottom,0px)); width:56px; height:56px; border-radius:50%; border:2px solid rgba(255,255,255,.7); background:rgba(22,48,31,.82); font-size:24px; display:none; touch-action:manipulation; }
+  #fpBtn.on { background:rgba(176,120,0,.9); }
   #warn { position:fixed; left:50%; top:30%; transform:translate(-50%,-50%) scale(.6); margin:0; font:400 clamp(40px, 11vw, 120px)/1 Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif; color:#e01010; letter-spacing:.02em; text-shadow:0 4px 0 #6a0000, 0 8px 18px rgba(0,0,0,.35); white-space:nowrap; opacity:0; pointer-events:none; transition:opacity .25s, transform .25s; }
   #warn.show { opacity:1; transform:translate(-50%,-50%) scale(1); }
   .coins { position:fixed; right:16px; top:calc(16px + env(safe-area-inset-top,0px)); display:flex; align-items:center; gap:8px; background:var(--panel); padding:8px 14px; border-radius:10px; font:400 26px/1 Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif; color:#7a5200; font-variant-numeric:tabular-nums; backdrop-filter:blur(6px); }
@@ -107,8 +117,8 @@
   #touchActions button[hidden] { display:none; }
   #touchActions .red { background:rgba(200,16,26,.88); }
   #touchActions .shop { background:rgba(176,120,0,.9); }
-  @media (pointer:coarse) { #stick, #jump { display:block; } .hud .keys { display:none; } #saveBtn { bottom:calc(130px + env(safe-area-inset-bottom,0px)); }
-    #touchActions { display:flex; } #actionPrompt, #bedPrompt { display:none; }
+  @media (pointer:coarse) { #stick, #jump, #camStick, #fpBtn { display:block; } #shootBtn:not([hidden]) { display:block; } .hud .keys { display:none; } #saveBtn { left:16px; right:auto; bottom:calc(220px + env(safe-area-inset-bottom,0px)); padding:10px 16px; font-size:18px; }
+    #touchActions { display:flex; bottom:calc(220px + env(safe-area-inset-bottom,0px)); } #actionPrompt, #bedPrompt { display:none; }
     #toast { bottom:auto; top:calc(196px + env(safe-area-inset-top,0px)); } }
   /* Pantallas angostas: la ayuda deja sitio a las monedas y el reloj; los avisos pueden ocupar 2 líneas */
   @media (max-width:600px) { .hud { max-width:calc(100% - 150px); font-size:12px; } #parkourHud { top:calc(108px + env(safe-area-inset-top,0px)); white-space:normal; font-size:13px; border-radius:14px; width:max-content; }
@@ -181,17 +191,29 @@
 <div id="sleep" aria-live="polite"><span>Zzz… durmiendo</span></div>
 <p id="lockHint" hidden>Haz clic para mirar con el ratón (Esc para soltarlo)</p>
 <div id="stick"><div id="knob"></div></div>
+<div id="camStick" aria-label="Mover la cámara"><div class="knob"></div><span>CÁMARA</span></div>
 <button id="jump" type="button">SALTAR</button>
+<button id="shootBtn" type="button" hidden>🔫<br>DISPARAR</button>
+<button id="fpBtn" type="button" aria-label="Cambiar a primera persona">👁️</button>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module">
 import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, invertColor, fleeCoin, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
          upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-11-04'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
-import { PUERTO, ENVIOS_POR_SEGUNDO, acercar, piezasExplosion } from './src/red.js?v=2026-10-03';
+import { PUERTO, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto, acercar, piezasExplosion } from './src/red.js?v=2026-10-03c';
 (() => {
+  // iPhone ignora user-scalable=no: aquí se bloquea el zoom con dos dedos y el doble toque
+  for (const ev of ['gesturestart', 'gesturechange']) document.addEventListener(ev, e => e.preventDefault(), { passive: false });
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', e => { const now = Date.now(); if (now - lastTouchEnd < 350 && e.target.tagName !== 'INPUT') e.preventDefault(); lastTouchEnd = now; }, { passive: false });
+  document.addEventListener('touchmove', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
   const canvas = document.getElementById('game');
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  // Performance: en el celular dibujamos menos píxeles extra (su pantalla igual se ve nítida)
+  const TOUCH_GPU = matchMedia('(pointer:coarse)').matches;
+  const MAX_RATIO = Math.min(devicePixelRatio, TOUCH_GPU ? 1.5 : 2);
+  let pixelRatio = MAX_RATIO;
+  renderer.setPixelRatio(pixelRatio);
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -221,7 +243,7 @@ import { PUERTO, ENVIOS_POR_SEGUNDO, acercar, piezasExplosion } from './src/red.
   const sun = new THREE.DirectionalLight(0xffffff, 0.85);
   sun.position.set(20, 40, 15);
   sun.castShadow = true;
-  sun.shadow.mapSize.set(2048, 2048);
+  sun.shadow.mapSize.setScalar(TOUCH_GPU ? 1024 : 2048);   // sombras más livianas en el celular
   Object.assign(sun.shadow.camera, { left:-30, right:30, top:30, bottom:-30, near:1, far:120 });
   scene.add(sun, sun.target);
 
@@ -581,6 +603,16 @@ import { PUERTO, ENVIOS_POR_SEGUNDO, acercar, piezasExplosion } from './src/red.
   fpBlaster.visible = false;
   camera.add(fpBlaster);
 
+  // ---------- Multijugador (datos) ----------
+  // Solo se conecta si el juego viene del servidor multijugador (bun server.js o el link de Cloudflare)
+  const ONLINE = location.port === String(PUERTO) || location.hostname.endsWith('.trycloudflare.com');
+  // otros: id → { obj, body, nombre, x, y, z, rot } · gigante y bots: lo último que contó el anfitrión
+  const red = { ws: null, id: null, anfitrion: null, otros: new Map(), envio: 0, pedazos: [], gigante: null, bots: null, aturdido: 0 };
+  // ¿Estamos conectados y otra compu (el anfitrión) mueve al gigante y a los bots?
+  const copia = () => !!(red.id !== null && red.anfitrion !== red.id);
+  const esAnfitrion = () => red.id !== null && red.anfitrion === red.id;
+  const enviar = datos => { if (red.ws && red.ws.readyState === WebSocket.OPEN) red.ws.send(JSON.stringify(datos)); };
+
   // Entrada
   const keys = {};
   let firstPerson = false, fpPitch = 0;
@@ -608,12 +640,14 @@ import { PUERTO, ENVIOS_POR_SEGUNDO, acercar, piezasExplosion } from './src/red.
   function requestLock() { try { const r = canvas.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (e) {} }
   function setFirstPerson(on) {
     firstPerson = on; player.visible = !on; fpPitch = 0;
-    if (on) requestLock(); else if (isLocked()) document.exitPointerLock();
+    if (on && !IS_TOUCH) requestLock(); else if (isLocked()) document.exitPointerLock();   // en el celular no hay cursor que bloquear
+    fpBtn.classList.toggle('on', on);
+    fpBtn.setAttribute('aria-label', on ? 'Volver a tercera persona' : 'Cambiar a primera persona');
     updateLockUI();
   }
   function updateLockUI() {
-    cross.style.display = firstPerson && isLocked() ? 'block' : 'none';
-    lockHint.hidden = !(firstPerson && !isLocked());
+    cross.style.display = firstPerson && (isLocked() || IS_TOUCH) ? 'block' : 'none';
+    lockHint.hidden = !(firstPerson && !isLocked() && !IS_TOUCH);
   }
   const FP_SENS = 0.005; // sensibilidad del ratón en primera persona
   document.addEventListener('pointerlockchange', updateLockUI);
@@ -624,7 +658,7 @@ import { PUERTO, ENVIOS_POR_SEGUNDO, acercar, piezasExplosion } from './src/red.
   });
 
   canvas.addEventListener('pointerdown', e => {
-    if (firstPerson) {
+    if (firstPerson && !IS_TOUCH) {
       if (!isLocked()) requestLock();   // el primer clic bloquea el cursor
       else shoot(0, 0);                 // con el cursor bloqueado, dispara al centro
       return;
@@ -640,29 +674,38 @@ import { PUERTO, ENVIOS_POR_SEGUNDO, acercar, piezasExplosion } from './src/red.
     dragging = false;
   });
   addEventListener('pointermove', e => {
-    if (!dragging || firstPerson) return;
+    if (!dragging) return;
     camYaw -= (e.clientX - lx) * 0.005;
     if (firstPerson) fpPitch = Math.min(1.3, Math.max(-1.3, fpPitch - (e.clientY - ly) * 0.004));
     else camPitch = Math.min(1.2, Math.max(0.1, camPitch + (e.clientY - ly) * 0.004));
     lx = e.clientX; ly = e.clientY;
   });
 
-  // Joystick táctil
-  const stick = document.getElementById('stick'), knob = document.getElementById('knob');
-  const joy = { x: 0, y: 0 };
-  let stickId = null;
-  const moveStick = e => {
-    const r = stick.getBoundingClientRect();
-    let dx = e.clientX - (r.left + r.width/2), dy = e.clientY - (r.top + r.height/2);
-    const m = Math.hypot(dx, dy), max = 40;
-    if (m > max) { dx *= max/m; dy *= max/m; }
-    knob.style.transform = `translate(${dx}px,${dy}px)`;
-    joy.x = dx/max; joy.y = dy/max;
-  };
-  stick.addEventListener('pointerdown', e => { stickId = e.pointerId; stick.setPointerCapture(e.pointerId); moveStick(e); e.stopPropagation(); });
-  stick.addEventListener('pointermove', e => { if (e.pointerId === stickId) moveStick(e); });
-  const endStick = () => { stickId = null; joy.x = joy.y = 0; knob.style.transform = ''; };
-  stick.addEventListener('pointerup', endStick); stick.addEventListener('pointercancel', endStick);
+  // Joysticks táctiles: el de la izquierda te mueve y el de la derecha gira la cámara
+  function makeStick(el, knobEl) {
+    const out = { x: 0, y: 0 };
+    let id = null;
+    const move = e => {
+      const r = el.getBoundingClientRect();
+      let dx = e.clientX - (r.left + r.width/2), dy = e.clientY - (r.top + r.height/2);
+      const m = Math.hypot(dx, dy), max = 40;
+      if (m > max) { dx *= max/m; dy *= max/m; }
+      knobEl.style.transform = `translate(${dx}px,${dy}px)`;
+      out.x = dx/max; out.y = dy/max;
+    };
+    el.addEventListener('pointerdown', e => { id = e.pointerId; try { el.setPointerCapture(e.pointerId); } catch (err) {} move(e); e.stopPropagation(); });
+    el.addEventListener('pointermove', e => { if (e.pointerId === id) move(e); });
+    const end = () => { id = null; out.x = out.y = 0; knobEl.style.transform = ''; };
+    el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
+    return out;
+  }
+  const joy = makeStick(document.getElementById('stick'), document.getElementById('knob'));
+  const camStickEl = document.getElementById('camStick');
+  const camJoy = makeStick(camStickEl, camStickEl.querySelector('.knob'));
+  // Botón de primera persona y botón de disparar (dispara hacia el centro de la pantalla)
+  const fpBtn = document.getElementById('fpBtn'), shootBtn = document.getElementById('shootBtn');
+  fpBtn.addEventListener('click', () => setFirstPerson(!firstPerson));
+  shootBtn.addEventListener('pointerdown', e => { e.stopPropagation(); shoot(0, firstPerson ? 0 : 0.15); });
   const jumpBtn = document.getElementById('jump');
   jumpBtn.addEventListener('pointerdown', e => { keys.Space = true; e.stopPropagation(); });
   jumpBtn.addEventListener('pointerup', () => keys.Space = false);
@@ -742,10 +785,15 @@ import { PUERTO, ENVIOS_POR_SEGUNDO, acercar, piezasExplosion } from './src/red.
     dropTaskItem();
     ps.pos.set(spawn.x, spawn.y, spawn.z);
     ps.vel.set(0, 0, 0); ps.carrying = null; ps.onGround = true;
+    flashWarn('¡MORISTE!', 1.2);
+    // En multijugador el gigante es de todos: le avisamos al anfitrión para que lo regrese a su lugar
+    if (copia()) { enviar({ tipo: 'evento', que: 'atrapado' }); return; }
+    resetEnemy();
+  }
+  function resetEnemy() {
     es.pos.set(ENEMY_SPAWN.x, ENEMY_SPAWN.y, ENEMY_SPAWN.z);
     es.vel.set(0, 0, 0); es.carrying = null; es.onGround = true;
     enemyWait = 2; stunTime = 0; enemyAwake = !isNight;
-    flashWarn('¡MORISTE!', 1.2);
   }
 
   // IA del enemigo: te persigue a tu misma velocidad, pero no puede cruzar la línea amarilla
@@ -780,7 +828,8 @@ import { PUERTO, ENVIOS_POR_SEGUNDO, acercar, piezasExplosion } from './src/red.
   const coins = [];
   function placeCoin(c) {
     // Siempre en la mitad del enemigo
-    c.position.set((Math.random() * 2 - 1) * (EDGE - 6), 1.2, -6 - Math.random() * (EDGE - 12));
+    const p = lugarMoneda(Math.random);
+    c.position.set(p.x, 1.2, p.z);
   }
   for (let i = 0; i < COIN_COUNT; i++) {
     const c = new THREE.Mesh(coinGeo, coinMat);
@@ -788,15 +837,20 @@ import { PUERTO, ENVIOS_POR_SEGUNDO, acercar, piezasExplosion } from './src/red.
     placeCoin(c); scene.add(c); coins.push(c);
   }
   function updateCoins(dt) {
-    for (const c of coins) {
+    coins.forEach((c, i) => {
+      if (c.userData.taken) return;   // ya la agarraste: espera a que el servidor diga dónde aparece la nueva
       c.rotation.y += dt * 3;
       c.position.y = 1.2 + Math.sin(t * 2 + c.userData.phase) * 0.2;
       const d = Math.hypot(c.position.x - ps.pos.x, c.position.z - ps.pos.z);
-      if (d < PICKUP && c.position.y > ps.pos.y - 0.8 && c.position.y < ps.pos.y + H + 0.8) {
-        save.coins++; renderCoins(); sfxCoin();
-        placeCoin(c); // aparece otra en un lugar nuevo
-      }
-    }
+      if (d < PICKUP && c.position.y > ps.pos.y - 0.8 && c.position.y < ps.pos.y + H + 0.8) { takeCoin(c, i); sfxCoin(); }
+    });
+  }
+  function takeCoin(c, i) {
+    if (c.userData.taken) return;
+    save.coins++; renderCoins();
+    // En multijugador las monedas son las mismas para todos: el servidor decide dónde aparece la nueva
+    if (red.id !== null) { c.visible = false; c.userData.taken = true; enviar({ tipo: 'moneda', i }); }
+    else placeCoin(c); // aparece otra en un lugar nuevo
   }
 
   // ---------- Tienda (P) ----------
@@ -877,6 +931,7 @@ import { PUERTO, ENVIOS_POR_SEGUNDO, acercar, piezasExplosion } from './src/red.
     if (lvl >= it.max || (it.needs && !save.levels[it.needs]) || !canAfford(save, cost)) return;
     for (const [c, n] of Object.entries(cost)) save[c] -= n;
     save.levels[id]++; it.apply(save.levels[id]);
+    enviar({ tipo: 'nivel', id, nivel: save.levels[id] });   // en multijugador la base es de todo el equipo
     renderCoins(); renderShop();
     showToast(it.max === 1 ? `¡Compraste: ${it.name}!` : `¡${it.name}: nivel ${save.levels[id]}!`);
   }
@@ -987,7 +1042,8 @@ import { PUERTO, ENVIOS_POR_SEGUNDO, acercar, piezasExplosion } from './src/red.
       if (on) { platforms.push(...L.platforms); x = L.start; wait = 0; }
     };
     L.setHopper = on => { L.hopperOwned = on; hopper.visible = on && L.owned; };
-    const collect = () => { onCollect(); wait = 1.5; sinkT = 0; };   // los siguientes pedazos salen en un momento
+    // Con la tolva se recoge solo: en multijugador eso lo cobra solo el anfitrión (si no, cada compu lo cobraría otra vez)
+    const collect = auto => { if (!(auto && copia())) onCollect(); wait = 1.5; sinkT = 0; };   // los siguientes pedazos salen en un momento
     L.update = dt => {
       if (!L.owned) return;
       tex.offset.x -= L.speed * dt / 2;                               // las rayas avanzan con la cinta
@@ -998,7 +1054,7 @@ import { PUERTO, ENVIOS_POR_SEGUNDO, acercar, piezasExplosion } from './src/red.
       const onPlate = x >= L.plateX;
       let y = L.y0 + beltItemY(x, L.x1, L.plateX, BELT_TOP, 0.08);    // altura de la base de lo que viaja
       // Con tolva: al llegar se hunde en el embudo y se recoge sola
-      if (onPlate && L.hopperOwned) { sinkT += dt; y -= Math.min(1, sinkT / 0.4) * 0.6; if (sinkT >= 0.4) { collect(); return; } }
+      if (onPlate && L.hopperOwned) { sinkT += dt; y -= Math.min(1, sinkT / 0.4) * 0.6; if (sinkT >= 0.4) { collect(true); return; } }
       pieces.visible = !converted; item.visible = converted;
       if (!converted) { pieces.position.set(x, L.y0 + BELT_TOP, z); pieces.rotation.y += dt * 0.6; }
       const bob = onPlate && !L.hopperOwned ? Math.sin(t * 4) * 0.06 : 0;
@@ -1098,9 +1154,21 @@ import { PUERTO, ENVIOS_POR_SEGUNDO, acercar, piezasExplosion } from './src/red.
       for (let j = i + 1; j < bodies.length; j++) separate(bodies[i][0], bodies[i][1](bodies[i][0]), bodies[j][0], bodies[j][1](bodies[j][0]));
   }
   function updateAssistant(dt) {
+    // Los asistentes son del equipo: los mueve el anfitrión y los demás solo los dibujan donde él dice
+    if (copia()) {
+      const k = dt * 12;
+      assistants.forEach((a, i) => {
+        const r = red.asistentes && red.asistentes[i]; if (!r) return;
+        a.pos.set(acercar(a.pos.x, r[0], k), acercar(a.pos.y, r[1], k), acercar(a.pos.z, r[2], k));
+        a.facing = r[3]; a.obj.rotation.y = r[3];
+        a.obj.children[0].position.y = 0.75 + Math.abs(Math.sin(t * 14 + a.pos.x)) * 0.05;
+      });
+      return;
+    }
+    const far = new THREE.Vector3(1e6, 0, 1e6);   // las monedas ya agarradas (esperando al servidor) no cuentan
     for (const a of assistants) {
       // Va por la moneda más cercana
-      const c = coins[nearestIndex(a.pos, coins.map(k => k.position))];
+      const ci = nearestIndex(a.pos, coins.map(k => k.userData.taken ? far : k.position)), c = coins[ci];
       // No se meten a tu casa: si están adentro salen por la puerta, y si la casa estorba, la rodean
       const house = save.levels.bigHouse ? BIG_HOUSE : MEDIUM_HOUSE;
       if (insideRect(a.pos.x, a.pos.z, house)) a.pos.set(HOUSE_VISIT.outside.x, 0, HOUSE_VISIT.outside.z);
@@ -1112,10 +1180,7 @@ import { PUERTO, ENVIOS_POR_SEGUNDO, acercar, piezasExplosion } from './src/red.
         turnTo(a, dx, dz, dt);
       }
       physics(a, dt, a.onGround && a.hitWall, JUMP); // si choca con algo, lo salta
-      if (Math.hypot(c.position.x - a.pos.x, c.position.z - a.pos.z) < PICKUP) {
-        save.coins++; renderCoins();
-        placeCoin(c);
-      }
+      if (Math.hypot(c.position.x - a.pos.x, c.position.z - a.pos.z) < PICKUP) takeCoin(c, ci);
       a.obj.children[0].position.y = 0.75 + Math.abs(Math.sin(t * 14 + a.pos.x)) * 0.05; // camina
     }
   }
@@ -1230,6 +1295,18 @@ import { PUERTO, ENVIOS_POR_SEGUNDO, acercar, piezasExplosion } from './src/red.
   const botInsideHouse = () => houseVisitor && houseVisitor.pos.x > 20.3 && houseVisitor.pos.x < 35.7 && houseVisitor.pos.z > 4.3 && houseVisitor.pos.z < 17.7 && houseVisitor.pos.y > -1;
   function updateDumbBots(dt) {
     idleSwings(dt);
+    // Si otra compu es el anfitrión, los bots solo se dibujan donde ella dice
+    if (copia()) {
+      if (!red.bots) return;
+      const k = dt * 12;
+      dumbBots.forEach((b, i) => {
+        const r = red.bots[i]; if (!r) return;
+        b.pos.set(acercar(b.pos.x, r[0], k), acercar(b.pos.y, r[1], k), acercar(b.pos.z, r[2], k));
+        b.facing = r[3]; b.obj.rotation.y = r[3]; b.obj.visible = !!r[4];
+        b.body.position.y = H * BOT_SCALE / 2 + Math.abs(Math.sin(t * 14 + b.pos.x)) * 0.05;
+      });
+      return;
+    }
     for (const b of dumbBots) {
       if ((isNight || b.asleep) && goToBed(b, dumbBots.indexOf(b), dt)) continue;   // de noche se van a dormir a su casa
       // Ya está en el columpio o en el tobogán
@@ -2105,6 +2182,7 @@ import { PUERTO, ENVIOS_POR_SEGUNDO, acercar, piezasExplosion } from './src/red.
       mgF: !!(MG.active && MG.active.onF),
     };
     for (const k in show) if (touchBtns[k].hidden === show[k]) touchBtns[k].hidden = !show[k];
+    if (shootBtn.hidden === stats.blaster) shootBtn.hidden = !stats.blaster;
   }
   const swatch = c => `<span class="swatch" style="background:#${c.toString(16).padStart(6, '0')}"></span>`;
   const GROUPS = [['hat', 'Sombreros'], ['color', 'Colores para tu rectángulo'], ['glasses', 'Gafas']];
@@ -2287,7 +2365,8 @@ import { PUERTO, ENVIOS_POR_SEGUNDO, acercar, piezasExplosion } from './src/red.
   function saveGame() {
     if (!userName) return;
     try {
-      localStorage.setItem(saveKey(userName), serializeSave({ coins: save.coins, boxes: save.boxes, levels: save.levels, dayPhase, pos: MG.active ? MG.back : ps.pos, style: save.style, trophies: save.trophies }));
+      const mine = red.solo || save;   // en multijugador, lo de tu partida de solo queda como estaba
+      localStorage.setItem(saveKey(userName), serializeSave({ coins: mine.coins, boxes: mine.boxes, levels: mine.levels, dayPhase, pos: MG.active ? MG.back : ps.pos, style: save.style, trophies: save.trophies }));
     } catch (e) {
       showToast('No se pudo guardar: este navegador no deja guardar datos', true);
       return;
@@ -2342,38 +2421,63 @@ import { PUERTO, ENVIOS_POR_SEGUNDO, acercar, piezasExplosion } from './src/red.
     sp.scale.set(4, 2, 1); sp.visible = false; scene.add(sp);
     return sp;
   })();
-  function updateEnemy(dt) {
-    let wantJump = false, moving = false;
-    const stunned = stunTime > 0;
-    if (stunned) stunTime -= dt;
+  // Cómo se ve el gigante: azul y temblando si está aturdido, ojos cerrados y Zzz si duerme
+  function enemyLook(stunned, sleeping) {
     enemyBody.material.color.setHex(stunned ? 0x6f8cff : 0xd4161b);
     enemyBody.rotation.z = stunned ? Math.sin(t * 30) * 0.05 : 0; // tiembla mientras está aturdido
-    // De noche duerme, a menos que te acerques demasiado
-    if (isNight) {
-      const d = Math.hypot(ps.pos.x - es.pos.x, ps.pos.z - es.pos.z);
-      if (!enemyAwake && d < WAKE_DIST) { enemyAwake = true; showToast('¡Despertaste al gigante!', true); }
-      else if (enemyAwake && d > SLEEP_DIST) enemyAwake = false; // te alejaste: se vuelve a dormir
-    } else enemyAwake = true;
-    const sleeping = !enemyAwake;
     for (const e of enemyEyes) e.scale.y = sleeping ? 0.15 : 1; // ojos cerrados
     zzz.visible = sleeping;
     if (sleeping) {
       zzz.position.set(es.pos.x + 1.2, es.pos.y + H * ENEMY_SCALE + 1 + Math.sin(t * 2) * 0.3, es.pos.z);
       zzz.material.opacity = 0.6 + Math.sin(t * 3) * 0.3;
     }
+  }
+  // Todos los jugadores que el gigante puede perseguir: tú y (si eres el anfitrión) tus amigos
+  function giantTargets() {
+    const all = [ps.pos];
+    if (esAnfitrion()) for (const f of red.otros.values()) all.push(f);
+    return all.filter(p => Math.abs(p.x) < EDGE && Math.abs(p.z) < EDGE);   // los que están en un minijuego no cuentan
+  }
+  const flatDist = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
+  function updateEnemy(dt) {
+    // Si otra compu es el anfitrión, el gigante solo se dibuja donde ella dice
+    if (copia()) {
+      const g = red.gigante;
+      if (g) {
+        const k = dt * 12;
+        es.pos.set(acercar(es.pos.x, g.x, k), acercar(es.pos.y, g.y, k), acercar(es.pos.z, g.z, k));
+        es.facing = g.rot; es.obj.rotation.y = g.rot;
+        enemyLook(g.stun, g.sleep);
+      }
+      return;
+    }
+    let wantJump = false, moving = false;
+    const stunned = stunTime > 0;
+    if (stunned) stunTime -= dt;
+    const targets = giantTargets();
+    // De noche duerme, a menos que alguien se acerque demasiado
+    if (isNight) {
+      const d = Math.min(Infinity, ...targets.map(p => flatDist(p, es.pos)));
+      if (!enemyAwake && d < WAKE_DIST) { enemyAwake = true; if (flatDist(ps.pos, es.pos) < WAKE_DIST) showToast('¡Despertaste al gigante!', true); }
+      else if (enemyAwake && d > SLEEP_DIST) enemyAwake = false; // todos se alejaron: se vuelve a dormir
+    } else enemyAwake = true;
+    const sleeping = !enemyAwake;
+    enemyLook(stunned, sleeping);
+    // Persigue al jugador más cercano que esté en su mitad
+    const prey = targets.filter(p => p.z <= -LINE_W/2).sort((a, b) => flatDist(a, es.pos) - flatDist(b, es.pos))[0];
     if (stunned || sleeping) { /* no se mueve */ }
     else if (enemyWait > 0) { enemyWait -= dt; }
     else {
       let tx, tz, speed;
-      if (ps.pos.z > -LINE_W/2) {
+      if (!prey) {
         // Estás en la zona segura: camina al azar por su mitad, lejos de ti
         wanderTime -= dt;
         const far = Math.hypot(wander.x - ps.pos.x, wander.z - ps.pos.z) >= WANDER_MIN_DIST;
         if (wanderTime <= 0 || !far || Math.hypot(wander.x - es.pos.x, wander.z - es.pos.z) < 1) pickWander();
         tx = wander.x; tz = wander.z; speed = ENEMY_SPEED * 0.5;
       } else {
-        // Estás en su mitad: te persigue a tu misma velocidad
-        tx = ps.pos.x; tz = Math.min(ps.pos.z, ENEMY_MAX_Z); speed = ENEMY_SPEED;
+        // Alguien está en su mitad: lo persigue a tu misma velocidad
+        tx = prey.x; tz = Math.min(prey.z, ENEMY_MAX_Z); speed = ENEMY_SPEED;
         wanderTime = 0;
       }
       const dx = tx - es.pos.x, dz = tz - es.pos.z, dist = Math.hypot(dx, dz);
@@ -2383,8 +2487,8 @@ import { PUERTO, ENVIOS_POR_SEGUNDO, acercar, piezasExplosion } from './src/red.
         turnTo(es, dx, dz, dt);
         moving = dist > 0.3;
       }
-      // Salta si tú saltas cerca de él
-      if (ps.pos.y > es.pos.y + 0.5 && Math.hypot(ps.pos.x - es.pos.x, ps.pos.z - es.pos.z) < 8) wantJump = true;
+      // Salta si al que persigue salta cerca de él
+      if (prey && prey.y > es.pos.y + 0.5 && flatDist(prey, es.pos) < 8) wantJump = true;
     }
     physics(es, dt, wantJump, ENEMY_JUMP);
     es.pos.x = Math.max(-EDGE + ENEMY_R, Math.min(EDGE - ENEMY_R, es.pos.x));
@@ -2468,11 +2572,24 @@ import { PUERTO, ENVIOS_POR_SEGUNDO, acercar, piezasExplosion } from './src/red.
     mesh.position.copy(start).addScaledVector(dir, 0.5);
     mesh.lookAt(mesh.position.clone().add(dir));
     scene.add(mesh);
-    lasers.push({ mesh, dir, travel: 0 });
+    lasers.push({ mesh, dir, travel: 0, speed: blaster.speed });
     sfxPium();
+    enviar({ tipo: 'disparo', s: [start.x, start.y, start.z].map(corto), d: [dir.x, dir.y, dir.z].map(n => Math.round(n * 1000) / 1000), v2: !!blaster.particles });
     reloadLeft = blaster.reload;
     // Pequeño retroceso del bláster
     (firstPerson ? fpBlaster : handBlaster).userData.kick = 1;
+  }
+  // Láseres de tus amigos: solo se ven (lo que tocan lo revisa la compu de quien disparó)
+  const friendLaserMats = [false, true].map(v2 => { const b = blasterStats(v2); return [new THREE.MeshBasicMaterial({ color: b.color }), new THREE.MeshBasicMaterial({ color: b.glow, transparent: true, opacity: 0.35, depthWrite: false })]; });
+  function friendShot(m) {
+    const [mat, glow] = friendLaserMats[m.v2 ? 1 : 0];
+    const dir = new THREE.Vector3(...m.d).normalize();
+    const mesh = new THREE.Mesh(laserGeo, mat);
+    mesh.add(new THREE.Mesh(glowGeo, glow));
+    mesh.position.set(...m.s).addScaledVector(dir, 0.5);
+    mesh.lookAt(mesh.position.clone().add(dir));
+    scene.add(mesh);
+    lasers.push({ mesh, dir, travel: 0, speed: blasterStats(m.v2).speed, friend: true });
   }
   function updateLaser(dt) {
     // Barra de recarga
@@ -2490,15 +2607,31 @@ import { PUERTO, ENVIOS_POR_SEGUNDO, acercar, piezasExplosion } from './src/red.
 
     for (let i = lasers.length - 1; i >= 0; i--) {
       const L = lasers[i];
-      const step = blaster.speed * dt;
+      const step = L.speed * dt;
       L.mesh.position.addScaledVector(L.dir, step);
       L.travel += step;
       const lp = L.mesh.position;
+      if (L.friend) {   // láser de un amigo: se apaga al llegar al suelo, a las montañas o muy lejos
+        if (lp.y < 0 || Math.max(Math.abs(lp.x), Math.abs(lp.z)) > EDGE - MOUNTAIN_WALL_INSET || L.travel > LASER_RANGE) { scene.remove(L.mesh); lasers.splice(i, 1); }
+        continue;
+      }
       // El láser también es una caja: 0,2 de ancho, 0,5 de alto y 1 de largo
       const laserBox = { x: lp.x, z: lp.z, hw: 0.1, hd: 0.5, a: Math.atan2(L.dir.x, L.dir.z), y0: lp.y - 0.25, y1: lp.y + 0.25 };
       const hitEnemy = !!boxHit(laserBox, boxOf(es, ENEMY_SCALE));
+      // ¿Le diste a un amigo? Se queda aturdido 2 segundos
+      for (const [id, f] of red.otros) {
+        if (f.mg) continue;   // está en un minijuego: no está aquí
+        const fp = f.obj.position;
+        if (boxHit(laserBox, { x: fp.x, z: fp.z, hw: W/2, hd: D/2, a: f.obj.rotation.y, y0: fp.y, y1: fp.y + H })) {
+          enviar({ tipo: 'golpe', a: id }); showToast(`⚡ ¡Le diste a ${f.nombre}!`);
+          const bm = new THREE.Mesh(burstGeo, new THREE.MeshBasicMaterial({ color: 0xffe14d, transparent: true, opacity: 0.8, depthWrite: false }));
+          bm.position.copy(lp); scene.add(bm); bursts.push({ mesh: bm, life: 0.4 });
+          L.travel = Infinity;   // el láser se apaga
+          break;
+        }
+      }
       if (hitEnemy) {
-        stunTime = 2;
+        if (copia()) enviar({ tipo: 'evento', que: 'aturdir' }); else stunTime = 2;   // el gigante lo controla el anfitrión
         const bm = new THREE.Mesh(burstGeo, new THREE.MeshBasicMaterial({ color: blaster.particles ? 0xff4d4d : 0x4d8dff, transparent: true, opacity: 0.8, depthWrite: false }));
         bm.position.copy(lp); scene.add(bm); bursts.push({ mesh: bm, life: 0.4 });
         showToast('¡Gigante aturdido 2 segundos!');
@@ -2520,7 +2653,7 @@ import { PUERTO, ENVIOS_POR_SEGUNDO, acercar, piezasExplosion } from './src/red.
   }
 
   // ---------- Ciclo día / noche ----------
-  const DAY_LEN = 240;                 // segundos por día completo (4 minutos)
+  const DAY_LEN = DIA_SEGUNDOS;        // segundos por día completo (4 minutos)
   let dayPhase = 8 / 24;               // empieza a las 8:00 (0 = medianoche, 0.5 = mediodía)
   let isNight = false;
   const SKY_DAY = new THREE.Color(0xbfe3f2), SKY_NIGHT = new THREE.Color(0x0b1330), SKY_SUNSET = new THREE.Color(0xf29b63);
@@ -2554,7 +2687,10 @@ import { PUERTO, ENVIOS_POR_SEGUNDO, acercar, piezasExplosion } from './src/red.
     const wasNight = isNight;
     isNight = elev < -0.05;
     if (isNight && !wasNight) { enemyAwake = false; showToast('Se hizo de noche: el gigante se durmió'); }
-    if (!isNight && wasNight) { showToast('¡Amaneció! El gigante despertó. Los bots del pueblo necesitan ayuda', true); newVillageDay(); }
+    if (!isNight && wasNight) { showToast('¡Amaneció! El gigante despertó. Los bots del pueblo necesitan ayuda', true);
+      // En multijugador el anfitrión decide el día nuevo del pueblo, para que todos tengan las mismas misiones
+      if (!copia()) { newVillageDay(); if (esAnfitrion()) enviar({ tipo: 'dia', dia: village.day }); }
+    }
     // Reloj
     const mins = Math.floor(dayPhase * 24 * 60);
     if (mins !== lastMinute) {
@@ -2582,6 +2718,7 @@ import { PUERTO, ENVIOS_POR_SEGUNDO, acercar, piezasExplosion } from './src/red.
     sleepLeft -= dt;
     if (sleepLeft <= 0) {
       dayPhase = hourToPhase(9);     // se salta la noche: son las 9:00
+      enviar({ tipo: 'hora', fase: dayPhase });   // en multijugador también amanece para tus amigos
       sleepEl.classList.remove('on');
       showToast('¡Buenos días! Son las 9:00');
     }
@@ -2622,7 +2759,7 @@ import { PUERTO, ENVIOS_POR_SEGUNDO, acercar, piezasExplosion } from './src/red.
     });
     newVillageDay();
   }
-  function newVillageDay() { village.day++; village.tasks = tasksForDay(village.day); village.done.clear(); }
+  function newVillageDay(day = village.day + 1) { village.day = day; village.tasks = tasksForDay(village.day); village.done.clear(); }
   const botName = i => MINIGAMES[i].bot;
   // Las cosas perdidas de las misiones
   function makeTaskItem(kind) {
@@ -2728,9 +2865,6 @@ import { PUERTO, ENVIOS_POR_SEGUNDO, acercar, piezasExplosion } from './src/red.
   buildVillage();
 
   // ---------- Multijugador: tus amigos en tiempo real ----------
-  // Solo se conecta si el juego viene del servidor multijugador (bun server.js o el link de Cloudflare)
-  const ONLINE = location.port === String(PUERTO) || location.hostname.endsWith('.trycloudflare.com');
-  const red = { ws: null, otros: new Map(), envio: 0, pedazos: [] };   // otros: id → { obj, label, x, y, z, rot }
   // Cartelito con el nombre encima de la cabeza
   function makeLabel(text) {
     const c = document.createElement('canvas'); c.width = 256; c.height = 64;
@@ -2742,68 +2876,187 @@ import { PUERTO, ENVIOS_POR_SEGUNDO, acercar, piezasExplosion } from './src/red.
     s.scale.set(2.4, 0.6, 1); s.position.y = H + 0.6;
     return s;
   }
-  // Un amigo: rectángulo de su color con ojos, igual que tú
+  // Un amigo: rectángulo de su color con ojos, igual que tú (y con su gorra, sus gafas y su bláster)
   function addFriend(j) {
-    const obj = new THREE.Group();
+    const obj = new THREE.Group(), look = new THREE.Group();   // look: todo lo que se esconde si está en un minijuego
     const b = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), new THREE.MeshLambertMaterial({ color: j.color }));
-    b.position.y = H/2; b.castShadow = true; obj.add(b);
-    [-0.22, 0.22].forEach(x => { const e = new THREE.Mesh(eyeGeo, eyeMat); e.scale.z = 0.5; e.position.set(x, H*0.78, D/2 + 0.02); obj.add(e); });
-    obj.add(makeLabel(j.nombre));
+    b.position.y = H/2; b.castShadow = true; look.add(b);
+    [-0.22, 0.22].forEach(x => { const e = new THREE.Mesh(eyeGeo, eyeMat); e.scale.z = 0.5; e.position.set(x, H*0.78, D/2 + 0.02); look.add(e); });
+    const label = makeLabel(j.nombre), mgLabel = makeLabel('🎮 ' + j.nombre + ': minijuego');
+    mgLabel.scale.set(3.6, 0.6, 1); mgLabel.visible = false;
+    obj.add(look, label, mgLabel);
     obj.position.set(j.x, j.y, j.z); obj.rotation.y = j.rot || 0;
     scene.add(obj);
-    red.otros.set(j.id, { obj, body: b, nombre: j.nombre, x: j.x, y: j.y, z: j.z, rot: j.rot || 0 });
+    const f = { obj, body: b, look, label, mgLabel, wear: [], blaster: null, nombre: j.nombre, x: j.x, y: j.y, z: j.z, rot: j.rot || 0, mg: 0 };
+    red.otros.set(j.id, f);
+    setFriendLook(f, j.look);
+    setFriendMinigame(f, j.mg);
+  }
+  // Ponerle a tu amigo lo que lleva puesto
+  function setFriendLook(f, look) {
+    if (!look) return;
+    for (const m of f.wear) f.body.remove(m);
+    f.wear = [];
+    for (const id of [look.hat, look.glasses]) {
+      const c = id && cosmeticById(id);
+      if (!c) continue;
+      const m = c.type === 'hat' ? HAT_MODELS[c.model](c) : GLASSES_MODELS[c.model](c);
+      if (c.type === 'hat') m.position.y = H / 2; else m.position.set(0, H * 0.78 - H / 2, D / 2 + 0.06);
+      f.body.add(m); f.wear.push(m);
+    }
+    if (look.blaster && !f.blaster) { f.blaster = makeBlaster(); f.blaster.position.copy(handBlaster.position); f.look.add(f.blaster); }
+    if (f.blaster) { f.blaster.visible = look.blaster > 0; f.blaster.userData.accent.color.setHex(look.blaster === 2 ? 0xff2a2a : 0x3d8bff); }
+  }
+  // En un minijuego tu amigo está en un lugar que solo existe en su compu: se esconde y su cartel lo avisa
+  function setFriendMinigame(f, mg) {
+    f.mg = mg ? 1 : 0;
+    f.look.visible = f.label.visible = !f.mg;
+    f.mgLabel.visible = !!f.mg;
   }
   // ¡BOOM! El rectángulo se rompe en pedacitos de su color que salen volando
+  const pieceGeo = new THREE.BoxGeometry(0.25, 0.25, 0.25);
   function explode(f) {
-    const mat = f.body.material, p = f.obj.position;
-    const geo = new THREE.BoxGeometry(0.25, 0.25, 0.25);
+    const p = f.obj.position;
+    // Un solo material para los 40 pedacitos (todos se desvanecen igual): menos trabajo para la tarjeta de video
+    const mat = f.body.material.clone(); mat.transparent = true;
+    const boom = { mat, vida: 1.6, piezas: [] };
     for (const q of piezasExplosion(40)) {
-      const m = new THREE.Mesh(geo, mat.clone());
-      m.material.transparent = true;
+      const m = new THREE.Mesh(pieceGeo, mat);
       m.position.set(p.x, p.y + q.y, p.z);
       scene.add(m);
-      red.pedazos.push({ m, ...q, vida: 1.6 });
+      boom.piezas.push({ m, ...q });
     }
+    red.pedazos.push(boom);
     scene.remove(f.obj);
+  }
+  // Cuando tu compu pasa a ser el anfitrión: los bots empiezan a pensar desde donde están
+  function takeOverWorld() {
+    for (const b of dumbBots) { if (b.play) endPlay(b); b.visit = null; b.timer = 0; b.body.rotation.set(0, 0, 0); }
+    houseVisitor = null; enemyWait = 0; stunTime = red.gigante && red.gigante.stun ? 2 : 0;
+    enemyAwake = !(red.gigante && red.gigante.sleep);
   }
   function conectarRed(name) {
     if (!ONLINE || red.ws) return;
     const ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`);
     red.ws = ws;
-    ws.onopen = () => ws.send(JSON.stringify({ tipo: 'hola', nombre: name, color: body.material.color.getHex(), monedas: save.coins }));
+    ws.onopen = () => ws.send(JSON.stringify({ tipo: 'hola', nombre: name, color: body.material.color.getHex(), monedas: save.coins, cajas: save.boxes, niveles: save.levels, look: myLook() }));
     ws.onmessage = e => {
       const m = JSON.parse(e.data);
       if (m.tipo === 'bienvenida') {
+        red.id = m.id; red.anfitrion = m.anfitrion;
         for (const j of m.jugadores) addFriend(j);
         // En una compu nueva (sin guardado en el navegador) apareces donde te dejó la base de datos
         if (m.guardado && !loadedLocal && Math.abs(m.guardado.x) < 100 && Math.abs(m.guardado.z) < 100) ps.pos.set(m.guardado.x, m.guardado.y, m.guardado.z);
+        // El mundo compartido: la misma hora, las mismas misiones del pueblo y las mismas monedas para todos
+        dayPhase = m.fase; lastMinute = -1;
+        newVillageDay(m.dia);
+        // La base y la billetera del equipo. Lo de tu partida de solo se guarda aparte, para cuando vuelvas a jugar solo.
+        red.solo = red.solo || { coins: save.coins, boxes: save.boxes, levels: { ...save.levels } };   // (si te reconectas, ya estaba guardado)
+        save.coins = m.equipo.monedas; save.boxes = m.equipo.cajas;
+        red.synced = { coins: save.coins, boxes: save.boxes };
+        applyTeamLevels(m.equipo.niveles, null);
+        if (m.aporte && (m.aporte.monedas || m.aporte.cajas)) setTimeout(() => showToast(`Aportaste ${m.aporte.monedas} monedas y ${m.aporte.cajas} cajas a la billetera del equipo 🤝`, false, 4000), 3200);
+        m.monedas.forEach((p, i) => { const c = coins[i]; if (c) { c.position.set(p.x, 1.2, p.z); c.visible = true; c.userData.taken = false; } });
         const n = m.jugadores.length;
         showToast(n ? `¡Conectado! Hay ${n} amigo${n > 1 ? 's' : ''} jugando` : '¡Conectado! Eres el primero en llegar', false, 3000);
       } else if (m.tipo === 'entra') {
         addFriend(m); showToast(`${m.nombre} entró al juego`);
       } else if (m.tipo === 'pos') {
         const f = red.otros.get(m.id);
-        if (f) { f.x = m.x; f.y = m.y; f.z = m.z; f.rot = m.rot; f.body.material.color.setHex(m.color); }
+        if (f) { f.x = m.x; f.y = m.y; f.z = m.z; f.rot = m.rot; f.body.material.color.setHex(m.color); if (f.mg !== m.mg) setFriendMinigame(f, m.mg); }
+      } else if (m.tipo === 'look') {
+        const f = red.otros.get(m.id);
+        if (f) setFriendLook(f, m.look);
+      } else if (m.tipo === 'equipo') {
+        // La billetera del equipo cambió: lo que tú ganaste o gastaste y todavía no llega al servidor se mantiene
+        const pc = save.coins - red.synced.coins, pb = save.boxes - red.synced.boxes;
+        red.synced = { coins: m.monedas, boxes: m.cajas };
+        save.coins = m.monedas + pc; save.boxes = m.cajas + pb;
+        renderCoins();
+      } else if (m.tipo === 'nivel') {
+        applyTeamLevels({ [m.id]: m.nivel }, m.quien);
       } else if (m.tipo === 'sale') {
         const f = red.otros.get(m.id);
         if (f) { explode(f); red.otros.delete(m.id); }
         showToast(`💥 ${m.nombre} se desconectó`, true, 3000);
+      } else if (m.tipo === 'anfitrion') {
+        red.anfitrion = m.id;
+        if (m.id === red.id) takeOverWorld();
+      } else if (m.tipo === 'mundo') {
+        const g = m.g;
+        red.gigante = { x: g[0], y: g[1], z: g[2], rot: g[3], stun: !!g[4], sleep: !!g[5] };
+        red.bots = m.b; red.asistentes = m.a;
+      } else if (m.tipo === 'moneda') {
+        const c = coins[m.i];
+        if (c) { c.position.set(m.x, 1.2, m.z); c.visible = true; c.userData.taken = false; }
+      } else if (m.tipo === 'hora') {
+        dayPhase = m.fase; lastMinute = -1;
+        if (m.quien && m.quien !== userName) showToast(`${m.quien} durmió y se saltó la noche: ¡buenos días!`, false, 3000);
+      } else if (m.tipo === 'dia') {
+        newVillageDay(m.dia);
+      } else if (m.tipo === 'evento' && esAnfitrion()) {
+        // Solo le llega al anfitrión: cosas que le pasan al gigante en la pantalla de un amigo
+        if (m.que === 'atrapado') resetEnemy();
+        else if (m.que === 'aturdir') { stunTime = 2; showToast(`¡${m.nombre} aturdió al gigante!`); }
+      } else if (m.tipo === 'disparo') {
+        friendShot(m);
+      } else if (m.tipo === 'golpe') {
+        red.aturdido = 2;
+        showToast(`⚡ ¡${m.de} te aturdió con su láser!`, true, 2500);
       } else if (m.tipo === 'error') {
         showToast(m.texto, true, 5000);
       }
     };
     ws.onclose = () => {
       for (const f of red.otros.values()) scene.remove(f.obj);
-      red.otros.clear(); red.ws = null;
+      red.otros.clear(); red.ws = null; red.id = null; red.anfitrion = null;
+      // Vuelves a tu billetera de solo (las cosas del equipo se van al recargar la página)
+      if (red.solo) { save.coins = red.solo.coins; save.boxes = red.solo.boxes; renderCoins(); }
+      // Sin servidor vuelves a jugar solo: tu compu mueve otra vez al gigante, a los bots y las monedas
+      for (const c of coins) if (c.userData.taken) { placeCoin(c); c.visible = true; c.userData.taken = false; }
+      takeOverWorld();
       showToast('Se cortó la conexión con el servidor', true, 4000);
     };
   }
-  function updateRed(dt) {
-    // Mandar tu posición unas 10 veces por segundo
-    if (red.ws && red.ws.readyState === WebSocket.OPEN && (red.envio -= dt) <= 0) {
-      red.envio = 1 / ENVIOS_POR_SEGUNDO;
-      red.ws.send(JSON.stringify({ tipo: 'pos', x: ps.pos.x, y: ps.pos.y, z: ps.pos.z, rot: ps.facing, color: body.material.color.getHex(), monedas: save.coins }));
+  // Lo que llevas puesto, para que tus amigos te vean igual
+  const myLook = () => ({ hat: save.style.equipped.hat || null, glasses: save.style.equipped.glasses || null, blaster: stats.blaster ? (blaster.particles ? 2 : 1) : 0 });
+  // Aplica las compras del equipo que tu compu todavía no tiene (en el orden de la tienda, como al cargar una partida)
+  function applyTeamLevels(levels, quien) {
+    quietToasts = !quien;
+    for (const it of SHOP) {
+      const lv = Math.min(levels[it.id] || 0, it.max);
+      if (lv <= save.levels[it.id]) continue;
+      save.levels[it.id] = lv; it.apply(lv);
+      if (quien) { quietToasts = false; setTimeout(() => showToast(`🤝 ${quien} compró para el equipo: ${it.name}`, false, 3500), 2000); }
     }
+    quietToasts = false;
+    renderCoins();
+  }
+  function updateRed(dt) {
+    if (red.id !== null) {
+      // Billetera del equipo: le contamos al servidor cuánto ganaste o gastaste desde la última vez
+      const dc = save.coins - red.synced.coins, db = save.boxes - red.synced.boxes;
+      if (dc || db) { enviar({ tipo: 'cambio', monedas: dc, cajas: db }); red.synced.coins += dc; red.synced.boxes += db; }
+      // ¿Te cambiaste la gorra, las gafas o el bláster?
+      const lk = JSON.stringify(myLook());
+      if (lk !== red.lastLook) { if (red.lastLook) enviar({ tipo: 'look', look: myLook() }); red.lastLook = lk; }
+    }
+    // Mandar tu posición (y, si eres el anfitrión, cómo está el mundo) unas 10 veces por segundo
+    if (red.id !== null && (red.envio -= dt) <= 0) {
+      red.envio = 1 / ENVIOS_POR_SEGUNDO;
+      // Si no te moviste, no hace falta repetirlo 10 veces por segundo: basta una vez por segundo (para que el servidor sepa que sigues ahí)
+      const pos = { tipo: 'pos', x: corto(ps.pos.x), y: corto(ps.pos.y), z: corto(ps.pos.z), rot: corto(ps.facing), color: body.material.color.getHex(), mg: MG.active ? 1 : 0 };
+      const txt = JSON.stringify(pos);
+      red.quieto = txt === red.ultimaPos ? (red.quieto || 0) + 1 : 0;
+      if (red.quieto % ENVIOS_POR_SEGUNDO === 0) { enviar(pos); red.ultimaPos = txt; }
+      if (esAnfitrion()) enviar({ tipo: 'mundo',
+        g: [es.pos.x, es.pos.y, es.pos.z, es.obj.rotation.y].map(corto).concat(stunTime > 0 ? 1 : 0, enemyAwake ? 0 : 1),
+        b: dumbBots.map(b => [b.pos.x, b.pos.y, b.pos.z, b.obj.rotation.y].map(corto).concat(b.obj.visible ? 1 : 0)),
+        a: assistants.map(a => [a.pos.x, a.pos.y, a.pos.z, a.obj.rotation.y].map(corto)) });
+    }
+    // Aturdido por el láser de un amigo: tiemblas y no te puedes mover
+    if (red.aturdido > 0) red.aturdido = Math.max(0, red.aturdido - dt);
+    body.rotation.z = red.aturdido > 0 ? Math.sin(t * 30) * 0.06 : 0;
     // Los amigos se deslizan suave hacia donde dijo el servidor
     const k = dt * 12;
     for (const f of red.otros.values()) {
@@ -2813,19 +3066,35 @@ import { PUERTO, ENVIOS_POR_SEGUNDO, acercar, piezasExplosion } from './src/red.
     }
     // Pedacitos de la explosión: vuelan, caen, giran y se desvanecen
     for (let i = red.pedazos.length - 1; i >= 0; i--) {
-      const q = red.pedazos[i];
-      q.vy -= 20 * dt;
-      q.m.position.x += q.vx * dt; q.m.position.y += q.vy * dt; q.m.position.z += q.vz * dt;
-      if (q.m.position.y < 0.12) { q.m.position.y = 0.12; q.vy *= -0.4; q.vx *= 0.7; q.vz *= 0.7; }   // rebota en el piso
-      q.m.rotation.x += q.giro * dt; q.m.rotation.z += q.giro * dt;
-      q.vida -= dt; q.m.material.opacity = Math.min(1, q.vida);
-      if (q.vida <= 0) { scene.remove(q.m); red.pedazos.splice(i, 1); }
+      const boom = red.pedazos[i];
+      boom.vida -= dt; boom.mat.opacity = Math.min(1, boom.vida);
+      for (const q of boom.piezas) {
+        q.vy -= 20 * dt;
+        q.m.position.x += q.vx * dt; q.m.position.y += q.vy * dt; q.m.position.z += q.vz * dt;
+        if (q.m.position.y < 0.12) { q.m.position.y = 0.12; q.vy *= -0.4; q.vx *= 0.7; q.vz *= 0.7; }   // rebota en el piso
+        q.m.rotation.x += q.giro * dt; q.m.rotation.z += q.giro * dt;
+      }
+      if (boom.vida <= 0) { for (const q of boom.piezas) scene.remove(q.m); boom.mat.dispose(); red.pedazos.splice(i, 1); }
     }
   }
 
   let t = 0, stepTimer = 0;
+  // Resolución automática: si el juego va lento (menos de 40 cuadros por segundo), baja un poco la resolución;
+  // si va sobrado por un buen rato, la vuelve a subir
+  const perf = { time: 0, frames: 0, good: 0 };
+  function autoResolution(raw) {
+    if (raw > 0.2) return;   // la pestaña estuvo escondida: ese cuadro no cuenta
+    perf.time += raw; perf.frames++;
+    if (perf.time < 2) return;
+    const fps = perf.frames / perf.time;
+    perf.time = perf.frames = 0;
+    if (fps < 40 && pixelRatio > 1) { pixelRatio = Math.max(1, pixelRatio - 0.25); perf.good = 0; renderer.setPixelRatio(pixelRatio); resize(); }
+    else if (fps > 55 && pixelRatio < MAX_RATIO && ++perf.good >= 5) { pixelRatio = Math.min(MAX_RATIO, pixelRatio + 0.25); perf.good = 0; renderer.setPixelRatio(pixelRatio); resize(); }
+  }
+
   function tick() {
-    const dt = Math.min(clock.getDelta(), 0.05);
+    const raw = clock.getDelta(), dt = Math.min(raw, 0.05);
+    autoResolution(raw);
     t += dt;
     updateSleep(dt);
     updateStylePrompt();
@@ -2843,8 +3112,14 @@ import { PUERTO, ENVIOS_POR_SEGUNDO, acercar, piezasExplosion } from './src/red.
     if (keys.ArrowLeft) camYaw += CAM_TURN * dt;
     if (keys.ArrowRight) camYaw -= CAM_TURN * dt;
     fx += joy.x; fz += joy.y;
+    // Joystick de la cámara (celular): a los lados gira, arriba y abajo mira hacia arriba o abajo
+    if (camJoy.x || camJoy.y) {
+      camYaw -= camJoy.x * 2.6 * dt;
+      if (firstPerson) fpPitch = Math.min(1.3, Math.max(-1.3, fpPitch - camJoy.y * 1.6 * dt));
+      else camPitch = Math.min(1.2, Math.max(0.1, camPitch + camJoy.y * 1.2 * dt));
+    }
     const busy = sleepLeft > 0 || !shopEl.hidden || !loginEl.hidden || !!document.querySelector('.panel:not([hidden])');
-    if (busy) fx = fz = 0; // dormido, en una tienda, en el armario o eligiendo usuario no te mueves
+    if (busy || red.aturdido > 0) fx = fz = 0; // dormido, en una tienda, en el armario, eligiendo usuario o aturdido no te mueves
     const len = Math.hypot(fx, fz);
     let moving = false;
     if (len > 0.1) {
