@@ -13,7 +13,7 @@ import {
   SWINGS, swingAngle, SLIDE, slidePoint,
   HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail,
   MINIGAMES, minigameOrigin, MAZE, generateMaze, mazePathLength, pickMaze, pickLemon, clampToArea, flowerTired, MEDIUM_HOUSE, insideRect, segmentHitsRect, detourAround, INVERTED, INVERTED_K, minigameDef, invertColor, fleeCoin, botSpeedAfter, CRATES, crateOutside, GARDEN, DROPPER, dropperLayers, dropperPad,
-  DOLPHINS, dolphinX, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot,
+  DOLPHINS, dolphinLane, dolphinLeap, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot,
 } from '../src/logic.js';
 
 // Caja de un personaje normal (1 × 0,6 × 2 m) en (x, z), girada `a` radianes
@@ -689,14 +689,24 @@ describe('morado: dropper', () => {
   });
 });
 
-describe('azul: delfines', () => {
-  it('los delfines van en carriles que se alcanzan de un salto, del muelle a la ballena', () => {
-    const lanes = [0, ...DOLPHINS.lanes, DOLPHINS.whaleZ - DOLPHINS.whaleSize[2] / 2];
-    for (let i = 1; i < lanes.length; i++) expect(lanes[i] - lanes[i - 1]).toBeLessThanOrEqual(6.5);
+describe('azul: delfines que saltan', () => {
+  const D = DOLPHINS;
+  it('son 10 y las filas se alcanzan de un salto, del muelle a la ballena', () => {
+    expect(D.count).toBe(10);
+    const rows = [1.4, ...Array.from({ length: D.count }, (_, i) => dolphinLane(i)), D.whaleZ - D.whaleSize[2] / 2];
+    for (let i = 1; i < rows.length; i++) expect(rows[i] - rows[i - 1]).toBeLessThanOrEqual(6.5);
   });
-  it('cada delfín nada de un lado a otro sin salirse de su zona', () => {
-    for (let i = 0; i < DOLPHINS.lanes.length; i++) for (let t = 0; t < 20; t += 0.1)
-      expect(Math.abs(dolphinX(i, t))).toBeLessThanOrEqual(DOLPHINS.halfRange);
+  it('cada delfín sale del agua, salta y se vuelve a esconder', () => {
+    let up = 0, down = 0;
+    for (let t = 0; t < 36; t += 0.05) { const L = dolphinLeap(3, t); if (L.up) { up++; expect(L.y).toBeGreaterThanOrEqual(0); expect(L.y).toBeLessThanOrEqual(D.peak); expect(Math.abs(L.x)).toBeLessThanOrEqual(D.span / 2); } else down++; }
+    expect(up).toBeGreaterThan(0); expect(down).toBeGreaterThan(0);
+  });
+  it('siempre hay un momento en que el siguiente delfín también está afuera (para saltar de uno a otro)', () => {
+    for (let i = 0; i + 1 < D.count; i++) {
+      let both = 0;
+      for (let t = 0; t < D.leap + D.under; t += 0.05) if (dolphinLeap(i, t).up && dolphinLeap(i + 1, t).up) both += 0.05;
+      expect(both).toBeGreaterThan(1);
+    }
   });
 });
 

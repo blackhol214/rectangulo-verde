@@ -179,8 +179,8 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module">
-import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, invertColor, fleeCoin, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinX, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, missingFor, canAfford, collideWalls, extraLineSlot, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
-         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-30'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
+import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, invertColor, fleeCoin, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, missingFor, canAfford, collideWalls, extraLineSlot, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
+         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-11-02'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
 (() => {
   const canvas = document.getElementById('game');
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -1351,6 +1351,33 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, cla
     const stock = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.3, 0.7, 12), skin); stock.rotation.z = Math.PI / 2; stock.position.set(-1.6, 0.6, 0); g.add(stock);
     return g;
   }
+  // Una ballena dormida (mira hacia +x): cuerpo enorme, cabeza grande, panza clara con rayas, aletas, cola levantada y ojos cerrados
+  function makeWhale() {
+    const g = new THREE.Group(), skin = mgMat(0x2f4a6d), dark = mgMat(0x223854), belly = mgMat(0xc9d6e3), lid = mgMat(0x111a26);
+    const body = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 18), skin); body.scale.set(5.2, 1.6, 3); body.position.set(-0.6, 0.9, 0); g.add(body);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 18), skin); head.scale.set(2.8, 1.55, 2.9); head.position.set(3.2, 0.95, 0); g.add(head);
+    const tummy = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 14), belly); tummy.scale.set(5.6, 0.9, 2.6); tummy.position.set(0.6, 0.35, 0); g.add(tummy);
+    for (let k = 0; k < 6; k++) { const groove = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.05, 0.08), dark); groove.position.set(3.4, 0.15 + k * 0.04, -1.2 + k * 0.48); g.add(groove); }   // rayas de la panza
+    const mouth = new THREE.Mesh(new THREE.BoxGeometry(4, 0.08, 5.4), lid); mouth.position.set(3.9, 0.55, 0); g.add(mouth);
+    for (const s of [-1, 1]) {
+      const eye = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.05, 6, 12, Math.PI), lid); eye.rotation.set(0, s > 0 ? 0 : Math.PI, Math.PI); eye.position.set(3.3, 1.15, s * 2.62); g.add(eye);   // ojos cerrados (duerme)
+      const fin = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.12, 0.8), dark); fin.position.set(1.8, 0.35, s * 3.1); fin.rotation.set(s * 0.4, s * 0.5, -0.3); g.add(fin);
+      const fluke = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.12, 1.9), dark); fluke.position.set(-8.4, 2.1, s * 1.05); fluke.rotation.set(0, s * 0.55, 0.25); g.add(fluke);
+    }
+    const stock = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 1.2, 3, 16), skin); stock.rotation.z = Math.PI / 2 + 0.35; stock.position.set(-6.6, 1.5, 0); g.add(stock);
+    const hole = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.1, 10), lid); hole.position.set(2.2, 2.45, 0); g.add(hole);   // el agujero para respirar
+    g.traverse(m => { if (m.isMesh) m.castShadow = true; });
+    return g;
+  }
+  // Salpicaduras de agua (cuando un delfín sale o se mete)
+  const splashMat = new THREE.MeshBasicMaterial({ color: 0xe8f6ff });
+  function splash(x, y, z, list) {
+    for (let k = 0; k < 10; k++) {
+      const m = new THREE.Mesh(new THREE.SphereGeometry(0.12, 6, 5), splashMat); m.position.set(x, y, z); scene.add(m);
+      const a = Math.random() * Math.PI * 2, v = 2 + Math.random() * 2;
+      list.push({ m, v: new THREE.Vector3(Math.cos(a) * v, 4 + Math.random() * 3, Math.sin(a) * v) });
+    }
+  }
   function makeLittleHouse(x, y, z, wallColor, roofColor) {
     const h = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.9, 2.2), mgMat(wallColor)); h.position.set(x, y + 0.95, z); h.castShadow = true; scene.add(h);
     const r = new THREE.Mesh(new THREE.ConeGeometry(2, 1.2, 4), mgMat(roofColor)); r.position.set(x, y + 2.5, z); r.rotation.y = Math.PI / 4; scene.add(r);
@@ -1607,31 +1634,41 @@ import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, cla
     dolphins: {
       build(o) {
         const Dl = DOLPHINS;
-        const water = new THREE.Mesh(new THREE.PlaneGeometry(90, 90), new THREE.MeshLambertMaterial({ color: 0x1e88e5, transparent: true, opacity: 0.85 }));
-        water.rotation.x = -Math.PI / 2; water.position.set(o.x, 0.35, o.z + 18); scene.add(water);
+        const water = new THREE.Mesh(new THREE.PlaneGeometry(140, 140), new THREE.MeshLambertMaterial({ color: 0x1e88e5, transparent: true, opacity: 0.85 }));
+        water.rotation.x = -Math.PI / 2; water.position.set(o.x, 0.35, o.z + 25); scene.add(water);
         mgBox(o.x - 3, o.x + 3, 0, 1, o.z - 4, o.z + 1.4, mgMat(0x8a5a33));                                  // muelle
+        // La ballena dormida, de lado, con la gorra del bot azul en la espalda
         const [ww, wh, wd] = Dl.whaleSize;
-        const whale = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 14), mgMat(0x37474f)); whale.scale.set(ww / 2, wh, wd / 2);
-        whale.position.set(o.x, 0, o.z + Dl.whaleZ); whale.castShadow = true; scene.add(whale);
-        platforms.push({ x: o.x, z: o.z + Dl.whaleZ, hw: ww / 2 - 0.6, hd: wd / 2 - 0.6, top: wh, bottom: 0 });
-        const zz = new THREE.Sprite(zzz.material); zz.scale.set(3, 1.5, 1); zz.position.set(o.x + 2, wh + 2.2, o.z + Dl.whaleZ); scene.add(zz);
+        const whale = makeWhale(); whale.position.set(o.x, 0, o.z + Dl.whaleZ); scene.add(whale);
+        platforms.push({ x: o.x - 0.3, z: o.z + Dl.whaleZ, hw: ww / 2, hd: wd / 2, top: wh, bottom: 0 });   // solo lo alto de la espalda
+        const zz = new THREE.Sprite(zzz.material); zz.scale.set(3, 1.5, 1); zz.position.set(o.x + 4.5, wh + 2.4, o.z + Dl.whaleZ); scene.add(zz);
         const cap = makeCap(0x0a84ff); cap.position.set(o.x - 1, wh + 0.05, o.z + Dl.whaleZ); scene.add(cap); MG.built.cap = cap;
-        MG.built.dolphins = Dl.lanes.map(z => {
-          const g = makeDolphin();
-          g.traverse(m => { if (m.isMesh) m.castShadow = true; }); scene.add(g);
-          const pl = { x: o.x, z: o.z + z, hw: Dl.length / 2, hd: Dl.width / 2, top: 1, bottom: 0, move: true, dx: 0, dy: 0, dz: 0 };
-          platforms.push(pl); return { g, pl };
+        // 10 delfines, uno por fila. Su "piso" solo existe mientras están fuera del agua
+        MG.built.dolphins = Array.from({ length: Dl.count }, (_, i) => {
+          const g = makeDolphin(); g.traverse(m => { if (m.isMesh) m.castShadow = true; }); g.visible = false; scene.add(g);
+          const pl = { x: o.x, z: o.z + dolphinLane(i), hw: Dl.length / 2, hd: Dl.width / 2, top: -5, bottom: -6, move: true, dx: 0, dy: 0, dz: 0 };
+          platforms.push(pl); return { g, pl, wasUp: false };
         });
+        MG.built.splash = [];
       },
-      start(o) { placePlayer(o.x, 1, o.z - 2); MG.built.cap.visible = true; MG.state.zero = MG.t; },
+      start(o) { placePlayer(o.x, 1, o.z - 2); MG.built.cap.visible = true; MG.t = 0; },
       update(dt, o) {
-        MG.built.dolphins.forEach(({ g, pl }, i) => {
-          const nx = o.x + dolphinX(i, MG.t);
-          pl.dx = nx - pl.x; pl.dy = 0; pl.dz = 0; pl.x = nx;
-          g.position.set(nx, Math.sin(MG.t * 3 + i) * 0.08, pl.z); g.rotation.y = Math.cos(MG.t * DOLPHINS.speed + i * 1.7) >= 0 ? 0 : Math.PI;
+        MG.built.dolphins.forEach((d, i) => {
+          const L = dolphinLeap(i, MG.t), { g, pl } = d, z = o.z + dolphinLane(i);
+          if (L.up !== d.wasUp) splash(o.x + (L.up ? -L.dir : L.dir) * DOLPHINS.span / 2, 0.4, z, MG.built.splash);   // ¡splash! al salir y al meterse
+          d.wasUp = L.up;
+          g.visible = L.up;
+          if (!L.up) { pl.dx = pl.dy = 0; pl.top = -5; pl.bottom = -6; return; }   // bajo el agua: no se puede pisar
+          const nx = o.x + L.x, top = L.y + 1;
+          pl.dx = nx - pl.x; pl.dy = pl.top > -5 ? top - pl.top : 0; pl.x = nx; pl.top = top; pl.bottom = L.y;
+          g.position.set(nx, L.y - 0.05, z); g.rotation.set(0, L.dir > 0 ? 0 : Math.PI, L.pitch);
         });
+        for (let k = MG.built.splash.length - 1; k >= 0; k--) {
+          const q = MG.built.splash[k]; q.v.y -= 20 * dt; q.m.position.addScaledVector(q.v, dt);
+          if (q.m.position.y < 0.3) { scene.remove(q.m); q.m.geometry.dispose(); MG.built.splash.splice(k, 1); }
+        }
         const p = ps.pos;
-        mgHud.innerHTML = `Salta por los <b>delfines</b> y recoge la gorra del <b>bot azul</b> sobre la ballena dormida`;
+        mgHud.innerHTML = `Salta sobre los <b>10 delfines</b> mientras están fuera del agua y recoge la gorra sobre la <b>ballena dormida</b>`;
         if (ps.onGround && p.y < 0.5) { placePlayer(o.x, 1, o.z - 2); showToast('¡Al agua! Vuelve a intentarlo desde el muelle', true); }
         const c = MG.built.cap.position;
         if (Math.hypot(p.x - c.x, p.z - c.z) < 1.4 && Math.abs(p.y - c.y) < 1.5) return { won: true, msg: '¡Recuperaste la gorra del bot azul! +80 monedas' };

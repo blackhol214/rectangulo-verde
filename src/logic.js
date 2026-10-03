@@ -419,7 +419,7 @@ export const MINIGAMES = [
   { id: 'crates',   bot: 'naranja',    name: 'Cajas grandes',         goal: 'Saca las 5 cajas grandes de la casa del bot naranja (empújalas)', reward: { boxes: 5 } },
   { id: 'flower',   bot: 'rosa',       name: 'La flor que corre',     goal: 'Alcanza a la flor rosada y riégala con F', reward: { coins: 20 } },
   { id: 'dropper',  bot: 'morado',     name: 'Dropper',               goal: 'Cae 200 m sin tocar lo rojo y aterriza en lo verde', reward: { coins: 150 } },
-  { id: 'dolphins', bot: 'azul',       name: 'Delfines',              goal: 'Salta entre los delfines y recoge la gorra sobre la ballena dormida', reward: { coins: 80 } },
+  { id: 'dolphins', bot: 'azul',       name: 'Delfines',              goal: 'Salta sobre los 10 delfines que saltan fuera del agua y recoge la gorra sobre la ballena dormida', reward: { coins: 80 } },
   { id: 'clouds',   bot: 'celeste',    name: 'Nubes',                 goal: 'Salta por las 10 nubes y lleva al bot celeste a su casa', reward: { coins: 60 } },
   { id: 'lava',     bot: 'turquesa',   name: '50 escalones con lava', goal: 'Sube los 50 escalones con el bot turquesa antes de que llegue la lava', reward: { coins: 100 } },
   { id: 'trees',    bot: 'verde lima', name: 'Los 20 árboles',        goal: 'Busca el círculo amarillo entre los rojos: pulsa E junto a cada árbol', reward: { coins: 40 } },
@@ -500,8 +500,19 @@ export const dropperPad = () => { const r = seededRandom(DROPPER.seed + 1); cons
 
 // ----- Azul: delfines y ballena -----
 // Cada delfín nada de un lado a otro (a lo largo de x) en su carril z; el muelle está en z = 0 y la ballena al final.
-export const DOLPHINS = { lanes: [5, 9.5, 14, 18.5, 23, 27.5], halfRange: 4, speed: 1.1, length: 3, width: 1.4, whaleZ: 34, whaleSize: [8, 2.4, 6] };
-export const dolphinX = (i, t) => Math.sin(t * DOLPHINS.speed + i * 1.7) * DOLPHINS.halfRange;
+// 10 delfines, uno por fila. No nadan: salen del agua, hacen un arco y se vuelven a meter.
+// leap: segundos fuera del agua · under: segundos escondidos · span: metros que avanzan de lado en el salto
+// peak: qué tan alto suben · wave: retraso entre un delfín y el siguiente (salen en ola)
+export const DOLPHINS = { count: 10, firstZ: 5, gap: 4.4, leap: 2.6, under: 1.0, span: 5, peak: 2.2, wave: 0.85, length: 3, width: 1.4, whaleZ: 51, whaleSize: [7.2, 2.4, 3.4] };   // whaleSize: la parte de arriba de su espalda, donde se puede pisar
+export const dolphinLane = i => DOLPHINS.firstZ + i * DOLPHINS.gap;
+// Dónde está el delfín i en el segundo t (x relativo a su fila; y = cuánto subió)
+export function dolphinLeap(i, t) {
+  const D = DOLPHINS, cycle = D.leap + D.under, local = (((t - i * D.wave) % cycle) + cycle) % cycle;
+  if (local >= D.leap) return { up: false, u: 1, x: 0, y: -2, pitch: 0, dir: 1 };
+  const u = local / D.leap, dir = i % 2 ? -1 : 1;   // uno salta hacia la derecha, el siguiente hacia la izquierda
+  return { up: true, u, dir, x: dir * (u - 0.5) * D.span, y: Math.sin(u * Math.PI) * D.peak,
+    pitch: Math.atan2(Math.PI * D.peak * Math.cos(u * Math.PI), D.span) };   // la nariz apunta hacia donde va el arco
+}
 
 // ----- Celeste y coral: nubes -----
 // Nubes una detrás de otra, subiendo un poco; se alcanzan de un salto
