@@ -69,7 +69,8 @@ describe('el mundo compartido', () => {
 describe('leerMensaje: mensajes del mundo', () => {
   const leer = m => leerMensaje(JSON.stringify(m));
   it('acepta monedas válidas y rechaza números de moneda que no existen', () => {
-    expect(leer({ tipo: 'moneda', i: 3 })).toEqual({ tipo: 'moneda', i: 3 });
+    expect(leer({ tipo: 'moneda', i: 3 })).toEqual({ tipo: 'moneda', i: 3, ayuda: 0 });
+    expect(leer({ tipo: 'moneda', i: 3, ayuda: 1 })).toEqual({ tipo: 'moneda', i: 3, ayuda: 1 });   // la agarró un asistente
     expect(leer({ tipo: 'moneda', i: 30 })).toBeNull();
     expect(leer({ tipo: 'moneda', i: -1 })).toBeNull();
     expect(leer({ tipo: 'moneda', i: 1.5 })).toBeNull();
@@ -110,9 +111,8 @@ describe('la base del equipo', () => {
     expect(leerLook({ hat: 'topHat', glasses: 'glassesPixel', blaster: 2 })).toEqual({ hat: 'topHat', glasses: 'glassesPixel', blaster: 2 });
     expect(leerLook({ hat: 42, blaster: 7 })).toEqual({ hat: null, glasses: null, blaster: 0 });
   });
-  it('la billetera: cambios de monedas válidos y compras', () => {
-    expect(leerMensaje(JSON.stringify({ tipo: 'cambio', monedas: -30, cajas: 2 }))).toEqual({ tipo: 'cambio', monedas: -30, cajas: 2 });
-    expect(leerMensaje(JSON.stringify({ tipo: 'cambio', monedas: 1.5, cajas: 0 }))).toBeNull();
+  it('compras de la base (la plata es de cada uno: no hay billetera del equipo)', () => {
+    expect(leerMensaje(JSON.stringify({ tipo: 'cambio', monedas: -30, cajas: 2 }))).toBeNull();
     expect(leerMensaje(JSON.stringify({ tipo: 'nivel', id: 'belt', nivel: 1 }))).toEqual({ tipo: 'nivel', id: 'belt', nivel: 1 });
     expect(leerMensaje(JSON.stringify({ tipo: 'nivel', id: 'belt', nivel: 0 }))).toBeNull();
   });

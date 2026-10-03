@@ -3,7 +3,7 @@
 // 2) Reparte en tiempo real dónde está cada jugador (WebSocket)
 // 3) Guarda a todos los jugadores en una base de datos SQLite (datos/jugadores.sqlite)
 // 4) Es el dueño del mundo compartido: la hora, las monedas, quién es el anfitrión
-//    y la base del equipo (lo que compraron entre todos) con su billetera
+//    y la base del equipo (lo que compraron entre todos; la plata es de cada uno)
 import { Database } from 'bun:sqlite';
 import { mkdirSync } from 'node:fs';
 import { PUERTO, MAX_JUGADORES, NUM_MONEDAS, leerMensaje, lugarMoneda, faseAhora, corto, juntarNiveles } from './src/red.js';
@@ -24,12 +24,12 @@ const guardarJugador = db.query(`INSERT INTO jugadores (nombre, color, x, y, z, 
   VALUES ($nombre, $color, $x, $y, $z, $monedas, 1, datetime('now', 'localtime'))
   ON CONFLICT(nombre) DO UPDATE SET color = $color, x = $x, y = $y, z = $z, monedas = $monedas, ultima_vez = datetime('now', 'localtime')`);
 const sumarVisita = db.query('UPDATE jugadores SET veces = veces + 1 WHERE nombre = ?');
-// La base del equipo: una sola fila con todo en JSON (monedas, cajas, lo comprado y quién ya aportó lo suyo)
+// La base del equipo: una sola fila en JSON con lo que se compró entre todos (las monedas son de cada uno)
 db.run('CREATE TABLE IF NOT EXISTS equipo (id INTEGER PRIMARY KEY, datos TEXT)');
 const filaEquipo = db.query('SELECT datos FROM equipo WHERE id = 1').get();
-const equipo = { monedas: 0, cajas: 0, niveles: {}, aportaron: [], ...(filaEquipo ? JSON.parse(filaEquipo.datos) : {}) };
+const equipo = { niveles: (filaEquipo && JSON.parse(filaEquipo.datos).niveles) || {} };
 const guardarEquipo = () => db.query('INSERT OR REPLACE INTO equipo (id, datos) VALUES (1, ?)').run(JSON.stringify(equipo));
-const billetera = () => ({ tipo: 'equipo', monedas: equipo.monedas, cajas: equipo.cajas });
+guardarEquipo();   // (borra la billetera del equipo de la versión anterior)
 
 function guardar(j) {
   guardarJugador.run({ $nombre: j.nombre, $color: j.color, $x: j.x, $y: j.y, $z: j.z, $monedas: j.monedas });
@@ -82,10 +82,7 @@ const servidor = Bun.serve({
         if (antes) sumarVisita.run(m.nombre);
         const j = { id: siguienteId++, nombre: m.nombre, color: m.color, monedas: m.monedas, rot: 0, mg: 0, look: m.look,
           x: antes ? antes.x : 0, y: antes ? antes.y : 0, z: antes ? antes.z : 15, ws };
-        // La primera vez que alguien juega en equipo, sus monedas y cajas pasan a la billetera del equipo.
-        // Lo que compró en su partida de solo se suma a la base (de cada cosa queda el nivel más alto).
-        const nuevoEnEquipo = !equipo.aportaron.includes(m.nombre.toLowerCase());
-        if (nuevoEnEquipo) { equipo.monedas += m.monedas; equipo.cajas += m.cajas; equipo.aportaron.push(m.nombre.toLowerCase()); }
+        // Lo que compró en su partida de solo se suma a la base (de cada cosa queda el nivel más alto)
         equipo.niveles = juntarNiveles(equipo.niveles, m.niveles);
         guardarEquipo();
         ws.data.id = j.id;
@@ -94,13 +91,12 @@ const servidor = Bun.serve({
         ws.send(JSON.stringify({ tipo: 'bienvenida', id: j.id, jugadores: [...conectados.values()].map(sinWs),
           guardado: antes ? { x: antes.x, y: antes.y, z: antes.z, veces: antes.veces + 1 } : null,
           anfitrion, fase: faseDeAhora(), dia: diaPueblo, monedas,
-          equipo: { monedas: equipo.monedas, cajas: equipo.cajas, niveles: equipo.niveles }, aporte: nuevoEnEquipo ? { monedas: m.monedas, cajas: m.cajas } : null }));
+          niveles: equipo.niveles }));
         conectados.set(j.id, j);
         guardar(j);
         ws.subscribe('juego');
         ws.publish('juego', JSON.stringify({ tipo: 'entra', ...sinWs(j) }));   // ws.publish no se lo manda a él mismo
-        // A los demás: la billetera nueva y lo que trajo para la base
-        ws.publish('juego', JSON.stringify(billetera()));
+        // A los demás: lo que trajo para la base
         for (const [id, nivel] of Object.entries(m.niveles)) ws.publish('juego', JSON.stringify({ tipo: 'nivel', id, nivel: equipo.niveles[id] }));
         console.log(`➕ ${j.nombre} entró (${conectados.size} jugando)${anfitrion === j.id ? ' · es el anfitrión' : ''}`);
         return;
@@ -115,12 +111,6 @@ const servidor = Bun.serve({
       } else if (m.tipo === 'look') {
         yo.look = m.look;
         ws.publish('juego', JSON.stringify({ tipo: 'look', id: yo.id, look: m.look }));
-      } else if (m.tipo === 'cambio') {
-        // La billetera nunca queda en negativo (si dos compran a la vez sin alcanzar, el equipo invita 😉)
-        equipo.monedas = Math.max(0, equipo.monedas + m.monedas);
-        equipo.cajas = Math.max(0, equipo.cajas + m.cajas);
-        guardarEquipo();
-        aTodos(billetera());
       } else if (m.tipo === 'nivel') {
         if ((equipo.niveles[m.id] || 0) >= m.nivel) return;   // ya lo tenían
         equipo.niveles[m.id] = m.nivel;
@@ -129,7 +119,9 @@ const servidor = Bun.serve({
       } else if (m.tipo === 'moneda') {
         // Alguien agarró una moneda: aparece en otro lugar para todos
         monedas[m.i] = lugarMoneda();
-        aTodos({ tipo: 'moneda', i: m.i, x: corto(monedas[m.i].x), z: corto(monedas[m.i].z) });
+        // Si la agarró un asistente (los mueve el anfitrión), cada jugador gana 1 moneda: trabajan para todo el equipo
+        const ayuda = m.ayuda && yo.id === anfitrion ? 1 : 0;
+        aTodos({ tipo: 'moneda', i: m.i, x: corto(monedas[m.i].x), z: corto(monedas[m.i].z), ayuda });
       } else if (m.tipo === 'hora') {
         hora = { fase: m.fase, ms: Date.now() };
         aTodos({ tipo: 'hora', fase: m.fase, quien: yo.nombre });

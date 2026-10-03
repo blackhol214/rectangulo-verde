@@ -67,11 +67,6 @@ export function leerMensaje(texto) {
   }
   // Cambió tu gorra, tus gafas o tu bláster
   if (m.tipo === 'look') return { tipo: 'look', look: leerLook(m.look) };
-  // Billetera del equipo: cuántas monedas y cajas ganaste (+) o gastaste (-)
-  if (m.tipo === 'cambio') {
-    if (!esEntero(m.monedas, -1e6, 1e6) || !esEntero(m.cajas, -1e6, 1e6)) return null;
-    return { tipo: 'cambio', monedas: m.monedas, cajas: m.cajas };
-  }
   // Alguien compró algo para la base del equipo
   if (m.tipo === 'nivel') {
     if (!esId(m.id) || !esEntero(m.nivel, 1, 50)) return null;
@@ -80,7 +75,7 @@ export function leerMensaje(texto) {
   // Agarraste la moneda número i
   if (m.tipo === 'moneda') {
     if (!Number.isInteger(m.i) || m.i < 0 || m.i >= NUM_MONEDAS) return null;
-    return { tipo: 'moneda', i: m.i };
+    return { tipo: 'moneda', i: m.i, ayuda: m.ayuda === 1 ? 1 : 0 };   // ayuda: la agarró un asistente
   }
   // Cambió la hora (alguien durmió y se saltó la noche)
   if (m.tipo === 'hora') {

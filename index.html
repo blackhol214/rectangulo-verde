@@ -200,7 +200,7 @@
 <script type="module">
 import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, invertColor, fleeCoin, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
          upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-11-04'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
-import { PUERTO, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto, acercar, piezasExplosion } from './src/red.js?v=2026-10-03c';
+import { PUERTO, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto, acercar, piezasExplosion } from './src/red.js?v=2026-10-03d';
 (() => {
   // iPhone ignora user-scalable=no: aquí se bloquea el zoom con dos dedos y el doble toque
   for (const ev of ['gesturestart', 'gesturechange']) document.addEventListener(ev, e => e.preventDefault(), { passive: false });
@@ -814,6 +814,15 @@ import { PUERTO, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto, acercar, 
   // Progreso de esta partida: se guarda con el botón GUARDAR, por usuario
   const save = { coins: 0, boxes: 0, style: emptyStyle(), trophies: [], levels: { belt: 0, hopper: 0, belt2: 0, turbo: 0, bigHouse: 0, transformer: 0, hopper2: 0, lineBox: 0, lineBag: 0, assistant2: 0, assistant: 0, assistSpeed: 0, blaster: 0, blaster2: 0 } };
   try { localStorage.removeItem('rectangulo-verde-tienda'); } catch (e) {} // borra el guardado de versiones anteriores
+  // Reinicio de avances: cuando cambia esta marca, las partidas guardadas en este navegador se borran una sola vez
+  // (pasa igual en localhost y en github.io, porque cada navegador lo revisa al abrir el juego)
+  const SAVE_RESET = '2026-10-03-reinicio-1';
+  try {
+    if (localStorage.getItem('rectangulo-verde:reinicio') !== SAVE_RESET) {
+      for (const k of Object.keys(localStorage)) if (k.startsWith('rectangulo-verde:partida:')) localStorage.removeItem(k);
+      localStorage.setItem('rectangulo-verde:reinicio', SAVE_RESET);
+    }
+  } catch (e) {}
 
   function renderCoins() {
     coinsEl.textContent = fmt(save.coins);
@@ -845,11 +854,11 @@ import { PUERTO, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto, acercar, 
       if (d < PICKUP && c.position.y > ps.pos.y - 0.8 && c.position.y < ps.pos.y + H + 0.8) { takeCoin(c, i); sfxCoin(); }
     });
   }
-  function takeCoin(c, i) {
+  function takeCoin(c, i, byAssistant = false) {
     if (c.userData.taken) return;
     save.coins++; renderCoins();
     // En multijugador las monedas son las mismas para todos: el servidor decide dónde aparece la nueva
-    if (red.id !== null) { c.visible = false; c.userData.taken = true; enviar({ tipo: 'moneda', i }); }
+    if (red.id !== null) { c.visible = false; c.userData.taken = true; enviar({ tipo: 'moneda', i, ayuda: byAssistant ? 1 : 0 }); }
     else placeCoin(c); // aparece otra en un lugar nuevo
   }
 
@@ -1042,8 +1051,7 @@ import { PUERTO, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto, acercar, 
       if (on) { platforms.push(...L.platforms); x = L.start; wait = 0; }
     };
     L.setHopper = on => { L.hopperOwned = on; hopper.visible = on && L.owned; };
-    // Con la tolva se recoge solo: en multijugador eso lo cobra solo el anfitrión (si no, cada compu lo cobraría otra vez)
-    const collect = auto => { if (!(auto && copia())) onCollect(); wait = 1.5; sinkT = 0; };   // los siguientes pedazos salen en un momento
+    const collect = () => { onCollect(); wait = 1.5; sinkT = 0; };   // los siguientes pedazos salen en un momento (en multijugador, cada uno cobra en su compu)
     L.update = dt => {
       if (!L.owned) return;
       tex.offset.x -= L.speed * dt / 2;                               // las rayas avanzan con la cinta
@@ -1054,7 +1062,7 @@ import { PUERTO, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto, acercar, 
       const onPlate = x >= L.plateX;
       let y = L.y0 + beltItemY(x, L.x1, L.plateX, BELT_TOP, 0.08);    // altura de la base de lo que viaja
       // Con tolva: al llegar se hunde en el embudo y se recoge sola
-      if (onPlate && L.hopperOwned) { sinkT += dt; y -= Math.min(1, sinkT / 0.4) * 0.6; if (sinkT >= 0.4) { collect(true); return; } }
+      if (onPlate && L.hopperOwned) { sinkT += dt; y -= Math.min(1, sinkT / 0.4) * 0.6; if (sinkT >= 0.4) { collect(); return; } }
       pieces.visible = !converted; item.visible = converted;
       if (!converted) { pieces.position.set(x, L.y0 + BELT_TOP, z); pieces.rotation.y += dt * 0.6; }
       const bob = onPlate && !L.hopperOwned ? Math.sin(t * 4) * 0.06 : 0;
@@ -1180,7 +1188,7 @@ import { PUERTO, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto, acercar, 
         turnTo(a, dx, dz, dt);
       }
       physics(a, dt, a.onGround && a.hitWall, JUMP); // si choca con algo, lo salta
-      if (Math.hypot(c.position.x - a.pos.x, c.position.z - a.pos.z) < PICKUP) takeCoin(c, ci);
+      if (Math.hypot(c.position.x - a.pos.x, c.position.z - a.pos.z) < PICKUP) takeCoin(c, ci, true);   // (en multijugador, todos ganan esta moneda)
       a.obj.children[0].position.y = 0.75 + Math.abs(Math.sin(t * 14 + a.pos.x)) * 0.05; // camina
     }
   }
@@ -2365,8 +2373,8 @@ import { PUERTO, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto, acercar, 
   function saveGame() {
     if (!userName) return;
     try {
-      const mine = red.solo || save;   // en multijugador, lo de tu partida de solo queda como estaba
-      localStorage.setItem(saveKey(userName), serializeSave({ coins: mine.coins, boxes: mine.boxes, levels: mine.levels, dayPhase, pos: MG.active ? MG.back : ps.pos, style: save.style, trophies: save.trophies }));
+      // Tus monedas son tuyas siempre; las compras de la base del equipo no se mezclan con tu partida de solo
+      localStorage.setItem(saveKey(userName), serializeSave({ coins: save.coins, boxes: save.boxes, levels: red.soloLevels || save.levels, dayPhase, pos: MG.active ? MG.back : ps.pos, style: save.style, trophies: save.trophies }));
     } catch (e) {
       showToast('No se pudo guardar: este navegador no deja guardar datos', true);
       return;
@@ -2939,7 +2947,7 @@ import { PUERTO, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto, acercar, 
     if (!ONLINE || red.ws) return;
     const ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`);
     red.ws = ws;
-    ws.onopen = () => ws.send(JSON.stringify({ tipo: 'hola', nombre: name, color: body.material.color.getHex(), monedas: save.coins, cajas: save.boxes, niveles: save.levels, look: myLook() }));
+    ws.onopen = () => ws.send(JSON.stringify({ tipo: 'hola', nombre: name, color: body.material.color.getHex(), monedas: save.coins, niveles: save.levels, look: myLook() }));
     ws.onmessage = e => {
       const m = JSON.parse(e.data);
       if (m.tipo === 'bienvenida') {
@@ -2950,12 +2958,9 @@ import { PUERTO, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto, acercar, 
         // El mundo compartido: la misma hora, las mismas misiones del pueblo y las mismas monedas para todos
         dayPhase = m.fase; lastMinute = -1;
         newVillageDay(m.dia);
-        // La base y la billetera del equipo. Lo de tu partida de solo se guarda aparte, para cuando vuelvas a jugar solo.
-        red.solo = red.solo || { coins: save.coins, boxes: save.boxes, levels: { ...save.levels } };   // (si te reconectas, ya estaba guardado)
-        save.coins = m.equipo.monedas; save.boxes = m.equipo.cajas;
-        red.synced = { coins: save.coins, boxes: save.boxes };
-        applyTeamLevels(m.equipo.niveles, null);
-        if (m.aporte && (m.aporte.monedas || m.aporte.cajas)) setTimeout(() => showToast(`Aportaste ${m.aporte.monedas} monedas y ${m.aporte.cajas} cajas a la billetera del equipo 🤝`, false, 4000), 3200);
+        // La base del equipo (tus monedas siguen siendo tuyas). Tus compras de solo se guardan aparte, para cuando vuelvas a jugar solo.
+        red.soloLevels = red.soloLevels || { ...save.levels };   // (si te reconectas, ya estaba guardado)
+        applyTeamLevels(m.niveles, null);
         m.monedas.forEach((p, i) => { const c = coins[i]; if (c) { c.position.set(p.x, 1.2, p.z); c.visible = true; c.userData.taken = false; } });
         const n = m.jugadores.length;
         showToast(n ? `¡Conectado! Hay ${n} amigo${n > 1 ? 's' : ''} jugando` : '¡Conectado! Eres el primero en llegar', false, 3000);
@@ -2967,12 +2972,6 @@ import { PUERTO, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto, acercar, 
       } else if (m.tipo === 'look') {
         const f = red.otros.get(m.id);
         if (f) setFriendLook(f, m.look);
-      } else if (m.tipo === 'equipo') {
-        // La billetera del equipo cambió: lo que tú ganaste o gastaste y todavía no llega al servidor se mantiene
-        const pc = save.coins - red.synced.coins, pb = save.boxes - red.synced.boxes;
-        red.synced = { coins: m.monedas, boxes: m.cajas };
-        save.coins = m.monedas + pc; save.boxes = m.cajas + pb;
-        renderCoins();
       } else if (m.tipo === 'nivel') {
         applyTeamLevels({ [m.id]: m.nivel }, m.quien);
       } else if (m.tipo === 'sale') {
@@ -2989,6 +2988,8 @@ import { PUERTO, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto, acercar, 
       } else if (m.tipo === 'moneda') {
         const c = coins[m.i];
         if (c) { c.position.set(m.x, 1.2, m.z); c.visible = true; c.userData.taken = false; }
+        // La agarró un asistente del equipo: trabajan para todos, así que tú también ganas 1 (el anfitrión ya la contó)
+        if (m.ayuda && !esAnfitrion()) { save.coins++; renderCoins(); }
       } else if (m.tipo === 'hora') {
         dayPhase = m.fase; lastMinute = -1;
         if (m.quien && m.quien !== userName) showToast(`${m.quien} durmió y se saltó la noche: ¡buenos días!`, false, 3000);
@@ -3010,8 +3011,6 @@ import { PUERTO, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto, acercar, 
     ws.onclose = () => {
       for (const f of red.otros.values()) scene.remove(f.obj);
       red.otros.clear(); red.ws = null; red.id = null; red.anfitrion = null;
-      // Vuelves a tu billetera de solo (las cosas del equipo se van al recargar la página)
-      if (red.solo) { save.coins = red.solo.coins; save.boxes = red.solo.boxes; renderCoins(); }
       // Sin servidor vuelves a jugar solo: tu compu mueve otra vez al gigante, a los bots y las monedas
       for (const c of coins) if (c.userData.taken) { placeCoin(c); c.visible = true; c.userData.taken = false; }
       takeOverWorld();
@@ -3034,9 +3033,6 @@ import { PUERTO, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto, acercar, 
   }
   function updateRed(dt) {
     if (red.id !== null) {
-      // Billetera del equipo: le contamos al servidor cuánto ganaste o gastaste desde la última vez
-      const dc = save.coins - red.synced.coins, db = save.boxes - red.synced.boxes;
-      if (dc || db) { enviar({ tipo: 'cambio', monedas: dc, cajas: db }); red.synced.coins += dc; red.synced.boxes += db; }
       // ¿Te cambiaste la gorra, las gafas o el bláster?
       const lk = JSON.stringify(myLook());
       if (lk !== red.lastLook) { if (red.lastLook) enviar({ tipo: 'look', look: myLook() }); red.lastLook = lk; }
