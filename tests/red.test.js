@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { limpiarNombre, leerMensaje, acercar, piezasExplosion, lugarMoneda, faseAhora, corto, BORDE, DIA_SEGUNDOS, leerLook, leerNiveles, juntarNiveles } from '../src/red.js';
+import { limpiarNombre, leerMensaje, acercar, piezasExplosion, lugarMoneda, faseAhora, corto, BORDE, DIA_SEGUNDOS, leerLook, leerNiveles, juntarNiveles, leerSala, salaDeHost, linkOficial } from '../src/red.js';
 
 describe('limpiarNombre', () => {
   it('quita espacios de más y corta a 20 letras', () => {
@@ -115,5 +115,23 @@ describe('la base del equipo', () => {
     expect(leerMensaje(JSON.stringify({ tipo: 'cambio', monedas: -30, cajas: 2 }))).toBeNull();
     expect(leerMensaje(JSON.stringify({ tipo: 'nivel', id: 'belt', nivel: 1 }))).toEqual({ tipo: 'nivel', id: 'belt', nivel: 1 });
     expect(leerMensaje(JSON.stringify({ tipo: 'nivel', id: 'belt', nivel: 0 }))).toBeNull();
+  });
+});
+
+describe('salas: github.io es el único juego oficial', () => {
+  it('leerSala acepta nombres de túnel y rechaza cosas raras', () => {
+    expect(leerSala('Palabras-Raras-123')).toBe('palabras-raras-123');
+    expect(leerSala('evil.com/hack')).toBeNull();          // no se puede mandar el juego a otro sitio
+    expect(leerSala('a b')).toBeNull();
+    expect(leerSala('')).toBeNull();
+    expect(leerSala(null)).toBeNull();
+  });
+  it('salaDeHost saca la sala del link de Cloudflare', () => {
+    expect(salaDeHost('palabras-raras.trycloudflare.com')).toBe('palabras-raras');
+    expect(salaDeHost('localhost:8080')).toBeNull();
+    expect(salaDeHost('trampa.trycloudflare.com.otro.com')).toBeNull();
+  });
+  it('linkOficial arma el link de github.io con la sala', () => {
+    expect(linkOficial('palabras-raras')).toBe('https://blackhol214.github.io/rectangulo-verde/?sala=palabras-raras');
   });
 });

@@ -6,7 +6,7 @@
 //    y la base del equipo (lo que compraron entre todos; la plata es de cada uno)
 import { Database } from 'bun:sqlite';
 import { mkdirSync } from 'node:fs';
-import { PUERTO, MAX_JUGADORES, NUM_MONEDAS, leerMensaje, lugarMoneda, faseAhora, corto, juntarNiveles } from './src/red.js';
+import { PUERTO, MAX_JUGADORES, NUM_MONEDAS, leerMensaje, lugarMoneda, faseAhora, corto, juntarNiveles, salaDeHost, linkOficial } from './src/red.js';
 
 // ---------- Base de datos ----------
 mkdirSync(new URL('./datos', import.meta.url), { recursive: true });
@@ -61,6 +61,9 @@ const servidor = Bun.serve({
       if (conectados.size >= MAX_JUGADORES) return new Response('El juego está lleno', { status: 503 });
       return srv.upgrade(req, { data: { id: null } }) ? undefined : new Response('Se necesita WebSocket', { status: 400 });
     }
+    // Quien abre el link de Cloudflare va al juego oficial (github.io) con la sala puesta: así hay un solo juego
+    const sala = salaDeHost(req.headers.get('host'));
+    if (sala && (url.pathname === '/' || url.pathname === '/index.html')) return Response.redirect(linkOficial(sala), 302);
     const ruta = url.pathname === '/' ? '/index.html' : url.pathname;
     if (!PERMITIDOS.test(ruta)) return new Response('No encontrado', { status: 404 });
     return new Response(Bun.file(new URL('.' + ruta, import.meta.url)), { headers: { 'Cache-Control': 'no-cache' } });

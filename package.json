@@ -8,7 +8,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "online": "bun server.js",
-    "tunel": "cloudflared tunnel --url http://localhost:8080"
+    "tunel": "bun tunel.js"
   },
   "devDependencies": {
     "vitest": "^5.0.2"

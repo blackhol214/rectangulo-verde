@@ -200,7 +200,7 @@
 <script type="module">
 import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, invertColor, fleeCoin, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
          upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-11-04'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
-import { PUERTO, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto, acercar, piezasExplosion } from './src/red.js?v=2026-10-03d';
+import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto, acercar, piezasExplosion } from './src/red.js?v=2026-10-03e';
 (() => {
   // iPhone ignora user-scalable=no: aquí se bloquea el zoom con dos dedos y el doble toque
   for (const ev of ['gesturestart', 'gesturechange']) document.addEventListener(ev, e => e.preventDefault(), { passive: false });
@@ -604,8 +604,10 @@ import { PUERTO, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto, acercar, 
   camera.add(fpBlaster);
 
   // ---------- Multijugador (datos) ----------
-  // Solo se conecta si el juego viene del servidor multijugador (bun server.js o el link de Cloudflare)
-  const ONLINE = location.port === String(PUERTO) || location.hostname.endsWith('.trycloudflare.com');
+  // Se conecta si el link trae una sala (github.io/...?sala=palabras-raras) o si el juego viene del servidor (localhost:8080)
+  const SALA = leerSala(new URLSearchParams(location.search).get('sala'));
+  const ONLINE = !!SALA || location.port === String(PUERTO);
+  const SERVER_WS = SALA ? `wss://${SALA}.trycloudflare.com/ws` : `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`;
   // otros: id → { obj, body, nombre, x, y, z, rot } · gigante y bots: lo último que contó el anfitrión
   const red = { ws: null, id: null, anfitrion: null, otros: new Map(), envio: 0, pedazos: [], gigante: null, bots: null, aturdido: 0 };
   // ¿Estamos conectados y otra compu (el anfitrión) mueve al gigante y a los bots?
@@ -2945,7 +2947,7 @@ import { PUERTO, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto, acercar, 
   }
   function conectarRed(name) {
     if (!ONLINE || red.ws) return;
-    const ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`);
+    const ws = new WebSocket(SERVER_WS);
     red.ws = ws;
     ws.onopen = () => ws.send(JSON.stringify({ tipo: 'hola', nombre: name, color: body.material.color.getHex(), monedas: save.coins, niveles: save.levels, look: myLook() }));
     ws.onmessage = e => {
@@ -3009,6 +3011,8 @@ import { PUERTO, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto, acercar, 
       }
     };
     ws.onclose = () => {
+      // Si nunca llegó la bienvenida, la sala no existe o el servidor está apagado
+      if (red.id === null) { red.ws = null; showToast('No se pudo entrar a la sala: ¿el servidor está encendido? Juegas solo', true, 5000); return; }
       for (const f of red.otros.values()) scene.remove(f.obj);
       red.otros.clear(); red.ws = null; red.id = null; red.anfitrion = null;
       // Sin servidor vuelves a jugar solo: tu compu mueve otra vez al gigante, a los bots y las monedas

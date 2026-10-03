@@ -1,6 +1,16 @@
 // Multijugador: funciones puras que usan el servidor (server.js) y el juego (index.html)
 
 export const PUERTO = 8080;
+export const OFICIAL = 'https://blackhol214.github.io/rectangulo-verde/';   // el único juego oficial
+
+// La sala es el nombre del túnel de Cloudflare (lo de antes de .trycloudflare.com). Solo letras, números y guiones,
+// así nadie puede mandarte un link que conecte el juego a otro sitio raro.
+export function leerSala(texto) {
+  const sala = String(texto || '').trim().toLowerCase();
+  return /^[a-z0-9]+(-[a-z0-9]+)*$/.test(sala) && sala.length <= 80 ? sala : null;
+}
+export const salaDeHost = host => { const m = /^([a-z0-9-]+)\.trycloudflare\.com$/.exec(String(host).toLowerCase()); return m ? leerSala(m[1]) : null; };
+export const linkOficial = sala => `${OFICIAL}?sala=${sala}`;
 export const MAX_JUGADORES = 12;
 export const ENVIOS_POR_SEGUNDO = 10;   // cuántas veces por segundo mandas tu posición
 export const DIA_SEGUNDOS = 240;        // un día del juego dura 4 minutos (igual para todos)
