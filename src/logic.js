@@ -396,6 +396,8 @@ export const HOUSE_VISIT = { outside: { x: 16.5, z: 9 }, door: { x: 21.5, z: 9 }
 
 // ---------- Botón rojo del sótano ----------
 export const RED_BUTTON = { x: 35.6, z: 9 };   // contra la pared derecha del sótano
+// Antes de comprar el sótano, el botón está en la esquina de adelante a la derecha de tu casa mediana
+export const RED_BUTTON_HOUSE = { x: 31.2, z: 4.8 };
 
 // ---------- Parkour con lava (modo turquesa) ----------
 // Torre de 50 escalones en espiral (coordenadas relativas al centro de su zona); en la cima está la casita del bot.

@@ -11,7 +11,7 @@ import {
   noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval,
   distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, botCanGo, randomBotTarget,
   SWINGS, swingAngle, SLIDE, slidePoint,
-  HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail,
+  HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail,
   MINIGAMES, minigameOrigin, MAZE, generateMaze, mazePathLength, pickMaze, pickLemon, clampToArea, flowerTired, MEDIUM_HOUSE, insideRect, segmentHitsRect, detourAround, INVERTED, INVERTED_K, minigameDef, invertColor, fleeCoin, botSpeedAfter, CRATES, crateOutside, GARDEN, DROPPER, dropperLayers, dropperPad,
   DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, nearVillageHouse, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot,
 } from '../src/logic.js';
@@ -583,6 +583,16 @@ describe('bots que entran a tu casa y el botón rojo', () => {
   it('el botón rojo está dentro del sótano y lejos de la escalera', () => {
     expect(RED_BUTTON.x > BASEMENT.x0 && RED_BUTTON.x < BASEMENT.x1 && RED_BUTTON.z > BASEMENT.z0 && RED_BUTTON.z < BASEMENT.z1).toBe(true);
     expect(RED_BUTTON.x > STAIRWELL.x1 + 1 || RED_BUTTON.z > STAIRWELL.z1 + 1).toBe(true);
+  });
+  it('antes del sótano, el botón rojo está en una esquina de la casa mediana sin tocar paredes, la cama ni la puerta', () => {
+    const { x, z } = RED_BUTTON_HOUSE, half = 0.35, wall = 0.3;
+    expect(x + half).toBeLessThan(MEDIUM_HOUSE.x1 - wall);      // no se mete en la pared de la derecha
+    expect(z - half).toBeGreaterThan(MEDIUM_HOUSE.z0 + wall);   // ni en la de adelante
+    expect(MEDIUM_HOUSE.x1 - x).toBeLessThan(1.5);              // está en la esquina
+    expect(z - MEDIUM_HOUSE.z0).toBeLessThan(1.5);
+    const bed = { x0: 27.75, x1: 29.25, z0: 7.75, z1: 10.25 };
+    expect(x - half > bed.x1 || z + half < bed.z0).toBe(true);   // lejos de la cama
+    expect(Math.hypot(x - HOUSE_VISIT.door.x, z - HOUSE_VISIT.door.z)).toBeGreaterThan(5);   // y de la puerta
   });
 });
 

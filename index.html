@@ -26,6 +26,9 @@
   #saved { position:fixed; left:50%; top:40%; transform:translate(-50%,-50%) scale(.7); margin:0; z-index:25; font:400 clamp(34px, 8vw, 84px)/1.1 "ADLaM Display", Impact, "Arial Narrow Bold", sans-serif; color:#2fd158; text-shadow:0 4px 0 #0d5a22, 0 8px 18px rgba(0,0,0,.35); white-space:nowrap; opacity:0; pointer-events:none; transition:opacity .25s, transform .25s; }
   #saved.show { opacity:1; transform:translate(-50%,-50%) scale(1); }
   #game { position:fixed; inset:0; display:block; width:100%; height:100%; touch-action:none; }
+  /* Mundo al revés: TODA la pantalla con los colores invertidos (el mundo, el cielo, las sombras y los textos).
+     El mundo se dibuja con sus colores normales y este filtro los da vuelta: si inviertes los colores de tu pantalla, se ve normal. */
+  html.al-reves { filter:invert(1); }
   /* Celular: que tocar dos veces rápido (o con dos dedos) no haga zoom en la pantalla */
   html, body { touch-action:manipulation; overscroll-behavior:none; -webkit-user-select:none; user-select:none; -webkit-text-size-adjust:100%; }
   input { -webkit-user-select:text; user-select:text; }
@@ -198,8 +201,8 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module">
-import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, invertColor, fleeCoin, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
-         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-11-04'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
+import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
+         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-05'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
 import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto, acercar, piezasExplosion } from './src/red.js?v=2026-10-03e';
 (() => {
   // iPhone ignora user-scalable=no: aquí se bloquea el zoom con dos dedos y el doble toque
@@ -425,7 +428,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     const S = STAIRWELL, B = BASEMENT;
     buildHouse(BIG_HOUSE, [], S);
     placeWardrobe(BIG_HOUSE);
-    buildRedButton();
+    buildRedButton(RED_BUTTON.x, RED_BUTTON.z, BASEMENT.y);   // el botón se muda al sótano
     // Suelo de afuera con el hueco de la escalera
     ground.geometry.dispose(); ground.geometry = groundGeometry(S);
     // Escalera: 18 escalones de 0,39 m de alto y 0,6 m de fondo, hasta el piso del sótano
@@ -1302,7 +1305,8 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
   const BOT_SPEED = 5;
   let houseVisitor = null;   // el bot que está de visita en tu casa (solo uno a la vez)
   // ¿Hay un bot dentro de tu casa ahora mismo?
-  const botInsideHouse = () => houseVisitor && houseVisitor.pos.x > 20.3 && houseVisitor.pos.x < 35.7 && houseVisitor.pos.z > 4.3 && houseVisitor.pos.z < 17.7 && houseVisitor.pos.y > -1;
+  // ¿Qué bot está dentro de tu casa ahora mismo? (se revisan todos: en multijugador la visita la decide el anfitrión)
+  const botInsideHouse = () => dumbBots.find(b => b.obj.visible && b.pos.x > 20.3 && b.pos.x < 35.7 && b.pos.z > 4.3 && b.pos.z < 17.7 && b.pos.y > -1) || null;
   function updateDumbBots(dt) {
     idleSwings(dt);
     // Si otra compu es el anfitrión, los bots solo se dibujan donde ella dice
@@ -1338,7 +1342,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
           if (V.step === 3) {                                   // ya está adentro: se queda
             V.wait = 6 + Math.random() * 6;
             const def = MINIGAMES[dumbBots.indexOf(b)];
-            if (redButton) showToast(`¡El bot ${def.bot} entró a tu casa! Aprieta el botón rojo del sótano: ${def.name}`);   // solo si ya tienes sótano
+            showToast(`¡El bot ${def.bot} entró a tu casa! Aprieta el botón rojo ${basementOpen ? 'del sótano' : 'de la esquina'}: ${def.name}`);
           }
         }
         if (V.step >= V.route.length || b.timer < -45) { b.visit = null; houseVisitor = null; b.timer = 0; }
@@ -1387,25 +1391,32 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     return true;
   }
 
-  // ---------- Botón rojo del sótano ----------
+  // ---------- Botón rojo: en una esquina de tu casa, y cuando compras el sótano se muda allá abajo ----------
   let redButton = null;
-  function buildRedButton() {
-    const y = BASEMENT.y, { x, z } = RED_BUTTON;
+  function buildRedButton(x, z, y) {
+    if (redButton) {   // si ya estaba en otro lugar, se quita de ahí
+      for (const m of redButton.meshes) scene.remove(m);
+      const i = platforms.indexOf(redButton.pl); if (i >= 0) platforms.splice(i, 1);
+    }
     const base = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1, 0.7), new THREE.MeshLambertMaterial({ color: 0x3a3f46 }));
     base.position.set(x, y + 0.5, z); base.castShadow = true; scene.add(base);
     const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.28, 0.16, 24), new THREE.MeshLambertMaterial({ color: 0xe0141a, emissive: 0x5a0000 }));
     cap.position.set(x, y + 1.08, z); scene.add(cap);
-    platforms.push({ x, z, hw: 0.35, hd: 0.35, top: y + 1, bottom: y });
-    redButton = { cap, press: 0 };
+    const pl = { x, z, hw: 0.35, hd: 0.35, top: y + 1, bottom: y };
+    platforms.push(pl);
+    redButton = { cap, press: 0, x, z, y, meshes: [base, cap], pl };
   }
-  const nearRedButton = () => redButton && ps.pos.y < BASEMENT.y + 1 && Math.hypot(ps.pos.x - RED_BUTTON.x, ps.pos.z - RED_BUTTON.z) < 1.9;
+  buildRedButton(RED_BUTTON_HOUSE.x, RED_BUTTON_HOUSE.z, 0);   // al empezar: en la esquina de tu casa
+  const nearRedButton = () => redButton && Math.abs(ps.pos.y - redButton.y) < 1.2 && Math.hypot(ps.pos.x - redButton.x, ps.pos.z - redButton.z) < 1.9;
   function tryRedButton() {
     if (!nearRedButton()) return false;
-    redButton.press = 0.25; redButton.cap.position.y = BASEMENT.y + 1.03;
-    setTimeout(() => { if (redButton) redButton.cap.position.y = BASEMENT.y + 1.08; }, 250);
+    const btn = redButton;
+    btn.press = 0.25; btn.cap.position.y = btn.y + 1.03;
+    setTimeout(() => { btn.cap.position.y = btn.y + 1.08; }, 250);
     if (MG.active) return true;
     // El minijuego depende de qué bot está dentro de tu casa
-    if (botInsideHouse()) startMinigame(dumbBots.indexOf(houseVisitor));
+    const visitor = botInsideHouse();
+    if (visitor) startMinigame(dumbBots.indexOf(visitor));
     else showToast('El botón hace "clic"… pero no pasa nada. ¿Y si alguien estuviera dentro de tu casa?');
     return true;
   }
@@ -1899,39 +1910,41 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
       },
       end() { for (const m of MG.built.meteors) { scene.remove(m.shadow); scene.remove(m.rock); } MG.built.meteors = []; },
     },
-    // Mundo al revés: eres el gigante rojo y tienes que atrapar 10 veces al jugador
+    // Mundo al revés: eres el gigante y tienes que atrapar 10 veces al jugador.
+    // Todo se construye con los colores NORMALES y la clase "al-reves" invierte la pantalla entera
+    // (el gigante rojo se ve celeste, el jugador verde se ve morado, la línea amarilla se ve azul…)
     inverted: {
-      giant: true, jump: INVERTED.giantJump, lunge: INVERTED.lunge, sky: invertColor(0xbfe3f2),
+      giant: true, jump: INVERTED.giantJump, lunge: INVERTED.lunge, invertScreen: true,
       area: { x0: -INVERTED.half + 2, x1: INVERTED.half - 2, z0: -INVERTED.half + 2, z1: -INVERTED.lineW / 2 - INVERTED.giantR },   // no puedes cruzar la línea
       look(o) { return { x: o.x, z: o.z + 30 }; },
       build(o) {
-        const I = INVERTED, h = I.half, inv = hex => '#' + invertColor(hex).toString(16).padStart(6, '0');
-        // Suelo con los cuadros del mundo normal, pero con los colores al revés
+        const I = INVERTED, h = I.half, css = hex => '#' + hex.toString(16).padStart(6, '0');
+        // Suelo con los cuadros del mundo normal (el filtro lo da vuelta)
         const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d');
-        g.fillStyle = inv(0x5fa83a); g.fillRect(0, 0, 128, 128); g.fillStyle = inv(0x56a034); g.fillRect(0, 0, 64, 64); g.fillRect(64, 64, 64, 64);
+        g.fillStyle = css(0x5fa83a); g.fillRect(0, 0, 128, 128); g.fillStyle = css(0x56a034); g.fillRect(0, 0, 64, 64); g.fillRect(64, 64, 64, 64);
         const tx = new THREE.CanvasTexture(c); tx.wrapS = tx.wrapT = THREE.RepeatWrapping; tx.repeat.set(h / 4, h / 4);
         const floor = new THREE.Mesh(new THREE.PlaneGeometry(h * 2, h * 2), new THREE.MeshLambertMaterial({ map: tx }));
         floor.rotation.x = -Math.PI / 2; floor.position.set(o.x, 0.01, o.z); floor.receiveShadow = true; scene.add(floor);
-        // La línea: azul en vez de amarilla, con su pared transparente
-        const blue = invertColor(0xffd400);
-        const line = new THREE.Mesh(new THREE.PlaneGeometry(h * 2, I.lineW), new THREE.MeshBasicMaterial({ color: blue })); line.rotation.x = -Math.PI / 2; line.position.set(o.x, 0.03, o.z); scene.add(line);
-        const lw = new THREE.Mesh(new THREE.PlaneGeometry(h * 2, 8), new THREE.MeshBasicMaterial({ color: blue, transparent: true, opacity: 0.15, side: THREE.DoubleSide, depthWrite: false })); lw.position.set(o.x, 4, o.z); scene.add(lw);
+        // La línea amarilla (se ve azul), con su pared transparente
+        const yellow = 0xffd400;
+        const line = new THREE.Mesh(new THREE.PlaneGeometry(h * 2, I.lineW), new THREE.MeshBasicMaterial({ color: yellow })); line.rotation.x = -Math.PI / 2; line.position.set(o.x, 0.03, o.z); scene.add(line);
+        const lw = new THREE.Mesh(new THREE.PlaneGeometry(h * 2, 8), new THREE.MeshBasicMaterial({ color: yellow, transparent: true, opacity: 0.15, side: THREE.DoubleSide, depthWrite: false })); lw.position.set(o.x, 4, o.z); scene.add(lw);
         // Montañas alrededor
-        const rock = mgMat(invertColor(0x8a7a62));
+        const rock = mgMat(0x8a7a62);
         mgBox(o.x - h - 4, o.x - h, 0, 30, o.z - h - 4, o.z + h + 4, rock); mgBox(o.x + h, o.x + h + 4, 0, 30, o.z - h - 4, o.z + h + 4, rock);
         mgBox(o.x - h, o.x + h, 0, 30, o.z - h - 4, o.z - h, rock); mgBox(o.x - h, o.x + h, 0, 30, o.z + h, o.z + h + 4, rock);
-        // La casa del jugador (como la tuya, al revés) y su tienda de mejoras, en su zona segura
-        mgBox(o.x + 20, o.x + 32, 0, 4, o.z + 4, o.z + 14, mgMat(invertColor(0xe8d9b5)));
-        const roof = new THREE.Mesh(new THREE.ConeGeometry(8.8, 3, 4), mgMat(invertColor(0xb5452f))); roof.rotation.y = Math.PI / 4; roof.scale.z = 0.8; roof.position.set(o.x + 26, 5.5, o.z + 9); scene.add(roof);
+        // La casa del jugador (como la tuya) y su tienda de mejoras, en su zona segura
+        mgBox(o.x + 20, o.x + 32, 0, 4, o.z + 4, o.z + 14, mgMat(0xe8d9b5));
+        const roof = new THREE.Mesh(new THREE.ConeGeometry(8.8, 3, 4), mgMat(0xb5452f)); roof.rotation.y = Math.PI / 4; roof.scale.z = 0.8; roof.position.set(o.x + 26, 5.5, o.z + 9); scene.add(roof);
         const S = I.shop;
-        mgBox(o.x + S.x - 2, o.x + S.x + 2, 0, 1.1, o.z + S.z + 1, o.z + S.z + 2.4, mgMat(invertColor(0x8a5a33)));
+        mgBox(o.x + S.x - 2, o.x + S.x + 2, 0, 1.1, o.z + S.z + 1, o.z + S.z + 2.4, mgMat(0x8a5a33));
         const sc = document.createElement('canvas'); sc.width = 256; sc.height = 96; const sg = sc.getContext('2d');
-        sg.fillStyle = inv(0xffd400); sg.fillRect(0, 0, 256, 96); sg.fillStyle = '#fff'; sg.font = '800 44px system-ui, sans-serif'; sg.textAlign = 'center'; sg.textBaseline = 'middle'; sg.fillText('MEJORAS', 128, 50);
+        sg.fillStyle = css(0xffd400); sg.fillRect(0, 0, 256, 96); sg.fillStyle = '#16301f'; sg.font = '800 44px system-ui, sans-serif'; sg.textAlign = 'center'; sg.textBaseline = 'middle'; sg.fillText('MEJORAS', 128, 50);
         const sign = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(sc) })); sign.scale.set(4, 1.5, 1); sign.position.set(o.x + S.x, 3.2, o.z + S.z + 1.7); scene.add(sign);
-        // Monedas azules (el dorado al revés)
-        const coinM = new THREE.MeshLambertMaterial({ color: invertColor(0xffc400), emissive: 0x001a66 });
+        // Monedas doradas (se ven azules)
+        const coinM = coinMat;
         MG.built.invCoins = Array.from({ length: I.coinCount }, () => { const m = new THREE.Mesh(coinGeo, coinM); m.castShadow = true; scene.add(m); return m; });
-        // Tú (el gigante rojo) y el jugador (el rectángulo verde)
+        // Tú (el gigante rojo, se ve celeste) y el jugador (el rectángulo verde, se ve morado)
         MG.built.giant = makeGiantFigure(new THREE.MeshLambertMaterial({ color: 0xd4161b })); MG.built.giant.scale.setScalar(ENEMY_SCALE); MG.built.giant.visible = false; scene.add(MG.built.giant);
         const bot = new THREE.Group(), bb = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), mgMat(0x2fae4e)); bb.position.y = H / 2; bb.castShadow = true; bot.add(bb);
         for (const ex of [-0.22, 0.22]) { const e = new THREE.Mesh(eyeGeo, eyeMat); e.scale.z = 0.5; e.position.set(ex, H * 0.78, D / 2 + 0.02); bot.add(e); }
@@ -2034,6 +2047,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     const def = minigameDef(k), mode = MODES[def.id], o = minigameOrigin(k);
     if (!MG.done.has(def.id)) { mode.build(o); MG.done.add(def.id); }
     MG.back = ps.pos.clone(); MG.active = mode; MG.k = k; MG.t = 0; MG.state = {};
+    document.documentElement.classList.toggle('al-reves', !!mode.invertScreen);   // el mundo al revés da vuelta toda la pantalla
     for (const f of MG.followers) scene.remove(f);
     // En la mezcla te siguen tres: celeste, turquesa y coral
     const team = def.id === 'mix' ? [5, 6, 9] : k < MINIGAMES.length ? [k] : [];
@@ -2054,6 +2068,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     const def = minigameDef(MG.k), mode = MG.active;
     if (mode.end) mode.end();
     MG.active = null; for (const f of MG.followers) f.visible = false; mgHud.hidden = true;
+    document.documentElement.classList.remove('al-reves');
     ps.pos.copy(MG.back); ps.vel.set(0, 0, 0); ps.carrying = null; camYaw = MG.yaw;
     if (won) { save.coins += def.reward.coins || 0; save.boxes += def.reward.boxes || 0; renderCoins(); }
     // Un trofeo la primera vez que ganas (el de diamante va sobre tu armario)
@@ -2159,7 +2174,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
   }
   function updateStylePrompt() {
     const vt = villagePrompt();
-    const txt = vt ? vt : nearRedButton() ? (botInsideHouse() ? `Pulsa <kbd>E</kbd>: el bot ${MINIGAMES[dumbBots.indexOf(houseVisitor)].bot} te espera (${MINIGAMES[dumbBots.indexOf(houseVisitor)].name})` : 'Pulsa <kbd>E</kbd> para apretar el botón rojo') : nearStall() ? 'Pulsa <kbd>E</kbd> para ver la tienda de estilo' : nearWardrobe() ? 'Pulsa <kbd>E</kbd> para abrir el armario' : '';
+    const txt = vt ? vt : nearRedButton() ? (botInsideHouse() ? `Pulsa <kbd>E</kbd>: el bot ${MINIGAMES[dumbBots.indexOf(botInsideHouse())].bot} te espera (${MINIGAMES[dumbBots.indexOf(botInsideHouse())].name})` : 'Pulsa <kbd>E</kbd> para apretar el botón rojo') : nearStall() ? 'Pulsa <kbd>E</kbd> para ver la tienda de estilo' : nearWardrobe() ? 'Pulsa <kbd>E</kbd> para abrir el armario' : '';
     actionPrompt.hidden = !txt || !!document.querySelector('.panel:not([hidden])');
     if (txt && actionPrompt.innerHTML !== txt) actionPrompt.innerHTML = txt;
   }
@@ -2679,7 +2694,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     setAmbientDay(day);
     const dusk = Math.max(0, 1 - Math.abs(elev) / 0.3); // color naranja cerca del horizonte
     tmpColor.copy(SKY_NIGHT).lerp(SKY_DAY, day).lerp(SKY_SUNSET, dusk * 0.55);
-    if (MG.active && MG.active.sky !== undefined) tmpColor.setHex(MG.active.sky);   // el mundo al revés tiene su propio cielo
+    if (MG.active && MG.active.sky !== undefined) tmpColor.setHex(MG.active.sky);   // un minijuego puede tener su propio cielo
     scene.background.copy(tmpColor); scene.fog.color.copy(tmpColor);
     hemi.intensity = 0.18 + 0.57 * day;
     sun.intensity = 0.85 * day;
@@ -2778,7 +2793,27 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
       const r = new THREE.Mesh(new THREE.DodecahedronGeometry(0.45), M(0x8a8f96)); r.position.y = 0.45; g.add(r);
       for (const ex of [-0.13, 0.13]) { const e = new THREE.Mesh(eyeGeo, eyeMat); e.scale.setScalar(0.7); e.position.set(ex, 0.55, 0.4); g.add(e); }   // ¡tiene ojitos!
     } else if (kind === 'ball') { const b = new THREE.Mesh(new THREE.SphereGeometry(0.45, 16, 12), M(0xff3b30)); b.position.y = 0.45; g.add(b); const st = new THREE.Mesh(new THREE.TorusGeometry(0.45, 0.06, 6, 20), M(0xffffff)); st.position.y = 0.45; g.add(st); }
-    else if (kind === 'teddy') { for (const [r, y, x] of [[0.4, 0.4, 0], [0.28, 0.95, 0], [0.12, 1.2, -0.2], [0.12, 1.2, 0.2]]) { const p = new THREE.Mesh(new THREE.SphereGeometry(r, 12, 10), M(0x9c6b3d)); p.position.set(x, y, 0); g.add(p); } }
+    else if (kind === 'teddy') {
+      // Osito de peluche sentado: panza, cabeza con hocico y nariz, orejas con relleno, bracitos, patitas y un moñito
+      const fur = M(0x9c6b3d), light = M(0xe0bf8f), dark = new THREE.MeshBasicMaterial({ color: 0x2a1a10 }), bow = M(0xe0302f);
+      const ball = (r, mat, x, y, z, sx = 1, sy = 1, sz = 1) => { const m = new THREE.Mesh(new THREE.SphereGeometry(r, 14, 12), mat); m.position.set(x, y, z); m.scale.set(sx, sy, sz); g.add(m); return m; };
+      ball(0.36, fur, 0, 0.42, 0, 1, 1.1, 0.9);                      // cuerpo
+      ball(0.22, light, 0, 0.4, 0.24, 1, 1.15, 0.5);                 // panza clarita
+      ball(0.29, fur, 0, 0.98, 0);                                   // cabeza
+      ball(0.13, light, 0, 0.91, 0.24, 1.1, 0.85, 0.75);             // hocico
+      ball(0.05, dark, 0, 0.96, 0.34, 1.2, 0.8, 0.8);                // nariz
+      for (const sx of [-1, 1]) {
+        ball(0.04, dark, sx * 0.11, 1.06, 0.25);                     // ojos de botón
+        ball(0.1, fur, sx * 0.21, 1.21, 0, 1, 1, 0.6);               // orejas
+        ball(0.055, light, sx * 0.21, 1.21, 0.05, 1, 1, 0.4);        // relleno de las orejas
+        ball(0.11, fur, sx * 0.35, 0.55, 0.1, 1, 1.6, 1).rotation.z = sx * 0.6;   // bracitos
+        ball(0.13, fur, sx * 0.19, 0.14, 0.22, 1, 0.9, 1.5);         // patitas (está sentado)
+        ball(0.075, light, sx * 0.19, 0.14, 0.42, 1, 1, 0.35);       // plantitas de las patas
+        const lazo = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.14, 10), bow);   // moñito rojo
+        lazo.rotation.z = sx * Math.PI / 2; lazo.position.set(sx * 0.07, 0.73, 0.27); g.add(lazo);
+      }
+      ball(0.04, bow, 0, 0.73, 0.28);                                // nudo del moñito
+    }
     else if (kind === 'key') { const ring = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.07, 8, 16), M(0xffc400)); ring.position.set(0, 0.6, 0); g.add(ring); const bar = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.6, 0.08), M(0xffc400)); bar.position.set(0, 0.15, 0); g.add(bar); }
     else if (kind === 'apple') { const a = new THREE.Mesh(new THREE.SphereGeometry(0.3, 14, 10), M(0xe0302f)); a.position.y = 0.3; g.add(a); const l = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 6), M(0x3fae4a)); l.scale.set(1, 0.4, 2); l.position.set(0.08, 0.62, 0); g.add(l); }
     else if (kind === 'plank') { const pl = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.12, 0.35), M(0xb07a45)); pl.position.y = 0.1; g.add(pl); }
