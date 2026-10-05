@@ -194,9 +194,23 @@ export const STAIRWELL = { x0: 31, x1: 34, z0: 5, steps: 18, rise: 7 / 18, run: 
 STAIRWELL.z1 = STAIRWELL.z0 + STAIRWELL.steps * STAIRWELL.run;   // 15,8
 
 // Altura del suelo en (x, z): dentro del sótano (si ya existe) es el piso del sótano; afuera, 0
-export function groundHeight(x, z, basementOpen) {
+export function groundHeight(x, z, basementOpen, factoryOpen = false) {
   const b = BASEMENT;
-  return basementOpen && x > b.x0 && x < b.x1 && z > b.z0 && z < b.z1 ? b.y : 0;
+  if (basementOpen && x > b.x0 && x < b.x1 && z > b.z0 && z < b.z1) return b.y;
+  return factoryOpen && inFactory(x, z) ? FACTORY.y : 0;
+}
+
+// ---------- Fábrica subterránea (se compra después del sótano) ----------
+// Un salón al lado del sótano (se entra por una puerta en su pared derecha) con las 10 cintas en filas.
+// Entre fila y fila queda un pasillo para caminar; los trabajadores están en las puntas de cada cinta.
+export const FACTORY = { x0: 37, x1: 72, z0: 4, z1: 62, y: -7, ceilingY: -2, door: { z0: 12, z1: 16 }, lineX0: 44, firstZ: 8, rowGap: 5.5,
+  cost: { coins: 2000, boxes: 1000 } };
+export const inFactory = (x, z) => x > FACTORY.x0 && x < FACTORY.x1 && z > FACTORY.z0 && z < FACTORY.z1;
+// Dónde va cada cinta en la fábrica. index 0 = la de la tienda; 1, 2, 3, 4 = las extra.
+// Arriba las 5 cintas de cajas y abajo los 5 transformadores.
+export function factoryLineSlot(type, index) {
+  const row = (type === 'box' ? 0 : 5) + index;
+  return { x0: FACTORY.lineX0, len: type === 'box' ? 20 : 15, z: FACTORY.firstZ + row * FACTORY.rowGap, y0: FACTORY.y };
 }
 
 // El techo del sótano (que es el suelo de arriba) tiene un hueco para la escalera.

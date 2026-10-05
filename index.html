@@ -201,8 +201,8 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module">
-import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
-         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-05b'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
+import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
+         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-05c'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
 import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto, acercar, piezasExplosion } from './src/red.js?v=2026-10-03e';
 (() => {
   // iPhone ignora user-scalable=no: aquí se bloquea el zoom con dos dedos y el doble toque
@@ -420,7 +420,8 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
   })();
 
   // Casa grande con sótano (se construye al comprarla)
-  let basementOpen = false;
+  let basementOpen = false, factoryOpen = false;
+  const basementRightWall = [];
   function buildBigHouse() {
     if (basementOpen) return;
     basementOpen = true;
@@ -449,7 +450,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(B.x1 - B.x0, B.z1 - B.z0), concrete);
     floor.rotation.x = -Math.PI / 2; floor.position.set((B.x0 + B.x1) / 2, B.y + 0.01, (B.z0 + B.z1) / 2); floor.receiveShadow = true; scene.add(floor);
     const wallC = new THREE.MeshLambertMaterial({ color: 0x6f757d });
-    addBox(B.x0 - 0.5, B.x0, B.y, C, B.z0, B.z1, wallC); addBox(B.x1, B.x1 + 0.5, B.y, C, B.z0, B.z1, wallC);
+    addBox(B.x0 - 0.5, B.x0, B.y, C, B.z0, B.z1, wallC); addBox(B.x1, B.x1 + 0.5, B.y, C, B.z0, B.z1, wallC, basementRightWall);   // (la fábrica le abre una puerta)
     addBox(B.x0 - 0.5, B.x1 + 0.5, B.y, C, B.z0 - 0.5, B.z0, wallC); addBox(B.x0 - 0.5, B.x1 + 0.5, B.y, C, B.z1, B.z1 + 0.5, wallC);
     const cshape = new THREE.Shape([new THREE.Vector2(B.x0, B.z0), new THREE.Vector2(B.x1, B.z0), new THREE.Vector2(B.x1, B.z1), new THREE.Vector2(B.x0, B.z1)]);
     cshape.holes.push(new THREE.Path([new THREE.Vector2(S.x0, S.z0), new THREE.Vector2(S.x0, S.z1), new THREE.Vector2(S.x1, S.z1), new THREE.Vector2(S.x1, S.z0)]));
@@ -748,7 +749,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
 
     if (wantJump && st.onGround) { st.vel.y = jump; st.onGround = false; }
     const prevY = st.pos.y;
-    let floor = groundHeight(st.pos.x, st.pos.z, basementOpen), standing = null;
+    let floor = groundHeight(st.pos.x, st.pos.z, basementOpen, factoryOpen), standing = null;
     for (const pl of platforms) {
       if (pl.top > floor && pl.top <= prevY + 0.01 && overlaps(pl, st.pos.x, st.pos.z)) { floor = pl.top; standing = pl; }
     }
@@ -817,7 +818,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('show'), ms);
   }
   // Progreso de esta partida: se guarda con el botón GUARDAR, por usuario
-  const save = { coins: 0, boxes: 0, style: emptyStyle(), trophies: [], levels: { belt: 0, hopper: 0, belt2: 0, turbo: 0, bigHouse: 0, transformer: 0, hopper2: 0, lineBox: 0, lineBag: 0, assistant2: 0, assistant: 0, assistSpeed: 0, blaster: 0, blaster2: 0 } };
+  const save = { coins: 0, boxes: 0, style: emptyStyle(), trophies: [], levels: { belt: 0, hopper: 0, belt2: 0, turbo: 0, bigHouse: 0, transformer: 0, hopper2: 0, lineBox: 0, lineBag: 0, factory: 0, assistant2: 0, assistant: 0, assistSpeed: 0, blaster: 0, blaster2: 0 } };
   try { localStorage.removeItem('rectangulo-verde-tienda'); } catch (e) {} // borra el guardado de versiones anteriores
   // Reinicio de avances: cuando cambia esta marca, las partidas guardadas en este navegador se borran una sola vez
   // (pasa igual en localhost y en github.io, porque cada navegador lo revisa al abrir el juego)
@@ -887,6 +888,9 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
       base: 50, flat: true, max: MAX_EXTRA_BAG_LINES, count: true, needs: 'transformer', apply: l => { ensureExtraLines('bag', l); if (l) showToast('Nuevo transformador, con tolva y Cinta 2.0'); } },
     { id: 'bigHouse', group: 'Tu base', name: 'Casa grande con sótano', desc: 'Tu casa crece y le sale un sótano debajo; baja por la escalera de la casa.',
       cost: { boxes: 100, coins: 200 }, max: 1, apply: l => { if (l) { buildBigHouse(); showToast('¡Casa grande! Baja al sótano por la escalera'); } } },
+    // Solo después del sótano (needs): si se pudiera comprar antes, la fábrica no tendría por dónde entrar
+    { id: 'factory', group: 'Tu base', name: 'Fábrica subterránea', desc: 'Un salón enorme al lado del sótano: todas tus cintas se mudan ahí, con pasillos para caminar y trabajadores con casco que las cuidan. Se entra por la puerta del sótano.',
+      cost: FACTORY.cost, max: 1, needs: 'bigHouse', apply: l => { if (l) { buildFactory(); showToast('¡Fábrica lista! Entra por la puerta del sótano'); } } },
     { id: 'assistant', group: 'Tu base', name: 'Asistente', desc: 'Un robot que va por las monedas por ti. Se paga con cajas doradas de la cinta.',
       currency: 'boxes', base: 10, max: 1, apply: l => { ensureAssistants(); if (l) showToast('¡Tu asistente ya está buscando monedas!'); } },
     { id: 'assistant2', group: 'Mejoras del asistente', name: 'Otro asistente', desc: 'Un segundo asistente que también va por las monedas (máximo 2 asistentes).',
@@ -1056,6 +1060,12 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
       if (on) { platforms.push(...L.platforms); x = L.start; wait = 0; }
     };
     L.setHopper = on => { L.hopperOwned = on; hopper.visible = on && L.owned; };
+    // Quitar la cinta del mundo (cuando se muda a la fábrica se construye otra en su nuevo lugar)
+    L.dispose = () => {
+      scene.remove(group, hopper, pieces, item);
+      if (L.owned) for (const pl of L.platforms) { const i = platforms.indexOf(pl); if (i >= 0) platforms.splice(i, 1); }
+      for (const w of L.workers || []) scene.remove(w);
+    };
     const collect = () => { onCollect(); wait = 1.5; sinkT = 0; };   // los siguientes pedazos salen en un momento (en multijugador, cada uno cobra en su compu)
     L.update = dt => {
       if (!L.owned) return;
@@ -1093,7 +1103,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     box: { machineOffset: 6, machineColor: 0x3a4658, bandColor: 0xffc400, product: 'box', onCollect: REWARD.box },
     bag: { machineOffset: 5, machineColor: 0x5b2a86, bandColor: 0xffffff, product: 'bag', onCollect: REWARD.bag },
   };
-  const lines = {
+  const lines = {   // al comprar la fábrica, cada cinta se reemplaza por una nueva allá abajo
     box: createLine({ ...LINE_SPECS.box, ...MAIN_LINES.box }),
     bag: createLine({ ...LINE_SPECS.bag, ...MAIN_LINES.bag }),
   };
@@ -1101,7 +1111,8 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
   const extraLines = [];
   function ensureExtraLines(type, count) {
     while (extraLines.filter(e => e.type === type).length < count) {
-      const slot = extraLineSlot(type, extraLines.filter(e => e.type === type).length);
+      const n = extraLines.filter(e => e.type === type).length;
+      const slot = factoryOpen ? factoryLineSlot(type, n + 1) : extraLineSlot(type, n);   // en la fábrica, la fila 0 es la cinta de la tienda
       const L = createLine({ ...LINE_SPECS[type], ...slot });
       L.extra = true; L.setOwned(true); L.setHopper(true);
       extraLines.push({ type, L });
@@ -1114,7 +1125,89 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     const tier = save.levels.turbo ? 2 : save.levels.belt2 ? 1 : 0;
     for (const L of allLines()) L.speed = beltSpeed(L.extra ? Math.max(tier, 1) : tier);
   }
-  function updateBelt(dt) { for (const L of allLines()) L.update(dt); }
+  function updateBelt(dt) {
+    for (const L of allLines()) L.update(dt);
+    if (factoryOpen) updateWorkers();
+  }
+
+  // ---------- Fábrica subterránea ----------
+  // Trabajador: rectángulo gris (del blanco al negro) con casco amarillo de construcción
+  const WORKER_GRAYS = [0xe6e6e6, 0xb3b3b3, 0x8c8c8c, 0x666666, 0x404040];
+  const hatMat = new THREE.MeshLambertMaterial({ color: 0xffc400 });
+  function makeWorker(color) {
+    const g = new THREE.Group();
+    const b = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), new THREE.MeshLambertMaterial({ color }));
+    b.position.y = H / 2; b.castShadow = true; g.add(b);
+    for (const x of [-0.22, 0.22]) { const e = new THREE.Mesh(eyeGeo, eyeMat); e.scale.z = 0.5; e.position.set(x, H * 0.78, D / 2 + 0.02); g.add(e); }
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(0.5, 18, 8, 0, Math.PI * 2, 0, Math.PI / 2), hatMat); dome.scale.z = 0.75; dome.position.y = H; g.add(dome);
+    const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.62, 0.06, 20), hatMat); brim.scale.z = 0.8; brim.position.set(0, H + 0.02, 0.06); g.add(brim);
+    scene.add(g); return g;
+  }
+  // Cada cinta tiene dos trabajadores, uno en cada punta, mirando hacia la cinta (los pasillos quedan libres para ti)
+  function updateWorkers() {
+    allLines().forEach((L, i) => {
+      if (!L.owned) return;
+      if (!L.workers) {
+        const a = makeWorker(WORKER_GRAYS[i % 5]), b = makeWorker(WORKER_GRAYS[(i + 2) % 5]);
+        a.position.set(L.x0 - 2, L.y0, L.z); a.rotation.y = Math.PI / 2;        // mira a la derecha (hacia la cinta)
+        b.position.set(L.plateX + 2.6, L.y0, L.z); b.rotation.y = -Math.PI / 2; // mira a la izquierda (hacia el plato)
+        a.userData.phase = i; b.userData.phase = i + 0.5;
+        L.workers = [a, b];
+      }
+      for (const w of L.workers) w.position.y = L.y0 + Math.abs(Math.sin(t * 5 + w.userData.phase)) * 0.3;   // ¡saltitos de trabajo!
+    });
+  }
+  function buildFactory() {
+    if (factoryOpen || !basementOpen) return;   // sin sótano no hay por dónde entrar
+    factoryOpen = true;
+    const F = FACTORY, B = BASEMENT, C = F.ceilingY, wallC = new THREE.MeshLambertMaterial({ color: 0x6f757d });
+    // Puerta en la pared derecha del sótano
+    removeParts(basementRightWall);
+    addBox(B.x1, B.x1 + 0.5, B.y, C, B.z0, F.door.z0, wallC); addBox(B.x1, B.x1 + 0.5, B.y, C, F.door.z1, B.z1, wallC);
+    addBox(B.x1, B.x1 + 0.5, B.y + 3, C, F.door.z0, F.door.z1, wallC);   // encima de la puerta
+    const sign = document.createElement('canvas'); sign.width = 256; sign.height = 64; const sg = sign.getContext('2d');
+    sg.fillStyle = '#ffc400'; sg.fillRect(0, 0, 256, 64); sg.fillStyle = '#16301f'; sg.font = '900 40px system-ui, sans-serif'; sg.textAlign = 'center'; sg.textBaseline = 'middle'; sg.fillText('🏭 FÁBRICA', 128, 34);
+    const plaque = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 0.6), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(sign) }));
+    plaque.position.set(B.x1 - 0.02, B.y + 3.5, (F.door.z0 + F.door.z1) / 2); plaque.rotation.y = -Math.PI / 2; scene.add(plaque);
+    // Piso de concreto con franjas amarillas en los pasillos, paredes y techo
+    const fc = document.createElement('canvas'); fc.width = fc.height = 64; const fg = fc.getContext('2d');
+    fg.fillStyle = '#8a8f96'; fg.fillRect(0, 0, 64, 64); fg.fillStyle = '#80858c'; fg.fillRect(0, 0, 32, 32); fg.fillRect(32, 32, 32, 32);
+    const ftex = new THREE.CanvasTexture(fc); ftex.wrapS = ftex.wrapT = THREE.RepeatWrapping; ftex.repeat.set((F.x1 - F.x0) / 4, (F.z1 - F.z0) / 4);
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(F.x1 - F.x0, F.z1 - F.z0), new THREE.MeshLambertMaterial({ map: ftex }));
+    floor.rotation.x = -Math.PI / 2; floor.position.set((F.x0 + F.x1) / 2, F.y + 0.01, (F.z0 + F.z1) / 2); floor.receiveShadow = true; scene.add(floor);
+    const stripe = new THREE.MeshBasicMaterial({ color: 0xffc400 });
+    for (let r = 0; r < 9; r++) {   // una franja amarilla en medio de cada pasillo
+      const z = F.firstZ + (r + 0.5) * F.rowGap, m = new THREE.Mesh(new THREE.PlaneGeometry(F.x1 - F.lineX0 + 2, 0.12), stripe);
+      m.rotation.x = -Math.PI / 2; m.position.set((F.lineX0 - 2 + F.x1) / 2, F.y + 0.02, z); scene.add(m);
+    }
+    addBox(F.x0, F.x0 + 0.5, F.y, C, B.z1, F.z1 + 0.5, wallC);           // izquierda (después del sótano)
+    addBox(F.x0, F.x1 + 0.5, F.y, C, F.z0 - 0.5, F.z0, wallC);           // adelante
+    addBox(F.x0, F.x1 + 0.5, F.y, C, F.z1, F.z1 + 0.5, wallC);           // atrás
+    addBox(F.x1, F.x1 + 0.5, F.y, C, F.z0 - 0.5, F.z1 + 0.5, wallC);     // derecha
+    const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(F.x1 - F.x0 + 0.5, F.z1 - F.z0 + 1), new THREE.MeshLambertMaterial({ color: 0x9aa0a8 }));
+    ceiling.rotation.x = Math.PI / 2; ceiling.position.set((F.x0 + F.x1 + 0.5) / 2, C, (F.z0 + F.z1) / 2); ceiling.castShadow = true; scene.add(ceiling);
+    // Arriba de la fábrica hay tierra: afuera se sigue caminando encima
+    platforms.push({ x: (F.x0 + F.x1 + 0.5) / 2, z: (F.z0 + F.z1) / 2, hw: (F.x1 - F.x0 + 0.5) / 2, hd: (F.z1 - F.z0 + 1) / 2, top: 0, bottom: C });
+    // Lámparas (pocas pero grandes: cada luz extra hace más lento el juego)
+    for (const [lx, lz] of [[50, 16], [50, 46], [64, 16], [64, 46]]) {
+      const light = new THREE.PointLight(0xfff1d6, 1, 34, 1.2); light.position.set(lx, C - 0.4, lz); scene.add(light);
+      const lamp = new THREE.Mesh(new THREE.BoxGeometry(2, 0.12, 2), new THREE.MeshBasicMaterial({ color: 0xfff1d6 })); lamp.position.set(lx, C - 0.07, lz); scene.add(lamp);
+    }
+    // Las cintas que ya tenías se mudan a la fábrica (con su tolva y su velocidad)
+    for (const [type, L] of Object.entries(lines)) {
+      const owned = L.owned, hopper = L.hopperOwned;
+      L.dispose();
+      lines[type] = createLine({ ...LINE_SPECS[type], ...factoryLineSlot(type, 0) });
+      lines[type].setOwned(owned); lines[type].setHopper(hopper);
+    }
+    const counts = { box: 0, bag: 0 };
+    for (const e of extraLines) {
+      e.L.dispose();
+      e.L = createLine({ ...LINE_SPECS[e.type], ...factoryLineSlot(e.type, ++counts[e.type]) });
+      e.L.extra = true; e.L.setOwned(true); e.L.setHopper(true);
+    }
+    applyBeltSpeeds();
+  }
 
   // ---------- Asistentes: recogen monedas por ti ----------
   function makeAssistantObj() {
@@ -2698,7 +2791,8 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     if (MG.active && MG.active.sky !== undefined) tmpColor.setHex(MG.active.sky);   // un minijuego puede tener su propio cielo
     scene.background.copy(tmpColor); scene.fog.color.copy(tmpColor);
     hemi.intensity = 0.18 + 0.57 * day;
-    sun.intensity = 0.85 * day;
+    // Bajo tierra (sótano o fábrica) casi no llega el sol: así no se cuela luz por las partes lejanas del techo
+    sun.intensity = 0.85 * day * (ps.pos.y < BASEMENT.ceilingY ? 0.25 : 1);
     moon.intensity = 0.3 * (1 - day);
     stars.material.opacity = 1 - day;
     stars.position.copy(camera.position);

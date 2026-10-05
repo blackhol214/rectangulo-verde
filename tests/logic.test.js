@@ -4,7 +4,7 @@ import {
   upgradePrice, fmt, sunElevation, isNightPhase, clockText, hourToPhase,
   launchSpeedForHeight, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, productReward, BAG_VALUE, nearestIndex, assistantSpeed, ASSIST_SPEED_MAX,
   normalizeName, saveKey, serializeSave, parseSave,
-  BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, missingFor, canAfford,
+  BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, FACTORY, factoryLineSlot, inFactory, slabPieces, missingFor, canAfford,
   mountainRing, MOUNTAIN_WALL_INSET, seededRandom,
   blasterStats,
   COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, parseStyle, cosmeticById,
@@ -901,5 +901,38 @@ describe('pueblo y misiones', () => {
     expect(taskReady(rock, 0)).toBe(false); expect(taskReady(rock, 1)).toBe(true);
     expect(taskReady(apples, 4)).toBe(false); expect(taskReady(apples, 5)).toBe(true);
     for (const t of TASKS) expect((t.reward.coins || 0) + (t.reward.boxes || 0)).toBeGreaterThan(0);
+  });
+});
+
+describe('fábrica subterránea', () => {
+  const slots = [0, 1, 2, 3, 4].flatMap(i => [factoryLineSlot('box', i), factoryLineSlot('bag', i)]);
+  // Lo que ocupa cada cinta: desde el marco hasta el plato y su tolva (radio 1,3)
+  const area = ({ x0, len, z }) => ({ x0: x0 - 0.3, x1: x0 + len + 1.6 + 1.3, z0: z - 1.3, z1: z + 1.3 });
+  it('cuesta 2000 monedas y 1000 cajas', () => {
+    expect(FACTORY.cost).toEqual({ coins: 2000, boxes: 1000 });
+  });
+  it('las 10 cintas caben adentro, con lugar para los trabajadores en las dos puntas', () => {
+    for (const s of slots.map(area)) {
+      expect(s.x0 - 2.5).toBeGreaterThan(FACTORY.x0 + 0.5);   // trabajador de la izquierda + la pared
+      expect(s.x1 + 2.5).toBeLessThan(FACTORY.x1);            // trabajador de la derecha
+      expect(s.z0).toBeGreaterThan(FACTORY.z0);
+      expect(s.z1).toBeLessThan(FACTORY.z1);
+    }
+  });
+  it('entre cinta y cinta hay un pasillo de más de 2,5 m para caminar', () => {
+    const zs = slots.map(s => s.z).sort((a, b) => a - b);
+    for (let i = 1; i < zs.length; i++) expect(zs[i] - zs[i - 1] - 2 * 1.3).toBeGreaterThan(2.5);   // 1,3 = media máquina
+  });
+  it('está al lado del sótano, a la misma altura, y la puerta queda lejos del botón rojo', () => {
+    expect(FACTORY.x0).toBe(BASEMENT.x1);
+    expect(FACTORY.y).toBe(BASEMENT.y);
+    expect(FACTORY.door.z0).toBeGreaterThan(BASEMENT.z0); expect(FACTORY.door.z1).toBeLessThan(BASEMENT.z1);
+    expect(RED_BUTTON.z < FACTORY.door.z0 - 1 || RED_BUTTON.z > FACTORY.door.z1 + 1).toBe(true);
+  });
+  it('el piso de la fábrica solo existe después de comprarla', () => {
+    expect(groundHeight(55, 30, true, false)).toBe(0);
+    expect(groundHeight(55, 30, true, true)).toBe(FACTORY.y);
+    expect(groundHeight(25, 11, true, true)).toBe(BASEMENT.y);   // el sótano sigue igual
+    expect(inFactory(30, 30)).toBe(false);
   });
 });
