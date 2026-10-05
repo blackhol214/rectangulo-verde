@@ -514,18 +514,19 @@ export const dropperPad = () => { const r = seededRandom(DROPPER.seed + 1); cons
 
 // ----- Azul: delfines y ballena -----
 // Cada delfín nada de un lado a otro (a lo largo de x) en su carril z; el muelle está en z = 0 y la ballena al final.
-// 10 delfines en fila, como en Mario World: salen del agua, saltan HACIA ADELANTE (hacia la ballena) y se vuelven a meter.
-// leap: segundos fuera del agua · under: segundos escondidos · span: metros que avanzan en el salto
-// peak: qué tan alto suben · wave: retraso entre un delfín y el siguiente (salen en ola, al ritmo de tus saltos)
-export const DOLPHINS = { count: 10, firstZ: 5, gap: 5, leap: 1.5, under: 0.6, span: 4, peak: 2, wave: 0.8, length: 3, width: 1.4, whaleZ: 56, whaleSize: [7.2, 2.4, 3.4] };   // whaleSize: la parte de arriba de su espalda, donde se puede pisar
+// 10 delfines, uno por fila. No nadan: salen del agua, hacen un arco de lado y se vuelven a meter.
+// Como "fijar estilo de rotación a izquierda-derecha" en Scratch: solo miran a la izquierda o a la derecha, nunca se inclinan.
+// leap: segundos fuera del agua · under: segundos escondidos · span: metros que avanzan de lado en el salto
+// peak: qué tan alto suben · wave: retraso entre un delfín y el siguiente (salen en ola)
+export const DOLPHINS = { count: 10, firstZ: 5, gap: 4.4, leap: 2.6, under: 1.0, span: 5, peak: 2.2, wave: 0.85, length: 3, width: 1.4, whaleZ: 51, whaleSize: [7.2, 2.4, 3.4] };   // whaleSize: la parte de arriba de su espalda, donde se puede pisar
 export const dolphinLane = i => DOLPHINS.firstZ + i * DOLPHINS.gap;
-// Dónde está el delfín i en el segundo t (along: cuánto avanzó en su fila; y: cuánto subió)
+// Dónde está el delfín i en el segundo t (x: de lado en su fila; y: cuánto subió; dir: 1 = mira a la derecha, -1 = a la izquierda)
 export function dolphinLeap(i, t) {
   const D = DOLPHINS, cycle = D.leap + D.under, local = (((t - i * D.wave) % cycle) + cycle) % cycle;
-  if (local >= D.leap) return { up: false, u: 1, along: 0, y: -2, pitch: 0 };
+  const dir = i % 2 ? -1 : 1;   // uno salta hacia la derecha, el siguiente hacia la izquierda
+  if (local >= D.leap) return { up: false, u: 1, x: 0, y: -2, dir };
   const u = local / D.leap;
-  return { up: true, u, along: (u - 0.5) * D.span, y: Math.sin(u * Math.PI) * D.peak,
-    pitch: 0.7 * Math.atan2(Math.PI * D.peak * Math.cos(u * Math.PI), D.span) };   // la nariz sube al salir y baja al meterse
+  return { up: true, u, dir, x: dir * (u - 0.5) * D.span, y: Math.sin(u * Math.PI) * D.peak };
 }
 
 // ----- Celeste y coral: nubes -----

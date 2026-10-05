@@ -714,33 +714,31 @@ describe('morado: dropper', () => {
   });
 });
 
-describe('azul: delfines que saltan en fila', () => {
+describe('azul: delfines que saltan de lado', () => {
   const D = DOLPHINS;
   it('son 10 y las filas se alcanzan de un salto, del muelle a la ballena', () => {
     expect(D.count).toBe(10);
     const rows = [1.4, ...Array.from({ length: D.count }, (_, i) => dolphinLane(i)), D.whaleZ - D.whaleSize[2] / 2];
     for (let i = 1; i < rows.length; i++) expect(rows[i] - rows[i - 1]).toBeLessThanOrEqual(6.5);
   });
-  it('cada delfín sale del agua, salta hacia adelante y se vuelve a esconder', () => {
+  it('cada delfín sale del agua, salta de lado y se vuelve a esconder', () => {
     let up = 0, down = 0;
-    for (let t = 0; t < 20; t += 0.05) {
-      const L = dolphinLeap(3, t);
-      if (L.up) { up++; expect(L.y).toBeGreaterThanOrEqual(0); expect(L.y).toBeLessThanOrEqual(D.peak); expect(Math.abs(L.along)).toBeLessThanOrEqual(D.span / 2); } else down++;
-    }
+    for (let t = 0; t < 36; t += 0.05) { const L = dolphinLeap(3, t); if (L.up) { up++; expect(L.y).toBeGreaterThanOrEqual(0); expect(L.y).toBeLessThanOrEqual(D.peak); expect(Math.abs(L.x)).toBeLessThanOrEqual(D.span / 2); } else down++; }
     expect(up).toBeGreaterThan(0); expect(down).toBeGreaterThan(0);
   });
-  it('saltan más rápido que antes (menos de 2 segundos en el aire)', () => {
-    expect(D.leap).toBeLessThan(2);
+  it('estilo de rotación izquierda-derecha: solo miran a un lado o al otro, sin inclinarse', () => {
+    for (let t = 0; t < 10; t += 0.1) for (let i = 0; i < D.count; i++) {
+      const L = dolphinLeap(i, t);
+      expect([1, -1]).toContain(L.dir);
+      expect(L.pitch).toBeUndefined();   // no hay inclinación
+    }
+    expect(dolphinLeap(0, 0).dir).toBe(-dolphinLeap(1, 0).dir);   // uno salta a la derecha y el siguiente a la izquierda
   });
-  it('siempre hay un momento en que el siguiente delfín también está afuera, y cerca (para saltar de uno a otro)', () => {
+  it('siempre hay un momento en que el siguiente delfín también está afuera (para saltar de uno a otro)', () => {
     for (let i = 0; i + 1 < D.count; i++) {
       let both = 0;
-      for (let t = 0; t < D.leap + D.under; t += 0.05) {
-        const a = dolphinLeap(i, t), b = dolphinLeap(i + 1, t);
-        // el siguiente va detrás en la misma ola
-        if (a.up && b.up && b.u < a.u) { both += 0.05; expect((dolphinLane(i + 1) + b.along) - (dolphinLane(i) + a.along)).toBeLessThan(6); }
-      }
-      expect(both).toBeGreaterThan(0.5);
+      for (let t = 0; t < D.leap + D.under; t += 0.05) if (dolphinLeap(i, t).up && dolphinLeap(i + 1, t).up) both += 0.05;
+      expect(both).toBeGreaterThan(1);
     }
   });
 });

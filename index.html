@@ -202,7 +202,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module">
 import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
-         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-05'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
+         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-05b'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
 import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto, acercar, piezasExplosion } from './src/red.js?v=2026-10-03e';
 (() => {
   // iPhone ignora user-scalable=no: aquí se bloquea el zoom con dos dedos y el doble toque
@@ -1768,7 +1768,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
         // 10 delfines, uno por fila. Su "piso" solo existe mientras están fuera del agua
         MG.built.dolphins = Array.from({ length: Dl.count }, (_, i) => {
           const g = makeDolphin(); g.traverse(m => { if (m.isMesh) m.castShadow = true; }); g.visible = false; scene.add(g);
-          const pl = { x: o.x, z: o.z + dolphinLane(i), hw: Dl.width / 2, hd: Dl.length / 2, top: -5, bottom: -6, move: true, dx: 0, dy: 0, dz: 0 };   // en fila: largos hacia la ballena
+          const pl = { x: o.x, z: o.z + dolphinLane(i), hw: Dl.length / 2, hd: Dl.width / 2, top: -5, bottom: -6, move: true, dx: 0, dy: 0, dz: 0 };   // largos de lado, a lo ancho de su fila
           platforms.push(pl); return { g, pl, wasUp: false };
         });
         MG.built.splash = [];
@@ -1776,14 +1776,15 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
       start(o) { placePlayer(o.x, 1, o.z - 2); MG.built.cap.visible = true; MG.t = 0; },
       update(dt, o) {
         MG.built.dolphins.forEach((d, i) => {
-          const L = dolphinLeap(i, MG.t), { g, pl } = d, lane = o.z + dolphinLane(i);
-          if (L.up !== d.wasUp) splash(o.x, 0.4, lane + (L.up ? -1 : 1) * DOLPHINS.span / 2, MG.built.splash);   // ¡splash! al salir y al meterse
+          const L = dolphinLeap(i, MG.t), { g, pl } = d, z = o.z + dolphinLane(i);
+          if (L.up !== d.wasUp) splash(o.x + (L.up ? -L.dir : L.dir) * DOLPHINS.span / 2, 0.4, z, MG.built.splash);   // ¡splash! al salir y al meterse
           d.wasUp = L.up;
           g.visible = L.up;
           if (!L.up) { pl.dx = pl.dy = pl.dz = 0; pl.top = -5; pl.bottom = -6; return; }   // bajo el agua: no se puede pisar
-          const nz = lane + L.along, top = L.y + 1;
-          pl.dz = pl.top > -5 ? nz - pl.z : 0; pl.dy = pl.top > -5 ? top - pl.top : 0; pl.dx = 0; pl.z = nz; pl.top = top; pl.bottom = L.y;   // te lleva hacia adelante
-          g.position.set(o.x, L.y - 0.05, nz); g.rotation.set(0, -Math.PI / 2, L.pitch);   // todos miran hacia la ballena
+          const nx = o.x + L.x, top = L.y + 1;
+          pl.dx = pl.top > -5 ? nx - pl.x : 0; pl.dy = pl.top > -5 ? top - pl.top : 0; pl.dz = 0; pl.x = nx; pl.top = top; pl.bottom = L.y;   // te lleva de lado
+          // Estilo de rotación "izquierda-derecha" (como en Scratch): mira a la derecha o a la izquierda, sin inclinarse nunca
+          g.position.set(nx, L.y - 0.05, z); g.rotation.set(0, L.dir > 0 ? 0 : Math.PI, 0);
         });
         for (let k = MG.built.splash.length - 1; k >= 0; k--) {
           const q = MG.built.splash[k]; q.v.y -= 20 * dt; q.m.position.addScaledVector(q.v, dt);
