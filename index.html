@@ -84,6 +84,29 @@
   .shop-item .buy:disabled { background:#d9dfdb; color:#6b7a70; cursor:not-allowed; }
   .shop-item .buy:focus-visible, .shop-head button:focus-visible { outline:3px solid #1e6bff; outline-offset:2px; }
   @media (max-width:420px) { .shop-item { grid-template-columns:1fr; } .shop-item .buy { grid-column:1; grid-row:auto; } }
+  /* Tiendas anchas: cada cosa es una tarjeta y caben varias por fila, así casi no hay que bajar */
+  #shop .shop-card, #styleShop .shop-card { width:min(1180px, 100%); }
+  #styleItems { display:grid; grid-template-columns:repeat(auto-fill, minmax(215px, 1fr)); gap:10px; }
+  #shopItems { display:flex; flex-wrap:wrap; gap:10px 16px; align-items:stretch; }
+  #shopItems .shop-sec { flex:1 1 calc(var(--n) * 156px); min-width:min(100%, 156px); display:flex; flex-direction:column; gap:6px; }
+  #shopItems .shop-sec:first-child { flex-basis:100%; }   /* la sección grande (cintas) usa todo el ancho */
+  #shopItems .shop-grid { flex:1; display:grid; grid-template-columns:repeat(var(--n), minmax(0, 1fr)); gap:10px; }
+  #shopItems .shop-sec:first-child .shop-grid { grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); }
+  /* Pantallas angostas (celular): una tarjeta por fila */
+  @media (max-width:560px) { #shopItems .shop-grid, #shopItems .shop-sec:first-child .shop-grid { grid-template-columns:1fr; } }
+  #shopItems .shop-item, #styleItems .shop-item { padding:10px 12px; } #shopItems .shop-item p { font-size:12.5px; }
+  #shopItems .shop-group, #styleItems .shop-group { grid-column:1 / -1; margin:6px 0 0; }
+  #shopItems .shop-item, #styleItems .shop-item { display:flex; flex-direction:column; align-items:stretch; gap:6px; }
+  #shopItems .shop-item .buy, #styleItems .shop-item .buy { margin-top:auto; width:100%; min-width:0; }
+  #shopItems .shop-item.ready, #styleItems .shop-item.ready { box-shadow:inset 0 0 0 2px #2fae4e; }   /* ¡ya lo puedes comprar! */
+  #shopItems .shop-item.owned, #styleItems .shop-item.owned { background:#f3f6f3; }
+  #shopItems .shop-item.owned :is(h3, p), #styleItems .shop-item.owned :is(h3, p) { opacity:.6; }
+  /* Maqueta 3D de cada cosa (se anima al pasar el mouse por encima) */
+  .shop-prev { aspect-ratio:2 / 1; border-radius:8px; overflow:hidden; background:linear-gradient(#dff1fb, #f4f9ee); }
+  .shop-prev canvas { display:block; width:100%; height:100%; }
+  #shopItems .shop-item.owned .shop-prev { opacity:.75; }
+  /* En pantallas grandes la descripción ocupa 2 líneas (el texto completo sale al pasar el mouse; el precio está en el botón) */
+  @media (min-width:700px) { #shopItems .shop-item p { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; } }
   /* Tienda de estilo y armario */
   .swatch { display:inline-block; width:14px; height:14px; border-radius:4px; margin-right:6px; vertical-align:-2px; box-shadow:inset 0 0 0 1px rgba(0,0,0,.25); }
   .shop-item .buy.on { background:#c98a00; }
@@ -870,36 +893,36 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
 
   // ---------- Tienda (P) ----------
   const SHOP = [
-    { id: 'belt', group: 'Tu base', name: 'Cinta transportadora', desc: 'Una cinta de 20 m en medio de tu mitad. Los pedazos amarillos pasan por la máquina y salen como cajas doradas: agárralas en el plato amarillo y guárdalas para comprar al asistente.',
+    { id: 'belt', group: 'Cintas', name: 'Cinta transportadora', desc: 'Una cinta de 20 m en medio de tu mitad. Los pedazos amarillos pasan por la máquina y salen como cajas doradas: agárralas en el plato amarillo y guárdalas para comprar al asistente.',
       base: 100, max: 1, apply: l => { lines.box.setOwned(l > 0); document.querySelector('.boxes').hidden = !(l > 0); if (l) showToast('La cinta está en medio de tu mitad'); } },
-    { id: 'hopper', group: 'Tu base', name: 'Tolva (cinta de cajas)', desc: 'Va al final de tu cinta y recoge las cajas doradas sola, sin que tengas que ir por ellas.',
+    { id: 'hopper', group: 'Cintas', name: 'Tolva (cinta de cajas)', desc: 'Va al final de tu cinta y recoge las cajas doradas sola, sin que tengas que ir por ellas.',
       currency: 'boxes', base: 5, max: 1, needs: 'belt', apply: l => { lines.box.setHopper(l > 0); if (l) showToast('La tolva recoge las cajas por ti'); } },
-    { id: 'belt2', group: 'Tu base', name: 'Cinta 2.0', desc: 'Tus cintas se ven igual, pero van un 50% más rápido.',
+    { id: 'belt2', group: 'Cintas', name: 'Cinta 2.0', desc: 'Tus cintas se ven igual, pero van un 50% más rápido.',
       currency: 'boxes', base: 5, max: 1, needs: 'belt', apply: l => { applyBeltSpeeds(); if (l) showToast('Cinta 2.0: tus cintas van 50% más rápido'); } },
-    { id: 'turbo', group: 'Tu base', name: 'Cintas turbo', desc: 'Todas tus cintas van un 100% más rápido que al principio (el doble).',
+    { id: 'turbo', group: 'Cintas', name: 'Cintas turbo', desc: 'Todas tus cintas van un 100% más rápido que al principio (el doble).',
       base: 100, max: 1, needs: 'belt', apply: l => { applyBeltSpeeds(); if (l) showToast('¡Cintas turbo: el doble de rápido!'); } },
-    { id: 'lineBox', group: 'Más cintas', name: 'Otra cinta de cajas', desc: 'Una cinta normal más (hace cajas doradas). Viene con su tolva y la velocidad de la Cinta 2.0. Máximo 5 cintas de cajas en total.',
+    { id: 'lineBox', group: 'Cintas', name: 'Otra cinta de cajas', desc: 'Una cinta normal más (hace cajas doradas). Viene con su tolva y la velocidad de la Cinta 2.0. Máximo 5 cintas de cajas en total.',
       base: 50, flat: true, max: MAX_EXTRA_BOX_LINES, count: true, needs: 'belt', apply: l => { ensureExtraLines('box', l); if (l) showToast('Nueva cinta de cajas, con tolva y Cinta 2.0'); } },
-    { id: 'transformer', group: 'Tu base', name: 'Transformador', desc: 'Otra cinta de 15 m, aparte, al lado de la tuya. Sus pedazos amarillos se vuelven bolsas de monedas: cada bolsa vale 10 monedas.',
+    { id: 'transformer', group: 'Cintas', name: 'Transformador', desc: 'Otra cinta de 15 m, aparte, al lado de la tuya. Sus pedazos amarillos se vuelven bolsas de monedas: cada bolsa vale 10 monedas.',
       currency: 'boxes', base: 20, max: 1, needs: 'belt', apply: l => { lines.bag.setOwned(l > 0); if (l) showToast('Transformador listo: sus pedazos se vuelven bolsas de 10 monedas'); } },
-    { id: 'hopper2', group: 'Tu base', name: 'Tolva (transformador)', desc: 'Va al final del transformador y recoge las bolsas de monedas sola.',
+    { id: 'hopper2', group: 'Cintas', name: 'Tolva (transformador)', desc: 'Va al final del transformador y recoge las bolsas de monedas sola.',
       currency: 'boxes', base: 5, max: 1, needs: 'transformer', apply: l => { lines.bag.setHopper(l > 0); if (l) showToast('La tolva recoge las bolsas de monedas por ti'); } },
-    { id: 'lineBag', group: 'Más cintas', name: 'Otro transformador', desc: 'Un transformador más (hace bolsas de 10 monedas). Viene con su tolva y la velocidad de la Cinta 2.0. Van en su propia zona, a la izquierda de tus cintas. Máximo 5 transformadores en total.',
+    { id: 'lineBag', group: 'Cintas', name: 'Otro transformador', desc: 'Un transformador más (hace bolsas de 10 monedas). Viene con su tolva y la velocidad de la Cinta 2.0. Van en su propia zona, a la izquierda de tus cintas. Máximo 5 transformadores en total.',
       base: 50, flat: true, max: MAX_EXTRA_BAG_LINES, count: true, needs: 'transformer', apply: l => { ensureExtraLines('bag', l); if (l) showToast('Nuevo transformador, con tolva y Cinta 2.0'); } },
     { id: 'bigHouse', group: 'Tu base', name: 'Casa grande con sótano', desc: 'Tu casa crece y le sale un sótano debajo; baja por la escalera de la casa.',
       cost: { boxes: 100, coins: 200 }, max: 1, apply: l => { if (l) { buildBigHouse(); showToast('¡Casa grande! Baja al sótano por la escalera'); } } },
     // Solo después del sótano (needs): si se pudiera comprar antes, la fábrica no tendría por dónde entrar
     { id: 'factory', group: 'Tu base', name: 'Fábrica subterránea', desc: 'Un salón enorme al lado del sótano: todas tus cintas se mudan ahí, con pasillos para caminar y trabajadores con casco que las cuidan. Se entra por la puerta del sótano.',
       cost: FACTORY.cost, max: 1, needs: 'bigHouse', apply: l => { if (l) { buildFactory(); showToast('¡Fábrica lista! Entra por la puerta del sótano'); } } },
-    { id: 'assistant', group: 'Tu base', name: 'Asistente', desc: 'Un robot que va por las monedas por ti. Se paga con cajas doradas de la cinta.',
+    { id: 'assistant', group: 'Asistentes', name: 'Asistente', desc: 'Un robot que va por las monedas por ti. Se paga con cajas doradas de la cinta.',
       currency: 'boxes', base: 10, max: 1, apply: l => { ensureAssistants(); if (l) showToast('¡Tu asistente ya está buscando monedas!'); } },
-    { id: 'assistant2', group: 'Mejoras del asistente', name: 'Otro asistente', desc: 'Un segundo asistente que también va por las monedas (máximo 2 asistentes).',
+    { id: 'assistant2', group: 'Asistentes', name: 'Otro asistente', desc: 'Un segundo asistente que también va por las monedas (máximo 2 asistentes).',
       currency: 'boxes', base: 15, flat: true, max: 1, count: true, needs: 'assistant', apply: l => { ensureAssistants(); if (l) showToast('¡Otro asistente más!'); } },
-    { id: 'assistSpeed', group: 'Mejoras del asistente', name: 'Velocidad de los asistentes', desc: 'Tus asistentes corren 2 m/s más rápido por nivel (hasta el nivel 5).',
+    { id: 'assistSpeed', group: 'Asistentes', name: 'Velocidad de los asistentes', desc: 'Tus asistentes corren 2 m/s más rápido por nivel (hasta el nivel 5).',
       base: 20, max: ASSIST_SPEED_MAX, needs: 'assistant', apply: l => { for (const a of assistants) a.speed = assistantSpeed(l); } },
-    { id: 'blaster', group: 'Mejoras para ti', name: 'Bláster láser', desc: 'Dispara con clic. Aturde al gigante 2 segundos.',
+    { id: 'blaster', group: 'Para ti', name: 'Bláster láser', desc: 'Dispara con clic. Aturde al gigante 2 segundos.',
       base: 20, max: 1, apply: l => { stats.blaster = l > 0; canvas.classList.toggle('aim', l > 0); handBlaster.visible = l > 0; document.getElementById('reload').hidden = !(l > 0); } },
-    { id: 'blaster2', group: 'Mejoras para ti', name: 'Bláster 2.0', desc: 'Igual al bláster, pero con las partes rojas. Dispara láseres rojos a 25 m/s (recarga en 1 s) que estallan en partículas rojas al chocar.',
+    { id: 'blaster2', group: 'Para ti', name: 'Bláster 2.0', desc: 'Igual al bláster, pero con las partes rojas. Dispara láseres rojos a 25 m/s (recarga en 1 s) que estallan en partículas rojas al chocar.',
       currency: 'boxes', base: 20, max: 1, needs: 'blaster', apply: l => setBlasterV2(l > 0) },
   ];
   const price = it => it.flat ? it.base : upgradePrice(it.base, save.levels[it.id]); // flat: siempre cuesta lo mismo
@@ -923,19 +946,26 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
   }
   function renderShop() {
     shopWallet.textContent = save.levels.belt ? `${amountText(save.coins, 'coins')} · ${amountText(save.boxes, 'boxes')}` : amountText(save.coins, 'coins');
-    let html = '', lastGroup = '';
-    for (const it of SHOP) {
-      if (it.group !== lastGroup) { html += `<p class="shop-group">${it.group}</p>`; lastGroup = it.group; }
+    let html = '';
+    // Por secciones, cada una una sola vez (el orden de SHOP no se toca: es el orden en que se aplican las compras al cargar)
+    // Cada sección es una cajita; las chicas se ponen una al lado de la otra (--n = cuántas cosas tiene)
+    const groups = [...new Set(SHOP.map(it => it.group))];
+    for (const it of groups.flatMap(g => SHOP.filter(i => i.group === g))) {
+      const first = SHOP.find(i => i.group === it.group), last = SHOP.filter(i => i.group === it.group).pop();
+      if (it === first) html += `<section class="shop-sec" style="--n:${SHOP.filter(i => i.group === it.group).length}"><p class="shop-group">${it.group}</p><div class="shop-grid">`;
       const lvl = save.levels[it.id], owned = lvl >= it.max, locked = it.needs && !save.levels[it.needs];
       const cost = costOf(it), missing = missingFor(save, cost), short = !canAfford(save, cost);
       const level = it.max === 1 ? '' : it.count ? ` · tienes ${lvl}` : ` · nivel ${lvl}`;
       const label = owned ? (it.count ? 'Ya tienes el máximo' : it.max > 1 ? 'Nivel máximo' : 'Ya es tuyo') : locked ? `Primero: ${SHOP.find(i => i.id === it.needs).name}` : short ? `Te faltan ${costText(missing, ' y ')}` : `Comprar · ${costText(cost, ' + ')}`;
       const priceLine = owned ? '' : ` Cuesta ${costText(cost, ' + ')}.`;
-      html += `<div class="shop-item"><h3>${it.name}${level}</h3><p>${it.desc}${priceLine}</p>` +
+      const state = owned ? ' owned' : locked || short ? '' : ' ready';   // ya es tuyo · se puede comprar
+      html += `<div class="shop-item${state}" title="${it.desc}${priceLine}"><div class="shop-prev" data-prev="${it.id}"></div><h3>${it.name}${level}</h3><p>${it.desc}${priceLine}</p>` +
               `<button type="button" class="buy" id="buy-${it.id}" data-id="${it.id}" ${owned || locked || short ? 'disabled' : ''}>${label}</button></div>`;
+      if (it === last) html += '</div></section>';
     }
     const focused = document.activeElement && document.activeElement.id;
     shopItems.innerHTML = html;
+    attachPreviews();
     if (focused) { const f = document.getElementById(focused); if (f && !f.disabled) f.focus(); }
   }
   shopItems.addEventListener('click', e => {
@@ -1134,14 +1164,14 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
   // Trabajador: rectángulo gris (del blanco al negro) con casco amarillo de construcción
   const WORKER_GRAYS = [0xe6e6e6, 0xb3b3b3, 0x8c8c8c, 0x666666, 0x404040];
   const hatMat = new THREE.MeshLambertMaterial({ color: 0xffc400 });
-  function makeWorker(color) {
+  function makeWorker(color, parent = scene) {
     const g = new THREE.Group();
     const b = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), new THREE.MeshLambertMaterial({ color }));
     b.position.y = H / 2; b.castShadow = true; g.add(b);
     for (const x of [-0.22, 0.22]) { const e = new THREE.Mesh(eyeGeo, eyeMat); e.scale.z = 0.5; e.position.set(x, H * 0.78, D / 2 + 0.02); g.add(e); }
     const dome = new THREE.Mesh(new THREE.SphereGeometry(0.5, 18, 8, 0, Math.PI * 2, 0, Math.PI / 2), hatMat); dome.scale.z = 0.75; dome.position.y = H; g.add(dome);
     const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.62, 0.06, 20), hatMat); brim.scale.z = 0.8; brim.position.set(0, H + 0.02, 0.06); g.add(brim);
-    scene.add(g); return g;
+    parent.add(g); return g;
   }
   // Cada cinta tiene dos trabajadores, uno en cada punta, mirando hacia la cinta (los pasillos quedan libres para ti)
   function updateWorkers() {
@@ -1209,8 +1239,200 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     applyBeltSpeeds();
   }
 
+  // ---------- Maquetas 3D de la tienda ----------
+  // Un solo dibujante chiquito (otro renderer) hace la maqueta de cada cosa y copia la imagen a su tarjeta.
+  // Al abrir la tienda se ven quietas; al pasar el mouse (o tocar en el celular) se anima SOLO esa, mostrando lo que hace.
+  const PREV_W = 320, PREV_H = 160;
+  let prevRenderer = null, prevActive = null, prevT = 0;
+  const previews = {};   // id de la tienda → { canvas, scene, camera, update(t) }
+  const lam = c => new THREE.MeshLambertMaterial({ color: c });
+  const box = (w, h, d, mat, x, y, z, parent) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); parent.add(m); return m; };
+  function previewScene() {
+    const sc = new THREE.Scene();
+    sc.add(new THREE.HemisphereLight(0xffffff, 0x8a9a8a, 0.9));
+    const d = new THREE.DirectionalLight(0xffffff, 0.75); d.position.set(4, 8, 6); sc.add(d);
+    return sc;
+  }
+  const persp = (fov, pos, look) => { const c = new THREE.PerspectiveCamera(fov, PREV_W / PREV_H, 0.1, 300); c.position.set(...pos); c.lookAt(...look); return c; };
+  // Isométrica: la cámara mira en diagonal desde arriba, sin perspectiva (las líneas paralelas no se juntan)
+  const iso = (size, look) => { const a = PREV_W / PREV_H, c = new THREE.OrthographicCamera(-size * a, size * a, size, -size, 0.1, 400); c.position.set(look[0] + 40, look[1] + 34, look[2] + 40); c.lookAt(...look); return c; };
+
+  // Una cinta de la tienda: los pedazos amarillos entran a la máquina y salen como cajas (o bolsas de monedas)
+  function beltPreview(product, speedMul) {
+    const sc = previewScene(), len = 8, x0 = -len / 2, x1 = len / 2, mx = x0 + 3, plateX = x1 + PLATE_GAP;
+    box(16, 0.1, 8, lam(0x9fd38a), 0.8, -0.05, 0, sc);   // pasto
+    const tex = makeBeltTex(len);
+    box(len + 0.6, BELT_TOP - 0.05, BELT_W + 0.4, lam(0x59606a), 0, (BELT_TOP - 0.05) / 2, 0, sc);
+    const surface = new THREE.Mesh(new THREE.PlaneGeometry(len, BELT_W), new THREE.MeshLambertMaterial({ map: tex })); surface.rotation.x = -Math.PI / 2; surface.position.y = BELT_TOP; sc.add(surface);
+    for (const sz of [-1, 1]) box(len + 0.6, 0.12, 0.15, lam(0xffc400), 0, BELT_TOP + 0.06, sz * (BELT_W / 2 + 0.12), sc);
+    const spec = LINE_SPECS[product], steel = lam(spec.machineColor), band = lam(spec.bandColor), mh = MACHINE.top - BELT_TOP;
+    box(2.4, 0.2, MACHINE.width, steel, mx, MACHINE.top - 0.1, 0, sc);
+    for (const sz of [-1, 1]) { box(2.4, mh, 0.2, steel, mx, BELT_TOP + mh / 2, sz * (MACHINE.width / 2 - 0.1), sc); box(2.42, 0.18, 0.22, band, mx, BELT_TOP + mh * 0.6, sz * (MACHINE.width / 2 - 0.1), sc); }
+    const plate = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.3, 0.08, 32), lam(0xffc400)); plate.position.set(plateX, 0.04, 0); sc.add(plate);
+    const speed = beltSpeed(0) * speedMul, start = x0 + 0.6, span = plateX - start;
+    const items = [0, 1, 2].map(() => { const p = makePieces(), q = product === 'bag' ? makeCoinBag() : makeGoldBox(); sc.add(p, q); return { p, q }; });
+    const baseY = product === 'bag' ? 0 : 0.4;
+    return { scene: sc, camera: persp(30, [0.9, 6.9, 10.2], [0.9, 0.45, 0]), update(t) {
+      tex.offset.x = -t * speed / 2;   // las rayas avanzan con la cinta
+      items.forEach(({ p, q }, k) => {
+        const x = start + ((t * speed + k * span / 3) % span), converted = x > mx, onPlate = x > x1;
+        p.visible = !converted; q.visible = converted;
+        p.position.set(x, BELT_TOP, 0);
+        q.position.set(x, baseY + (onPlate ? 0.08 : BELT_TOP), 0);
+      });
+    } };
+  }
+  // Tolva: solo gira
+  function hopperPreview() {
+    const sc = previewScene();
+    box(10, 0.1, 6, lam(0x9fd38a), 0, -0.05, 0, sc);
+    const plate = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.3, 0.08, 32), lam(0xffc400)); plate.position.y = 0.04; sc.add(plate);
+    const h = makeHopper(); sc.add(h);
+    return { scene: sc, camera: persp(30, [0, 2.9, 4.4], [0, 0.7, 0]), update(t) { h.rotation.y = t * 1.6; } };
+  }
+  // Asistente: gira y salta
+  function assistantPreview() {
+    const sc = previewScene();
+    box(10, 0.1, 6, lam(0x9fd38a), 0, -0.05, 0, sc);
+    const a = makeAssistantObj(sc);
+    return { scene: sc, camera: persp(30, [0, 1.7, 5], [0, 1.0, 0]), update(t) { a.rotation.y = 0.5 + t * 2.4; a.position.y = Math.abs(Math.sin(t * 5)) * 0.35; } };
+  }
+  // Velocidad de los asistentes: dos ruedas que giran rápido, con rayitas de velocidad
+  function wheelsPreview() {
+    const sc = previewScene(), wheels = [], lines = [];
+    box(12, 0.1, 6, lam(0x9fd38a), 0, -0.05, 0, sc);
+    box(3.4, 0.5, 0.9, lam(0x9fb8d6), 0, 1.0, 0, sc);   // el cuerpo del asistente, encima de las ruedas
+    for (const x of [-1.1, 1.1]) {
+      const w = new THREE.Group(); w.position.set(x, 0.62, 0.55); sc.add(w);
+      const tire = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.13, 10, 28), lam(0x22262b)); w.add(tire);
+      for (let i = 0; i < 6; i++) { const s = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.9, 0.06), lam(0xa7b0ba)); s.rotation.z = i * Math.PI / 6; w.add(s); }
+      const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.12, 14), lam(0x2de2ff)); hub.rotation.x = Math.PI / 2; w.add(hub);
+      wheels.push(w);
+    }
+    for (let i = 0; i < 4; i++) { const l = box(0.9, 0.05, 0.05, new THREE.MeshBasicMaterial({ color: 0x5c7465 }), -2.6, 0.5 + i * 0.28, 0.6, sc); lines.push(l); }
+    return { scene: sc, camera: persp(30, [0, 1.6, 6.2], [0, 0.8, 0]), update(t) {
+      for (const w of wheels) w.rotation.z = -t * 14;   // ¡muy rápido!
+      lines.forEach((l, i) => { l.position.x = -2.4 - ((t * 6 + i * 0.7) % 1.6); l.visible = t > 0; });
+    } };
+  }
+  // Bláster: dispara un láser. El 2.0 dispara uno rojo que choca con una pared y explota en partículas.
+  function blasterPreview(v2) {
+    const sc = previewScene(), st = blasterStats(v2);
+    box(12, 0.1, 6, lam(0x9fd38a), 0, -0.05, 0, sc);
+    const b = makeBlaster(); b.rotation.y = Math.PI / 2; b.position.set(-2.2, 1.1, 0); sc.add(b);
+    if (v2) b.userData.accent.color.setHex(0xff2a2a);
+    const laser = new THREE.Mesh(new THREE.BoxGeometry(1, 0.2, 0.2), new THREE.MeshBasicMaterial({ color: st.color }));
+    laser.add(new THREE.Mesh(new THREE.BoxGeometry(1.25, 0.42, 0.42), new THREE.MeshBasicMaterial({ color: st.glow, transparent: true, opacity: 0.35, depthWrite: false })));
+    sc.add(laser);
+    const wallX = 3.2, sparks = [];
+    if (v2) {
+      box(0.4, 2.4, 2.4, lam(0x8a8f96), wallX + 0.2, 1.2, 0, sc);   // la pared donde choca
+      for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2; const m = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.14, 0.14), new THREE.MeshBasicMaterial({ color: 0xff2a2a })); m.userData.v = new THREE.Vector3(-1.5 - (i % 3), Math.sin(a) * 3 + 2, Math.cos(a) * 3); sc.add(m); sparks.push(m); }
+    }
+    const muzzle = -2.2 + 0.95, travel = (v2 ? wallX - 0.5 : 4.6) - muzzle;
+    const fly = travel / (st.speed / 6), cycle = fly + (v2 ? 0.6 : 0.3);   // segundos que vuela (más lento que en el juego, para verlo bien)
+    return { scene: sc, camera: persp(30, [0.6, 1.8, 6.4], [0.6, 1.0, 0]), update(t) {
+      const k = (t + 0.35) % cycle;
+      laser.visible = k < fly; laser.position.set(muzzle + 0.5 + k / fly * travel, 1.12, 0);
+      b.rotation.x = k < 0.12 ? -0.25 * (1 - k / 0.12) : 0;   // retroceso al disparar
+      for (const m of sparks) {   // partículas que salen del choque, caen y desaparecen
+        const s = k - fly; m.visible = s > 0 && s < 0.5;
+        if (m.visible) m.position.set(wallX + m.userData.v.x * s, 1.12 + m.userData.v.y * s - 10 * s * s, m.userData.v.z * s);
+      }
+    } };
+  }
+  // Pedazo de terreno cortado (como una maqueta): pasto arriba y tierra por los lados de atrás e izquierda
+  function cutGround(sc, x0, x1, z0, z1, depth) {
+    const grass = lam(0x7cc35a), dirt = lam(0x8a6a48);
+    box(x1 - x0 + 3, 0.3, 3, grass, (x0 + x1) / 2 - 1.5, -0.15, z0 - 1.5, sc); box(3, 0.3, z1 - z0, grass, x0 - 1.5, -0.15, (z0 + z1) / 2, sc);
+    box(x1 - x0 + 3, depth, 3, dirt, (x0 + x1) / 2 - 1.5, -0.3 - depth / 2, z0 - 1.5, sc); box(3, depth, z1 - z0, dirt, x0 - 1.5, -0.3 - depth / 2, (z0 + z1) / 2, sc);
+  }
+  // Casa grande con sótano, vista isométrica: la casa arriba y el sótano abierto por delante y por la derecha
+  function basementPreview() {
+    const sc = previewScene(), g = new THREE.Group(); sc.add(g);
+    cutGround(g, -4, 4, -3.5, 3.5, 4);
+    const concrete = lam(0x8a8f96), wallC = lam(0x6f757d);
+    box(8, 0.2, 7, concrete, 0, -3.8, 0, g);                                   // piso del sótano
+    box(8, 3.5, 0.2, wallC, 0, -2.05, -3.4, g); box(0.2, 3.5, 7, wallC, -3.9, -2.05, 0, g);   // paredes (atrás e izquierda)
+    box(8, 0.3, 7, lam(0xc89f6a), 0, -0.15, 0, g);                              // piso de la casa (techo del sótano)
+    for (let i = 0; i < 6; i++) box(1.2, 0.2, 0.6, lam(0x8a5a33), 2.6, -0.5 - i * 0.6, -2.6 + i * 0.6, g);   // escalera
+    box(0.5, 0.7, 0.5, lam(0x3a3f46), -2.8, -3.35, 2.2, g);
+    const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.22, 0.12, 16), new THREE.MeshLambertMaterial({ color: 0xe0141a, emissive: 0x5a0000 })); cap.position.set(-2.8, -2.94, 2.2); g.add(cap);
+    box(1, 0.08, 1, new THREE.MeshBasicMaterial({ color: 0xfff1d6 }), 0, -0.4, 0, g);   // lámpara
+    const walls = lam(0xe8d9b5);
+    box(8, 2.6, 0.2, walls, 0, 1.3, -3.4, g); box(0.2, 2.6, 7, walls, -3.9, 1.3, 0, g); box(8, 2.6, 0.2, walls, 0, 1.3, 3.4, g); box(0.2, 2.6, 7, walls, 3.9, 1.3, 0, g);
+    box(1.4, 1.9, 0.05, lam(0x5a3820), -1.5, 0.95, 3.52, g);                   // puerta
+    const roof = new THREE.Mesh(new THREE.ConeGeometry(6.4, 2.4, 4), lam(0xb5452f)); roof.rotation.y = Math.PI / 4; roof.scale.z = 0.88; roof.position.y = 3.8; g.add(roof);
+    return { scene: sc, camera: iso(6.2, [0, -0.6, 0]), update(t) {
+      g.rotation.y = Math.sin(t * 0.9) * 0.35;                    // gira un poquito para ver adentro
+      cap.material.emissive.setHex(Math.sin(t * 6) > 0 ? 0xaa0000 : 0x5a0000);   // el botón rojo parpadea
+    } };
+  }
+  // Fábrica, vista isométrica: el salón abierto con 3 cintas y sus trabajadores dando saltitos
+  function factoryPreview() {
+    const sc = previewScene(), g = new THREE.Group(), workers = [], texs = []; sc.add(g);
+    cutGround(g, -7, 7, -5, 5, 4.4);
+    box(14, 0.2, 10, lam(0x8a8f96), 0, -4.2, 0, g);
+    box(14, 4, 0.2, lam(0x6f757d), 0, -2.2, -4.9, g); box(0.2, 4, 10, lam(0x6f757d), -6.9, -2.2, 0, g);
+    [-3, 0, 3].forEach((z, r) => {
+      const tex = makeBeltTex(6); texs.push(tex);
+      box(6.4, 0.35, 1.6, lam(0x59606a), 0.5, -3.92, z, g);
+      const s = new THREE.Mesh(new THREE.PlaneGeometry(6, 1.3), new THREE.MeshLambertMaterial({ map: tex })); s.rotation.x = -Math.PI / 2; s.position.set(0.5, -3.74, z); g.add(s);
+      box(1.6, 1.4, 1.9, lam(r === 2 ? 0x5b2a86 : 0x3a4658), -0.9, -3.3, z, g);
+      const plate = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 0.06, 20), lam(0xffc400)); plate.position.set(4.6, -4.07, z); g.add(plate);
+      for (const [x, ry] of [[-3.6, Math.PI / 2], [6, -Math.PI / 2]]) {
+        const w = makeWorker(WORKER_GRAYS[(r * 2 + (x > 0 ? 1 : 0)) % 5], g); w.scale.setScalar(0.62); w.position.set(x, -4.1, z); w.rotation.y = ry; w.userData.phase = r + (x > 0 ? 0.5 : 0); workers.push(w);
+      }
+    });
+    return { scene: sc, camera: iso(7.4, [0, -2.6, 0]), update(t) {
+      for (const w of workers) w.position.y = -4.1 + Math.abs(Math.sin(t * 5 + w.userData.phase)) * 0.22;
+      for (const tex of texs) tex.offset.x = -t * 1.5;
+    } };
+  }
+  const PREVIEW_MAKERS = {
+    belt: () => beltPreview('box', 1), lineBox: () => beltPreview('box', 1.5),
+    belt2: () => beltPreview('box', 1.5), turbo: () => beltPreview('box', 2),
+    transformer: () => beltPreview('bag', 1), lineBag: () => beltPreview('bag', 1.5),
+    hopper: hopperPreview, hopper2: hopperPreview,
+    bigHouse: basementPreview, factory: factoryPreview,
+    assistant: assistantPreview, assistant2: assistantPreview, assistSpeed: wheelsPreview,
+    blaster: () => blasterPreview(false), blaster2: () => blasterPreview(true),
+  };
+  function drawPreview(p, t) {
+    p.update(t);
+    prevRenderer.render(p.scene, p.camera);
+    const ctx = p.canvas.getContext('2d');
+    ctx.clearRect(0, 0, PREV_W, PREV_H); ctx.drawImage(prevRenderer.domElement, 0, 0, PREV_W, PREV_H);
+  }
+  function getPreview(id) {
+    if (previews[id] !== undefined) return previews[id];
+    previews[id] = null;
+    if (!PREVIEW_MAKERS[id]) return null;
+    try {
+      if (!prevRenderer) { prevRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); prevRenderer.setSize(PREV_W, PREV_H, false); }
+      const p = PREVIEW_MAKERS[id]();
+      p.canvas = document.createElement('canvas'); p.canvas.width = PREV_W; p.canvas.height = PREV_H;
+      drawPreview(p, 0.8);   // la foto quieta: un momento en que se ve qué hace
+      previews[id] = p;
+    } catch (e) { previews[id] = null; }   // si el navegador no puede, la tarjeta queda sin maqueta
+    return previews[id];
+  }
+  // Las tarjetas se vuelven a armar seguido (cuando cambian tus monedas): las maquetas se reusan, no se dibujan de nuevo
+  function attachPreviews() {
+    for (const slot of shopItems.querySelectorAll('.shop-prev')) { const p = getPreview(slot.dataset.prev); if (p) slot.appendChild(p.canvas); }
+  }
+  shopItems.addEventListener('pointerover', e => {
+    const card = e.target.closest('.shop-item'), id = card && card.querySelector('.shop-prev') && card.querySelector('.shop-prev').dataset.prev;
+    if (id && id !== prevActive) { prevActive = id; prevT = 0.8; }
+  });
+  shopItems.addEventListener('pointerleave', () => { prevActive = null; });
+  function updatePreviews(dt) {
+    if (shopEl.hidden || !prevActive || !previews[prevActive]) return;
+    prevT += dt; drawPreview(previews[prevActive], prevT);
+  }
+
   // ---------- Asistentes: recogen monedas por ti ----------
-  function makeAssistantObj() {
+  function makeAssistantObj(parent = scene) {   // parent: dónde se pone (el mundo, o la maqueta de la tienda)
     const g = new THREE.Group();
     const metal = new THREE.MeshLambertMaterial({ color: 0x9fb8d6 });
     const dark = new THREE.MeshLambertMaterial({ color: 0x3a4658 });
@@ -1225,7 +1447,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     part(new THREE.SphereGeometry(0.08, 10, 8), new THREE.MeshBasicMaterial({ color: 0xff3b3b }), 0, 2.05, 0);
     part(new THREE.BoxGeometry(0.2, 0.3, 0.2), dark, -0.22, 0.15, 0);        // piernas
     part(new THREE.BoxGeometry(0.2, 0.3, 0.2), dark, 0.22, 0.15, 0);
-    scene.add(g);
+    parent.add(g);
     return g;
   }
   const assistants = [];
@@ -2313,7 +2535,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
       for (const it of COSMETICS.filter(c => c.type === type)) {
         const owned = save.style.owned.includes(it.id), short = it.price - save.coins;
         const label = owned ? 'Ya es tuyo' : short > 0 ? `Te faltan ${amountText(short, 'coins')}` : `Comprar · ${amountText(it.price, 'coins')}`;
-        html += `<div class="shop-item"><h3>${it.color !== undefined && type === 'color' ? swatch(it.color) : ''}${it.name}</h3><p>${owned ? 'Póntelo en el armario de tu casa.' : `Cuesta ${amountText(it.price, 'coins')}.`}</p>` +
+        html += `<div class="shop-item${owned ? ' owned' : short > 0 ? '' : ' ready'}"><h3>${it.color !== undefined && type === 'color' ? swatch(it.color) : ''}${it.name}</h3><p>${owned ? 'Póntelo en el armario de tu casa.' : `Cuesta ${amountText(it.price, 'coins')}.`}</p>` +
                 `<button type="button" class="buy" id="style-${it.id}" data-id="${it.id}" ${owned || short > 0 ? 'disabled' : ''}>${label}</button></div>`;
       }
     }
@@ -3282,6 +3504,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     updateVillage(dt);
     updateMinigame(dt);
     updateRed(dt);
+    updatePreviews(dt);
     resolveBodies();
     if (boxHit(boxOf(ps), boxOf(es, ENEMY_SCALE))) die();
 
