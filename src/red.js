@@ -95,6 +95,8 @@ export function leerMensaje(texto) {
     if (!tres(m.s) || !tres(m.d)) return null;
     return { tipo: 'disparo', s: m.s, d: m.d, v2: m.v2 === true };
   }
+  // Tu pestaña se escondió (v: 0) o volvió a verse (v: 1): una pestaña escondida no puede ser el anfitrión
+  if (m.tipo === 'visible') return { tipo: 'visible', v: m.v === 0 ? 0 : 1 };
   // Tu láser le dio a un amigo
   if (m.tipo === 'golpe') {
     if (!Number.isInteger(m.a)) return null;
@@ -123,4 +125,10 @@ export function piezasExplosion(cantidad, azar = Math.random) {
     });
   }
   return piezas;
+}
+
+// Lo mismo, pero para girar: va por el camino más corto (de 350° a 10° gira 20°, no 340°)
+export function acercarAngulo(desde, hacia, k) {
+  const d = Math.atan2(Math.sin(hacia - desde), Math.cos(hacia - desde));
+  return desde + d * Math.min(1, Math.max(0, k));
 }

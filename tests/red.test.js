@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { limpiarNombre, leerMensaje, acercar, piezasExplosion, lugarMoneda, faseAhora, corto, BORDE, DIA_SEGUNDOS, leerLook, leerSala, salaDeHost, linkOficial } from '../src/red.js';
+import { limpiarNombre, leerMensaje, acercar, acercarAngulo, piezasExplosion, lugarMoneda, faseAhora, corto, BORDE, DIA_SEGUNDOS, leerLook, leerSala, salaDeHost, linkOficial } from '../src/red.js';
 
 describe('limpiarNombre', () => {
   it('quita espacios de más y corta a 20 letras', () => {
@@ -122,5 +122,19 @@ describe('salas: github.io es el único juego oficial', () => {
   });
   it('linkOficial arma el link de github.io con la sala', () => {
     expect(linkOficial('palabras-raras')).toBe('https://blackhol214.github.io/rectangulo-verde/?sala=palabras-raras');
+  });
+});
+
+describe('giros suaves y pestañas escondidas', () => {
+  it('acercarAngulo gira por el camino más corto', () => {
+    const casi360 = 350 * Math.PI / 180, diez = 10 * Math.PI / 180;
+    expect(acercarAngulo(casi360, diez, 1) % (2 * Math.PI)).toBeCloseTo(diez);   // llega
+    expect(acercarAngulo(casi360, diez, 0.5) - casi360).toBeCloseTo(10 * Math.PI / 180);   // a la mitad avanza 10°, no 170°
+    expect(acercarAngulo(1, 2, 0)).toBe(1);
+  });
+  it('mensaje de pestaña escondida o visible', () => {
+    expect(leerMensaje(JSON.stringify({ tipo: 'visible', v: 0 }))).toEqual({ tipo: 'visible', v: 0 });
+    expect(leerMensaje(JSON.stringify({ tipo: 'visible', v: 1 }))).toEqual({ tipo: 'visible', v: 1 });
+    expect(leerMensaje(JSON.stringify({ tipo: 'visible' }))).toEqual({ tipo: 'visible', v: 1 });
   });
 });

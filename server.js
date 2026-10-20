@@ -78,7 +78,7 @@ const servidor = Bun.serve({
         }
         const antes = buscarJugador.get(m.nombre);   // ¿ya había jugado alguna vez?
         if (antes) sumarVisita.run(m.nombre);
-        const j = { id: siguienteId++, nombre: m.nombre, color: m.color, monedas: m.monedas, rot: 0, mg: 0, look: m.look,
+        const j = { id: siguienteId++, nombre: m.nombre, color: m.color, monedas: m.monedas, rot: 0, mg: 0, look: m.look, visible: 1,
           x: antes ? antes.x : 0, y: antes ? antes.y : 0, z: antes ? antes.z : 15, ws };
         ws.data.id = j.id;
         if (!anfitrion) anfitrion = j.id;
@@ -100,6 +100,10 @@ const servidor = Bun.serve({
         yo.x = m.x; yo.y = m.y; yo.z = m.z; yo.rot = m.rot; yo.mg = m.mg;
         if (m.color !== null) yo.color = m.color;
         ws.publish('juego', JSON.stringify({ tipo: 'pos', id: yo.id, x: m.x, y: m.y, z: m.z, rot: m.rot, color: yo.color, mg: m.mg }));
+      } else if (m.tipo === 'visible') {
+        // Una pestaña escondida no corre el juego: si era el anfitrión, otro toma el control ya mismo (sin esperar 3 segundos)
+        yo.visible = m.v;
+        if (!m.v && yo.id === anfitrion) cambiarAnfitrion();
       } else if (m.tipo === 'look') {
         yo.look = m.look;
         ws.publish('juego', JSON.stringify({ tipo: 'look', id: yo.id, look: m.look }));
@@ -140,10 +144,13 @@ const servidor = Bun.serve({
 });
 
 // Elige como anfitrión a alguien que esté jugando ahora (que haya mandado algo hace poco)
+// Solo sirve alguien con la pestaña a la vista y que esté jugando ahora. Si no hay nadie así, se queda el mismo
+// (pasarle el control a otra pestaña escondida solo haría que el gigante y los bots salten de una compu a otra).
 function cambiarAnfitrion() {
-  const activos = [...conectados.values()].filter(j => j.id !== anfitrion && Date.now() - (j.ultimo || 0) < 2000);
-  const nuevo = activos[0] || [...conectados.values()].find(j => j.id !== anfitrion);
-  anfitrion = nuevo ? nuevo.id : (conectados.has(anfitrion) ? anfitrion : null);
+  const activos = [...conectados.values()].filter(j => j.id !== anfitrion && j.visible && Date.now() - (j.ultimo || 0) < 2000);
+  const nuevo = activos[0] || (conectados.has(anfitrion) ? null : [...conectados.values()][0]);
+  if (nuevo) anfitrion = nuevo.id;
+  else if (!conectados.has(anfitrion)) anfitrion = null;
   ultimoMundo = Date.now();
   if (anfitrion) aTodos({ tipo: 'anfitrion', id: anfitrion });
   if (nuevo) console.log(`👑 ${nuevo.nombre} ahora es el anfitrión`);

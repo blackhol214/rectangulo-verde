@@ -222,7 +222,7 @@
 <script type="module">
 import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, squashStretch, ACHIEVEMENTS, achievementById, coinAchievementsFor, TROPHY_TABLE, trophySpot, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
          upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-20b'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
-import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto, acercar, piezasExplosion } from './src/red.js?v=2026-10-03e';
+import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto, acercar, acercarAngulo, piezasExplosion } from './src/red.js?v=2026-10-20b';
 (() => {
   // iPhone ignora user-scalable=no: aquí se bloquea el zoom con dos dedos y el doble toque
   for (const ev of ['gesturestart', 'gesturechange']) document.addEventListener(ev, e => e.preventDefault(), { passive: false });
@@ -1633,7 +1633,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
       dumbBots.forEach((b, i) => {
         const r = red.bots[i]; if (!r) return;
         b.pos.set(acercar(b.pos.x, r[0], k), acercar(b.pos.y, r[1], k), acercar(b.pos.z, r[2], k));
-        b.facing = r[3]; b.obj.rotation.y = r[3]; b.obj.visible = !!r[4];
+        b.facing = acercarAngulo(b.facing, r[3], k); b.obj.rotation.y = b.facing; b.obj.visible = !!r[4];   // gira suave
         bendObj(b.obj, dt);
         b.body.position.y = H * BOT_SCALE / 2 + Math.abs(Math.sin(t * 14 + b.pos.x)) * 0.05;
       });
@@ -2876,7 +2876,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
       if (g) {
         const k = dt * 12;
         es.pos.set(acercar(es.pos.x, g.x, k), acercar(es.pos.y, g.y, k), acercar(es.pos.z, g.z, k));
-        es.facing = g.rot; es.obj.rotation.y = g.rot;
+        es.facing = acercarAngulo(es.facing, g.rot, k); es.obj.rotation.y = es.facing;   // gira suave, no a saltitos
         enemyLook(g.stun, g.sleep);
         bendObj(es.obj, dt, ENEMY_SCALE);
       }
@@ -3391,6 +3391,8 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     houseVisitor = null; enemyWait = 0; stunTime = red.gigante && red.gigante.stun ? 2 : 0;
     enemyAwake = !(red.gigante && red.gigante.sleep);
   }
+  // Si escondes la pestaña, el navegador pausa el juego: le avisamos al servidor para que otro mueva al gigante y a los bots
+  document.addEventListener('visibilitychange', () => enviar({ tipo: 'visible', v: document.hidden ? 0 : 1 }));
   function conectarRed(name) {
     if (!ONLINE || red.ws) return;
     const ws = new WebSocket(SERVER_WS);
@@ -3400,6 +3402,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
       const m = JSON.parse(e.data);
       if (m.tipo === 'bienvenida') {
         red.id = m.id; red.anfitrion = m.anfitrion;
+        if (document.hidden) enviar({ tipo: 'visible', v: 0 });
         for (const j of m.jugadores) addFriend(j);
         // En una compu nueva (sin guardado en el navegador) apareces donde te dejó la base de datos
         if (m.guardado && !loadedLocal && Math.abs(m.guardado.x) < 100 && Math.abs(m.guardado.z) < 100) ps.pos.set(m.guardado.x, m.guardado.y, m.guardado.z);
@@ -3447,12 +3450,13 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
         red.aturdido = 2;
         showToast(`⚡ ¡${m.de} te aturdió con su láser!`, true, 2500);
       } else if (m.tipo === 'error') {
+        red.error = true;   // (para que al cerrarse no diga "¿el servidor está encendido?")
         showToast(m.texto, true, 5000);
       }
     };
     ws.onclose = () => {
       // Si nunca llegó la bienvenida, la sala no existe o el servidor está apagado
-      if (red.id === null) { red.ws = null; showToast('No se pudo entrar a la sala: ¿el servidor está encendido? Juegas solo', true, 5000); return; }
+      if (red.id === null) { red.ws = null; if (!red.error) showToast('No se pudo entrar a la sala: ¿el servidor está encendido? Juegas solo', true, 5000); red.error = false; return; }
       for (const f of red.otros.values()) scene.remove(f.obj);
       red.otros.clear(); red.ws = null; red.id = null; red.anfitrion = null;
       // Sin servidor vuelves a jugar solo: tu compu mueve otra vez al gigante, a los bots y las monedas
@@ -3489,7 +3493,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     for (const f of red.otros.values()) {
       const o = f.obj;
       o.position.set(acercar(o.position.x, f.x, k), acercar(o.position.y, f.y, k), acercar(o.position.z, f.z, k));
-      o.rotation.y = f.rot;
+      o.rotation.y = acercarAngulo(o.rotation.y, f.rot, k);   // gira suave
       bendObj(o, dt);
     }
     // Pedacitos de la explosión: vuelan, caen, giran y se desvanecen
