@@ -111,16 +111,13 @@
   .swatch { display:inline-block; width:14px; height:14px; border-radius:4px; margin-right:6px; vertical-align:-2px; box-shadow:inset 0 0 0 1px rgba(0,0,0,.25); }
   .shop-item .buy.on { background:#c98a00; }
   .trophy-note { background:#fff8e0 !important; box-shadow:inset 0 0 0 2px #ffc83d !important; }
-  /* Modo Escuela: panel de preguntas y tienda de mejoras (color violeta) */
+  /* Modo Escuela: panel de preguntas para cargar la batería (color violeta) */
   #escuela .shop-card { width:min(640px, 100%); }
   #escuela .shop-head h2 { color:#5b3df5; }
-  #escuela .shop-head .wallet { color:#3f2bb8; }
-  .esc-meta { display:flex; align-items:center; gap:10px; font:700 13px system-ui, sans-serif; color:#4a3f7a; font-variant-numeric:tabular-nums; }
-  .esc-barra { flex:1; height:12px; border-radius:6px; background:#e4e0f7; overflow:hidden; }
-  .esc-barra i { display:block; height:100%; width:0; background:linear-gradient(90deg, #7b5cff, #b18cff); transition:width .3s; }
-  .esc-tabs { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-  .esc-tabs button { border:0; border-radius:10px; padding:12px; font:800 16px system-ui, sans-serif; background:#ece9fb; color:#3f2bb8; cursor:pointer; touch-action:manipulation; }
-  .esc-tabs button.on { background:#5b3df5; color:#fff; }
+  #escuela .shop-head .wallet { color:#1f8a3b; font-variant-numeric:tabular-nums; }
+  .esc-ayuda { margin:0; font:14px/1.4 system-ui, sans-serif; color:#4a3f7a; text-align:center; }
+  .esc-salir { align-self:center; border:0; border-radius:10px; padding:10px 16px; font:700 14px system-ui, sans-serif; background:#ece9fb; color:#3f2bb8; cursor:pointer; touch-action:manipulation; }
+  .esc-salir:focus-visible { outline:3px solid #1e6bff; outline-offset:2px; }
   .esc-pregunta { margin:4px 0; font:800 clamp(18px, 4.6vw, 24px)/1.3 system-ui, sans-serif; text-align:center; color:#1d1640; }
   .esc-opciones { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
   .esc-opciones button { min-height:64px; border:0; border-radius:12px; padding:10px 12px 10px 50px; position:relative; font:700 16px/1.25 system-ui, sans-serif; color:#fff; text-align:left; cursor:pointer; touch-action:manipulation; box-shadow:0 4px 0 rgba(0,0,0,.2); }
@@ -130,16 +127,11 @@
   .esc-opciones button:disabled { cursor:default; opacity:.35; }
   .esc-opciones button.bien { opacity:1; outline:4px solid #1d1640; outline-offset:2px; }
   .esc-opciones button.mal { opacity:1; filter:grayscale(.6); }
-  .esc-opciones button:focus-visible, .esc-tabs button:focus-visible { outline:3px solid #1e6bff; outline-offset:2px; }
+  .esc-opciones button:focus-visible { outline:3px solid #1e6bff; outline-offset:2px; }
   .esc-resultado { margin:0; min-height:1.4em; font:800 17px system-ui, sans-serif; text-align:center; }
   .esc-resultado.bien { color:#1f8a3b; } .esc-resultado.mal { color:#c8102e; }
-  #escTienda { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-  #escTienda .shop-item { display:flex; flex-direction:column; gap:6px; }
-  #escTienda .shop-item .buy { width:100%; min-width:0; min-height:48px; background:#5b3df5; }
-  #escTienda .shop-item .buy:disabled { background:#d9dfdb; }
-  #escTienda .shop-item.ready { box-shadow:inset 0 0 0 2px #5b3df5; }
   @media (pointer:coarse) { #escuela .keys { display:none; } }
-  @media (max-width:480px) { .esc-opciones, #escTienda { grid-template-columns:1fr; } .esc-opciones button { min-height:56px; } }
+  @media (max-width:480px) { .esc-opciones { grid-template-columns:1fr; } .esc-opciones button { min-height:56px; } }
   .empty-note { margin:0; padding:12px; border-radius:10px; background:#fff; box-shadow:inset 0 0 0 1px #dde5df; font:14px/1.45 system-ui, sans-serif; color:#4a5f52; }
   /* Dormir */
   /* Aviso al iniciar sesión: el juego sigue en desarrollo */
@@ -168,6 +160,13 @@
   #touchActions button[hidden] { display:none; }
   #touchActions .red { background:rgba(200,16,26,.88); }
   #touchActions .shop { background:rgba(176,120,0,.9); }
+  /* Botón RESPONDER (abajo a la izquierda, letra Comic Sans): abre las preguntas en los modos de juego de la Escuela */
+  #responderBtn { position:fixed; left:16px; bottom:calc(16px + env(safe-area-inset-bottom,0px)); z-index:15; padding:12px 22px; border:3px solid #3f2bb8; border-radius:14px;
+    background:#ffd84d; color:#3f2bb8; font:700 24px/1 "Comic Sans MS", "Comic Sans", "Chalkboard SE", "Comic Neue", cursive; letter-spacing:.03em;
+    box-shadow:0 4px 0 #3f2bb8, 0 8px 18px rgba(0,0,0,.3); cursor:pointer; touch-action:manipulation; }
+  #responderBtn[hidden] { display:none; }
+  #responderBtn:focus-visible { outline:3px solid #1e6bff; outline-offset:2px; }
+  @media (pointer:coarse) { #responderBtn { bottom:calc(276px + env(safe-area-inset-bottom,0px)); } }   /* en el celular, encima de GUARDAR (abajo están el joystick y 👁️) */
   @media (pointer:coarse) { #stick, #jump, #camStick, #fpBtn { display:block; } #shootBtn:not([hidden]) { display:block; } .hud .keys { display:none; } #saveBtn { left:16px; right:auto; bottom:calc(220px + env(safe-area-inset-bottom,0px)); padding:10px 16px; font-size:18px; }
     #touchActions { display:flex; bottom:calc(220px + env(safe-area-inset-bottom,0px)); } #actionPrompt, #bedPrompt { display:none; }
     #toast { bottom:auto; top:calc(196px + env(safe-area-inset-top,0px)); } }
@@ -205,6 +204,7 @@
 <p id="saved" aria-live="polite">CAMBIOS GUARDADOS</p>
 <button type="button" id="helpOpen" aria-label="Ver cómo se juega" hidden>?</button>
 <button type="button" id="saveBtn">GUARDAR</button>
+<button type="button" id="responderBtn" hidden>RESPONDER</button>
 <div id="touchActions">
   <button type="button" class="shop" data-act="shop">🛒 Tienda</button>
   <button type="button" data-act="wardrobe" hidden>👕 Armario</button>
@@ -235,18 +235,15 @@
     <div id="wardrobeItems"></div>
   </div>
 </div>
-<!-- Modo Escuela: se abre al entrar por el portal violeta -->
+<!-- Modo Escuela: preguntas para cargar la batería de "No mires abajo" (Q) -->
 <div id="escuela" class="panel" hidden role="dialog" aria-modal="true" aria-labelledby="escTitle">
   <div class="shop-card">
-    <div class="shop-head"><h2 id="escTitle">MODO ESCUELA</h2><span class="wallet" id="escDinero">$0</span><button type="button" id="escSalir">Salir</button></div>
-    <div class="esc-meta"><div class="esc-barra"><i id="escBarra"></i></div><span id="escMetaTxt"></span></div>
-    <div class="esc-tabs"><button type="button" data-tab="preguntas" class="on">Preguntas</button><button type="button" data-tab="tienda">Tienda <span class="keys">(T)</span></button></div>
-    <div id="escPreguntas">
-      <p class="esc-pregunta" id="escPregunta"></p>
-      <div class="esc-opciones" id="escOpciones"></div>
-      <p class="esc-resultado" id="escResultado" aria-live="polite"></p>
-    </div>
-    <div id="escTienda" hidden></div>
+    <div class="shop-head"><h2 id="escTitle">⚡ CARGAR BATERÍA</h2><span class="wallet" id="escBateria">🔋 0</span><button type="button" id="escCerrar">Cerrar <span class="keys">(Q)</span></button></div>
+    <p class="esc-ayuda">Cada respuesta correcta da <b>+2.000 🔋</b>. Caminar y saltar gastan batería.</p>
+    <p class="esc-pregunta" id="escPregunta"></p>
+    <div class="esc-opciones" id="escOpciones"></div>
+    <p class="esc-resultado" id="escResultado" aria-live="polite"></p>
+    <button type="button" class="esc-salir" id="escSalirTorre">Salir de la torre (volver al salón)</button>
   </div>
 </div>
 <p id="actionPrompt" hidden></p>
@@ -263,8 +260,8 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module">
-import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, ESCUELA, ESCUELA_K, ESCUELA_MEJORAS, ESCUELA_PREGUNTAS, escuelaNiveles, escuelaValor, escuelaPrecio, escuelaResponder, escuelaComprar, escuelaSiguiente, escuelaMezclar, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, squashStretch, ACHIEVEMENTS, achievementById, coinAchievementsFor, TROPHY_TABLE, trophySpot, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
-         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-21-escuela'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
+import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, ESCUELA, ESCUELA_K, ESCUELA_PREGUNTAS, escuelaSiguiente, escuelaMezclar, SALON, salonSillas, sillaCercana, NO_MIRES, torreNoMires, seededRandom, debeReaparecer, ETAPAS, etapaDe, cajasDe, decoracionTorre, ovniDesplazamiento, HIELO, deslizar, puedeDobleSalto, gastarBateria, cargarBateria, hayBateria, BATERIA, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, squashStretch, ACHIEVEMENTS, achievementById, coinAchievementsFor, TROPHY_TABLE, trophySpot, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
+         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-21-etapas'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
 import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto, acercar, acercarAngulo, piezasExplosion } from './src/red.js?v=2026-10-20b';
 (() => {
   // iPhone ignora user-scalable=no: aquí se bloquea el zoom con dos dedos y el doble toque
@@ -694,7 +691,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
   let firstPerson = false, fpPitch = 0;
   addEventListener('keydown', e => {
     if (!loginEl.hidden) return;                 // en la pantalla de inicio: solo se escribe el usuario
-    if (!escuelaEl.hidden) { escuelaTecla(e); return; }   // en el Modo Escuela las teclas son para responder
+    if (!escuelaEl.hidden) { escuelaTecla(e); return; }   // con el panel de la batería abierto, las teclas son para responder
     // Tienda: P la abre y la cierra (Esc también la cierra)
     if (e.code === 'KeyP' && !e.repeat) { e.preventDefault(); toggleShop(); return; }
     if (!shopEl.hidden) { if (e.code === 'Escape') toggleShop(false); return; }
@@ -705,6 +702,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     if (e.code === 'KeyV' && !e.repeat) setFirstPerson(!firstPerson);
     if (e.code === 'KeyE' && !e.repeat) { if (MG.active) { if (MG.active.onE) MG.active.onE(); } else if (!tryRedButton() && !tryTrophy() && !tryStyleInteract() && !tryVillage()) trySleep(); }
     if (e.code === 'KeyF' && !e.repeat && MG.active && MG.active.onF) MG.active.onF();
+    if (e.code === 'KeyQ' && !e.repeat && MG.active && MG.active.onQ) MG.active.onQ();   // Q: cargar batería (No mires abajo)
   });
   addEventListener('keyup', e => { keys[e.code] = false; });
 
@@ -1912,20 +1910,54 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     for (const ex of [-0.22, 0.22]) { const e = new THREE.Mesh(eyeGeo, eyeMat); e.scale.z = 0.5; e.position.set(ex, bh * 0.78, bd / 2 + 0.01); inner.add(e); }
     g.visible = false; scene.add(g); return g;
   }
-  // Un delfín: cuerpo gris azulado, panza clara, hocico, aleta en la espalda, aletas a los lados y cola de dos puntas (mira hacia +x)
+  // ---------- El delfín 3D (lo usan el minijuego azul y la etapa Océano de la torre) ----------
+  // Mide 1 de largo (la cabeza hacia −z, la cola hacia +z) y unos 0,3 de ancho. Son 3 piezas:
+  // el cuerpo (gris azulado arriba y la panza clarita, con colores por vértice), las aletas y los ojos.
+  // Juntar varias formas en una sola (así se dibujan de una vez)
+  function juntarFormas(lista) {
+    const partes = lista.map(g => (g.index ? g.toNonIndexed() : g)), pos = [], nor = [];
+    for (const g of partes) { pos.push(...g.attributes.position.array); nor.push(...g.attributes.normal.array); }
+    const out = new THREE.BufferGeometry();
+    out.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); out.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+    return out;
+  }
+  function crearDelfin() {
+    // Cuerpo: un "torno" (como en alfarería): este perfil da vueltas alrededor del eje. Gordito en el medio, fino hacia la cola,
+    // cabeza redonda (el melón) y un hocico corto adelante
+    const perfil = [[0, 0], [0.025, 0.02], [0.045, 0.1], [0.09, 0.25], [0.135, 0.45], [0.15, 0.6], [0.135, 0.74], [0.11, 0.84], [0.08, 0.9], [0.05, 0.93], [0.04, 0.98], [0.02, 1]]
+      .map(([r, y]) => new THREE.Vector2(r, y));
+    const cuerpo = new THREE.LatheGeometry(perfil, 20);
+    cuerpo.rotateX(-Math.PI / 2); cuerpo.translate(0, 0, 0.5); cuerpo.scale(1, 0.92, 1);   // acostado: la cabeza hacia −z
+    cuerpo.computeVertexNormals();
+    // Colores: gris azulado arriba, panza clarita, con un degradado suave en el medio
+    const arriba = new THREE.Color(0x5b7f99), panza = new THREE.Color(0xe8eef2), c = new THREE.Color(), cols = [], P = cuerpo.attributes.position;
+    for (let i = 0; i < P.count; i++) { const k = THREE.MathUtils.smoothstep(P.getY(i), -0.06, 0.04); c.copy(panza).lerp(arriba, k); cols.push(c.r, c.g, c.b); }
+    cuerpo.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
+    const delgada = { depth: 0.02, bevelEnabled: true, bevelThickness: 0.006, bevelSize: 0.006, bevelSegments: 2, curveSegments: 10 };
+    // Aleta dorsal, curvada hacia atrás
+    const sd = new THREE.Shape(); sd.moveTo(-0.09, 0); sd.quadraticCurveTo(0.0, 0.12, 0.15, 0.17); sd.quadraticCurveTo(0.07, 0.08, 0.1, 0); sd.lineTo(-0.09, 0);
+    const dorsal = new THREE.ExtrudeGeometry(sd, delgada); dorsal.translate(0, 0, -0.01); dorsal.rotateY(-Math.PI / 2); dorsal.translate(0, 0.12, 0.06);
+    // Cola horizontal en forma de media luna
+    const sc = new THREE.Shape(); sc.moveTo(0, -0.03); sc.quadraticCurveTo(0.15, -0.04, 0.25, 0.1); sc.quadraticCurveTo(0.12, 0.03, 0, 0.05);
+    sc.quadraticCurveTo(-0.12, 0.03, -0.25, 0.1); sc.quadraticCurveTo(-0.15, -0.04, 0, -0.03);
+    const cola = new THREE.ExtrudeGeometry(sc, { ...delgada, depth: 0.012 }); cola.translate(0, 0, -0.006); cola.rotateX(Math.PI / 2); cola.translate(0, 0, 0.48);
+    // Aletas de los lados (pectorales): gotitas aplastadas, inclinadas hacia atrás y hacia abajo
+    const pectoral = s => { const g = new THREE.SphereGeometry(1, 12, 8); g.scale(0.11, 0.018, 0.05); g.rotateY(-s * 0.6); g.rotateZ(-s * 0.5); g.translate(s * 0.15, -0.07, -0.12); return g; };
+    const aletas = juntarFormas([dorsal, cola, pectoral(1), pectoral(-1)]);
+    const ojo = s => { const g = new THREE.SphereGeometry(0.018, 10, 8); g.translate(s * 0.104, 0.02, -0.33); return g; };
+    const ojos = juntarFormas([ojo(1), ojo(-1)]);
+    return { cuerpo, aletas, ojos, piel: new THREE.MeshLambertMaterial({ vertexColors: true }), aleta: new THREE.MeshLambertMaterial({ color: 0x4a6c85 }), negro: new THREE.MeshLambertMaterial({ color: 0x101418 }) };
+  }
+  const DELFIN = crearDelfin();
+  // Un delfín del minijuego azul (mira hacia +x, como antes: su caja para pisar no cambia)
   function makeDolphin() {
-    const g = new THREE.Group(), skin = mgMat(0x4f86b0), dark = mgMat(0x3d6f96), belly = mgMat(0xe6eef3);
-    const body = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 16), skin); body.scale.set(1.45, 0.5, 0.55); body.position.set(0, 0.6, 0); g.add(body);
-    const tummy = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 12), belly); tummy.scale.set(1.25, 0.32, 0.45); tummy.position.set(0.1, 0.45, 0); g.add(tummy);
-    const melon = new THREE.Mesh(new THREE.SphereGeometry(0.42, 16, 12), skin); melon.position.set(1.15, 0.7, 0); g.add(melon);
-    const beak = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.17, 0.55, 12), skin); beak.rotation.z = -Math.PI / 2; beak.position.set(1.65, 0.55, 0); g.add(beak);
-    const dorsal = new THREE.Mesh(new THREE.ConeGeometry(0.24, 0.7, 4), dark); dorsal.scale.z = 0.3; dorsal.rotation.z = 0.55; dorsal.position.set(-0.15, 1.2, 0); g.add(dorsal);
-    for (const s of [-1, 1]) {
-      const flipper = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.05, 0.22), dark); flipper.position.set(0.45, 0.35, s * 0.55); flipper.rotation.set(s * 0.5, s * 0.6, -0.3); g.add(flipper);
-      const fluke = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.05, 0.32), dark); fluke.position.set(-2.05, 0.6, s * 0.28); fluke.rotation.y = s * 0.6; g.add(fluke);
-      const eye = new THREE.Mesh(eyeGeo, eyeMat); eye.scale.setScalar(0.5); eye.position.set(1.25, 0.72, s * 0.36); g.add(eye);
+    const g = new THREE.Group(), cuerpo = new THREE.Group();
+    cuerpo.rotation.y = -Math.PI / 2;            // la cabeza (−z) queda hacia +x
+    cuerpo.scale.set(3.7, 3.7, 3.6);             // 3,6 m de largo y 1,1 m de ancho y de alto
+    cuerpo.position.y = 0.6; g.add(cuerpo);
+    for (const [forma, mat] of [[DELFIN.cuerpo, DELFIN.piel], [DELFIN.aletas, DELFIN.aleta], [DELFIN.ojos, DELFIN.negro]]) {
+      const m = new THREE.Mesh(forma, mat); m.castShadow = true; cuerpo.add(m);
     }
-    const stock = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.3, 0.7, 12), skin); stock.rotation.z = Math.PI / 2; stock.position.set(-1.6, 0.6, 0); g.add(stock);
     return g;
   }
   // Una ballena dormida (mira hacia +x): cuerpo enorme, cabeza grande, panza clara con rayas, aletas, cola levantada y ojos cerrados
@@ -1992,8 +2024,309 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
       for (const e of f.userData.inner.children.slice(1)) e.visible = !blocks;
     });
   }
-  function placePlayer(x, y, z) { ps.pos.set(x, y, z); ps.vel.set(0, 0, 0); ps.onGround = true; ps.carrying = null; }
+  function placePlayer(x, y, z) { ps.pos.set(x, y, z); ps.vel.set(0, 0, 0); ps.onGround = true; ps.carrying = null; ps.desliz = null; }
   function resetFollower(x, y, z) { MG.trail = [{ t: MG.t, x, y, z }]; MG.trailT = 0; for (const f of MG.followers) f.position.set(x, y, z); }
+
+  // ===== Modo Escuela: el salón y la torre "No mires abajo" =====
+  const SILLAS = salonSillas();
+  const TORRE_X = 300;   // la torre está 300 m al costado del salón (dentro del mismo minijuego), así no se ven encimados
+  const SALON_AREA = { x0: -SALON.ancho / 2 + 0.6, x1: SALON.ancho / 2 - 0.6, z0: -SALON.largo / 2 - 0.4, z1: SALON.largo / 2 - 0.6 };
+  const TORRE_AREA = { x0: TORRE_X - NO_MIRES.radio - 8, x1: TORRE_X + NO_MIRES.radio + 8, z0: -NO_MIRES.radio - 8, z1: NO_MIRES.radio + 8 };
+  // Un letrero que flota (texto en un canvas)
+  function letrero(texto, bg, fg, ancho, x, y, z) {
+    const c = document.createElement('canvas'); c.width = 512; c.height = 128; const g = c.getContext('2d');
+    g.fillStyle = bg; g.beginPath(); g.roundRect(4, 4, 504, 120, 24); g.fill();
+    g.fillStyle = fg; g.font = '800 58px system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(texto, 256, 68);
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c) })); sp.scale.set(ancho, ancho / 4, 1); sp.position.set(x, y, z); scene.add(sp);
+    return sp;
+  }
+  function construirSalon(o) {
+    const S = SALON, w = S.ancho / 2, l = S.largo / 2, pared = mgMat(0xf3ead8), madera = mgMat(0x9a6a3e), metal = mgMat(0x5a6470);
+    const piso = new THREE.Mesh(new THREE.PlaneGeometry(S.ancho, S.largo), mgMat(0xc9a77a)); piso.rotation.x = -Math.PI / 2; piso.position.set(o.x, 0.01, o.z); piso.receiveShadow = true; scene.add(piso);
+    // Paredes y techo (la de atrás tiene el hueco de la puerta)
+    const P = S.puerta, px0 = o.x + P.x - P.ancho / 2, px1 = o.x + P.x + P.ancho / 2;
+    mgBox(o.x - w - 0.4, o.x + w + 0.4, 0, S.alto, o.z + l, o.z + l + 0.4, pared, true, true);   // frente (pizarrón)
+    mgBox(o.x - w - 0.4, o.x - w, 0, S.alto, o.z - l, o.z + l, pared, true, true);
+    mgBox(o.x + w, o.x + w + 0.4, 0, S.alto, o.z - l, o.z + l, pared, true, true);
+    mgBox(o.x - w - 0.4, px0, 0, S.alto, o.z - l - 0.4, o.z - l, pared, true, true);
+    mgBox(px1, o.x + w + 0.4, 0, S.alto, o.z - l - 0.4, o.z - l, pared, true, true);
+    mgBox(px0, px1, 3.2, S.alto, o.z - l - 0.4, o.z - l, pared, true, true);
+    mgBox(o.x - w - 0.4, o.x + w + 0.4, S.alto, S.alto + 0.3, o.z - l - 0.4, o.z + l + 0.4, mgMat(0xfaf6ee), true, true).mesh.castShadow = false;   // el techo no hace sombra (si no, el salón queda oscuro)
+    // La puerta de SALIDA: un marco verde y luz que brilla
+    const verde = mgMat(0x1f8a3b);
+    mgBox(px0 - 0.25, px0, 0, 3.4, o.z - l - 0.5, o.z - l + 0.1, verde, false); mgBox(px1, px1 + 0.25, 0, 3.4, o.z - l - 0.5, o.z - l + 0.1, verde, false);
+    mgBox(px0 - 0.25, px1 + 0.25, 3.2, 3.45, o.z - l - 0.5, o.z - l + 0.1, verde, false);
+    const luz = new THREE.Mesh(new THREE.PlaneGeometry(P.ancho, 3.2), new THREE.MeshBasicMaterial({ color: 0x7dff9a, transparent: true, opacity: 0.45, side: THREE.DoubleSide, depthWrite: false }));
+    luz.position.set(o.x + P.x, 1.6, o.z - l - 0.2); scene.add(luz); cameraBlockers.push(luz);   // la cámara no se sale por la puerta
+    letrero('SALIDA', '#1f8a3b', '#ffffff', 3, o.x + P.x, 4.1, o.z - l + 0.3);
+    // El pizarrón (verde oscuro, con marco de madera)
+    mgBox(o.x - 7.4, o.x + 7.4, 1.2, 4.9, o.z + l - 0.15, o.z + l, madera, false);
+    const c = document.createElement('canvas'); c.width = 1024; c.height = 256; const g = c.getContext('2d');
+    g.fillStyle = '#1e4d36'; g.fillRect(0, 0, 1024, 256); g.fillStyle = '#f4f1e6'; g.font = '800 130px system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('MODO ESCUELA', 512, 135);
+    const pizarron = new THREE.Mesh(new THREE.PlaneGeometry(14.4, 3.6), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c) }));
+    pizarron.rotation.y = Math.PI; pizarron.position.set(o.x, 3.05, o.z + l - 0.17); scene.add(pizarron);
+    // El escritorio de la profe
+    mgBox(o.x - 2, o.x + 2, 0, 1.15, o.z + l - 4.2, o.z + l - 2.9, madera);
+    // Mesas y sillas (todas sólidas). La silla del modo brilla y tiene su letrero.
+    MG.built.sillaMat = new THREE.MeshLambertMaterial({ color: 0xffc83d, emissive: 0x553300 });
+    SILLAS.forEach(s => {
+      const x = o.x + s.x, z = o.z + s.z, tz = z + SALON.sillaAtras, mat = s.modo ? MG.built.sillaMat : madera;
+      mgBox(x - 1.1, x + 1.1, 0, 1.1, tz - 0.6, tz + 0.6, madera);                      // mesa
+      mgBox(x - 1.05, x + 1.05, 0, 0.05, tz - 0.55, tz + 0.55, metal, false);
+      mgBox(x - 0.5, x + 0.5, 0, 0.6, z - 0.5, z + 0.5, mat);                           // asiento
+      mgBox(x - 0.5, x + 0.5, 0.6, 1.6, z - 0.55, z - 0.4, mat);                        // respaldo
+      if (s.modo) {
+        const l2 = new THREE.PointLight(0xffc83d, 1.4, 6, 1.5); l2.position.set(x, 2, z); scene.add(l2);
+        letrero('⬇️ No mires abajo', '#5b3df5', '#ffffff', 3.6, x, 3, z);
+      }
+    });
+    for (const lx of [-8, 8]) { const l1 = new THREE.PointLight(0xffffff, 0.9, 40, 1.2); l1.position.set(o.x + lx, 5, o.z); scene.add(l1); }   // lámparas del techo
+  }
+  // ----- La torre: 10 etapas con piezas de su tema -----
+  // Para que vaya fluido, cada tipo de pieza (caja, cilindro, esfera…) es UNA malla "instanciada" con muchas copias.
+  // Cada pieza se arma con una "receta": qué formas lleva, de qué color, dónde y de qué tamaño.
+  // add(forma, material, color, [x, y, z], [ancho, alto, largo], [giroX, giroY, giroZ]): x, y, z desde el centro de arriba de la plataforma.
+  const RECETAS = {
+    arena: (p, add) => {   // arena con granitos, y un montoncito encima (la caja para chocar no cambia)
+      add('caja', 'arena', p.color, [0, -0.3, 0], [p.ancho, 0.6, p.largo]);
+      add('esfera', 'arena', p.color, [0, -0.07, 0], [p.ancho * 0.82, 0.3, p.largo * 0.82]);
+      add('esfera', 'arena', p.color, [p.ancho * 0.22, -0.04, -p.largo * 0.18], [p.ancho * 0.35, 0.22, p.largo * 0.3]);
+    },
+    balde: (p, add) => { add('balde', 'mate', p.color, [0, -0.7, 0], [p.ancho, 1.4, p.ancho]); add('toro', 'mate', p.color, [0, -0.02, 0], [p.ancho, p.ancho, p.ancho], [Math.PI / 2, 0, 0]); },
+    pino: (p, add) => {   // la plataforma es la copa del pino (plana arriba)
+      const d = p.ancho;
+      add('copa', 'mate', 0x2e8b3a, [0, -0.5, 0], [d, 1, d]); add('copa', 'mate', 0x267a32, [0, -1.6, 0], [d * 1.35, 1.2, d * 1.35]);
+      add('copa', 'mate', 0x1f6a2b, [0, -2.8, 0], [d * 1.7, 1.3, d * 1.7]); add('cil', 'mate', 0x6b4423, [0, -4.6, 0], [0.5, 2.6, 0.5]);
+    },
+    descanso: (p, add) => { add('caja', 'mate', 0x5fbf4a, [0, -0.2, 0], [p.ancho, 0.4, p.largo]); add('caja', 'mate', 0x7a5230, [0, -0.7, 0], [p.ancho * 0.96, 0.6, p.largo * 0.96]); },
+    delfin: (p, add) => {   // un delfín 3D quieto (el mismo modelo del minijuego azul): se pisa su lomo
+      const esc = [p.ancho / 0.3, 3.3, p.largo];   // el modelo mide 0,3 de ancho y 1 de largo
+      add('delfinCuerpo', 'delfinPiel', 0xffffff, [0, -0.46, 0], esc); add('delfinAletas', 'mate', 0x4a6c85, [0, -0.46, 0], esc); add('delfinOjos', 'mate', 0x101418, [0, -0.46, 0], esc);
+    },
+    ballena: (p, add) => {
+      const a = p.ancho, l = p.largo;
+      add('esfera', 'mate', 0x2f4a6d, [0, -0.8, 0], [a, 1.6, l]); add('esfera', 'mate', 0xc9d6e3, [0, -1.1, 0], [a * 0.85, 1, l * 0.9]);
+      add('caja', 'mate', 0x223854, [0, -0.6, l / 2 + 0.5], [a * 1.5, 0.12, 1.2]);
+      for (const s of [-1, 1]) add('esfera', 'mate', 0x111111, [s * a * 0.42, -0.7, -l * 0.33], [0.2, 0.2, 0.2]);
+    },
+    tele: (p, add) => {   // televisor de tubo, apagado (pantalla gris)
+      add('caja', 'mate', p.color, [0, -0.8, 0], [p.ancho, 1.6, p.largo]); add('caja', 'mate', 0x5c6066, [0, -0.85, -p.largo / 2 - 0.01], [p.ancho * 0.78, 1.15, 0.04]);
+      add('caja', 'mate', p.color, [0, -0.85, p.largo / 2 + 0.3], [p.ancho * 0.6, 1.1, 0.6]);
+    },
+    telePlana: (p, add) => { add('caja', 'mate', 0x15161a, [0, -0.17, 0], [p.ancho, 0.3, p.largo]); add('caja', 'mate', 0x5c6066, [0, -0.01, 0], [p.ancho * 0.9, 0.02, p.largo * 0.94]); },
+    ovni: (p, add) => {
+      const a = p.ancho, l = p.largo;
+      add('cil', 'mate', 0xb8c4d0, [0, -0.2, 0], [a, 0.4, l]); add('cil', 'mate', 0x7d8a99, [0, -0.45, 0], [a * 1.15, 0.12, l * 1.15]);
+      add('esfera', 'mate', 0x9aa6b4, [0, -0.55, 0], [a * 0.6, 0.5, l * 0.6]); add('esfera', 'brilla', 0x8ff7ff, [0, 0, 0], [a * 0.28, 0.3, l * 0.28]);
+      for (const [x, z] of [[a * 0.56, 0], [-a * 0.56, 0], [0, l * 0.56], [0, -l * 0.56]]) add('esfera', 'brilla', 0xffe14d, [x, -0.45, z], [0.18, 0.18, 0.18]);
+    },
+    galleta: (p, add) => {
+      const d = p.ancho; add('cil', 'mate', 0xd9a066, [0, -0.2, 0], [d, 0.4, d]);
+      for (let k = 0; k < 5; k++) add('esfera', 'mate', 0x4a2412, [Math.cos(k * 1.26) * d * 0.28, -0.01, Math.sin(k * 1.26) * d * 0.28], [0.2, 0.08, 0.2]);
+    },
+    chocolate: (p, add) => {
+      add('caja', 'mate', 0x5a2e14, [0, -0.25, 0], [p.ancho, 0.5, p.largo]);
+      for (let k = 1; k < 7; k++) add('caja', 'mate', 0x3d1d0b, [0, 0.003, -p.largo / 2 + k * p.largo / 7], [p.ancho * 1.01, 0.02, 0.07]);
+      add('caja', 'mate', 0x3d1d0b, [0, 0.003, 0], [0.07, 0.02, p.largo]);
+    },
+    neon: (p, add) => {   // negra con borde que brilla (el borde es una caja un poco más grande, vista por dentro)
+      add('caja', 'mate', 0x07070d, [0, -0.25, 0], [p.ancho, 0.5, p.largo]); add('caja', 'neonBorde', p.color, [0, -0.25, 0], [p.ancho + 0.14, 0.62, p.largo + 0.14]);
+    },
+    tramp: (p, add) => {
+      const d = p.ancho; add('cil', 'mate', 0x1a1a1a, [0, -0.08, 0], [d * 0.86, 0.06, d * 0.86]); add('toro', 'mate', p.color, [0, -0.05, 0], [d, d, d], [Math.PI / 2, 0, 0]);
+      for (let k = 0; k < 4; k++) add('cil', 'mate', 0x777f88, [Math.cos(k * 1.571 + 0.785) * d * 0.4, -0.45, Math.sin(k * 1.571 + 0.785) * d * 0.4], [0.08, 0.8, 0.08]);
+    },
+    colchon: (p, add) => { add('caja', 'mate', p.color, [0, -0.35, 0], [p.ancho, 0.7, p.largo]); add('caja', 'mate', 0xffffff, [0, -0.35, 0], [p.ancho * 1.01, 0.15, p.largo * 1.01]); },
+    hielo: (p, add) => { add('caja', 'hielo', 0xbfefff, [0, -0.3, 0], [p.ancho, 0.6, p.largo]); add('caja', 'brilla', 0xf2fdff, [0, -0.015, 0], [p.ancho * 0.7, 0.03, p.largo * 0.7]); },
+    checkpoint: (p, add) => {
+      add('caja', 'mate', 0x2fd158, [0, -0.2, 0], [p.ancho, 0.4, p.largo]);
+      add('cil', 'mate', 0xeeeeee, [p.ancho / 2 - 0.3, 1.1, p.largo / 2 - 0.3], [0.12, 2.2, 0.12]); add('caja', 'mate', 0x2fd158, [p.ancho / 2 + 0.15, 1.9, p.largo / 2 - 0.3], [0.9, 0.55, 0.05]);
+    },
+    inicio: (p, add) => add('caja', 'mate', 0x7b6cff, [0, -0.2, 0], [p.ancho, 0.4, p.largo]),
+    meta: (p, add) => {
+      add('caja', 'mate', 0xffc400, [0, -0.2, 0], [p.ancho, 0.4, p.largo]); add('cil', 'mate', 0xeeeeee, [0, 2.5, 0], [0.2, 5, 0.2]); add('caja', 'brilla', 0xffd84d, [1, 4.3, 0], [2, 1.2, 0.08]);
+    },
+    // Decoración (no se pisa)
+    pelota: (p, add) => { add('esfera', 'mate', p.color, [0, 0, 0], [p.tam * 1.4, p.tam * 1.4, p.tam * 1.4]); add('toro', 'mate', 0xffffff, [0, 0, 0], [p.tam * 1.45, p.tam * 1.45, p.tam * 1.45]); },
+    pinoChueco: (p, add) => { add('cono', 'mate', 0x2e8b3a, [0, 3 * p.tam + 1, 0], [2.6 * p.tam, 6 * p.tam, 2.6 * p.tam]); add('cil', 'mate', 0x6b4423, [0, 0.5, 0], [0.4, 2, 0.4]); },
+    burbuja: (p, add) => add('esfera', 'hielo', 0xd8f6ff, [0, 0, 0], [p.tam, p.tam, p.tam]),
+    chupetin: (p, add) => { add('cil', 'mate', 0xffffff, [0, 1.5, 0], [0.12, 3, 0.12]); add('cil', 'mate', p.color, [0, 3.2, 0], [p.tam * 2, 0.25, p.tam * 2], [Math.PI / 2, 0, 0]); },
+    planeta: (p, add) => { add('esfera', 'mate', p.color, [0, 0, 0], [p.tam * 7, p.tam * 7, p.tam * 7]); if (p.tam > 1) add('toro', 'mate', 0xe8d9a0, [0, 0, 0], [p.tam * 11, p.tam * 11, p.tam * 4], [1.2, 0, 0]); },
+    trampAdorno: (p, add) => RECETAS.tramp({ ancho: p.tam * 2.5, color: p.color }, add),
+  };
+  RECETAS.ovniMueve = RECETAS.ovni; RECETAS.neonBarra = RECETAS.neon; RECETAS.trampPalido = RECETAS.tramp;
+  const FORMAS = {
+    caja: new THREE.BoxGeometry(1, 1, 1), cil: new THREE.CylinderGeometry(0.5, 0.5, 1, 20), copa: new THREE.CylinderGeometry(0.5, 0.75, 1, 8),
+    balde: new THREE.CylinderGeometry(0.5, 0.38, 1, 18), cono: new THREE.ConeGeometry(0.5, 1, 10), esfera: new THREE.SphereGeometry(0.5, 16, 10),
+    toro: new THREE.TorusGeometry(0.47, 0.05, 8, 28),
+    delfinCuerpo: DELFIN.cuerpo, delfinAletas: DELFIN.aletas, delfinOjos: DELFIN.ojos,
+  };
+  // Textura de arena: puntitos más claros y más oscuros sobre gris claro. Se multiplica por el color de cada plataforma.
+  function texturaArena() {
+    const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), r = seededRandom(9);
+    g.fillStyle = '#d6d6d6'; g.fillRect(0, 0, 64, 64);
+    for (let i = 0; i < 900; i++) { const v = Math.floor(150 + r() * 105); g.fillStyle = `rgb(${v},${v},${v})`; g.fillRect(Math.floor(r() * 64), Math.floor(r() * 64), 1 + Math.floor(r() * 2), 1); }
+    const tx = new THREE.CanvasTexture(c); tx.wrapS = tx.wrapT = THREE.RepeatWrapping; tx.repeat.set(3, 3);
+    return tx;
+  }
+  function materialTorre(clave) {
+    if (clave === 'arena') return new THREE.MeshLambertMaterial({ color: 0xffffff, map: texturaArena() });   // Lambert: no brilla
+    if (clave === 'hielo') return new THREE.MeshPhongMaterial({ color: 0xffffff, transparent: true, opacity: 0.78, shininess: 120, specular: 0xffffff });
+    if (clave === 'delfinPiel') return new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true });   // gris azulado arriba, panza clara
+    if (clave === 'brilla') return new THREE.MeshBasicMaterial({ color: 0xffffff });
+    if (clave === 'neonBorde') return new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.BackSide });
+    return new THREE.MeshLambertMaterial({ color: 0xffffff });
+  }
+  const COLORES_DECO = [0xff6fa8, 0xffd23f, 0xff4b3e, 0x4dd6c8, 0xa98bff, 0x2f7de1, 0xffb000];
+  function construirTorre(o) {
+    const plats = torreNoMires(), cx = o.x + TORRE_X, cz = o.z, G = NO_MIRES.grosor;
+    const grupo = new THREE.Group(); grupo.visible = false; scene.add(grupo);
+    const piso = new THREE.Mesh(new THREE.PlaneGeometry(90, 90), mgMat(0x2b2350)); piso.rotation.x = -Math.PI / 2; piso.position.set(cx, 0.01, cz); grupo.add(piso);
+    const cubetas = new Map();   // "forma|material" → lista de { matriz, color }
+    const m = new THREE.Matrix4(), base = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), v = new THREE.Vector3(), s = new THREE.Vector3();
+    const baseDe = p => base.compose(v.set(cx + p.x, p.y, cz + p.z), q.setFromEuler(e.set(p.inclina || 0, p.giro || 0, 0, 'YXZ')), s.set(1, 1, 1));
+    // add para las piezas quietas: guarda la matriz en su cubeta
+    const addQuieta = (forma, mat, color, [x, y, z], [sx, sy, sz], [rx, ry, rz] = [0, 0, 0]) => {
+      const k = forma + '|' + mat; if (!cubetas.has(k)) cubetas.set(k, []);
+      m.compose(v.set(x, y, z), q.setFromEuler(e.set(rx, ry, rz)), s.set(sx, sy, sz)).premultiply(base);
+      cubetas.get(k).push({ matriz: m.clone(), color });
+    };
+    // Cada plataforma: su dibujo y sus cajas para chocar
+    const pls = [], moviles = [];
+    for (const p of plats) {
+      const mueve = p.pieza === 'ovniMueve';
+      let ref = null;
+      if (mueve) {   // los ovnis que se mueven son mallas normales (son pocos), dentro de su propio grupito
+        ref = new THREE.Group(); ref.position.set(cx + p.x, p.y, cz + p.z); grupo.add(ref);
+        RECETAS.ovni(p, (forma, mat, color, [x, y, z], [sx, sy, sz], [rx, ry, rz] = [0, 0, 0]) => {
+          const mm = new THREE.Mesh(FORMAS[forma], mat === 'brilla' ? new THREE.MeshBasicMaterial({ color }) : mgMat(color));
+          mm.position.set(x, y, z); mm.scale.set(sx, sy, sz); mm.rotation.set(rx, ry, rz); ref.add(mm);
+        });
+      } else { baseDe(p); RECETAS[p.pieza](p, addQuieta); }
+      const mias = cajasDe(p).map(c => ({ x: cx + p.x + c.x, z: cz + p.z + c.z, hw: c.hw, hd: c.hd, top: p.y, bottom: p.y - G,
+        salto: p.salto, hielo: p.hielo, move: mueve, dx: 0, dy: 0, dz: 0, rx: c.x }));
+      pls.push(...mias);
+      if (mueve) moviles.push({ p, grupo: ref, pls: mias, x0: cx + p.x, y0: p.y });
+    }
+    // La decoración (no choca)
+    decoracionTorre().forEach((d, i) => { baseDe(d); RECETAS[d.tipo]({ ...d, color: COLORES_DECO[i % COLORES_DECO.length] }, addQuieta); });
+    // Una malla instanciada por cubeta
+    for (const [k, lista] of cubetas) {
+      const [forma, mat] = k.split('|'), malla = new THREE.InstancedMesh(FORMAS[forma], materialTorre(mat), lista.length), c = new THREE.Color();
+      lista.forEach((it, i) => { malla.setMatrixAt(i, it.matriz); malla.setColorAt(i, c.setHex(it.color)); });
+      malla.frustumCulled = false;   // three.js no sabe dónde están las copias: sin esto a veces las esconde
+      grupo.add(malla);
+    }
+    // Estrellas en la etapa del espacio
+    const pts = [];
+    const r = seededRandom(5);
+    for (let i = 0; i < 700; i++) { const a = r() * Math.PI * 2, d = 25 + r() * 70; pts.push(cx + Math.cos(a) * d, 400 + r() * 110, cz + Math.sin(a) * d); }
+    const estrellas = new THREE.Points(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(pts, 3)), new THREE.PointsMaterial({ color: 0xffffff, size: 0.5 }));
+    grupo.add(estrellas);
+    const meta = plats[plats.length - 1];
+    const luzMeta = new THREE.PointLight(0xffd84d, 1.5, 20, 1.5); luzMeta.position.set(cx + meta.x, meta.y + 3, cz + meta.z); grupo.add(luzMeta);
+    grupo.add(letrero('1000 m', '#ffc400', '#3a2600', 4, cx + meta.x, meta.y + 6.5, cz + meta.z));
+    MG.built.torre = plats.map(p => ({ ...p, x: cx + p.x, z: cz + p.z }));   // en coordenadas del mundo
+    MG.built.torreCps = MG.built.torre.filter(p => p.tipo === 'checkpoint');
+    MG.built.torrePl = pls;
+    MG.built.torreGrupo = grupo;
+    MG.built.moviles = moviles;
+    MG.built.torreEnUso = false;
+  }
+  // La torre existe solo mientras estás en ella: se ve y choca al entrar, y desaparece al salir
+  function ponerTorre(o) {
+    if (!MG.built.torre) construirTorre(o);   // se arma la primera vez que entras
+    if (MG.built.torreEnUso) return;
+    platforms.push(...MG.built.torrePl); MG.built.torreGrupo.visible = true; MG.built.torreEnUso = true;
+  }
+  function quitarTorre() {
+    if (!MG.built.torreEnUso) return;
+    const fuera = new Set(MG.built.torrePl);
+    for (let i = platforms.length - 1; i >= 0; i--) if (fuera.has(platforms[i])) platforms.splice(i, 1);
+    MG.built.torreGrupo.visible = false; MG.built.torreEnUso = false;
+  }
+  // ¿Estás parado sobre esta plataforma de la torre? (sirve para los checkpoints y la meta, que no están girados)
+  const parado = p => ps.onGround && Math.abs(ps.pos.y - p.y) < 0.3 && Math.abs(ps.pos.x - p.x) < p.ancho / 2 + 0.3 && Math.abs(ps.pos.z - p.z) < p.largo / 2 + 0.3;
+  // Lo que se mueve en la torre: los ovnis (te llevan encima)
+  function moverTorre(t) {
+    for (const mv of MG.built.moviles) {
+      const M = mv.p.mueve, off = ovniDesplazamiento(M, t);
+      const x = mv.x0 + (M.eje === 'x' ? off : 0), y = mv.y0 + (M.eje === 'y' ? off : 0);
+      for (const pl of mv.pls) {
+        const nx = x + pl.rx;
+        pl.dx = nx - pl.x; pl.dy = y - pl.top; pl.dz = 0;   // cuánto se movió este cuadro (para llevarte encima)
+        pl.x = nx; pl.top = y; pl.bottom = y - NO_MIRES.grosor;
+      }
+      mv.grupo.position.x = x; mv.grupo.position.y = y;
+    }
+  }
+  // E junto a una silla: la del modo te lleva a la torre; las demás todavía no tienen modo
+  function sentarse() {
+    const o = minigameOrigin(MG.k), i = sillaCercana(ps.pos.x - o.x, ps.pos.z - o.z, SILLAS);
+    if (i < 0) return;
+    if (SILLAS[i].modo === 'nomires') entrarTorre(o);
+    else showToast('Próximamente: esta silla todavía no tiene modo');
+  }
+  function entrarTorre(o) {
+    ponerTorre(o);
+    const st = MG.state, ini = MG.built.torre[0];
+    Object.assign(st, { fase: 'nomires', bateria: 0, checkpoint: ini, etapaVista: 1 });   // empiezas sin batería: ¡a responder!
+    placePlayer(ini.x, ini.y, ini.z);
+    const sig = MG.built.torre[1]; camYaw = Math.atan2(ps.pos.x - sig.x, ps.pos.z - sig.z);   // mirando a la primera plataforma
+    showToast(`${NO_MIRES.nombre} · Etapa 1/10: ${ETAPAS[0].nombre}. ¡Tienes doble salto: salta otra vez en el aire!`, false, 3500);
+    abrirCarga();
+  }
+  // Volver al salón (ganaste: te llevas el premio)
+  function salirTorre(o, gano) {
+    cerrarCarga(); quitarTorre();
+    MG.state.fase = 'salon';
+    const s = SILLAS[0]; placePlayer(o.x + s.x - 2, 0, o.z + s.z - 1.5);
+    camYaw = Math.PI;   // mirando al pizarrón
+    if (gano) {
+      save.coins += NO_MIRES.premio.coins; renderCoins();
+      flashWarn('¡LO LOGRASTE!', 2);
+      showToast(`¡Llegaste a ${fmt(NO_MIRES.altura)} m! +${NO_MIRES.premio.coins} monedas`);
+    }
+  }
+  function updateSalon(o) {
+    const t2 = MG.t * 3; MG.built.sillaMat.emissive.setRGB(0.35 + 0.2 * Math.sin(t2), 0.2 + 0.12 * Math.sin(t2), 0);   // la silla del modo brilla
+    const E = IS_TOUCH ? '<b>✋ Sentarse</b>' : '<b>E</b>';
+    mgHud.innerHTML = `<b>Modo Escuela</b> · ve a la <b>silla que brilla</b> (adelante a la izquierda) y pulsa ${E} · la <b>SALIDA</b> está atrás`;
+    // Cruzar la puerta de atrás: vuelves a tu mundo
+    const x = ps.pos.x - o.x, z = ps.pos.z - o.z;
+    if (z < -SALON.largo / 2 + 0.2 && Math.abs(x - SALON.puerta.x) < SALON.puerta.ancho / 2) {
+      MG.state.salir = true;
+      return { won: false, msg: 'Saliste de la escuela. ¡Vuelve cuando quieras!' };
+    }
+  }
+  function updateTorre(dt, o) {
+    const st = MG.state, inp = MG.input || {};
+    st.bateria = gastarBateria(st.bateria, dt, inp.moving, inp.jumped);   // (los saltos de trampolín no gastan)
+    moverTorre(MG.t);
+    // Trampolín: si caes en uno, te lanza hacia arriba (a 2 veces tu altura, o a 3 veces los pálidos)
+    const pie = ps.standing;
+    if (ps.onGround) { st.enHielo = !!(pie && pie.hielo); ps.saltosAire = 0; }   // al tocar una plataforma: ¿es hielo? y se recarga el doble salto
+    if (ps.onGround && pie && pie.salto) { ps.vel.y = launchSpeedForHeight(pie.salto, GRAV); ps.onGround = false; }
+    // ¿Llegaste a la meta? ¿Pisaste un checkpoint más alto?
+    const torre = MG.built.torre, meta = torre[torre.length - 1];
+    if (parado(meta)) { salirTorre(o, true); return; }
+    for (const p of MG.built.torreCps) {
+      if (p.y > st.checkpoint.y && parado(p)) { st.checkpoint = p; showToast(`Checkpoint ${fmt(p.y)} m`); }
+    }
+    // ¿Caíste al vacío? Vuelves a tu último checkpoint (o al inicio). Si caes en otra plataforma, sigues desde ahí.
+    if (debeReaparecer(ps.pos.y, ps.onGround)) {
+      const c = st.checkpoint; placePlayer(c.x, c.y, c.z);
+      showToast(c.tipo === 'checkpoint' ? `¡No mires abajo! Vuelves al checkpoint de ${fmt(c.y)} m` : '¡No mires abajo! Vuelves al inicio', true);
+    }
+    // ¿Etapa nueva? (solo avisa la primera vez que llegas)
+    const et = etapaDe(ps.pos.y);
+    if (et.n > st.etapaVista) { st.etapaVista = et.n; showToast(`¡Etapa ${et.n}/10: ${et.nombre}!`, false, 2500); }
+    const Q = IS_TOUCH ? '<b>RESPONDER</b>' : '<b>Q</b> o <b>RESPONDER</b>';
+    const bat = hayBateria(st.bateria) ? `🔋 <b>${bateriaTexto(st.bateria)}</b>` : `🔋 <b style="color:#ff5a5a">Sin batería</b>: ${IS_TOUCH ? 'toca' : 'pulsa'} ${Q} para responder`;
+    const cp = st.checkpoint.tipo === 'checkpoint' ? `${fmt(st.checkpoint.y)} m` : 'ninguno';
+    mgHud.innerHTML = `Etapa ${et.n}/10 · <b>${et.nombre}</b> · ⬇️ <b>${fmt(Math.max(0, Math.floor(ps.pos.y)))} m</b> / ${fmt(NO_MIRES.altura)} m · ${bat} · checkpoint: ${cp}`;
+    mgHud.hidden = !escuelaEl.hidden;   // con el panel abierto, el letrero de arriba molesta (el panel ya dice la batería)
+  }
 
   // ===== Los 10 modos =====
   const MODES = {
@@ -2463,37 +2796,34 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
       },
       end() { MG.built.giant.visible = false; MG.built.bot.obj.visible = false; },
     },
-    // Modo Escuela: un salón violeta. Te quedas quieto y respondes preguntas en el panel (toda la cuenta está en logic.js)
+    // Modo Escuela: un salón con mesas y sillas. Cada silla es un modo (por ahora solo "No mires abajo").
+    // El salón y la torre son el MISMO minijuego: MG.state.fase dice dónde estás ('salon' o 'nomires').
     escuela: {
-      noJump: true, noHud: true,   // no se salta y no se usa el letrero de arriba: todo está en el panel
-      area: { x0: -8, x1: 8, z0: -8, z1: 8 },
+      get area() { return MG.state.fase === 'nomires' ? TORRE_AREA : SALON_AREA; },
+      get noMove() { return MG.state.fase === 'nomires' && !hayBateria(MG.state.bateria); },   // sin batería no caminas…
+      get noJump() { return this.noMove; },                                                   // …ni saltas (pero sí te caes)
+      get onE() { return MG.state.fase === 'salon' ? sentarse : null; },      // E: sentarse en la silla de al lado
+      get onQ() { return MG.state.fase === 'nomires' ? abrirCarga : null; },  // Q: responder para cargar batería
+      // El cielo se pone oscuro en el espacio (con estrellas) y en el neón
+      get sky() { if (MG.state.fase !== 'nomires') return undefined; const id = etapaDe(ps.pos.y).id; return id === 'espacio' ? 0x070a1f : id === 'neon' ? 0x0d0618 : undefined; },
+      // Parado en hielo: resbalas (agarre chico). 0 = piso normal
+      get agarre() { return MG.state.fase === 'nomires' && MG.state.enHielo ? HIELO.agarre : 0; },   // (si saltas desde el hielo, el impulso sigue)
+      get dobleSalto() { return MG.state.fase === 'nomires'; },   // el doble salto solo existe en la torre
+      eLabel: '✋ Sentarse',
       look(o) { return { x: o.x, z: o.z + 30 }; },
-      build(o) {
-        mgFloor(o, 10, 0x3a2b8f);
-        const wall = mgMat(0x5b3df5);
-        mgBox(o.x - 10, o.x + 10, 0, 6, o.z + 10, o.z + 10.4, wall); mgBox(o.x - 10, o.x + 10, 0, 6, o.z - 10.4, o.z - 10, wall);
-        mgBox(o.x - 10.4, o.x - 10, 0, 6, o.z - 10, o.z + 10, wall); mgBox(o.x + 10, o.x + 10.4, 0, 6, o.z - 10, o.z + 10, wall);
-        // Una pizarra grande con el nombre del modo, al frente
-        const c = document.createElement('canvas'); c.width = 512; c.height = 256; const g = c.getContext('2d');
-        g.fillStyle = '#1d1660'; g.fillRect(0, 0, 512, 256); g.fillStyle = '#ffd84d'; g.font = '800 96px system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('ESCUELA', 256, 110);
-        g.fillStyle = '#e8e2ff'; g.font = '700 30px system-ui, sans-serif'; g.fillText('¡Llega a $10.000!', 256, 195);
-        const board = new THREE.Mesh(new THREE.PlaneGeometry(10, 5), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c) }));
-        board.rotation.y = Math.PI; board.position.set(o.x, 3.2, o.z + 9.9); scene.add(board);
-        const light = new THREE.PointLight(0xb9a8ff, 1.2, 30, 1.5); light.position.set(o.x, 5, o.z); scene.add(light);
-      },
+      build(o) { construirSalon(o); },   // la torre se arma recién cuando entras a ella
       start(o) {
-        placePlayer(o.x, 0, o.z);
-        if (firstPerson) setFirstPerson(false);   // para poder usar el mouse en el panel
-        for (const k in keys) keys[k] = false;
-        Object.assign(MG.state, { e: { dinero: 0, racha: 0, niveles: escuelaNiveles() }, pregunta: -1, salir: false });
-        escuelaEl.hidden = false; escuelaTab('preguntas'); escuelaNueva();
+        Object.assign(MG.state, { fase: 'salon', bateria: 0, pregunta: -1, salir: false });
+        placePlayer(o.x + SALON.puerta.x, 0, o.z - SALON.largo / 2 + 5);   // entras por la puerta de atrás
       },
-      update() {
-        const e = MG.state.e;
-        if (e.dinero >= ESCUELA.meta) return { won: true, msg: `¡Llegaste a $${fmt(ESCUELA.meta)} en el Modo Escuela! +${ESCUELA.reward.coins} monedas` };
-        if (MG.state.salir) return { won: false, msg: 'Saliste del Modo Escuela. ¡Vuelve cuando quieras!' };
+      prompt() {
+        if (MG.state.fase !== 'salon') return '';
+        const i = sillaCercana(ps.pos.x - minigameOrigin(MG.k).x, ps.pos.z - minigameOrigin(MG.k).z, SILLAS);
+        if (i < 0) return '';
+        return SILLAS[i].modo ? `Pulsa <kbd>E</kbd> para jugar <b>No mires abajo</b>` : 'Pulsa <kbd>E</kbd> para ver esta silla';
       },
-      end() { escuelaEl.hidden = true; clearTimeout(MG.state.espera); },
+      update(dt, o) { return MG.state.fase === 'nomires' ? updateTorre(dt, o) : updateSalon(o); },
+      end() { cerrarCarga(); quitarTorre(); },
     },
     // Coral (mezcla): nubes que suben + lava + bot que te sigue
     mix: {
@@ -2549,7 +2879,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     // La cámara mira hacia el objetivo (por defecto, hacia adelante en +z)
     const look = mode.look ? mode.look(o) : { x: o.x, z: o.z + 30 };
     MG.yaw = camYaw; camYaw = Math.atan2(ps.pos.x - look.x, ps.pos.z - look.z);
-    mgHud.hidden = !!mode.noHud;
+    mgHud.hidden = false;
     showToast(`${def.intro || 'Bot ' + def.bot}: ${def.goal}`);
   }
   function endMinigame(won, msg) {
@@ -2657,24 +2987,16 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
   }
   function closePanels() { styleShopEl.hidden = wardrobeEl.hidden = true; }
 
-  // ---------- Panel del modo Escuela ----------
-  const escuelaEl = document.getElementById('escuela'), escOpciones = document.getElementById('escOpciones'), escTienda = document.getElementById('escTienda');
-  const escResultado = document.getElementById('escResultado');
-  const dinero = n => `$${fmt(n)}`;
-  // Muestra la plata, la barra hacia la meta y la tienda
-  function escuelaPintar() {
-    const e = MG.state.e;
-    document.getElementById('escDinero').textContent = dinero(e.dinero);
-    document.getElementById('escMetaTxt').textContent = `${dinero(e.dinero)} de ${dinero(ESCUELA.meta)}${e.racha > 1 ? ` · racha ${e.racha} 🔥` : ''}`;
-    document.getElementById('escBarra').style.width = `${Math.min(100, e.dinero / ESCUELA.meta * 100)}%`;
-    escTienda.innerHTML = ESCUELA_MEJORAS.map((m, i) => {
-      const nivel = e.niveles[m.id], precio = escuelaPrecio(m.id, e.niveles), alcanza = precio !== null && e.dinero >= precio;
-      const ahora = m.desc(escuelaValor(m.id, e.niveles)), luego = precio === null ? '' : ` → ${m.desc(m.valores[nivel + 1])}`;
-      const label = precio === null ? 'Nivel máximo' : alcanza ? `Comprar · ${dinero(precio)}` : `Te faltan ${dinero(precio - e.dinero)}`;
-      return `<div class="shop-item${alcanza ? ' ready' : ''}"><h3>${m.nombre} · nivel ${nivel + 1}/${m.valores.length}</h3><p>${ahora}${luego}</p>` +
-             `<button type="button" class="buy" data-id="${m.id}" ${alcanza ? '' : 'disabled'}><span class="keys">${i + 1} · </span>${label}</button></div>`;
-    }).join('');
+  // ---------- Panel de la batería (No mires abajo): responde preguntas para cargarla ----------
+  const escuelaEl = document.getElementById('escuela'), escOpciones = document.getElementById('escOpciones'), escResultado = document.getElementById('escResultado');
+  const bateriaTexto = b => fmt(Math.max(0, Math.ceil(b - 0.001)));   // sin decimales (y sin el 1.901 que sale de 1.900,0000001)
+  const pintarBateria = () => { document.getElementById('escBateria').textContent = `🔋 ${bateriaTexto(MG.state.bateria)}`; };
+  function abrirCarga() {
+    for (const k in keys) keys[k] = false;
+    if (isLocked()) document.exitPointerLock();   // para poder usar el mouse en el panel
+    escuelaEl.hidden = false; escuelaNueva();
   }
+  function cerrarCarga() { escuelaEl.hidden = true; clearTimeout(MG.state.espera); }
   // Una pregunta nueva (nunca la misma que la anterior), con las opciones mezcladas
   function escuelaNueva() {
     const st = MG.state;
@@ -2684,42 +3006,29 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     document.getElementById('escPregunta').textContent = q.p;
     escOpciones.innerHTML = m.opciones.map((op, i) => `<button type="button" data-i="${i}"><kbd>${i + 1}</kbd>${op}</button>`).join('');
     escResultado.textContent = ''; escResultado.className = 'esc-resultado';
-    escuelaPintar();
+    pintarBateria();
   }
-  // Responder la opción i: suma o resta $ y muestra si estuvo bien; luego viene otra pregunta
+  // Responder la opción i: si está bien, +2.000 de batería; luego viene otra pregunta
   function escuelaResponde(i) {
     const st = MG.state;
     if (st.esperando) return;   // ya respondiste: espera la siguiente
     st.esperando = true;
     const bien = i === st.correcta;
-    st.e = escuelaResponder(st.e, bien);
+    st.bateria = cargarBateria(st.bateria, bien);
     [...escOpciones.children].forEach((b, k) => { b.disabled = true; if (k === st.correcta) b.classList.add('bien'); else if (k === i) b.classList.add('mal'); });
     escResultado.className = `esc-resultado ${bien ? 'bien' : 'mal'}`;
-    escResultado.textContent = bien ? `¡Correcto! +${dinero(st.e.cambio)}${st.e.racha > 1 ? ` · racha ${st.e.racha} 🔥` : ''}` : `Incorrecto… ${st.e.cambio < 0 ? `−${dinero(-st.e.cambio)}` : 'el seguro te salvó'}`;
-    escuelaPintar();
-    st.espera = setTimeout(() => { if (MG.active === MODES.escuela) escuelaNueva(); }, bien ? 900 : 1700);   // si fallas, más tiempo para ver la buena
-  }
-  function escuelaCompra(id) {
-    const nuevo = escuelaComprar(MG.state.e, id);
-    if (!nuevo) return;
-    MG.state.e = nuevo; escuelaPintar();   // la tarjeta ya muestra el nivel nuevo
-  }
-  // Pestañas: Preguntas o Tienda
-  function escuelaTab(cual) {
-    document.getElementById('escPreguntas').hidden = cual !== 'preguntas';
-    escTienda.hidden = cual !== 'tienda';
-    for (const b of escuelaEl.querySelectorAll('.esc-tabs button')) b.classList.toggle('on', b.dataset.tab === cual);
+    escResultado.textContent = bien ? `¡Correcto! +${fmt(BATERIA.porRespuesta)} 🔋` : 'Incorrecto… esta vez no hay batería';
+    pintarBateria();
+    st.espera = setTimeout(() => { if (!escuelaEl.hidden) escuelaNueva(); }, bien ? 900 : 1700);   // si fallas, más tiempo para ver la buena
   }
   escOpciones.addEventListener('click', e => { const b = e.target.closest('button'); if (b && !b.disabled) escuelaResponde(+b.dataset.i); });
-  escTienda.addEventListener('click', e => { const b = e.target.closest('.buy'); if (b && !b.disabled) escuelaCompra(b.dataset.id); });
-  escuelaEl.querySelector('.esc-tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (b) escuelaTab(b.dataset.tab); });
-  document.getElementById('escSalir').addEventListener('click', () => { MG.state.salir = true; });
-  // Teclado: 1-4 responden (o compran, si estás en la tienda) · T cambia entre preguntas y tienda
+  document.getElementById('escCerrar').addEventListener('click', cerrarCarga);
+  document.getElementById('escSalirTorre').addEventListener('click', () => salirTorre(minigameOrigin(MG.k), false));
+  // Teclado: 1-4 responden · Q o Esc cierran el panel
   function escuelaTecla(e) {
     if (e.repeat) return;
     const n = Math.max(['Digit1', 'Digit2', 'Digit3', 'Digit4'].indexOf(e.code), ['Numpad1', 'Numpad2', 'Numpad3', 'Numpad4'].indexOf(e.code));   // -1 = no es un número
-    if (e.code === 'KeyT') escuelaTab(escTienda.hidden ? 'tienda' : 'preguntas');
-    else if (n >= 0 && !escTienda.hidden) escuelaCompra(ESCUELA_MEJORAS[n].id);
+    if (e.code === 'KeyQ' || e.code === 'Escape') cerrarCarga();
     else if (n >= 0) escuelaResponde(n);
   }
   function tryStyleInteract() {
@@ -2728,12 +3037,14 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     return false;
   }
   function updateStylePrompt() {
-    const vt = villagePrompt();
+    const vt = MG.active && MG.active.prompt ? MG.active.prompt() : villagePrompt();   // en un minijuego, el texto lo da el minijuego
     const txt = vt ? vt : nearTrophy() ? 'Pulsa <kbd>E</kbd> para ver el logro' : nearRedButton() ? (botInsideHouse() ? `Pulsa <kbd>E</kbd>: el bot ${MINIGAMES[dumbBots.indexOf(botInsideHouse())].bot} te espera (${MINIGAMES[dumbBots.indexOf(botInsideHouse())].name})` : 'Pulsa <kbd>E</kbd> para apretar el botón rojo') : nearStall() ? 'Pulsa <kbd>E</kbd> para ver la tienda de estilo' : nearWardrobe() ? 'Pulsa <kbd>E</kbd> para abrir el armario' : '';
     actionPrompt.hidden = !txt || !!document.querySelector('.panel:not([hidden])');
     if (txt && actionPrompt.innerHTML !== txt) actionPrompt.innerHTML = txt;
   }
   // Botones del celular: cada uno hace lo mismo que su tecla
+  const responderBtn = document.getElementById('responderBtn');
+  responderBtn.addEventListener('click', () => { if (MG.active && MG.active.onQ) MG.active.onQ(); responderBtn.blur(); });   // blur: que Espacio siga siendo saltar
   const touchBtns = {};
   for (const b of document.querySelectorAll('#touchActions button')) {
     touchBtns[b.dataset.act] = b;
@@ -2763,6 +3074,11 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
       mgF: !!(MG.active && MG.active.onF),
       trophy: !MG.active && !panelOpen && !!nearTrophy(),
     };
+    // RESPONDER: solo en un modo de juego de la Escuela (cuando hay preguntas que responder) y sin un panel abierto
+    const showResponder = !!(MG.active && MG.active.onQ) && !panelOpen;
+    if (responderBtn.hidden === showResponder) responderBtn.hidden = !showResponder;
+    const eLabel = (MG.active && MG.active.eLabel) || '✋ Buscar';   // cada minijuego puede ponerle su nombre al botón ✋
+    if (touchBtns.mgE.textContent !== eLabel) touchBtns.mgE.textContent = eLabel;
     for (const k in show) if (touchBtns[k].hidden === show[k]) touchBtns[k].hidden = !show[k];
     if (shootBtn.hidden === stats.blaster) shootBtn.hidden = !stats.blaster;
   }
@@ -3660,7 +3976,18 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     }
   }
 
-  let t = 0, stepTimer = 0;
+  let t = 0, stepTimer = 0, espacioAntes = false;
+  // Efectito del doble salto: un anillo que se agranda y se desvanece debajo del jugador
+  const anillo = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.06, 8, 32), new THREE.MeshBasicMaterial({ color: 0xbff4ff, transparent: true, opacity: 0 }));
+  anillo.rotation.x = Math.PI / 2; anillo.visible = false; scene.add(anillo);
+  let anilloT = 0;
+  function anilloSalto(pos) { anillo.position.set(pos.x, pos.y + 0.05, pos.z); anilloT = 0.35; anillo.visible = true; }
+  function updateAnillo(dt) {
+    if (!anillo.visible) return;
+    anilloT -= dt; const k = 1 - anilloT / 0.35;
+    anillo.scale.setScalar(1 + k * 2.5); anillo.material.opacity = Math.max(0, 0.9 * (1 - k));
+    if (anilloT <= 0) anillo.visible = false;
+  }
   // Resolución automática: si el juego va lento (menos de 40 cuadros por segundo), baja un poco la resolución;
   // si va sobrado por un buen rato, la vuelve a subir
   const perf = { time: 0, frames: 0, good: 0 };
@@ -3701,9 +4028,9 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
       else camPitch = Math.min(1.2, Math.max(0.1, camPitch + camJoy.y * 1.2 * dt));
     }
     const busy = sleepLeft > 0 || !shopEl.hidden || !loginEl.hidden || !!document.querySelector('.panel:not([hidden])');
-    if (busy || red.aturdido > 0) fx = fz = 0; // dormido, en una tienda, en el armario, eligiendo usuario o aturdido no te mueves
+    if (busy || red.aturdido > 0 || (MG.active && MG.active.noMove)) fx = fz = 0; // dormido, en una tienda, en el armario, eligiendo usuario, aturdido o sin batería no te mueves
     const len = Math.hypot(fx, fz);
-    let moving = false;
+    let moving = false, qx = 0, qz = 0;   // qx, qz: la velocidad a la que quieres ir
     if (len > 0.1) {
       moving = true;
       const n = Math.min(len, 1) / len;
@@ -3713,16 +4040,28 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
       const mx = fx * c + fz * s, mz = -fx * s + fz * c;
       // De gigante, en el aire avanzas mucho más (tu salto de gigante)
       const lunge = MG.active && MG.active.lunge && !ps.onGround ? MG.active.lunge : 1;
-      ps.walkX += mx * stats.speed * lunge * dt;
-      ps.walkZ += mz * stats.speed * lunge * dt;
+      qx = mx * stats.speed * lunge; qz = mz * stats.speed * lunge;
       turnTo(ps, mx, mz, dt);
     }
+    // En el hielo resbalas: tu velocidad cambia de a poco (y si sueltas las teclas, sigues deslizándote)
+    const agarre = MG.active && MG.active.agarre;
+    ps.desliz = agarre ? deslizar(ps.desliz || { x: 0, z: 0 }, { x: qx, z: qz }, dt, agarre) : { x: qx, z: qz };
+    ps.walkX += ps.desliz.x * dt;
+    ps.walkZ += ps.desliz.z * dt;
 
     if (warnTimer > 0 && (warnTimer -= dt) <= 0) warn.classList.remove('show');
 
     if (onTrampoline(ps) && ps.vel.y <= 0) { trampolineLaunch(ps); showToast('¡BOING! 100 metros'); unlock('boing'); }
     updatePortal();
-    physics(ps, dt, keys.Space && !busy && !(MG.active && MG.active.noJump), (MG.active && MG.active.jump) || stats.jump);
+    const wantJump = keys.Space && !busy && !(MG.active && MG.active.noJump);
+    const apretoRecien = keys.Space && !espacioAntes; espacioAntes = keys.Space;   // recién apretado (no mantenido)
+    let doble = false;
+    if (MG.active && MG.active.dobleSalto && !busy && puedeDobleSalto({ enElPiso: ps.onGround, saltosEnAire: ps.saltosAire || 0, apretoRecien, bateria: MG.state.bateria })) {
+      ps.vel.y = (MG.active.jump || stats.jump); ps.saltosAire = (ps.saltosAire || 0) + 1; doble = true;   // ¡doble salto!
+      anilloSalto(ps.pos);
+    }
+    MG.input = { moving, jumped: (wantJump && ps.onGround) || doble };   // la batería de "No mires abajo" lo usa para saber cuánto gastar
+    physics(ps, dt, wantJump, (MG.active && MG.active.jump) || stats.jump);
     bendState(ps, dt);
 
     // Enemigo: funciona como un killbrick que te persigue
@@ -3734,6 +4073,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     updateDumbBots(dt);
     updateVillage(dt);
     updateMinigame(dt);
+    updateAnillo(dt);
     updateRed(dt);
     updatePreviews(dt);
     resolveBodies();

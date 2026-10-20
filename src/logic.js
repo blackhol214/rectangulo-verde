@@ -616,66 +616,287 @@ export function fleeCoin(bot, giant, coins) {
 // Velocidad del jugador después de comprar mejoras (con un tope)
 export const botSpeedAfter = upgrades => Math.min(INVERTED.botMaxSpeed, INVERTED.botSpeed + upgrades * INVERTED.speedPerUpgrade);
 
-// ---------- Modo Escuela: preguntas que dan dinero ($) para comprar mejoras ----------
-// Se entra por el portal violeta (al lado del Mundo al Revés). Respondes preguntas de 4 opciones:
-// si aciertas ganas $, si fallas pierdes un poco. Con los $ compras mejoras para ganar más rápido.
-// Ojo: los $ son solo de este modo; al ganar te llevas monedas del juego de verdad (reward).
+// ---------- Modo Escuela: un salón con sillas, y cada silla es un modo ----------
+// Se entra por el portal violeta (al lado del Mundo al Revés). Caminas por el salón;
+// junto a una silla pulsas E para jugar su modo. Por ahora hay uno: "No mires abajo".
 export const ESCUELA = {
   id: 'escuela', bot: 'profe', intro: 'Modo Escuela', name: 'Modo Escuela',
-  goal: 'Responde preguntas, gana $ y compra mejoras: llega a $10.000', reward: { coins: 50 },
-  meta: 10000,       // los $ que necesitas para ganar
-  maxRacha: 10,      // la racha deja de dar más bonus después de 10 seguidas
+  goal: 'Acércate a la silla que brilla y pulsa E para jugar', reward: {},   // el premio lo da cada modo al ganarlo
 };
 export const ESCUELA_K = MINIGAMES.length + 1;   // su "número de minijuego" (el Mundo al Revés es MINIGAMES.length)
 
-// Las 4 mejoras. valores[n] = cuánto vale la mejora en el nivel n · precios[n] = cuánto cuesta subir del nivel n al n + 1
-// (por eso hay un precio menos que valores: en el último nivel ya no se puede comprar más)
-export const ESCUELA_MEJORAS = [
-  { id: 'dinero', nombre: 'Dinero por pregunta', desc: v => `Ganas $${v} por respuesta`,
-    valores: [10, 25, 60, 150, 400], precios: [50, 200, 700, 2500] },
-  { id: 'racha', nombre: 'Bonus de racha', desc: v => `+$${v} por cada acierto seguido`,
-    valores: [2, 5, 15, 40, 100], precios: [40, 150, 600, 2000] },
-  { id: 'multi', nombre: 'Multiplicador', desc: v => `Todo lo que ganas × ${String(v).replace('.', ',')}`,
-    valores: [1, 1.5, 2, 3], precios: [150, 800, 3000] },
-  { id: 'seguro', nombre: 'Seguro', desc: v => `Al fallar te protege el ${v}\u00a0%`,
-    valores: [0, 25, 50, 75, 100], precios: [60, 250, 800, 2000] },
-];
-export const escuelaMejora = id => ESCUELA_MEJORAS.find(m => m.id === id);
-export const escuelaNiveles = () => ({ dinero: 0, racha: 0, multi: 0, seguro: 0 });   // todo empieza en el nivel 0
-// Cuánto vale una mejora en su nivel actual
-export const escuelaValor = (id, niveles) => escuelaMejora(id).valores[niveles[id]];
-// Cuánto cuesta subirla un nivel (null = ya está al máximo)
-export function escuelaPrecio(id, niveles) {
-  const p = escuelaMejora(id).precios[niveles[id]];
-  return p === undefined ? null : p;
+// El salón: 30 × 24 m, con el centro en el origen del minijuego. El pizarrón está al frente (z grande)
+// y la puerta de SALIDA atrás (z chico). Mirando al pizarrón, la izquierda es x grande.
+export const SALON = {
+  ancho: 30, largo: 24, alto: 6,
+  mesasX: [10.5, 3.5, -3.5, -10.5],   // de izquierda a derecha (mirando al pizarrón)
+  filasZ: [4.5, -0.5, -5.5],          // de adelante hacia atrás
+  sillaAtras: 1.5,                    // la silla está 1,5 m detrás de su mesa
+  puerta: { x: 0, ancho: 2.4 },       // la salida, en la pared de atrás
+};
+// Las 12 sillas. La primera (adelante a la izquierda) es la de "No mires abajo"; las demás, próximamente
+export function salonSillas() {
+  const out = [];
+  for (const z of SALON.filasZ) for (const x of SALON.mesasX) out.push({ x, z: z - SALON.sillaAtras, modo: out.length === 0 ? 'nomires' : null });
+  return out;
+}
+// ¿Junto a qué silla estás? (la más cercana a menos de `cerca` metros; -1 = ninguna)
+export function sillaCercana(x, z, sillas, cerca = 2) {
+  let mejor = -1, d = cerca;
+  sillas.forEach((s, i) => { const di = Math.hypot(x - s.x, z - s.z); if (di < d) { d = di; mejor = i; } });
+  return mejor;
 }
 
-// $ que ganas al acertar. racha = cuántas acertaste seguidas ANTES de esta (la primera no tiene bonus)
-export function escuelaGanancia(niveles, racha) {
-  const extra = escuelaValor('racha', niveles) * Math.min(racha, ESCUELA.maxRacha);
-  return Math.round((escuelaValor('dinero', niveles) + extra) * escuelaValor('multi', niveles));
+// ---------- ⬇️ No mires abajo: una torre de 1000 m que solo sube, en 10 etapas ----------
+// Con el salto normal (JUMP 12,5 y GRAV 30) subes unos 2,6 m: una plataforma normal sube como mucho 2,2 m.
+// Cada 30 m hay un checkpoint verde. Arriba del todo, a 1000 m, la bandera dorada.
+export const NO_MIRES = {
+  id: 'nomires', nombre: '⬇️ No mires abajo', altura: 1000, cada: 30, premio: { coins: 100 },
+  seed: 1000, radio: 12, inicioY: 1, grosor: 0.4,
+  subeMax: 2.2,        // lo más que sube una plataforma normal (el salto llega a ~2,6 m)
+  huecoMax: 2.6,       // el hueco más largo que hay que saltar (de borde a borde)
+  separaMin: 0.3,      // dos plataformas nunca se tocan (si no, te golpeas la cabeza)
+  lado: { checkpoint: 4, meta: 6, inicio: 6 },
+};
+// Las 10 etapas, de 100 m cada una. Cada una más difícil: plataformas más chicas (lado),
+// huecos más largos (hueco), que suben más (sube) y más saltos lejanos que necesitan doble salto (lejos: la probabilidad). piezas: [tipo de pieza, cuántas veces sale (peso)]
+export const ETAPAS = [
+  { n: 1, id: 'playa', nombre: 'Playa colorida', lejos: 0.02, lado: [3.2, 4], hueco: [0.4, 1], sube: [1.2, 1.7], piezas: [['arena', 3], ['balde', 1]] },
+  { n: 2, id: 'bosque', nombre: 'Bosque puro', lejos: 0.04, lado: [2.8, 3.6], hueco: [0.6, 1.2], sube: [1.3, 1.8], piezas: [['pino', 5], ['descanso', 1]] },
+  { n: 3, id: 'oceano', nombre: 'Océano', lejos: 0.08, lado: [2.6, 3.2], hueco: [0.7, 1.4], sube: [1.4, 1.9], piezas: [['delfin', 4], ['ballena', 1]] },
+  { n: 4, id: 'teles', nombre: 'Televisores', lejos: 0.08, lado: [2.4, 3], hueco: [0.8, 1.5], sube: [1.4, 1.9], piezas: [['tele', 4], ['telePlana', 1]] },
+  { n: 5, id: 'espacio', nombre: 'Espacio', lejos: 0.06, lado: [1.8, 4.5], hueco: [0.9, 1.4], sube: [1.5, 2], piezas: [['ovni', 3], ['ovniMueve', 1]] },
+  { n: 6, id: 'dulces', nombre: 'Dulces', lejos: 0.14, lado: [2.2, 2.8], hueco: [1, 1.7], sube: [1.5, 2], piezas: [['galleta', 3], ['chocolate', 1]] },
+  { n: 7, id: 'neon', nombre: 'Neón', lejos: 0.16, lado: [2, 2.6], hueco: [1, 1.6], sube: [1.5, 2], piezas: [['neon', 3], ['neonBarra', 1]] },
+  { n: 8, id: 'trampolines', nombre: 'Trampolines', lejos: 0.3, lado: [2, 2.6], hueco: [0.8, 1.4], sube: [1.5, 2], piezas: [['tramp', 6], ['trampPalido', 2], ['colchon', 0.5]] },
+  { n: 9, id: 'hielo', nombre: 'Hielo absoluto', lejos: 0.16, lado: [1.8, 2.4], hueco: [1.2, 2], sube: [1.6, 2.1], piezas: [['hielo', 5], ['tramp', 1]] },
+  { n: 10, id: 'masacote', nombre: 'El final: un masacote', lejos: 0.22, lado: [1.6, 2.2], hueco: [1.3, 2.2], sube: [1.7, 2.2],
+    piezas: [['arena', 1], ['pino', 1], ['delfin', 1], ['tele', 1], ['ovniMueve', 1], ['galleta', 1], ['neon', 1], ['tramp', 1], ['hielo', 1]] },
+];
+// ¿En qué etapa estás a esta altura? (0–100 m → 1, 100–200 m → 2 … 900–1000 m → 10)
+export const etapaDe = y => ETAPAS[Math.min(ETAPAS.length - 1, Math.max(0, Math.floor(y / 100)))];
+
+// Los trampolines: los normales te lanzan a 2 veces tu altura (4 m); los pálidos, a 3 veces (6 m)
+export const ALTO_JUGADOR = 2;
+export const TRAMPOLIN = { salto: 2 * ALTO_JUGADOR, saltoPalido: 3 * ALTO_JUGADOR };
+// Desde un trampolín, la siguiente plataforma puede estar más arriba que con un salto normal (2,6 m), con margen:
+// desde uno normal, de 2,4 a 3,4 m más arriba; desde uno pálido, de 4 a 5,2 m (¡sin él no se alcanza!)
+export const subeDesdeTramp = salto => (salto > TRAMPOLIN.salto ? [4, 5.2] : [2.4, 3.4]);
+// Los ovnis que se mueven: cuánto se corren (amp, en metros) y cada cuántos segundos van y vuelven (periodo)
+export const OVNI = { amp: 1.2, periodo: [4, 6] };
+// Dónde está un ovni que se mueve en el segundo t (desplazamiento desde su lugar)
+export const ovniDesplazamiento = (mueve, t) => mueve.amp * Math.sin((t / mueve.periodo) * Math.PI * 2);
+// Hielo: tu velocidad cambia de a poco (agarre chico = resbala más). En el piso normal cambia de golpe.
+export const HIELO = { agarre: 2.2 };
+export function deslizar(vel, quiere, dt, agarre) {
+  const k = 1 - Math.exp(-agarre * dt);
+  return { x: vel.x + (quiere.x - vel.x) * k, z: vel.z + (quiere.z - vel.z) * k };
 }
-// $ que pierdes al fallar: lo que ganarías sin racha, menos lo que cubre el seguro
-export function escuelaPerdida(niveles) {
-  const base = escuelaValor('dinero', niveles);
-  return Math.round(base * (1 - escuelaValor('seguro', niveles) / 100));
+
+const COLORES_PLAYA = [0xe8a5a0, 0xe9cf8a, 0xd98c6e, 0xa9d3c4, 0xe8b07f, 0xc9b5d6];   // arena pastel: rosada, amarilla, roja, turquesa…
+const COLORES_NEON = [0x00f0ff, 0xff2bd6, 0xffe600, 0x39ff14];   // el color del borde que brilla
+const COLORES_TRAMP = [0x1e6bff, 0xff3b3b, 0x2fd158, 0xff9f0a, 0xaf52de];
+const COLORES_PALIDOS = [0xbcd6ff, 0xffc7c7, 0xc4f5d0, 0xffe2b8, 0xe6ccf5];   // los pálidos saltan más alto
+// Cómo es cada pieza: su tamaño (ancho × largo), si está girada, si es redonda… r: números al azar, L: tamaño de la etapa
+const azar = (r, [a, b]) => a + r() * (b - a);
+const elegir = (r, lista) => lista[Math.floor(r() * lista.length)];
+const PIEZAS = {
+  arena: (r, L) => ({ ancho: L, largo: L, color: elegir(r, COLORES_PLAYA) }),
+  balde: (r, L) => ({ ancho: L * 1.1, largo: L * 1.1, redonda: true, color: elegir(r, COLORES_PLAYA) }),
+  pino: (r, L) => ({ ancho: L, largo: L, redonda: true }),
+  descanso: () => ({ ancho: 5.5, largo: 5.5, descanso: true }),
+  delfin: (r, L) => ({ ancho: 1.6, largo: L + 1, giro: r() * Math.PI, inclina: (r() - 0.5) * 0.16 }),
+  ballena: r => ({ ancho: 3, largo: 8, giro: r() * Math.PI, inclina: (r() - 0.5) * 0.1, descanso: true }),
+  tele: (r, L) => ({ ancho: L, largo: L, color: elegir(r, [0xd8cfc0, 0x8a8f96, 0x4a4f57]) }),
+  telePlana: r => ({ ancho: 2.2, largo: 7, giro: r() * Math.PI, descanso: true }),
+  ovni: (r, L) => ({ ancho: azar(r, [1.8, 4.5]), largo: azar(r, [1.8, 5.5]), redonda: true }),
+  ovniMueve: (r, L) => ({ ancho: azar(r, [2, 3.5]), largo: azar(r, [2, 3.5]), redonda: true,
+    mueve: { eje: r() < 0.5 ? 'x' : 'y', amp: OVNI.amp, periodo: azar(r, OVNI.periodo) } }),
+  galleta: (r, L) => ({ ancho: L, largo: L, redonda: true }),
+  chocolate: r => ({ ancho: 2, largo: 7, giro: r() * Math.PI, inclina: (r() - 0.5) * 0.12, descanso: true }),
+  neon: (r, L) => ({ ancho: L, largo: L, color: elegir(r, COLORES_NEON) }),
+  neonBarra: (r, L) => ({ ancho: 1.4, largo: 5, giro: r() * Math.PI, color: elegir(r, COLORES_NEON) }),   // una barra angosta y girada
+  tramp: (r, L) => ({ ancho: L, largo: L, redonda: true, salto: TRAMPOLIN.salto, color: elegir(r, COLORES_TRAMP) }),
+  trampPalido: (r, L) => ({ ancho: L, largo: L, redonda: true, salto: TRAMPOLIN.saltoPalido, color: elegir(r, COLORES_PALIDOS) }),
+  colchon: (r, L) => ({ ancho: L + 0.6, largo: L + 0.6, color: elegir(r, COLORES_TRAMP) }),
+  hielo: (r, L) => ({ ancho: L, largo: L, hielo: true }),
+};
+const esTramp = pieza => pieza === 'tramp' || pieza === 'trampPalido';
+
+// ----- Geometría de rectángulos (vistos desde arriba): sirve para medir huecos y para no encimar plataformas -----
+// Las 2 direcciones de los lados de una plataforma (girada `giro` radianes)
+const ejesDe = p => { const g = p.giro || 0; return [[Math.cos(g), -Math.sin(g)], [Math.sin(g), Math.cos(g)]]; };   // [eje del ancho, eje del largo]
+// Cuánto "sobresale" la plataforma desde su centro en la dirección u
+function alcance(p, u) {
+  const [ea, el] = ejesDe(p), extra = p.mueve && p.mueve.eje === 'x' ? p.mueve.amp * Math.abs(u[0]) : 0;
+  return (p.ancho / 2) * Math.abs(u[0] * ea[0] + u[1] * ea[1]) + (p.largo / 2) * Math.abs(u[0] * el[0] + u[1] * el[1]) + extra;
 }
-// Responder: devuelve cómo queda todo (no cambia el estado que le pasas, hace uno nuevo)
-// estado = { dinero, racha, niveles }
-export function escuelaResponder(estado, correcta) {
-  if (correcta) {
-    const gano = escuelaGanancia(estado.niveles, estado.racha);
-    return { ...estado, dinero: estado.dinero + gano, racha: estado.racha + 1, cambio: gano };
+// Hueco por la línea que une los centros (lo que saltas si vas derecho de una a la otra)
+export function huecoEntre(a, b) {
+  const dx = b.x - a.x, dz = b.z - a.z, d = Math.hypot(dx, dz) || 1e-9, u = [dx / d, dz / d];
+  return d - alcance(a, u) - alcance(b, u);
+}
+// Separación segura (si es > 0, seguro que no se tocan): se revisan los 4 lados (teorema del eje separador)
+export function separacion(a, b) {
+  let mejor = -Infinity;
+  for (const u of [...ejesDe(a), ...ejesDe(b)]) {
+    const centro = Math.abs((b.x - a.x) * u[0] + (b.z - a.z) * u[1]);
+    mejor = Math.max(mejor, centro - alcance(a, u) - alcance(b, u));
   }
-  const pierde = Math.min(estado.dinero, escuelaPerdida(estado.niveles));   // nunca bajas de $0
-  return { ...estado, dinero: estado.dinero - pierde, racha: 0, cambio: -pierde };
+  return mejor;
 }
-// Comprar una mejora: devuelve el estado nuevo, o null si no alcanza o ya está al máximo
-export function escuelaComprar(estado, id) {
-  const precio = escuelaPrecio(id, estado.niveles);
-  if (precio === null || estado.dinero < precio) return null;
-  return { ...estado, dinero: estado.dinero - precio, niveles: { ...estado.niveles, [id]: estado.niveles[id] + 1 } };
+// Lo más que se puede subir desde la plataforma p (un trampolín te lanza mucho más alto)
+export function subeMaxDesde(p) {
+  if (p.salto) return subeDesdeTramp(p.salto)[1];
+  return NO_MIRES.subeMax - (p.mueve && p.mueve.eje === 'y' ? p.mueve.amp : 0);
 }
+// Lo más que hay que saltar de largo desde la plataforma p
+export const huecoMaxDesde = p => (p.salto ? 1.6 : NO_MIRES.huecoMax);
+
+// ----- Saltos: hasta dónde llegas (de largo) con un salto y con doble salto -----
+// El jugador corre a 12 m/s, salta a 12,5 m/s y la gravedad es 30 (los mismos números del juego)
+export const JUGADOR = { velocidad: 12, salto: 12.5, gravedad: 30 };
+// Cuánto tiempo estás en el aire hasta volver a bajar a `sube` metros más arriba de donde saltaste
+function tiempoSimple(sube) {
+  const { salto: v, gravedad: g } = JUGADOR, d = v * v - 2 * g * sube;
+  return d < 0 ? 0 : (v + Math.sqrt(d)) / g;
+}
+function tiempoDoble(sube) {   // el segundo salto, justo arriba del primero (lo que más lejos te lleva)
+  const { salto: v, gravedad: g } = JUGADOR, arriba = (v * v) / (2 * g), d = v * v + 2 * g * (arriba - sube);
+  return d < 0 ? 0 : v / g + (v + Math.sqrt(d)) / g;
+}
+// Lo más lejos que llegas (de borde a borde, sin perder ni un poquito): con un salto o con doble salto
+export const alcanceSimple = sube => JUGADOR.velocidad * tiempoSimple(sube);
+export const alcanceDoble = sube => JUGADOR.velocidad * tiempoDoble(sube);
+// Los saltos lejanos: más largos de lo que alcanza un salto, pero bien por debajo de lo que alcanza el doble salto
+export const LEJOS = { sobreSimple: 1.05, deDoble: 0.6, subeMax: 1.6 };
+export const huecoLejos = sube => [alcanceSimple(sube) * LEJOS.sobreSimple, alcanceDoble(sube) * LEJOS.deDoble];
+
+// ----- Doble salto (solo en la torre): en el aire puedes saltar UNA vez más -----
+// Solo cuando vuelves a apretar (no por dejar el botón apretado), y solo con batería
+export const DOBLE_SALTO = { max: 1 };
+export const puedeDobleSalto = ({ enElPiso, saltosEnAire, apretoRecien, bateria }) =>
+  !enElPiso && apretoRecien && saltosEnAire < DOBLE_SALTO.max && bateria > 0;
+
+// Las cajas para chocar (relativas al centro). Las giradas se arman con varios cuadraditos a lo largo,
+// porque el juego solo choca con cajas derechas.
+export function cajasDe(p) {
+  const g = p.giro || 0, c = Math.abs(Math.cos(g)), s = Math.abs(Math.sin(g));
+  if (p.redonda) return [{ x: 0, z: 0, hw: p.ancho * 0.85 / 2, hd: p.largo * 0.85 / 2 }];
+  if (s < 1e-6) return [{ x: 0, z: 0, hw: p.ancho / 2, hd: p.largo / 2 }];
+  if (c < 1e-6) return [{ x: 0, z: 0, hw: p.largo / 2, hd: p.ancho / 2 }];
+  const lado = Math.min(p.ancho, p.largo) / (c + s);   // un cuadradito que cabe dentro, aunque esté girado
+  const largoEje = Math.max(p.ancho, p.largo) - Math.min(p.ancho, p.largo), n = Math.max(1, Math.ceil(largoEje / (lado * 0.7)) + 1);
+  const [ea, el] = ejesDe(p), eje = p.largo >= p.ancho ? el : ea, out = [];
+  for (let i = 0; i < n; i++) {
+    const k = n === 1 ? 0 : (i / (n - 1) - 0.5) * largoEje;
+    out.push({ x: eje[0] * k, z: eje[1] * k, hw: lado / 2, hd: lado / 2 });
+  }
+  return out;
+}
+
+// Las alturas que tocan: cada 30 m un checkpoint, y la meta a 1000 m
+const proximaParada = y => Math.min(NO_MIRES.altura, (Math.floor(y / NO_MIRES.cada + 1e-9) + 1) * NO_MIRES.cada);
+
+// Todas las plataformas de la torre: { x, y (arriba de la plataforma), z, ancho, largo, giro, tipo, pieza, etapa, … }
+// tipo: 'inicio' · 'normal' · 'checkpoint' (cada 30 m) · 'meta' (a 1000 m). Dan vueltas en espiral alrededor del centro.
+export function torreNoMires(seed = NO_MIRES.seed) {
+  const N = NO_MIRES, rnd = seededRandom(seed);
+  const plats = [{ x: N.radio, y: N.inicioY, z: 0, ancho: N.lado.inicio, largo: N.lado.inicio, giro: 0, tipo: 'inicio', pieza: 'inicio', etapa: 1 }];
+  let ang = 0;
+  while (plats[plats.length - 1].y < N.altura) {
+    const prev = plats[plats.length - 1], parada = proximaParada(prev.y), falta = parada - prev.y;
+    // 1. Cuánto sube
+    const maxSube = subeMaxDesde(prev), etP = etapaDe(prev.y + 0.01);
+    let sube, tipo = 'normal';
+    if (falta <= maxSube) { sube = falta; tipo = parada === N.altura ? 'meta' : 'checkpoint'; }
+    else {
+      sube = prev.salto ? azar(rnd, subeDesdeTramp(prev.salto)) : azar(rnd, [Math.min(etP.sube[0], maxSube), Math.min(etP.sube[1], maxSube)]);
+      if (falta - sube < 1) sube = falta - 1;   // que no quede un escalón chiquitito antes del checkpoint
+    }
+    let y = prev.y + sube;
+    // 2. Qué pieza es (según la etapa de su altura)
+    const et = etapaDe(y), L = azar(rnd, et.lado);
+    let pieza;
+    if (tipo !== 'normal') pieza = tipo;
+    else {
+      const total = et.piezas.reduce((s, [, w]) => s + w, 0); let k = rnd() * total;
+      pieza = et.piezas.find(([, w]) => (k -= w) < 0)[0];   // al azar, según su peso
+      // Un trampolín necesita espacio arriba antes del checkpoint; si no hay, va algo que no rebota
+      if (pieza === 'trampPalido' && parada - y < subeDesdeTramp(TRAMPOLIN.saltoPalido)[0] + 1) pieza = 'tramp';
+      if (pieza === 'tramp' && parada - y < subeDesdeTramp(TRAMPOLIN.salto)[0] + 1) pieza = et.piezas.find(([pz]) => !esTramp(pz))?.[0] || 'arena';
+      // Un ovni que sube y baja no puede quedar muy alto (lo más alto que llega es y + amp)
+    }
+    const forma = tipo === 'normal' ? PIEZAS[pieza](rnd, L) : { ancho: N.lado[tipo], largo: N.lado[tipo] };
+    if (forma.mueve && forma.mueve.eje === 'y' && prev.mueve && prev.mueve.eje === 'y') forma.mueve.eje = 'x';   // dos que suben y bajan seguidos, no
+    if (forma.mueve && forma.mueve.eje === 'y' && y + forma.mueve.amp - prev.y > maxSube) {
+      y = prev.y + Math.max(0.5, maxSube - forma.mueve.amp);
+    }
+    // ¿Un salto lejano? (de una plataforma quieta a otra quieta; desde un trampolín, nunca)
+    const lejos = tipo === 'normal' && prev.tipo !== 'inicio' && !prev.salto && !prev.mueve && !forma.mueve && rnd() < et.lejos;
+    if (lejos && y - prev.y > LEJOS.subeMax) y = prev.y + LEJOS.subeMax;   // los lejanos suben poquito
+    const p = { y, giro: 0, inclina: 0, tipo, pieza, etapa: et.n, ...forma, lejos };
+    // 3. Dónde va: avanzando por la espiral hasta que el hueco sea el que queremos
+    let quiero = lejos ? azar(rnd, huecoLejos(y - prev.y)) : prev.salto ? azar(rnd, [0.8, 1.4]) : p.mueve || prev.mueve ? et.hueco[0] : azar(rnd, et.hueco);
+    let paso = (quiero + (prev.ancho + p.ancho) / 2) / N.radio, radio = N.radio, primera = null, bien = false;
+    for (let intento = 0; intento < 40 && !bien; intento++) {
+      for (let k = 0; k < 8; k++) {   // ajustar el ángulo para que el hueco quede justo
+        p.x = Math.cos(ang + paso) * radio; p.z = Math.sin(ang + paso) * radio;
+        paso += (quiero - huecoEntre(prev, p)) / radio;
+      }
+      p.x = Math.cos(ang + paso) * radio; p.z = Math.sin(ang + paso) * radio;
+      if (!primera) primera = { x: p.x, z: p.z, paso, giro: p.giro };
+      if (!chocaCon(plats, p, lejos ? huecoLejos(y - prev.y)[1] : null)) { bien = true; break; }
+      // Si choca con otra: la giramos, o la ponemos un poco más afuera o más adentro de la espiral
+      if (p.giro) p.giro += 0.35;
+      else radio = N.radio + (intento % 2 ? -1 : 1) * (1 + Math.floor(intento / 2) * 0.5);
+    }
+    if (!bien) { p.x = primera.x; p.z = primera.z; p.giro = primera.giro; paso = primera.paso; }   // si nada sirvió, el primer intento
+    ang += paso;
+    plats.push(p);
+  }
+  return plats;
+}
+// ¿La plataforma nueva queda encima de otra (muy cerca) o en el camino de un salto de trampolín?
+function chocaCon(plats, p, huecoMax) {
+  const n = plats.length, prev = plats[n - 1];
+  for (let i = n - 1; i >= 0; i--) {
+    const q = plats[i];
+    if (p.y - q.y > TRAMPOLIN.saltoPalido + 4) break;   // las de mucho más abajo no molestan
+    const margen = NO_MIRES.separaMin;   // (los ovnis que van de lado ya cuentan su recorrido en `alcance`)
+    const cerca = p.y - q.y < 4.5 || (q.salto && p.y - q.y < q.salto + 4);   // muy cerca en altura, o en la columna de un trampolín
+    if (cerca && separacion(q, p) < (i === n - 1 ? margen : margen + 0.5)) return true;
+  }
+  return huecoEntre(prev, p) > (huecoMax || huecoMaxDesde(prev) - (p.mueve || prev.mueve ? OVNI.amp : 0));
+}
+
+// Decoración que no se pisa (alrededor de la torre, por fuera): pelotas de playa, pinos inclinados, chupetines, planetas…
+export function decoracionTorre(seed = NO_MIRES.seed + 1) {
+  const rnd = seededRandom(seed), out = [];
+  const tipos = { playa: 'pelota', bosque: 'pinoChueco', oceano: 'burbuja', dulces: 'chupetin', espacio: 'planeta', trampolines: 'trampAdorno' };
+  for (const et of ETAPAS) {
+    const tipo = tipos[et.id]; if (!tipo) continue;
+    const cuantos = tipo === 'pinoChueco' ? 40 : tipo === 'planeta' ? 6 : 16;
+    for (let i = 0; i < cuantos; i++) {
+      const a = rnd() * Math.PI * 2, d = NO_MIRES.radio + 7 + rnd() * (tipo === 'planeta' ? 40 : 14);
+      out.push({ tipo, x: Math.cos(a) * d, z: Math.sin(a) * d, y: (et.n - 1) * 100 + rnd() * 100, tam: 0.6 + rnd() * 1.2, inclina: tipo === 'pinoChueco' && rnd() < 0.6 ? (rnd() - 0.5) * 0.7 : 0, giro: rnd() * Math.PI * 2 });
+    }
+  }
+  return out;
+}
+// ¿Te caíste al vacío? Solo si llegas al piso de abajo de la torre (la plataforma de inicio está a 1 m, no cuenta).
+// Si caes en una plataforma más abajo, no pasa nada: sigues desde ahí (y tu checkpoint no baja).
+export const debeReaparecer = (y, enElPiso) => (enElPiso && y < 0.5) || y < -1;
+
+// ----- La batería: moverte y saltar la gastan; responder bien la carga -----
+export const BATERIA = { porSegundo: 50, porSalto: 50, porRespuesta: 2000 };
+// Lo que queda después de un ratito dt (caminando o no, saltando o no). Nunca baja de 0.
+export function gastarBateria(bateria, dt, caminando, salto) {
+  const gasto = (caminando ? BATERIA.porSegundo * dt : 0) + (salto ? BATERIA.porSalto : 0);
+  return Math.max(0, bateria - gasto);
+}
+export const cargarBateria = (bateria, correcta) => (correcta ? bateria + BATERIA.porRespuesta : bateria);
+export const hayBateria = bateria => bateria > 0;
 
 // Banco de preguntas. La primera opción de `op` es SIEMPRE la correcta: al mostrarla se mezclan.
 export const ESCUELA_PREGUNTAS = [

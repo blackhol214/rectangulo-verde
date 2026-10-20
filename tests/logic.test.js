@@ -13,7 +13,8 @@ import {
   SWINGS, swingAngle, SLIDE, slidePoint,
   HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail,
   MINIGAMES, minigameOrigin, MAZE, generateMaze, mazePathLength, pickMaze, pickLemon, clampToArea, flowerTired, MEDIUM_HOUSE, insideRect, segmentHitsRect, detourAround, INVERTED, INVERTED_K, minigameDef, invertColor, fleeCoin, botSpeedAfter, CRATES, crateOutside, GARDEN, DROPPER, dropperLayers, dropperPad,
-  ESCUELA, ESCUELA_K, ESCUELA_MEJORAS, ESCUELA_PREGUNTAS, escuelaNiveles, escuelaValor, escuelaPrecio, escuelaGanancia, escuelaPerdida, escuelaResponder, escuelaComprar, escuelaSiguiente, escuelaMezclar,
+  ESCUELA, ESCUELA_K, ESCUELA_PREGUNTAS, escuelaSiguiente, escuelaMezclar, SALON, salonSillas, sillaCercana,
+  NO_MIRES, torreNoMires, huecoEntre, separacion, huecoMaxDesde, subeDesdeTramp, cajasDe, decoracionTorre, ETAPAS, etapaDe, TRAMPOLIN, ALTO_JUGADOR, OVNI, ovniDesplazamiento, HIELO, alcanceSimple, alcanceDoble, huecoLejos, puedeDobleSalto, DOBLE_SALTO, deslizar, debeReaparecer, BATERIA, gastarBateria, cargarBateria, hayBateria,
   DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, nearVillageHouse, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot,
 } from '../src/logic.js';
 
@@ -989,12 +990,10 @@ describe('logros (trofeos)', () => {
 });
 
 describe('modo Escuela', () => {
-  const nuevo = (dinero = 0) => ({ dinero, racha: 0, niveles: escuelaNiveles() });
   it('es otro minijuego extra, con su propio lugar lejos de todo', () => {
     expect(ESCUELA_K).toBe(MINIGAMES.length + 1);
     expect(minigameDef(ESCUELA_K)).toBe(ESCUELA);
     expect(minigameDef(INVERTED_K)).toBe(INVERTED);   // el Mundo al Revés sigue igual
-    expect(ESCUELA.reward).toEqual({ coins: 50 });
     const o = minigameOrigin(ESCUELA_K);
     for (let k = 0; k < ESCUELA_K; k++) {
       const p = minigameOrigin(k);
@@ -1002,67 +1001,193 @@ describe('modo Escuela', () => {
     }
     expect(Math.hypot(o.x, o.z)).toBeGreaterThan(1500);
   });
-  it('acertar da $ y la racha suma bonus', () => {
-    let e = escuelaResponder(nuevo(), true);
-    expect(e.dinero).toBe(10);   // la primera: solo el dinero por pregunta
-    expect(e.racha).toBe(1);
-    e = escuelaResponder(e, true);
-    expect(e.dinero).toBe(10 + 10 + 2);   // la segunda: +$2 por 1 acierto seguido
-    e = escuelaResponder(e, true);
-    expect(e.cambio).toBe(10 + 2 * 2);
+  it('el salón tiene 12 sillas y solo la de adelante a la izquierda tiene modo', () => {
+    const sillas = salonSillas();
+    expect(sillas).toHaveLength(12);
+    expect(sillas.filter(s => s.modo)).toEqual([sillas[0]]);
+    expect(sillas[0].modo).toBe('nomires');
+    // adelante = z más grande · izquierda (mirando al pizarrón) = x más grande
+    for (const s of sillas) { expect(s.z).toBeLessThanOrEqual(sillas[0].z); expect(s.x).toBeLessThanOrEqual(sillas[0].x); }
+    // todas caben dentro del salón
+    for (const s of sillas) { expect(Math.abs(s.x)).toBeLessThan(SALON.ancho / 2 - 1); expect(Math.abs(s.z)).toBeLessThan(SALON.largo / 2 - 1); }
   });
-  it('la racha tiene un tope', () => {
-    expect(escuelaGanancia(escuelaNiveles(), 50)).toBe(escuelaGanancia(escuelaNiveles(), ESCUELA.maxRacha));
+  it('sabe junto a qué silla estás', () => {
+    const sillas = salonSillas();
+    expect(sillaCercana(sillas[0].x + 0.5, sillas[0].z, sillas)).toBe(0);
+    expect(sillaCercana(sillas[5].x, sillas[5].z - 1, sillas)).toBe(5);
+    expect(sillaCercana(0, 11, sillas)).toBe(-1);   // junto al pizarrón no hay sillas
   });
-  it('el multiplicador multiplica todo', () => {
-    const n = { ...escuelaNiveles(), multi: 2 };   // × 2
-    expect(escuelaGanancia(n, 0)).toBe(20);
-    expect(escuelaGanancia(n, 3)).toBe((10 + 2 * 3) * 2);
+});
+
+describe('No mires abajo: la torre', () => {
+  const torre = torreNoMires();
+  it('siempre sale igual (tiene semilla)', () => {
+    expect(torreNoMires()).toEqual(torre);
   });
-  it('fallar resta un poco, corta la racha y nunca baja de $0', () => {
-    let e = escuelaResponder({ ...nuevo(100), racha: 4 }, false);
-    expect(e.dinero).toBe(90);
-    expect(e.racha).toBe(0);
-    expect(escuelaResponder(nuevo(3), false).dinero).toBe(0);
-    expect(escuelaResponder(nuevo(0), false).dinero).toBe(0);
+  it('empieza abajo y termina a 1000 m con la meta', () => {
+    expect(torre[0].tipo).toBe('inicio');
+    expect(torre.at(-1)).toMatchObject({ tipo: 'meta', y: NO_MIRES.altura });
+    expect(torre.filter(p => p.tipo === 'meta')).toHaveLength(1);
+    expect(torre.length).toBeGreaterThan(400);   // ¡muchas plataformas!
   });
-  it('el seguro te protege de perder', () => {
-    expect(escuelaPerdida({ ...escuelaNiveles(), seguro: 2 })).toBe(5);    // 50 %
-    expect(escuelaPerdida({ ...escuelaNiveles(), seguro: 4 })).toBe(0);    // 100 %: no pierdes nada
-    expect(escuelaResponder({ dinero: 40, racha: 0, niveles: { ...escuelaNiveles(), seguro: 4 } }, false).dinero).toBe(40);
-  });
-  it('las mejoras suben de precio y tienen un máximo', () => {
-    for (const m of ESCUELA_MEJORAS) {
-      expect(m.precios).toHaveLength(m.valores.length - 1);
-      for (let i = 1; i < m.precios.length; i++) expect(m.precios[i]).toBeGreaterThan(m.precios[i - 1]);
-      for (let i = 1; i < m.valores.length; i++) expect(m.valores[i]).toBeGreaterThan(m.valores[i - 1]);
-      expect(escuelaPrecio(m.id, { ...escuelaNiveles(), [m.id]: m.valores.length - 1 })).toBeNull();
+  it('cada plataforma sube y se alcanza desde la anterior (de un salto o con trampolín)', () => {
+    const subeSalto = 12.5 ** 2 / (2 * 30);   // lo más alto que llegas saltando (≈ 2,6 m)
+    for (let i = 1; i < torre.length; i++) {
+      const a = torre[i - 1], b = torre[i], sube = b.y - a.y;
+      expect(sube).toBeGreaterThan(0);   // solo suben
+      if (a.salto) {
+        expect(sube).toBeLessThanOrEqual(subeDesdeTramp(a.salto)[1] + 1e-9);
+        expect(sube).toBeLessThan(a.salto - 0.5);   // el trampolín te lanza más alto que eso, con margen
+      } else {
+        // si alguno es un ovni que sube y baja, cuenta lo más alto que puede quedar
+        const extra = (a.mueve?.eje === 'y' ? a.mueve.amp : 0) + (b.mueve?.eje === 'y' ? b.mueve.amp : 0);
+        expect(sube + extra).toBeLessThan(subeSalto - 0.3);
+      }
+      const hueco = huecoEntre(a, b);
+      if (b.lejos) {   // un salto lejano: no llegas con un salto, pero sí (con margen) con doble salto
+        expect(hueco).toBeGreaterThan(alcanceSimple(sube));
+        expect(hueco).toBeLessThanOrEqual(alcanceDoble(sube) * 0.6 + 1e-9);
+      } else expect(hueco).toBeLessThanOrEqual(huecoMaxDesde(a) + 1e-9);   // los demás, de un salto (y con margen)
+      expect(separacion(a, b)).toBeGreaterThan(0.25);                     // y no se enciman
     }
-    expect(escuelaPrecio('dinero', escuelaNiveles())).toBe(50);
   });
-  it('comprar cobra el precio y sube el nivel (si alcanza)', () => {
-    expect(escuelaComprar(nuevo(49), 'dinero')).toBeNull();
-    const e = escuelaComprar(nuevo(60), 'dinero');
-    expect(e.dinero).toBe(10);
-    expect(e.niveles.dinero).toBe(1);
-    expect(escuelaValor('dinero', e.niveles)).toBe(25);
-    const lleno = { dinero: 1e6, racha: 0, niveles: { ...escuelaNiveles(), multi: 3 } };
-    expect(escuelaComprar(lleno, 'multi')).toBeNull();   // ya está al máximo
+  it('hay saltos cortos y saltos lejanos (de doble salto), y más lejanos en las etapas difíciles', () => {
+    const lejos = n => torre.filter(p => p.etapa === n && p.lejos).length;
+    const cortos = n => torre.filter((p, i) => i && p.etapa === n && !p.lejos && huecoEntre(torre[i - 1], p) <= NO_MIRES.huecoMax).length;
+    for (const et of ETAPAS) expect(cortos(et.n)).toBeGreaterThan(0);
+    const facil = [1, 2, 3, 4, 5].reduce((s, n) => s + lejos(n), 0), dificil = [6, 7, 8, 9, 10].reduce((s, n) => s + lejos(n), 0);
+    expect(facil).toBeGreaterThan(3);
+    expect(dificil).toBeGreaterThan(facil);
+    expect(torre[1].lejos).toBe(false);   // el primer salto, fácil
   });
-  it('no cambia el estado que le pasas', () => {
-    const e = nuevo(100);
-    escuelaResponder(e, true); escuelaComprar(e, 'dinero');
-    expect(e).toEqual(nuevo(100));
+  it('hay un checkpoint cada 30 m (30, 60 … 990)', () => {
+    const cps = torre.filter(p => p.tipo === 'checkpoint').map(p => p.y);
+    expect(cps).toEqual(Array.from({ length: 33 }, (_, i) => (i + 1) * 30));
   });
-  it('se puede ganar respondiendo bien y comprando mejoras', () => {
-    let e = nuevo(), preguntas = 0;
-    while (e.dinero < ESCUELA.meta && preguntas < 500) {
-      for (const m of ESCUELA_MEJORAS) { const c = escuelaComprar(e, m.id); if (c) e = c; }
-      e = escuelaResponder(e, true); preguntas++;
+  it('ninguna plataforma tapa a otra de cerca (ni el salto de un trampolín)', () => {
+    for (let i = 0; i < torre.length; i++) {
+      const alto = torre[i].salto ? torre[i].salto + 4 : 4.5;
+      for (let j = i + 2; j < torre.length && torre[j].y - torre[i].y < alto; j++) expect(separacion(torre[i], torre[j])).toBeGreaterThan(0.25);
     }
-    expect(e.dinero).toBeGreaterThanOrEqual(ESCUELA.meta);
-    expect(preguntas).toBeLessThan(80);
   });
+  it('hay 10 etapas de 100 m, y cada plataforma es de la etapa de su altura', () => {
+    expect(ETAPAS).toHaveLength(10);
+    expect(etapaDe(0).n).toBe(1); expect(etapaDe(99.9).n).toBe(1); expect(etapaDe(100).n).toBe(2);
+    expect(etapaDe(230).id).toBe('oceano'); expect(etapaDe(1000).n).toBe(10);
+    for (const p of torre) expect(p.etapa).toBe(etapaDe(p.y).n);
+    for (const et of ETAPAS) expect(torre.filter(p => p.etapa === et.n && p.tipo === 'normal').length).toBeGreaterThan(8);
+  });
+  it('cada etapa es más difícil: plataformas más chicas y huecos más largos', () => {
+    for (let i = 1; i < ETAPAS.length; i++) {
+      if (ETAPAS[i].id !== 'espacio' && ETAPAS[i - 1].id !== 'espacio') expect(ETAPAS[i].lado[0]).toBeLessThanOrEqual(ETAPAS[i - 1].lado[0]);   // (los ovnis tienen muchos tamaños)
+      expect(ETAPAS[i].hueco[1]).toBeGreaterThanOrEqual(ETAPAS[i - 1].hueco[1] - 0.4);
+    }
+    expect(ETAPAS[9].lado[1]).toBeLessThan(ETAPAS[0].lado[0]);
+    expect(ETAPAS[9].hueco[1]).toBeGreaterThan(ETAPAS[0].hueco[1] * 2);
+  });
+  it('las piezas son del tema de su etapa', () => {
+    const piezas = n => new Set(torre.filter(p => p.etapa === n && p.tipo === 'normal').map(p => p.pieza));
+    expect([...piezas(1)].every(p => ['arena', 'balde'].includes(p))).toBe(true);
+    expect(piezas(2).has('pino') && piezas(2).has('descanso')).toBe(true);
+    expect(piezas(3).has('delfin') && piezas(3).has('ballena')).toBe(true);
+    expect(piezas(4).has('tele') && piezas(4).has('telePlana')).toBe(true);
+    expect(piezas(5).has('ovni') && piezas(5).has('ovniMueve')).toBe(true);
+    expect([...piezas(7)].every(p => p.startsWith('neon'))).toBe(true);
+    expect(piezas(8).has('tramp') && piezas(8).has('trampPalido')).toBe(true);
+    expect(piezas(9).has('hielo') && piezas(9).has('tramp')).toBe(true);
+    expect(piezas(10).size).toBeGreaterThanOrEqual(7);   // el masacote: de todo
+    expect(torre.some(p => p.etapa === 3 && p.giro)).toBe(true);   // hay plataformas giradas
+  });
+  it('las cajas para chocar quedan dentro de la plataforma (aunque esté girada)', () => {
+    for (const p of torre) for (const c of cajasDe(p)) {
+      const caja = { x: p.x + c.x, z: p.z + c.z, ancho: c.hw * 2, largo: c.hd * 2 };
+      // cada esquina de la caja está dentro del rectángulo de la plataforma
+      const [ea, el] = [[Math.cos(p.giro || 0), -Math.sin(p.giro || 0)], [Math.sin(p.giro || 0), Math.cos(p.giro || 0)]];
+      for (const [sx, sz] of [[-1, -1], [-1, 1], [1, -1], [1, 1]]) {
+        const dx = caja.x + sx * c.hw - p.x, dz = caja.z + sz * c.hd - p.z;
+        expect(Math.abs(dx * ea[0] + dz * ea[1])).toBeLessThanOrEqual(p.ancho / 2 + 1e-6);
+        expect(Math.abs(dx * el[0] + dz * el[1])).toBeLessThanOrEqual(p.largo / 2 + 1e-6);
+      }
+    }
+  });
+  it('solo vuelves al checkpoint si caes al vacío (al piso de abajo de la torre)', () => {
+    expect(debeReaparecer(0, true)).toBe(true);       // tocaste el piso de abajo
+    expect(debeReaparecer(-3, false)).toBe(true);     // y más abajo todavía
+    expect(debeReaparecer(0.2, false)).toBe(false);   // en el aire, todavía no
+    expect(debeReaparecer(100, true)).toBe(false);    // caíste a una plataforma más abajo: de malas, a seguir desde ahí
+    expect(debeReaparecer(NO_MIRES.inicioY, true)).toBe(false);   // en la plataforma de inicio no pasa nada
+  });
+  it('la decoración queda por fuera del camino', () => {
+    for (const d of decoracionTorre()) expect(Math.hypot(d.x, d.z)).toBeGreaterThan(NO_MIRES.radio + 6);
+  });
+});
+
+describe('No mires abajo: ovnis, trampolines y hielo', () => {
+  it('los ovnis se mueven de ida y vuelta, sin pasarse de su recorrido', () => {
+    const m = { amp: OVNI.amp, periodo: 4 };
+    expect(ovniDesplazamiento(m, 0)).toBeCloseTo(0);
+    expect(ovniDesplazamiento(m, 1)).toBeCloseTo(OVNI.amp);
+    expect(ovniDesplazamiento(m, 3)).toBeCloseTo(-OVNI.amp);
+    expect(ovniDesplazamiento(m, 4)).toBeCloseTo(0);
+  });
+  it('los trampolines lanzan a 2 veces tu altura, y los pálidos a 3 veces', () => {
+    expect(TRAMPOLIN.salto).toBe(2 * ALTO_JUGADOR);
+    expect(TRAMPOLIN.saltoPalido).toBe(3 * ALTO_JUGADOR);
+    expect(subeDesdeTramp(TRAMPOLIN.salto)[1]).toBeGreaterThan(12.5 ** 2 / 60);   // más que un salto normal
+    expect(subeDesdeTramp(TRAMPOLIN.saltoPalido)[0]).toBeGreaterThan(subeDesdeTramp(TRAMPOLIN.salto)[1]);   // a esas solo llegas con un pálido
+    expect(TRAMPOLIN.saltoPalido).toBeGreaterThan(TRAMPOLIN.salto);
+    expect(subeDesdeTramp(TRAMPOLIN.saltoPalido)[1]).toBeGreaterThan(subeDesdeTramp(TRAMPOLIN.salto)[1]);
+  });
+  it('con doble salto llegas más lejos y más alto que con un salto', () => {
+    expect(alcanceSimple(0)).toBeCloseTo(12 * 2 * 12.5 / 30);   // corres 12 m/s durante todo el salto
+    expect(alcanceDoble(2)).toBeGreaterThan(alcanceSimple(2) * 1.8);
+    expect(alcanceSimple(3)).toBe(0);      // 3 m más arriba no llegas con un salto…
+    expect(alcanceDoble(3)).toBeGreaterThan(0);   // …pero con doble salto sí
+    const [a, b] = huecoLejos(1.5); expect(a).toBeGreaterThan(alcanceSimple(1.5)); expect(b).toBeLessThan(alcanceDoble(1.5));
+  });
+  it('el doble salto: solo en el aire, al volver a apretar, una vez y con batería', () => {
+    const base = { enElPiso: false, saltosEnAire: 0, apretoRecien: true, bateria: 500 };
+    expect(puedeDobleSalto(base)).toBe(true);
+    expect(puedeDobleSalto({ ...base, enElPiso: true })).toBe(false);        // en el piso es el salto normal
+    expect(puedeDobleSalto({ ...base, apretoRecien: false })).toBe(false);   // dejar Espacio apretado no cuenta
+    expect(puedeDobleSalto({ ...base, saltosEnAire: 1 })).toBe(false);       // solo uno más
+    expect(puedeDobleSalto({ ...base, bateria: 0 })).toBe(false);            // sin batería, nada
+    expect(DOBLE_SALTO.max).toBe(1);
+  });
+  it('en el hielo la velocidad cambia de a poco (y al soltar sigues deslizándote)', () => {
+    let v = { x: 0, z: 0 };
+    v = deslizar(v, { x: 12, z: 0 }, 0.1, HIELO.agarre);
+    expect(v.x).toBeGreaterThan(0); expect(v.x).toBeLessThan(6);   // toma impulso de a poco
+    for (let i = 0; i < 50; i++) v = deslizar(v, { x: 12, z: 0 }, 0.1, HIELO.agarre);
+    expect(v.x).toBeCloseTo(12, 0);
+    v = deslizar(v, { x: 0, z: 0 }, 0.1, HIELO.agarre);   // soltaste las teclas…
+    expect(v.x).toBeGreaterThan(8);                        // …y sigues resbalando
+  });
+});
+
+describe('No mires abajo: la batería', () => {
+  it('caminar y saltar gastan batería', () => {
+    expect(gastarBateria(1000, 1, true, false)).toBe(1000 - BATERIA.porSegundo);
+    expect(gastarBateria(1000, 0.5, false, true)).toBe(1000 - BATERIA.porSalto);
+    expect(gastarBateria(1000, 1, true, true)).toBe(1000 - BATERIA.porSegundo - BATERIA.porSalto);
+    expect(gastarBateria(1000, 1, false, false)).toBe(1000);   // quieto no gasta
+  });
+  it('nunca baja de 0', () => {
+    expect(gastarBateria(30, 1, true, true)).toBe(0);
+    expect(gastarBateria(0, 1, true, false)).toBe(0);
+  });
+  it('responder bien da 2000; mal, nada', () => {
+    expect(cargarBateria(0, true)).toBe(2000);
+    expect(cargarBateria(500, true)).toBe(2500);
+    expect(cargarBateria(500, false)).toBe(500);
+  });
+  it('sin batería no te puedes mover', () => {
+    expect(hayBateria(0)).toBe(false);
+    expect(hayBateria(1)).toBe(true);
+  });
+});
+
+describe('preguntas de la escuela', () => {
   it('hay unas 30 preguntas, todas con 4 opciones distintas', () => {
     expect(ESCUELA_PREGUNTAS.length).toBeGreaterThanOrEqual(30);
     for (const q of ESCUELA_PREGUNTAS) {
