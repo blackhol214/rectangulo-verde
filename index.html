@@ -111,6 +111,35 @@
   .swatch { display:inline-block; width:14px; height:14px; border-radius:4px; margin-right:6px; vertical-align:-2px; box-shadow:inset 0 0 0 1px rgba(0,0,0,.25); }
   .shop-item .buy.on { background:#c98a00; }
   .trophy-note { background:#fff8e0 !important; box-shadow:inset 0 0 0 2px #ffc83d !important; }
+  /* Modo Escuela: panel de preguntas y tienda de mejoras (color violeta) */
+  #escuela .shop-card { width:min(640px, 100%); }
+  #escuela .shop-head h2 { color:#5b3df5; }
+  #escuela .shop-head .wallet { color:#3f2bb8; }
+  .esc-meta { display:flex; align-items:center; gap:10px; font:700 13px system-ui, sans-serif; color:#4a3f7a; font-variant-numeric:tabular-nums; }
+  .esc-barra { flex:1; height:12px; border-radius:6px; background:#e4e0f7; overflow:hidden; }
+  .esc-barra i { display:block; height:100%; width:0; background:linear-gradient(90deg, #7b5cff, #b18cff); transition:width .3s; }
+  .esc-tabs { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .esc-tabs button { border:0; border-radius:10px; padding:12px; font:800 16px system-ui, sans-serif; background:#ece9fb; color:#3f2bb8; cursor:pointer; touch-action:manipulation; }
+  .esc-tabs button.on { background:#5b3df5; color:#fff; }
+  .esc-pregunta { margin:4px 0; font:800 clamp(18px, 4.6vw, 24px)/1.3 system-ui, sans-serif; text-align:center; color:#1d1640; }
+  .esc-opciones { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .esc-opciones button { min-height:64px; border:0; border-radius:12px; padding:10px 12px 10px 50px; position:relative; font:700 16px/1.25 system-ui, sans-serif; color:#fff; text-align:left; cursor:pointer; touch-action:manipulation; box-shadow:0 4px 0 rgba(0,0,0,.2); }
+  .esc-opciones button kbd { position:absolute; left:12px; margin:0; padding:0; border:0; color:#fff; top:50%; transform:translateY(-50%); width:24px; height:24px; display:grid; place-items:center; border-radius:6px; background:rgba(255,255,255,.25); font:800 13px system-ui, sans-serif; }
+  .esc-opciones button:nth-child(1) { background:#e0475f; } .esc-opciones button:nth-child(2) { background:#2f7de1; }
+  .esc-opciones button:nth-child(3) { background:#e0a100; } .esc-opciones button:nth-child(4) { background:#22a35a; }
+  .esc-opciones button:disabled { cursor:default; opacity:.35; }
+  .esc-opciones button.bien { opacity:1; outline:4px solid #1d1640; outline-offset:2px; }
+  .esc-opciones button.mal { opacity:1; filter:grayscale(.6); }
+  .esc-opciones button:focus-visible, .esc-tabs button:focus-visible { outline:3px solid #1e6bff; outline-offset:2px; }
+  .esc-resultado { margin:0; min-height:1.4em; font:800 17px system-ui, sans-serif; text-align:center; }
+  .esc-resultado.bien { color:#1f8a3b; } .esc-resultado.mal { color:#c8102e; }
+  #escTienda { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  #escTienda .shop-item { display:flex; flex-direction:column; gap:6px; }
+  #escTienda .shop-item .buy { width:100%; min-width:0; min-height:48px; background:#5b3df5; }
+  #escTienda .shop-item .buy:disabled { background:#d9dfdb; }
+  #escTienda .shop-item.ready { box-shadow:inset 0 0 0 2px #5b3df5; }
+  @media (pointer:coarse) { #escuela .keys { display:none; } }
+  @media (max-width:480px) { .esc-opciones, #escTienda { grid-template-columns:1fr; } .esc-opciones button { min-height:56px; } }
   .empty-note { margin:0; padding:12px; border-radius:10px; background:#fff; box-shadow:inset 0 0 0 1px #dde5df; font:14px/1.45 system-ui, sans-serif; color:#4a5f52; }
   /* Dormir */
   /* Aviso al iniciar sesión: el juego sigue en desarrollo */
@@ -206,6 +235,20 @@
     <div id="wardrobeItems"></div>
   </div>
 </div>
+<!-- Modo Escuela: se abre al entrar por el portal violeta -->
+<div id="escuela" class="panel" hidden role="dialog" aria-modal="true" aria-labelledby="escTitle">
+  <div class="shop-card">
+    <div class="shop-head"><h2 id="escTitle">MODO ESCUELA</h2><span class="wallet" id="escDinero">$0</span><button type="button" id="escSalir">Salir</button></div>
+    <div class="esc-meta"><div class="esc-barra"><i id="escBarra"></i></div><span id="escMetaTxt"></span></div>
+    <div class="esc-tabs"><button type="button" data-tab="preguntas" class="on">Preguntas</button><button type="button" data-tab="tienda">Tienda <span class="keys">(T)</span></button></div>
+    <div id="escPreguntas">
+      <p class="esc-pregunta" id="escPregunta"></p>
+      <div class="esc-opciones" id="escOpciones"></div>
+      <p class="esc-resultado" id="escResultado" aria-live="polite"></p>
+    </div>
+    <div id="escTienda" hidden></div>
+  </div>
+</div>
 <p id="actionPrompt" hidden></p>
 <p id="questHud" hidden></p>
 <p id="parkourHud" hidden></p>
@@ -220,8 +263,8 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module">
-import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, squashStretch, ACHIEVEMENTS, achievementById, coinAchievementsFor, TROPHY_TABLE, trophySpot, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
-         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-20b'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
+import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, ESCUELA, ESCUELA_K, ESCUELA_MEJORAS, ESCUELA_PREGUNTAS, escuelaNiveles, escuelaValor, escuelaPrecio, escuelaResponder, escuelaComprar, escuelaSiguiente, escuelaMezclar, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, squashStretch, ACHIEVEMENTS, achievementById, coinAchievementsFor, TROPHY_TABLE, trophySpot, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
+         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-21-escuela'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
 import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto, acercar, acercarAngulo, piezasExplosion } from './src/red.js?v=2026-10-20b';
 (() => {
   // iPhone ignora user-scalable=no: aquí se bloquea el zoom con dos dedos y el doble toque
@@ -335,34 +378,41 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     g.position.set(TRAMP.x, 0, TRAMP.z);
     scene.add(g);
   })();
-  // ---------- Cámara de teletransportación (junto al trampolín): te lleva al mundo al revés ----------
-  const PORTAL = { x: 73.5, z: 82 };
+  // ---------- Cámaras de teletransportación (junto al trampolín) ----------
+  // La morada te lleva al mundo al revés; la violeta (7 m más acá) al modo Escuela.
+  // k: a qué minijuego te lleva · frame/glow: colores · bg/fg/text: el letrero de arriba
+  const PORTAL = { x: 73.5, z: 82, k: INVERTED_K, frame: 0x5b2a86, glow: 0xc77dff, bg: '#2a1240', fg: '#e8c7ff', text: 'MUNDO AL REVÉS' };
+  const ESCUELA_PORTAL = { x: 73.5, z: 75, k: ESCUELA_K, frame: 0x3a2bb0, glow: 0x7b6cff, bg: '#1d1660', fg: '#ffd84d', text: 'ESCUELA' };
+  const PORTALS = [PORTAL, ESCUELA_PORTAL];
   function buildPortal() {   // se arma más abajo, cuando ya existe la lista de paredes (houseParts)
-    const frame = new THREE.MeshLambertMaterial({ color: 0x5b2a86 }), P = PORTAL;
-    // Tres paredes y techo; la entrada mira hacia el centro del mapa (-x)
-    addBox(P.x - 1.6, P.x + 1.6, 0, 0.2, P.z - 1.6, P.z + 1.6, frame);
-    addBox(P.x + 1.3, P.x + 1.6, 0.2, 4, P.z - 1.6, P.z + 1.6, frame);
-    addBox(P.x - 1.6, P.x + 1.3, 0.2, 4, P.z - 1.6, P.z - 1.3, frame);
-    addBox(P.x - 1.6, P.x + 1.3, 0.2, 4, P.z + 1.3, P.z + 1.6, frame);
-    addBox(P.x - 1.6, P.x + 1.6, 4, 4.3, P.z - 1.6, P.z + 1.6, frame);
-    const glow = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 3.6), new THREE.MeshBasicMaterial({ color: 0xc77dff, transparent: true, opacity: 0.55, side: THREE.DoubleSide, depthWrite: false }));
-    glow.rotation.y = Math.PI / 2; glow.position.set(P.x + 1.25, 2.1, P.z); scene.add(glow);
-    const light = new THREE.PointLight(0xc77dff, 1.2, 10, 1.5); light.position.set(P.x, 2.5, P.z); scene.add(light);
-    const c = document.createElement('canvas'); c.width = 512; c.height = 128; const g = c.getContext('2d');
-    g.fillStyle = '#2a1240'; g.fillRect(0, 0, 512, 128); g.fillStyle = '#e8c7ff'; g.font = '800 54px system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('MUNDO AL REVÉS', 256, 66);
-    const sign = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c) })); sign.scale.set(5, 1.25, 1); sign.position.set(P.x, 5.2, P.z); scene.add(sign);
-    PORTAL.glow = glow;
+    for (const P of PORTALS) {
+      const frame = new THREE.MeshLambertMaterial({ color: P.frame });
+      // Tres paredes y techo; la entrada mira hacia el centro del mapa (-x)
+      addBox(P.x - 1.6, P.x + 1.6, 0, 0.2, P.z - 1.6, P.z + 1.6, frame);
+      addBox(P.x + 1.3, P.x + 1.6, 0.2, 4, P.z - 1.6, P.z + 1.6, frame);
+      addBox(P.x - 1.6, P.x + 1.3, 0.2, 4, P.z - 1.6, P.z - 1.3, frame);
+      addBox(P.x - 1.6, P.x + 1.3, 0.2, 4, P.z + 1.3, P.z + 1.6, frame);
+      addBox(P.x - 1.6, P.x + 1.6, 4, 4.3, P.z - 1.6, P.z + 1.6, frame);
+      const glow = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 3.6), new THREE.MeshBasicMaterial({ color: P.glow, transparent: true, opacity: 0.55, side: THREE.DoubleSide, depthWrite: false }));
+      glow.rotation.y = Math.PI / 2; glow.position.set(P.x + 1.25, 2.1, P.z); scene.add(glow);
+      const light = new THREE.PointLight(P.glow, 1.2, 10, 1.5); light.position.set(P.x, 2.5, P.z); scene.add(light);
+      const c = document.createElement('canvas'); c.width = 512; c.height = 128; const g = c.getContext('2d');
+      g.fillStyle = P.bg; g.fillRect(0, 0, 512, 128); g.fillStyle = P.fg; g.font = '800 54px system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(P.text, 256, 66);
+      const sign = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c) })); sign.scale.set(5, 1.25, 1); sign.position.set(P.x, 5.2, P.z); scene.add(sign);
+      P.glowMesh = glow;
+    }
   }
   let portalArmed = true;   // después de volver estás parado en la cámara: se vuelve a activar cuando sales
-  const inPortal = () => ps.pos.y < 1 && Math.abs(ps.pos.x - PORTAL.x) < 1.1 && Math.abs(ps.pos.z - PORTAL.z) < 1.1;
+  const inPortal = P => ps.pos.y < 1 && Math.abs(ps.pos.x - P.x) < 1.1 && Math.abs(ps.pos.z - P.z) < 1.1;
   function updatePortal() {
-    PORTAL.glow.material.opacity = 0.45 + Math.sin(t * 4) * 0.15;
+    for (const P of PORTALS) P.glowMesh.material.opacity = 0.45 + Math.sin(t * 4) * 0.15;
     if (MG.active) return;
-    if (!inPortal()) { portalArmed = true; return; }
+    const P = PORTALS.find(inPortal);   // ¿en cuál cámara estás parado? (undefined = en ninguna)
+    if (!P) { portalArmed = true; return; }
     if (portalArmed) {
-      portalArmed = false; startMinigame(INVERTED_K);
+      portalArmed = false; startMinigame(P.k);
       // Al volver apareces afuera, frente a la puerta y mirando la cámara (adentro la vista quedaba toda morada y parecía que seguías en el mundo al revés)
-      MG.back.set(PORTAL.x - 4, 0, PORTAL.z); MG.yaw = -Math.PI / 2;
+      MG.back.set(P.x - 4, 0, P.z); MG.yaw = -Math.PI / 2;
     }
   }
   const onTrampoline = st => st.pos.y < 1.2 && Math.hypot(st.pos.x - TRAMP.x, st.pos.z - TRAMP.z) < TRAMP.r;
@@ -644,6 +694,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
   let firstPerson = false, fpPitch = 0;
   addEventListener('keydown', e => {
     if (!loginEl.hidden) return;                 // en la pantalla de inicio: solo se escribe el usuario
+    if (!escuelaEl.hidden) { escuelaTecla(e); return; }   // en el Modo Escuela las teclas son para responder
     // Tienda: P la abre y la cierra (Esc también la cierra)
     if (e.code === 'KeyP' && !e.repeat) { e.preventDefault(); toggleShop(); return; }
     if (!shopEl.hidden) { if (e.code === 'Escape') toggleShop(false); return; }
@@ -2412,6 +2463,38 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
       },
       end() { MG.built.giant.visible = false; MG.built.bot.obj.visible = false; },
     },
+    // Modo Escuela: un salón violeta. Te quedas quieto y respondes preguntas en el panel (toda la cuenta está en logic.js)
+    escuela: {
+      noJump: true, noHud: true,   // no se salta y no se usa el letrero de arriba: todo está en el panel
+      area: { x0: -8, x1: 8, z0: -8, z1: 8 },
+      look(o) { return { x: o.x, z: o.z + 30 }; },
+      build(o) {
+        mgFloor(o, 10, 0x3a2b8f);
+        const wall = mgMat(0x5b3df5);
+        mgBox(o.x - 10, o.x + 10, 0, 6, o.z + 10, o.z + 10.4, wall); mgBox(o.x - 10, o.x + 10, 0, 6, o.z - 10.4, o.z - 10, wall);
+        mgBox(o.x - 10.4, o.x - 10, 0, 6, o.z - 10, o.z + 10, wall); mgBox(o.x + 10, o.x + 10.4, 0, 6, o.z - 10, o.z + 10, wall);
+        // Una pizarra grande con el nombre del modo, al frente
+        const c = document.createElement('canvas'); c.width = 512; c.height = 256; const g = c.getContext('2d');
+        g.fillStyle = '#1d1660'; g.fillRect(0, 0, 512, 256); g.fillStyle = '#ffd84d'; g.font = '800 96px system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('ESCUELA', 256, 110);
+        g.fillStyle = '#e8e2ff'; g.font = '700 30px system-ui, sans-serif'; g.fillText('¡Llega a $10.000!', 256, 195);
+        const board = new THREE.Mesh(new THREE.PlaneGeometry(10, 5), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c) }));
+        board.rotation.y = Math.PI; board.position.set(o.x, 3.2, o.z + 9.9); scene.add(board);
+        const light = new THREE.PointLight(0xb9a8ff, 1.2, 30, 1.5); light.position.set(o.x, 5, o.z); scene.add(light);
+      },
+      start(o) {
+        placePlayer(o.x, 0, o.z);
+        if (firstPerson) setFirstPerson(false);   // para poder usar el mouse en el panel
+        for (const k in keys) keys[k] = false;
+        Object.assign(MG.state, { e: { dinero: 0, racha: 0, niveles: escuelaNiveles() }, pregunta: -1, salir: false });
+        escuelaEl.hidden = false; escuelaTab('preguntas'); escuelaNueva();
+      },
+      update() {
+        const e = MG.state.e;
+        if (e.dinero >= ESCUELA.meta) return { won: true, msg: `¡Llegaste a $${fmt(ESCUELA.meta)} en el Modo Escuela! +${ESCUELA.reward.coins} monedas` };
+        if (MG.state.salir) return { won: false, msg: 'Saliste del Modo Escuela. ¡Vuelve cuando quieras!' };
+      },
+      end() { escuelaEl.hidden = true; clearTimeout(MG.state.espera); },
+    },
     // Coral (mezcla): nubes que suben + lava + bot que te sigue
     mix: {
       build(o) {
@@ -2466,7 +2549,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     // La cámara mira hacia el objetivo (por defecto, hacia adelante en +z)
     const look = mode.look ? mode.look(o) : { x: o.x, z: o.z + 30 };
     MG.yaw = camYaw; camYaw = Math.atan2(ps.pos.x - look.x, ps.pos.z - look.z);
-    mgHud.hidden = false;
+    mgHud.hidden = !!mode.noHud;
     showToast(`${def.intro || 'Bot ' + def.bot}: ${def.goal}`);
   }
   function endMinigame(won, msg) {
@@ -2479,7 +2562,8 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     // Un trofeo la primera vez que ganas (el de diamante va sobre tu armario)
     const newTrophy = won && def.trophy && !save.trophies.includes(def.trophy);
     if (newTrophy) { save.trophies.push(def.trophy); refreshWardrobe(); }   // sin anuncio: los logros aparecen calladitos
-    flashWarn(newTrophy ? '¡TROFEO DE DIAMANTE!' : won ? '¡LO LOGRASTE!' : '¡CASI!', newTrophy ? 3 : 2);
+    // Sin anuncio de trofeos (los logros aparecen calladitos), y si saliste a propósito no dice "¡CASI!"
+    if (won || !MG.state.salir) flashWarn(won ? '¡LO LOGRASTE!' : '¡CASI!', 2);
     showToast(msg, !won);
   }
   function updateMinigame(dt) {
@@ -2572,6 +2656,72 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     (el === styleShopEl ? renderStyleShop : renderWardrobe)();
   }
   function closePanels() { styleShopEl.hidden = wardrobeEl.hidden = true; }
+
+  // ---------- Panel del modo Escuela ----------
+  const escuelaEl = document.getElementById('escuela'), escOpciones = document.getElementById('escOpciones'), escTienda = document.getElementById('escTienda');
+  const escResultado = document.getElementById('escResultado');
+  const dinero = n => `$${fmt(n)}`;
+  // Muestra la plata, la barra hacia la meta y la tienda
+  function escuelaPintar() {
+    const e = MG.state.e;
+    document.getElementById('escDinero').textContent = dinero(e.dinero);
+    document.getElementById('escMetaTxt').textContent = `${dinero(e.dinero)} de ${dinero(ESCUELA.meta)}${e.racha > 1 ? ` · racha ${e.racha} 🔥` : ''}`;
+    document.getElementById('escBarra').style.width = `${Math.min(100, e.dinero / ESCUELA.meta * 100)}%`;
+    escTienda.innerHTML = ESCUELA_MEJORAS.map((m, i) => {
+      const nivel = e.niveles[m.id], precio = escuelaPrecio(m.id, e.niveles), alcanza = precio !== null && e.dinero >= precio;
+      const ahora = m.desc(escuelaValor(m.id, e.niveles)), luego = precio === null ? '' : ` → ${m.desc(m.valores[nivel + 1])}`;
+      const label = precio === null ? 'Nivel máximo' : alcanza ? `Comprar · ${dinero(precio)}` : `Te faltan ${dinero(precio - e.dinero)}`;
+      return `<div class="shop-item${alcanza ? ' ready' : ''}"><h3>${m.nombre} · nivel ${nivel + 1}/${m.valores.length}</h3><p>${ahora}${luego}</p>` +
+             `<button type="button" class="buy" data-id="${m.id}" ${alcanza ? '' : 'disabled'}><span class="keys">${i + 1} · </span>${label}</button></div>`;
+    }).join('');
+  }
+  // Una pregunta nueva (nunca la misma que la anterior), con las opciones mezcladas
+  function escuelaNueva() {
+    const st = MG.state;
+    st.pregunta = escuelaSiguiente(st.pregunta);
+    const q = ESCUELA_PREGUNTAS[st.pregunta], m = escuelaMezclar(q);
+    st.correcta = m.correcta; st.esperando = false;
+    document.getElementById('escPregunta').textContent = q.p;
+    escOpciones.innerHTML = m.opciones.map((op, i) => `<button type="button" data-i="${i}"><kbd>${i + 1}</kbd>${op}</button>`).join('');
+    escResultado.textContent = ''; escResultado.className = 'esc-resultado';
+    escuelaPintar();
+  }
+  // Responder la opción i: suma o resta $ y muestra si estuvo bien; luego viene otra pregunta
+  function escuelaResponde(i) {
+    const st = MG.state;
+    if (st.esperando) return;   // ya respondiste: espera la siguiente
+    st.esperando = true;
+    const bien = i === st.correcta;
+    st.e = escuelaResponder(st.e, bien);
+    [...escOpciones.children].forEach((b, k) => { b.disabled = true; if (k === st.correcta) b.classList.add('bien'); else if (k === i) b.classList.add('mal'); });
+    escResultado.className = `esc-resultado ${bien ? 'bien' : 'mal'}`;
+    escResultado.textContent = bien ? `¡Correcto! +${dinero(st.e.cambio)}${st.e.racha > 1 ? ` · racha ${st.e.racha} 🔥` : ''}` : `Incorrecto… ${st.e.cambio < 0 ? `−${dinero(-st.e.cambio)}` : 'el seguro te salvó'}`;
+    escuelaPintar();
+    st.espera = setTimeout(() => { if (MG.active === MODES.escuela) escuelaNueva(); }, bien ? 900 : 1700);   // si fallas, más tiempo para ver la buena
+  }
+  function escuelaCompra(id) {
+    const nuevo = escuelaComprar(MG.state.e, id);
+    if (!nuevo) return;
+    MG.state.e = nuevo; escuelaPintar();   // la tarjeta ya muestra el nivel nuevo
+  }
+  // Pestañas: Preguntas o Tienda
+  function escuelaTab(cual) {
+    document.getElementById('escPreguntas').hidden = cual !== 'preguntas';
+    escTienda.hidden = cual !== 'tienda';
+    for (const b of escuelaEl.querySelectorAll('.esc-tabs button')) b.classList.toggle('on', b.dataset.tab === cual);
+  }
+  escOpciones.addEventListener('click', e => { const b = e.target.closest('button'); if (b && !b.disabled) escuelaResponde(+b.dataset.i); });
+  escTienda.addEventListener('click', e => { const b = e.target.closest('.buy'); if (b && !b.disabled) escuelaCompra(b.dataset.id); });
+  escuelaEl.querySelector('.esc-tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (b) escuelaTab(b.dataset.tab); });
+  document.getElementById('escSalir').addEventListener('click', () => { MG.state.salir = true; });
+  // Teclado: 1-4 responden (o compran, si estás en la tienda) · T cambia entre preguntas y tienda
+  function escuelaTecla(e) {
+    if (e.repeat) return;
+    const n = Math.max(['Digit1', 'Digit2', 'Digit3', 'Digit4'].indexOf(e.code), ['Numpad1', 'Numpad2', 'Numpad3', 'Numpad4'].indexOf(e.code));   // -1 = no es un número
+    if (e.code === 'KeyT') escuelaTab(escTienda.hidden ? 'tienda' : 'preguntas');
+    else if (n >= 0 && !escTienda.hidden) escuelaCompra(ESCUELA_MEJORAS[n].id);
+    else if (n >= 0) escuelaResponde(n);
+  }
   function tryStyleInteract() {
     if (nearStall()) { openPanel(styleShopEl); return true; }
     if (nearWardrobe()) { openPanel(wardrobeEl); return true; }

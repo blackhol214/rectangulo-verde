@@ -601,7 +601,7 @@ export const INVERTED = {
   fleeDist: 16, panicDist: 7, braveAfter: 6, shopTime: 2.5, shop: { x: 0, z: 38 }, home: { x: 0, z: 30 }, caughtPause: 2,
 };
 export const INVERTED_K = MINIGAMES.length;   // su "número de minijuego" (para minigameOrigin)
-export const minigameDef = k => (k < MINIGAMES.length ? MINIGAMES[k] : INVERTED);
+export const minigameDef = k => (k < MINIGAMES.length ? MINIGAMES[k] : k === ESCUELA_K ? ESCUELA : INVERTED);
 // Colores invertidos: cada canal de color pasa a 255 − valor (blanco ↔ negro, amarillo ↔ azul…)
 export const invertColor = hex => 0xffffff ^ hex;
 // A qué moneda corre el jugador: la que está cerca de él y lejos del gigante
@@ -615,6 +615,117 @@ export function fleeCoin(bot, giant, coins) {
 }
 // Velocidad del jugador después de comprar mejoras (con un tope)
 export const botSpeedAfter = upgrades => Math.min(INVERTED.botMaxSpeed, INVERTED.botSpeed + upgrades * INVERTED.speedPerUpgrade);
+
+// ---------- Modo Escuela: preguntas que dan dinero ($) para comprar mejoras ----------
+// Se entra por el portal violeta (al lado del Mundo al Revés). Respondes preguntas de 4 opciones:
+// si aciertas ganas $, si fallas pierdes un poco. Con los $ compras mejoras para ganar más rápido.
+// Ojo: los $ son solo de este modo; al ganar te llevas monedas del juego de verdad (reward).
+export const ESCUELA = {
+  id: 'escuela', bot: 'profe', intro: 'Modo Escuela', name: 'Modo Escuela',
+  goal: 'Responde preguntas, gana $ y compra mejoras: llega a $10.000', reward: { coins: 50 },
+  meta: 10000,       // los $ que necesitas para ganar
+  maxRacha: 10,      // la racha deja de dar más bonus después de 10 seguidas
+};
+export const ESCUELA_K = MINIGAMES.length + 1;   // su "número de minijuego" (el Mundo al Revés es MINIGAMES.length)
+
+// Las 4 mejoras. valores[n] = cuánto vale la mejora en el nivel n · precios[n] = cuánto cuesta subir del nivel n al n + 1
+// (por eso hay un precio menos que valores: en el último nivel ya no se puede comprar más)
+export const ESCUELA_MEJORAS = [
+  { id: 'dinero', nombre: 'Dinero por pregunta', desc: v => `Ganas $${v} por respuesta`,
+    valores: [10, 25, 60, 150, 400], precios: [50, 200, 700, 2500] },
+  { id: 'racha', nombre: 'Bonus de racha', desc: v => `+$${v} por cada acierto seguido`,
+    valores: [2, 5, 15, 40, 100], precios: [40, 150, 600, 2000] },
+  { id: 'multi', nombre: 'Multiplicador', desc: v => `Todo lo que ganas × ${String(v).replace('.', ',')}`,
+    valores: [1, 1.5, 2, 3], precios: [150, 800, 3000] },
+  { id: 'seguro', nombre: 'Seguro', desc: v => `Al fallar te protege el ${v}\u00a0%`,
+    valores: [0, 25, 50, 75, 100], precios: [60, 250, 800, 2000] },
+];
+export const escuelaMejora = id => ESCUELA_MEJORAS.find(m => m.id === id);
+export const escuelaNiveles = () => ({ dinero: 0, racha: 0, multi: 0, seguro: 0 });   // todo empieza en el nivel 0
+// Cuánto vale una mejora en su nivel actual
+export const escuelaValor = (id, niveles) => escuelaMejora(id).valores[niveles[id]];
+// Cuánto cuesta subirla un nivel (null = ya está al máximo)
+export function escuelaPrecio(id, niveles) {
+  const p = escuelaMejora(id).precios[niveles[id]];
+  return p === undefined ? null : p;
+}
+
+// $ que ganas al acertar. racha = cuántas acertaste seguidas ANTES de esta (la primera no tiene bonus)
+export function escuelaGanancia(niveles, racha) {
+  const extra = escuelaValor('racha', niveles) * Math.min(racha, ESCUELA.maxRacha);
+  return Math.round((escuelaValor('dinero', niveles) + extra) * escuelaValor('multi', niveles));
+}
+// $ que pierdes al fallar: lo que ganarías sin racha, menos lo que cubre el seguro
+export function escuelaPerdida(niveles) {
+  const base = escuelaValor('dinero', niveles);
+  return Math.round(base * (1 - escuelaValor('seguro', niveles) / 100));
+}
+// Responder: devuelve cómo queda todo (no cambia el estado que le pasas, hace uno nuevo)
+// estado = { dinero, racha, niveles }
+export function escuelaResponder(estado, correcta) {
+  if (correcta) {
+    const gano = escuelaGanancia(estado.niveles, estado.racha);
+    return { ...estado, dinero: estado.dinero + gano, racha: estado.racha + 1, cambio: gano };
+  }
+  const pierde = Math.min(estado.dinero, escuelaPerdida(estado.niveles));   // nunca bajas de $0
+  return { ...estado, dinero: estado.dinero - pierde, racha: 0, cambio: -pierde };
+}
+// Comprar una mejora: devuelve el estado nuevo, o null si no alcanza o ya está al máximo
+export function escuelaComprar(estado, id) {
+  const precio = escuelaPrecio(id, estado.niveles);
+  if (precio === null || estado.dinero < precio) return null;
+  return { ...estado, dinero: estado.dinero - precio, niveles: { ...estado.niveles, [id]: estado.niveles[id] + 1 } };
+}
+
+// Banco de preguntas. La primera opción de `op` es SIEMPRE la correcta: al mostrarla se mezclan.
+export const ESCUELA_PREGUNTAS = [
+  // Matemáticas
+  { p: '¿Cuánto es 7 + 8?', op: ['15', '14', '16', '13'] },
+  { p: '¿Cuánto es 25 + 17?', op: ['42', '32', '43', '52'] },
+  { p: '¿Cuánto es 50 − 18?', op: ['32', '38', '42', '28'] },
+  { p: '¿Cuánto es 100 − 37?', op: ['63', '73', '67', '53'] },
+  { p: '¿Cuánto es 6 × 7?', op: ['42', '36', '48', '49'] },
+  { p: '¿Cuánto es 8 × 9?', op: ['72', '64', '81', '63'] },
+  { p: '¿Cuánto es 12 × 3?', op: ['36', '34', '32', '39'] },
+  { p: '¿Cuánto es 4 × 25?', op: ['100', '75', '125', '90'] },
+  { p: '¿Cuánto es 144 ÷ 12?', op: ['12', '11', '14', '10'] },
+  { p: '¿Cuál es el doble de 35?', op: ['70', '65', '75', '60'] },
+  { p: '¿Cuál es el doble de 125?', op: ['250', '225', '205', '260'] },
+  { p: '¿Cuál es la mitad de 64?', op: ['32', '30', '34', '28'] },
+  { p: '¿Cuál es la mitad de 150?', op: ['75', '70', '50', '85'] },
+  { p: '¿Cuál es el doble de la mitad de 40?', op: ['40', '20', '80', '10'] },
+  // Scratch
+  { p: 'En Scratch, ¿qué bloque repite algo sin parar?', op: ['por siempre', 'repetir 10', 'esperar 1 segundos', 'detener todos'] },
+  { p: 'En Scratch, ¿qué bloque empieza el programa con la bandera verde?', op: ['al hacer clic en la bandera verde', 'al presionar tecla espacio', 'al recibir mensaje1', 'cuando este objeto sea clicado'] },
+  { p: 'En Scratch, ¿qué hace "mover 10 pasos"?', op: ['Avanza hacia donde mira', 'Gira 10 grados', 'Espera 10 segundos', 'Sube 10 en y'] },
+  { p: 'En Scratch, ¿qué bloque hace algo solo si se cumple una condición?', op: ['si … entonces', 'por siempre', 'decir ¡Hola!', 'mostrar'] },
+  { p: 'En Scratch, "cambiar x en 10" mueve el objeto hacia…', op: ['la derecha', 'la izquierda', 'arriba', 'abajo'] },
+  { p: 'En Scratch, ¿para qué sirve una variable?', op: ['Para guardar un dato, como los puntos', 'Para cambiar el disfraz', 'Para tocar un sonido', 'Para borrar el objeto'] },
+  { p: 'En Scratch, ¿qué bloque avisa a los otros objetos?', op: ['enviar mensaje1', 'pensar Hmm…', 'siguiente disfraz', 'esconder'] },
+  { p: 'En Scratch, ¿qué hace "siguiente disfraz"?', op: ['Cambia cómo se ve el objeto', 'Lo mueve 10 pasos', 'Lo esconde', 'Detiene el programa'] },
+  { p: 'En Scratch, ¿dónde está x: 0, y: 0?', op: ['En el centro del escenario', 'Arriba a la izquierda', 'Abajo a la derecha', 'Fuera del escenario'] },
+  // Rectángulo Verde
+  { p: '¿Qué pasa si el gigante te atrapa?', op: ['Mueres y vuelves al inicio', 'Ganas monedas', 'Te vuelves gigante', 'No pasa nada'] },
+  { p: '¿Qué NO puede cruzar el gigante rojo?', op: ['La línea amarilla', 'El trampolín', 'El pueblo', 'La fábrica'] },
+  { p: '¿Qué hace el gigante de noche?', op: ['Duerme', 'Baila', 'Corre más rápido', 'Se va a la fábrica'] },
+  { p: '¿Con qué tecla abres la tienda?', op: ['P', 'E', 'V', 'F'] },
+  { p: '¿Qué tecla cambia a primera persona?', op: ['V', 'P', 'E', 'Espacio'] },
+  { p: '¿Cuántas monedas da una bolsa de la cinta?', op: [`${BAG_VALUE}`, '1', '5', '100'] },
+  { p: '¿Qué hace el trampolín azul?', op: ['Te lanza 100 m hacia arriba', 'Te hace gigante', 'Te da monedas', 'Te lleva al pueblo'] },
+  { p: 'En el Mundo al Revés, ¿quién eres?', op: ['El gigante', 'El bot amarillo', 'La flor rosada', 'Una nube'] },
+];
+// La siguiente pregunta, al azar, pero nunca la misma que acaba de salir (anterior = -1 si es la primera)
+export function escuelaSiguiente(anterior, rnd = Math.random, total = ESCUELA_PREGUNTAS.length) {
+  if (anterior < 0 || total < 2) return Math.floor(rnd() * total);   // la primera: cualquiera
+  const i = Math.floor(rnd() * (total - 1));   // elige entre todas menos una…
+  return i >= anterior ? i + 1 : i;            // …y se salta la anterior
+}
+// Mezcla las opciones de una pregunta. Devuelve { opciones, correcta } (correcta = en qué lugar quedó la buena)
+export function escuelaMezclar(pregunta, rnd = Math.random) {
+  const idx = pregunta.op.map((_, i) => i);
+  for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
+  return { opciones: idx.map(i => pregunta.op[i]), correcta: idx.indexOf(0) };
+}
 
 // ---------- Misiones del pueblo: cada día, cada bot grande necesita ayuda con algo ----------
 // fetch: traer UNA cosa (la llevas encima; si el gigante te atrapa, se te cae) · collect: juntar varias cosas

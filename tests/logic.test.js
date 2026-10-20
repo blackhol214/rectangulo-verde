@@ -13,6 +13,7 @@ import {
   SWINGS, swingAngle, SLIDE, slidePoint,
   HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail,
   MINIGAMES, minigameOrigin, MAZE, generateMaze, mazePathLength, pickMaze, pickLemon, clampToArea, flowerTired, MEDIUM_HOUSE, insideRect, segmentHitsRect, detourAround, INVERTED, INVERTED_K, minigameDef, invertColor, fleeCoin, botSpeedAfter, CRATES, crateOutside, GARDEN, DROPPER, dropperLayers, dropperPad,
+  ESCUELA, ESCUELA_K, ESCUELA_MEJORAS, ESCUELA_PREGUNTAS, escuelaNiveles, escuelaValor, escuelaPrecio, escuelaGanancia, escuelaPerdida, escuelaResponder, escuelaComprar, escuelaSiguiente, escuelaMezclar,
   DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, nearVillageHouse, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot,
 } from '../src/logic.js';
 
@@ -984,5 +985,113 @@ describe('logros (trofeos)', () => {
     for (const p of spots) { expect(p.z).toBeGreaterThan(TROPHY_TABLE.z0); expect(p.z).toBeLessThan(TROPHY_TABLE.z1); }
     for (let i = 1; i < spots.length; i++) expect(spots[i].z - spots[i - 1].z).toBeGreaterThan(2);   // no se tocan
     expect(trophySpot('diamante')).toBeNull();
+  });
+});
+
+describe('modo Escuela', () => {
+  const nuevo = (dinero = 0) => ({ dinero, racha: 0, niveles: escuelaNiveles() });
+  it('es otro minijuego extra, con su propio lugar lejos de todo', () => {
+    expect(ESCUELA_K).toBe(MINIGAMES.length + 1);
+    expect(minigameDef(ESCUELA_K)).toBe(ESCUELA);
+    expect(minigameDef(INVERTED_K)).toBe(INVERTED);   // el Mundo al Revés sigue igual
+    expect(ESCUELA.reward).toEqual({ coins: 50 });
+    const o = minigameOrigin(ESCUELA_K);
+    for (let k = 0; k < ESCUELA_K; k++) {
+      const p = minigameOrigin(k);
+      expect(Math.hypot(o.x - p.x, o.z - p.z)).toBeGreaterThanOrEqual(1000);   // el Mundo al Revés mide 108 m: sobra espacio
+    }
+    expect(Math.hypot(o.x, o.z)).toBeGreaterThan(1500);
+  });
+  it('acertar da $ y la racha suma bonus', () => {
+    let e = escuelaResponder(nuevo(), true);
+    expect(e.dinero).toBe(10);   // la primera: solo el dinero por pregunta
+    expect(e.racha).toBe(1);
+    e = escuelaResponder(e, true);
+    expect(e.dinero).toBe(10 + 10 + 2);   // la segunda: +$2 por 1 acierto seguido
+    e = escuelaResponder(e, true);
+    expect(e.cambio).toBe(10 + 2 * 2);
+  });
+  it('la racha tiene un tope', () => {
+    expect(escuelaGanancia(escuelaNiveles(), 50)).toBe(escuelaGanancia(escuelaNiveles(), ESCUELA.maxRacha));
+  });
+  it('el multiplicador multiplica todo', () => {
+    const n = { ...escuelaNiveles(), multi: 2 };   // × 2
+    expect(escuelaGanancia(n, 0)).toBe(20);
+    expect(escuelaGanancia(n, 3)).toBe((10 + 2 * 3) * 2);
+  });
+  it('fallar resta un poco, corta la racha y nunca baja de $0', () => {
+    let e = escuelaResponder({ ...nuevo(100), racha: 4 }, false);
+    expect(e.dinero).toBe(90);
+    expect(e.racha).toBe(0);
+    expect(escuelaResponder(nuevo(3), false).dinero).toBe(0);
+    expect(escuelaResponder(nuevo(0), false).dinero).toBe(0);
+  });
+  it('el seguro te protege de perder', () => {
+    expect(escuelaPerdida({ ...escuelaNiveles(), seguro: 2 })).toBe(5);    // 50 %
+    expect(escuelaPerdida({ ...escuelaNiveles(), seguro: 4 })).toBe(0);    // 100 %: no pierdes nada
+    expect(escuelaResponder({ dinero: 40, racha: 0, niveles: { ...escuelaNiveles(), seguro: 4 } }, false).dinero).toBe(40);
+  });
+  it('las mejoras suben de precio y tienen un máximo', () => {
+    for (const m of ESCUELA_MEJORAS) {
+      expect(m.precios).toHaveLength(m.valores.length - 1);
+      for (let i = 1; i < m.precios.length; i++) expect(m.precios[i]).toBeGreaterThan(m.precios[i - 1]);
+      for (let i = 1; i < m.valores.length; i++) expect(m.valores[i]).toBeGreaterThan(m.valores[i - 1]);
+      expect(escuelaPrecio(m.id, { ...escuelaNiveles(), [m.id]: m.valores.length - 1 })).toBeNull();
+    }
+    expect(escuelaPrecio('dinero', escuelaNiveles())).toBe(50);
+  });
+  it('comprar cobra el precio y sube el nivel (si alcanza)', () => {
+    expect(escuelaComprar(nuevo(49), 'dinero')).toBeNull();
+    const e = escuelaComprar(nuevo(60), 'dinero');
+    expect(e.dinero).toBe(10);
+    expect(e.niveles.dinero).toBe(1);
+    expect(escuelaValor('dinero', e.niveles)).toBe(25);
+    const lleno = { dinero: 1e6, racha: 0, niveles: { ...escuelaNiveles(), multi: 3 } };
+    expect(escuelaComprar(lleno, 'multi')).toBeNull();   // ya está al máximo
+  });
+  it('no cambia el estado que le pasas', () => {
+    const e = nuevo(100);
+    escuelaResponder(e, true); escuelaComprar(e, 'dinero');
+    expect(e).toEqual(nuevo(100));
+  });
+  it('se puede ganar respondiendo bien y comprando mejoras', () => {
+    let e = nuevo(), preguntas = 0;
+    while (e.dinero < ESCUELA.meta && preguntas < 500) {
+      for (const m of ESCUELA_MEJORAS) { const c = escuelaComprar(e, m.id); if (c) e = c; }
+      e = escuelaResponder(e, true); preguntas++;
+    }
+    expect(e.dinero).toBeGreaterThanOrEqual(ESCUELA.meta);
+    expect(preguntas).toBeLessThan(80);
+  });
+  it('hay unas 30 preguntas, todas con 4 opciones distintas', () => {
+    expect(ESCUELA_PREGUNTAS.length).toBeGreaterThanOrEqual(30);
+    for (const q of ESCUELA_PREGUNTAS) {
+      expect(q.op).toHaveLength(4);
+      expect(new Set(q.op).size).toBe(4);
+    }
+  });
+  it('la siguiente pregunta nunca es la misma que la anterior', () => {
+    const rnd = seededRandom(3), n = ESCUELA_PREGUNTAS.length;
+    let prev = escuelaSiguiente(-1, rnd);
+    const vistas = new Set([prev]);
+    for (let i = 0; i < 500; i++) {
+      const q = escuelaSiguiente(prev, rnd);
+      expect(q).not.toBe(prev);
+      expect(q).toBeGreaterThanOrEqual(0); expect(q).toBeLessThan(n);
+      vistas.add(q); prev = q;
+    }
+    expect(vistas.size).toBe(n);   // con el tiempo salen todas
+    expect(escuelaSiguiente(5, () => 0.999, 6)).toBe(4);   // la última posible, saltándose la 5
+    expect(escuelaSiguiente(0, () => 0, 6)).toBe(1);
+  });
+  it('mezclar las opciones no pierde la correcta', () => {
+    const rnd = seededRandom(9), q = ESCUELA_PREGUNTAS[0], lugares = new Set();
+    for (let i = 0; i < 50; i++) {
+      const m = escuelaMezclar(q, rnd);
+      expect([...m.opciones].sort()).toEqual([...q.op].sort());
+      expect(m.opciones[m.correcta]).toBe(q.op[0]);
+      lugares.add(m.correcta);
+    }
+    expect(lugares.size).toBe(4);   // la buena no está siempre en el mismo botón
   });
 });
