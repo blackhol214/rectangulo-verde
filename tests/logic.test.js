@@ -4,7 +4,7 @@ import {
   upgradePrice, fmt, sunElevation, isNightPhase, clockText, hourToPhase,
   launchSpeedForHeight, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, productReward, BAG_VALUE, nearestIndex, assistantSpeed, ASSIST_SPEED_MAX,
   normalizeName, saveKey, serializeSave, parseSave,
-  BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, FACTORY, factoryLineSlot, inFactory, squashStretch, SQUASH, slabPieces, missingFor, canAfford,
+  BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, FACTORY, factoryLineSlot, inFactory, squashStretch, SQUASH, ACHIEVEMENTS, achievementById, coinAchievementsFor, TROPHY_TABLE, trophySpot, slabPieces, missingFor, canAfford,
   mountainRing, MOUNTAIN_WALL_INSET, seededRandom,
   blasterStats,
   COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, parseStyle, cosmeticById,
@@ -953,5 +953,36 @@ describe('estirar y aplastar al saltar', () => {
     const r = squashStretch(15, true, 0);
     expect(r.wide).toBeLessThan(1);
     expect(r.tall * r.wide * r.wide).toBeCloseTo(1);   // el "tamaño" total se mantiene
+  });
+});
+
+describe('logros (trofeos)', () => {
+  it('son los 6 de Mathias, con su nombre y descripción exactos', () => {
+    expect(ACHIEVEMENTS.map(a => [a.name, a.desc])).toEqual([
+      ['¡Muchas gracias!', 'Obtuviste este logro ayudando a un bot'],
+      ['Pequeños ahorros', 'Conseguiste 15 monedas'],
+      ['Soy un billete', 'Ganaste 1.000 monedas'],
+      ['Compra exitosa', 'Compraste algo por primera vez'],
+      ['!etsanaG¡', 'Ganaste en el Mundo al Revés'],
+      ['Boing boing', 'Saltaste por primera vez en el trampolín'],
+    ]);
+  });
+  it('el de diamante es el mismo trofeo que ya existía (sigue sobre el armario)', () => {
+    expect(achievementById('diamante').where).toBe('wardrobe');
+    expect(INVERTED.trophy).toBe('diamante');
+  });
+  it('logros de monedas: 15 y 1.000', () => {
+    expect(coinAchievementsFor(14)).toEqual([]);
+    expect(coinAchievementsFor(15)).toEqual(['ahorros']);
+    expect(coinAchievementsFor(999)).toEqual(['ahorros']);
+    expect(coinAchievementsFor(1000)).toEqual(['ahorros', 'billete']);
+  });
+  it('la mesa está en el sótano, lejos de la escalera y del botón rojo, y cada trofeo tiene su lugar en ella', () => {
+    expect(TROPHY_TABLE.x0).toBeGreaterThan(BASEMENT.x0); expect(TROPHY_TABLE.z0).toBeGreaterThan(BASEMENT.z0); expect(TROPHY_TABLE.z1).toBeLessThan(BASEMENT.z1);
+    expect(STAIRWELL.x0 - TROPHY_TABLE.x1).toBeGreaterThan(5);
+    const spots = ACHIEVEMENTS.filter(a => a.where === 'table').map(a => trophySpot(a.id));
+    for (const p of spots) { expect(p.z).toBeGreaterThan(TROPHY_TABLE.z0); expect(p.z).toBeLessThan(TROPHY_TABLE.z1); }
+    for (let i = 1; i < spots.length; i++) expect(spots[i].z - spots[i - 1].z).toBeGreaterThan(2);   // no se tocan
+    expect(trophySpot('diamante')).toBeNull();
   });
 });

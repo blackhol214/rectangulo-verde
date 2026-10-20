@@ -657,3 +657,28 @@ export function squashStretch(vy, airborne, landT) {
   else if (landT < SQUASH.landTime) tall = 1 - SQUASH.landSquash * (1 - landT / SQUASH.landTime);
   return { tall, wide: 1 / Math.sqrt(tall) };
 }
+
+// ---------- Logros: trofeos en la mesa larga del sótano ----------
+// No se anuncian: el trofeo aparece calladito en la mesa. Si te acercas y pulsas E, sale su nombre y descripción.
+// where: 'table' = en la mesa del sótano · 'wardrobe' = el de diamante, que sigue sobre el armario
+export const ACHIEVEMENTS = [
+  { id: 'gracias', name: '¡Muchas gracias!', desc: 'Obtuviste este logro ayudando a un bot', model: 'bot', where: 'table' },
+  { id: 'ahorros', name: 'Pequeños ahorros', desc: 'Conseguiste 15 monedas', model: 'piggy', where: 'table' },
+  { id: 'billete', name: 'Soy un billete', desc: 'Ganaste 1.000 monedas', model: 'bags', where: 'table' },
+  { id: 'compra', name: 'Compra exitosa', desc: 'Compraste algo por primera vez', model: 'shop', where: 'table' },
+  { id: 'diamante', name: '!etsanaG¡', desc: 'Ganaste en el Mundo al Revés', model: 'diamond', where: 'wardrobe' },
+  { id: 'boing', name: 'Boing boing', desc: 'Saltaste por primera vez en el trampolín', model: 'trampoline', where: 'table' },
+];
+export const achievementById = id => ACHIEVEMENTS.find(a => a.id === id) || null;
+// Los logros de monedas: cuántas tienes que tener juntas (la primera vez que llegas)
+export const COIN_ACHIEVEMENTS = [{ id: 'ahorros', coins: 15 }, { id: 'billete', coins: 1000 }];
+export const coinAchievementsFor = coins => COIN_ACHIEVEMENTS.filter(a => coins >= a.coins).map(a => a.id);
+// La mesa: pegada a la pared izquierda del sótano, casi de punta a punta (la escalera y el botón rojo quedan al otro lado)
+export const TROPHY_TABLE = { x0: 20, x1: 21.4, z0: 5, z1: 17, top: 1 };
+// Cada trofeo de la mesa tiene su lugar fijo (en el orden de la lista), repartidos a lo largo de la mesa
+export function trophySpot(id) {
+  const onTable = ACHIEVEMENTS.filter(a => a.where === 'table'), i = onTable.findIndex(a => a.id === id);
+  if (i < 0) return null;
+  const T = TROPHY_TABLE, step = (T.z1 - T.z0) / onTable.length;
+  return { x: (T.x0 + T.x1) / 2, z: T.z0 + step * (i + 0.5) };
+}

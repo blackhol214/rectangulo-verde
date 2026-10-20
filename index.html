@@ -105,11 +105,12 @@
   .shop-prev { aspect-ratio:2 / 1; border-radius:8px; overflow:hidden; background:linear-gradient(#dff1fb, #f4f9ee); }
   .shop-prev canvas { display:block; width:100%; height:100%; }
   #shopItems .shop-item.owned .shop-prev { opacity:.75; }
-  /* En pantallas grandes la descripción ocupa 2 líneas (el texto completo sale al pasar el mouse; el precio está en el botón) */
+  /* En pantallas grandes la descripción ocupa como mucho 2 líneas */
   @media (min-width:700px) { #shopItems .shop-item p { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; } }
   /* Tienda de estilo y armario */
   .swatch { display:inline-block; width:14px; height:14px; border-radius:4px; margin-right:6px; vertical-align:-2px; box-shadow:inset 0 0 0 1px rgba(0,0,0,.25); }
   .shop-item .buy.on { background:#c98a00; }
+  .trophy-note { background:#fff8e0 !important; box-shadow:inset 0 0 0 2px #ffc83d !important; }
   .empty-note { margin:0; padding:12px; border-radius:10px; background:#fff; box-shadow:inset 0 0 0 1px #dde5df; font:14px/1.45 system-ui, sans-serif; color:#4a5f52; }
   /* Dormir */
   /* Aviso al iniciar sesión: el juego sigue en desarrollo */
@@ -185,6 +186,7 @@
   <button type="button" data-act="talk" hidden>💬 Hablar</button>
   <button type="button" data-act="grab" hidden>✋ Agarrar</button>
   <button type="button" data-act="mgF" hidden>💧 Agua</button>
+  <button type="button" data-act="trophy" hidden>🏆 Ver logro</button>
 </div>
 <div id="shop" hidden role="dialog" aria-modal="true" aria-labelledby="shopTitle">
   <div class="shop-card">
@@ -218,8 +220,8 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module">
-import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, squashStretch, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
-         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-20'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
+import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, squashStretch, ACHIEVEMENTS, achievementById, coinAchievementsFor, TROPHY_TABLE, trophySpot, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
+         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-20b'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
 import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto, acercar, piezasExplosion } from './src/red.js?v=2026-10-03e';
 (() => {
   // iPhone ignora user-scalable=no: aquí se bloquea el zoom con dos dedos y el doble toque
@@ -447,6 +449,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     buildHouse(BIG_HOUSE, [], S);
     placeWardrobe(BIG_HOUSE);
     buildRedButton(RED_BUTTON.x, RED_BUTTON.z, BASEMENT.y);   // el botón se muda al sótano
+    buildTrophyTable();
     // Suelo de afuera con el hueco de la escalera
     ground.geometry.dispose(); ground.geometry = groundGeometry(S);
     // Escalera: 18 escalones de 0,39 m de alto y 0,6 m de fondo, hasta el piso del sótano
@@ -649,7 +652,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     keys[e.code] = true;
     if (e.code === 'Space' || e.code.startsWith('Arrow')) e.preventDefault();
     if (e.code === 'KeyV' && !e.repeat) setFirstPerson(!firstPerson);
-    if (e.code === 'KeyE' && !e.repeat) { if (MG.active) { if (MG.active.onE) MG.active.onE(); } else if (!tryRedButton() && !tryStyleInteract() && !tryVillage()) trySleep(); }
+    if (e.code === 'KeyE' && !e.repeat) { if (MG.active) { if (MG.active.onE) MG.active.onE(); } else if (!tryRedButton() && !tryTrophy() && !tryStyleInteract() && !tryVillage()) trySleep(); }
     if (e.code === 'KeyF' && !e.repeat && MG.active && MG.active.onF) MG.active.onF();
   });
   addEventListener('keyup', e => { keys[e.code] = false; });
@@ -863,6 +866,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
   } catch (e) {}
 
   function renderCoins() {
+    for (const id of coinAchievementsFor(save.coins)) unlock(id);   // Pequeños ahorros (15) y Soy un billete (1.000)
     coinsEl.textContent = fmt(save.coins);
     document.getElementById('boxes').textContent = fmt(save.boxes);
     if (!shopEl.hidden) renderShop(); // la tienda abierta se actualiza sola
@@ -964,11 +968,9 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
       if (it === first) html += `<section class="shop-sec" style="--n:${SHOP.filter(i => i.group === it.group).length}"><p class="shop-group">${it.group}</p><div class="shop-grid">`;
       const lvl = save.levels[it.id], owned = lvl >= it.max, locked = it.needs && !save.levels[it.needs];
       const cost = costOf(it), missing = missingFor(save, cost), short = !canAfford(save, cost);
-      const level = it.max === 1 ? '' : it.count ? ` · tienes ${lvl}` : ` · nivel ${lvl}`;
       const label = owned ? (it.count ? 'Ya tienes el máximo' : it.max > 1 ? 'Nivel máximo' : 'Ya es tuyo') : locked ? `Primero: ${SHOP.find(i => i.id === it.needs).name}` : short ? `Te faltan ${costText(missing, ' y ')}` : `Comprar · ${costText(cost, ' + ')}`;
-      const priceLine = owned ? '' : ` Cuesta ${costText(cost, ' + ')}.`;
       const state = owned ? ' owned' : locked || short ? '' : ' ready';   // ya es tuyo · se puede comprar
-      html += `<div class="shop-item${state}" title="${it.desc}${priceLine}"><div class="shop-prev" data-prev="${it.id}"></div><h3>${it.name}${level}</h3><p>${it.desc}${priceLine}</p>` +
+      html += `<div class="shop-item${state}"><div class="shop-prev" data-prev="${it.id}"></div><h3>${it.name}</h3><p>${it.desc}</p>` +   // solo el nombre y su texto: el precio está en el botón
               `<button type="button" class="buy" id="buy-${it.id}" data-id="${it.id}" ${owned || locked || short ? 'disabled' : ''}>${label}</button></div>`;
       if (it === last) html += '</div></section>';
     }
@@ -988,6 +990,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     if (lvl >= it.max || (it.needs && !save.levels[it.needs]) || !canAfford(save, cost)) return;
     for (const [c, n] of Object.entries(cost)) save[c] -= n;
     save.levels[id]++; it.apply(save.levels[id]);
+    unlock('compra');   // tu primera compra
     enviar({ tipo: 'nivel', id, nivel: save.levels[id] });   // en multijugador la base es de todo el equipo
     renderCoins(); renderShop();
     showToast(it.max === 1 ? `¡Compraste: ${it.name}!` : `¡${it.name}: nivel ${save.levels[id]}!`);
@@ -1749,6 +1752,91 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     return true;
   }
 
+  // ---------- Logros: la mesa larga del sótano con los trofeos dorados ----------
+  // No hay anuncios: cuando ganas un logro, su trofeo aparece calladito en la mesa.
+  // Te acercas, pulsas E (o 🏆 en el celular) y sale su nombre y su descripción.
+  const goldMat = new THREE.MeshPhongMaterial({ color: 0xffc83d, emissive: 0x4a3000, specular: 0xfff2b0, shininess: 90 });
+  let trophyTable = null;   // { meshes: [] } cuando ya hay sótano
+  const trophyMeshes = {};   // id → el trofeo puesto en la mesa
+  function unlock(id) {
+    if (save.trophies.includes(id)) return;
+    save.trophies.push(id);
+    placeTrophies();
+  }
+  function buildTrophyTable() {
+    if (trophyTable) return;
+    const T = TROPHY_TABLE, y = BASEMENT.y, wood = lam(0x8b4513), dark = lam(0x5a2d0c);
+    const top = new THREE.Mesh(new THREE.BoxGeometry(T.x1 - T.x0, 0.12, T.z1 - T.z0), wood);
+    top.position.set((T.x0 + T.x1) / 2, y + T.top - 0.06, (T.z0 + T.z1) / 2); top.castShadow = top.receiveShadow = true; scene.add(top);
+    for (const lx of [T.x0 + 0.12, T.x1 - 0.12]) for (const lz of [T.z0 + 0.15, (T.z0 + T.z1) / 2, T.z1 - 0.15]) {
+      const leg = new THREE.Mesh(new THREE.BoxGeometry(0.12, T.top - 0.12, 0.12), dark); leg.position.set(lx, y + (T.top - 0.12) / 2, lz); scene.add(leg);
+    }
+    platforms.push({ x: (T.x0 + T.x1) / 2, z: (T.z0 + T.z1) / 2, hw: (T.x1 - T.x0) / 2, hd: (T.z1 - T.z0) / 2, top: y + T.top, bottom: y });
+    trophyTable = true;
+    placeTrophies();
+  }
+  // Un bot dorado (rectángulo con ojitos), del tamaño que se pida
+  function goldBot(h) {
+    const g = new THREE.Group(), b = new THREE.Mesh(new THREE.BoxGeometry(h * 0.5, h, h * 0.3), goldMat); b.position.y = h / 2; g.add(b);
+    for (const ex of [-0.11, 0.11]) { const e = new THREE.Mesh(eyeGeo, eyeMat); e.scale.setScalar(h * 0.45); e.scale.z *= 0.5; e.position.set(ex * h, h * 0.78, h * 0.15 + 0.01); g.add(e); }
+    return g;
+  }
+  function makeTrophy(model) {
+    const g = new THREE.Group();
+    const base = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.14, 0.7), lam(0x3a2414)); base.position.y = 0.07; g.add(base);   // pedestal
+    const on = new THREE.Group(); on.position.y = 0.14; g.add(on);
+    const ball = (r, x, y, z, sx = 1, sy = 1, sz = 1) => { const m = new THREE.Mesh(new THREE.SphereGeometry(r, 16, 12), goldMat); m.position.set(x, y, z); m.scale.set(sx, sy, sz); on.add(m); return m; };
+    if (model === 'bot') on.add(goldBot(0.75));
+    else if (model === 'piggy') {   // alcancía de cerdito
+      ball(0.27, 0, 0.3, 0, 1, 0.85, 1.3);
+      const snout = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.1, 0.1, 14), goldMat); snout.rotation.x = Math.PI / 2; snout.position.set(0, 0.3, 0.38); on.add(snout);
+      for (const sx of [-1, 1]) {
+        const ear = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.12, 8), goldMat); ear.position.set(sx * 0.12, 0.53, 0.16); on.add(ear);
+        for (const sz of [-1, 1]) { const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.12, 8), goldMat); leg.position.set(sx * 0.13, 0.06, sz * 0.2); on.add(leg); }
+      }
+      const slot = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.02, 0.03), eyeMat); slot.position.set(0, 0.54, -0.02); on.add(slot);   // la ranita de las monedas
+    } else if (model === 'bags') {   // varias bolsas doradas
+      for (const [x, z, k] of [[-0.16, 0.08, 1], [0.16, 0.06, 0.9], [0, -0.16, 1.15]]) {
+        ball(0.15 * k, x, 0.15 * k, z, 1, 0.9, 1);
+        const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.04 * k, 0.07 * k, 0.08 * k, 10), goldMat); neck.position.set(x, 0.31 * k, z); on.add(neck);
+      }
+    } else if (model === 'shop') {   // dos bots que se miran: uno da una moneda y el otro tiene una gorra
+      const a = goldBot(0.6), b = goldBot(0.6);
+      a.position.x = -0.2; a.rotation.y = Math.PI / 2; b.position.x = 0.2; b.rotation.y = -Math.PI / 2; on.add(a, b);
+      const coin = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.02, 16), goldMat); coin.rotation.z = Math.PI / 2; coin.position.set(-0.02, 0.32, 0); on.add(coin);
+      const cap = makeCap(0xffc83d); cap.traverse(m => { if (m.isMesh) m.material = goldMat; }); cap.scale.setScalar(0.3); cap.position.y = 0.6; cap.rotation.y = -Math.PI / 2; b.add(cap);
+    } else if (model === 'trampoline') {   // trampolín dorado
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.035, 8, 24), goldMat); ring.rotation.x = Math.PI / 2; ring.position.y = 0.22; on.add(ring);
+      const mat = new THREE.Mesh(new THREE.CircleGeometry(0.26, 24), new THREE.MeshPhongMaterial({ color: 0xd9a400, emissive: 0x3a2600, side: THREE.DoubleSide })); mat.rotation.x = -Math.PI / 2; mat.position.y = 0.2; on.add(mat);
+      for (let i = 0; i < 4; i++) { const a = i / 4 * Math.PI * 2 + Math.PI / 4; const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.22, 6), goldMat); leg.position.set(Math.cos(a) * 0.25, 0.11, Math.sin(a) * 0.25); on.add(leg); }
+    }
+    g.traverse(m => { if (m.isMesh) m.castShadow = true; });
+    return g;
+  }
+  // Pone en la mesa los trofeos que ya ganaste (los demás no se ven)
+  function placeTrophies() {
+    if (!trophyTable) return;
+    for (const a of ACHIEVEMENTS) {
+      if (a.where !== 'table' || trophyMeshes[a.id] || !save.trophies.includes(a.id)) continue;
+      const p = trophySpot(a.id), m = makeTrophy(a.model);
+      m.position.set(p.x, BASEMENT.y + TROPHY_TABLE.top, p.z); m.rotation.y = Math.PI / 2;   // mirando hacia el sótano
+      scene.add(m); trophyMeshes[a.id] = m;
+    }
+  }
+  // ¿Estás frente a un trofeo de la mesa? (devuelve el logro)
+  function nearTrophy() {
+    if (!trophyTable || Math.abs(ps.pos.y - BASEMENT.y) > 1.5) return null;
+    let best = null, bestD = 2;
+    for (const id in trophyMeshes) { const m = trophyMeshes[id], d = Math.hypot(ps.pos.x - m.position.x, ps.pos.z - m.position.z); if (d < bestD) { bestD = d; best = achievementById(id); } }
+    return best;
+  }
+  function tryTrophy() {
+    const a = nearTrophy();
+    if (!a) return false;
+    showToast(`🏆 ${a.name} — ${a.desc}`, false, 4000);
+    return true;
+  }
+
   // ---------- Minijuegos: uno por cada bot tonto (se elige según quién está en tu casa) ----------
   const MG = { active: null, k: -1, t: 0, back: null, trail: [], trailT: 0, follower: null, followers: [], built: {}, done: new Set(), state: {} };
   // built: las cosas de cada nivel · done: qué niveles ya se construyeron
@@ -2402,7 +2490,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     if (won) { save.coins += def.reward.coins || 0; save.boxes += def.reward.boxes || 0; renderCoins(); }
     // Un trofeo la primera vez que ganas (el de diamante va sobre tu armario)
     const newTrophy = won && def.trophy && !save.trophies.includes(def.trophy);
-    if (newTrophy) { save.trophies.push(def.trophy); refreshWardrobe(); msg += ' · ¡Y el TROFEO DE DIAMANTE! Míralo sobre tu armario'; }
+    if (newTrophy) { save.trophies.push(def.trophy); refreshWardrobe(); }   // sin anuncio: los logros aparecen calladitos
     flashWarn(newTrophy ? '¡TROFEO DE DIAMANTE!' : won ? '¡LO LOGRASTE!' : '¡CASI!', newTrophy ? 3 : 2);
     showToast(msg, !won);
   }
@@ -2503,7 +2591,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
   }
   function updateStylePrompt() {
     const vt = villagePrompt();
-    const txt = vt ? vt : nearRedButton() ? (botInsideHouse() ? `Pulsa <kbd>E</kbd>: el bot ${MINIGAMES[dumbBots.indexOf(botInsideHouse())].bot} te espera (${MINIGAMES[dumbBots.indexOf(botInsideHouse())].name})` : 'Pulsa <kbd>E</kbd> para apretar el botón rojo') : nearStall() ? 'Pulsa <kbd>E</kbd> para ver la tienda de estilo' : nearWardrobe() ? 'Pulsa <kbd>E</kbd> para abrir el armario' : '';
+    const txt = vt ? vt : nearTrophy() ? 'Pulsa <kbd>E</kbd> para ver el logro' : nearRedButton() ? (botInsideHouse() ? `Pulsa <kbd>E</kbd>: el bot ${MINIGAMES[dumbBots.indexOf(botInsideHouse())].bot} te espera (${MINIGAMES[dumbBots.indexOf(botInsideHouse())].name})` : 'Pulsa <kbd>E</kbd> para apretar el botón rojo') : nearStall() ? 'Pulsa <kbd>E</kbd> para ver la tienda de estilo' : nearWardrobe() ? 'Pulsa <kbd>E</kbd> para abrir el armario' : '';
     actionPrompt.hidden = !txt || !!document.querySelector('.panel:not([hidden])');
     if (txt && actionPrompt.innerHTML !== txt) actionPrompt.innerHTML = txt;
   }
@@ -2519,6 +2607,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
       else if (act === 'sleep') trySleep();
       else if (act === 'mgE' && MG.active && MG.active.onE) MG.active.onE();
       else if (act === 'talk' || act === 'grab') tryVillage();
+      else if (act === 'trophy') tryTrophy();
       else if (act === 'mgF' && MG.active && MG.active.onF) MG.active.onF();
     });
   }
@@ -2534,6 +2623,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
       talk: !MG.active && !panelOpen && nearBigBot() >= 0 && !nearTaskItem(),
       grab: !MG.active && !panelOpen && !!nearTaskItem(),
       mgF: !!(MG.active && MG.active.onF),
+      trophy: !MG.active && !panelOpen && !!nearTrophy(),
     };
     for (const k in show) if (touchBtns[k].hidden === show[k]) touchBtns[k].hidden = !show[k];
     if (shootBtn.hidden === stats.blaster) shootBtn.hidden = !stats.blaster;
@@ -2558,7 +2648,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     const b = e.target.closest('.buy'); if (!b || b.disabled) return;
     const it = cosmeticById(b.dataset.id);
     if (save.style.owned.includes(it.id) || save.coins < it.price) return;
-    save.coins -= it.price; save.style.owned.push(it.id); renderCoins(); renderStyleShop();
+    save.coins -= it.price; save.style.owned.push(it.id); unlock('compra'); renderCoins(); renderStyleShop();
     showToast(`¡Compraste: ${it.name}! Póntelo en el armario de tu casa`);
   });
   function renderWardrobe() {
@@ -2576,6 +2666,8 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
                 `<button type="button" class="buy${on ? ' on' : ''}" id="wear-${it.id}" data-id="${it.id}" ${type === 'color' && on ? 'disabled' : ''}>${label}</button></div>`;
       }
     }
+    // El trofeo de diamante está sobre el armario: al abrirlo (con E) se ve su nombre y descripción
+    if (save.trophies.includes('diamante')) { const a = achievementById('diamante'); html = `<div class="shop-item trophy-note"><h3>🏆 ${a.name}</h3><p>${a.desc}</p></div>` + html; }
     if (!save.style.owned.length) html += '<p class="empty-note">Todavía no compraste nada. La tienda de estilo está detrás de tu casa, frente a la ventana de atrás.</p>';
     wardrobeItems.innerHTML = html;
   }
@@ -2741,7 +2833,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     }
     quietToasts = false;
     save.style = data.style; applyStyle();
-    save.trophies = data.trophies; refreshWardrobe();
+    save.trophies = data.trophies; refreshWardrobe(); placeTrophies();
     renderCoins();
     return true;
   }
@@ -3233,7 +3325,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     if (ready && !isNight && !MG.active && Math.hypot(ps.pos.x - door.x, ps.pos.z - door.z) < 4.5) {
       for (const it of A.items) scene.remove(it.mesh);
       save.coins += A.task.reward.coins || 0; save.boxes += A.task.reward.boxes || 0; renderCoins(); sfxCoin();
-      village.done.add(A.i); village.active = null;
+      village.done.add(A.i); village.active = null; unlock('gracias');
       const prize = [A.task.reward.coins && `+${A.task.reward.coins} monedas`, A.task.reward.boxes && `+${A.task.reward.boxes} cajas doradas`].filter(Boolean).join(' y ');
       flashWarn('¡MISIÓN CUMPLIDA!', 2); showToast(`Bot ${botName(A.i)}: ¡Muchas gracias! ${prize}`, false, 3500);
     }
@@ -3505,7 +3597,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
 
     if (warnTimer > 0 && (warnTimer -= dt) <= 0) warn.classList.remove('show');
 
-    if (onTrampoline(ps) && ps.vel.y <= 0) { trampolineLaunch(ps); showToast('¡BOING! 100 metros'); }
+    if (onTrampoline(ps) && ps.vel.y <= 0) { trampolineLaunch(ps); showToast('¡BOING! 100 metros'); unlock('boing'); }
     updatePortal();
     physics(ps, dt, keys.Space && !busy && !(MG.active && MG.active.noJump), (MG.active && MG.active.jump) || stats.jump);
     bendState(ps, dt);
