@@ -46,12 +46,50 @@ export function leerLook(l) {
   return { hat: esId(l.hat) ? l.hat : null, glasses: esId(l.glasses) ? l.glasses : null, blaster: esEntero(l.blaster, 0, 2) ? l.blaster : 0 };
 }
 
+// ---------- Modo profe: las preguntas de la clase ----------
+// Cada pregunta: { p: el texto (1 a 120 letras), r: 4 respuestas (1 a 60 letras cada una), ok: cuál es la correcta (0 a 3) }
+export const PROFE = { maxPreguntas: 30, maxPregunta: 120, maxRespuesta: 60, maxClave: 60 };
+// Un texto recortado con entre 1 y max letras; si no, null
+const textoEntre = (t, max) => (typeof t === 'string' && t.trim().length >= 1 && t.trim().length <= max ? t.trim() : null);
+// Lee la lista de preguntas (de 0 a 30). Si UNA sola cosa viene mal, se rechaza todo (devuelve null)
+export function leerPreguntas(lista) {
+  if (!Array.isArray(lista) || lista.length > PROFE.maxPreguntas) return null;
+  const out = [];
+  for (const q of lista) {
+    if (!q || typeof q !== 'object' || !Array.isArray(q.r) || q.r.length !== 4 || !esEntero(q.ok, 0, 3)) return null;
+    const p = textoEntre(q.p, PROFE.maxPregunta), r = q.r.map(t => textoEntre(t, PROFE.maxRespuesta));
+    if (!p || r.some(t => !t)) return null;
+    out.push({ p, r, ok: q.ok });
+  }
+  return out;
+}
+// Qué le falta (o le sobra) a lo que escribió el profe, para marcarlo en rojo: [{ i: número de pregunta, campo: 'p' o 'r0'…'r3' }]
+export function revisarPreguntas(lista) {
+  const faltan = [];
+  lista.forEach((q, i) => {
+    if (!textoEntre(q.p, PROFE.maxPregunta)) faltan.push({ i, campo: 'p' });
+    q.r.forEach((t, k) => { if (!textoEntre(t, PROFE.maxRespuesta)) faltan.push({ i, campo: 'r' + k }); });
+  });
+  return faltan;
+}
+// El servidor revisa la contraseña (la de verdad está en datos/profe.json, que no se sube a GitHub)
+export const claveCorrecta = (dada, real) => typeof dada === 'string' && typeof real === 'string' && real.length > 0 && dada === real;
+
 // Lee un mensaje que llegó por la red. Si viene roto o con trampas, devuelve null.
+// Los mensajes son cortitos (1.500 letras), menos el de las preguntas del profe, que puede ser más largo.
+export const MAX_MENSAJE = 1500, MAX_MENSAJE_PREGUNTAS = 40000;
 export function leerMensaje(texto) {
-  if (typeof texto !== 'string' || texto.length > 1500) return null;
+  if (typeof texto !== 'string' || texto.length > MAX_MENSAJE_PREGUNTAS) return null;
   let m;
   try { m = JSON.parse(texto); } catch (e) { return null; }
   if (!m || typeof m !== 'object') return null;
+  if (m.tipo !== 'preguntas' && texto.length > MAX_MENSAJE) return null;
+  // El profe manda las preguntas de la clase (con su contraseña, que solo revisa el servidor)
+  if (m.tipo === 'preguntas') {
+    const lista = leerPreguntas(m.lista);
+    if (!lista || typeof m.clave !== 'string' || m.clave.length > PROFE.maxClave) return null;
+    return { tipo: 'preguntas', clave: m.clave, lista };
+  }
   if (m.tipo === 'hola') {
     const nombre = limpiarNombre(m.nombre);
     if (!nombre || !esNumero(m.color)) return null;

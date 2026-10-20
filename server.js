@@ -2,11 +2,11 @@
 // 1) Entrega el juego (index.html y src/) a quien abra el link
 // 2) Reparte en tiempo real dónde está cada jugador (WebSocket)
 // 3) Guarda a todos los jugadores en una base de datos SQLite (datos/jugadores.sqlite)
-// 4) Es el dueño del mundo compartido: la hora, las monedas, quién es el anfitrión
+// 4) Es el dueño del mundo compartido: la hora, las monedas, quién es el anfitrión, las preguntas del profe
 //    (lo que compra cada uno y sus monedas son solo suyos)
 import { Database } from 'bun:sqlite';
-import { mkdirSync } from 'node:fs';
-import { PUERTO, MAX_JUGADORES, NUM_MONEDAS, leerMensaje, lugarMoneda, faseAhora, corto, salaDeHost, linkOficial } from './src/red.js';
+import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { PUERTO, MAX_JUGADORES, NUM_MONEDAS, leerMensaje, lugarMoneda, faseAhora, corto, salaDeHost, linkOficial, leerPreguntas, claveCorrecta } from './src/red.js';
 
 // ---------- Base de datos ----------
 mkdirSync(new URL('./datos', import.meta.url), { recursive: true });
@@ -29,6 +29,21 @@ db.run('DROP TABLE IF EXISTS equipo');   // ya no hay base del equipo: cada uno 
 function guardar(j) {
   guardarJugador.run({ $nombre: j.nombre, $color: j.color, $x: j.x, $y: j.y, $z: j.z, $monedas: j.monedas });
 }
+
+// ---------- Modo profe ----------
+// La contraseña NO está en el código (el repo es público): vive en datos/profe.json, que no se sube a GitHub.
+// Si no existe, se crea con la variable de entorno PROFE_CLAVE (por ejemplo: PROFE_CLAVE=miclave bun server.js).
+const RUTA_CLAVE = new URL('./datos/profe.json', import.meta.url), RUTA_PREGUNTAS = new URL('./datos/preguntas.json', import.meta.url);
+if (!existsSync(RUTA_CLAVE) && process.env.PROFE_CLAVE) writeFileSync(RUTA_CLAVE, JSON.stringify({ clave: process.env.PROFE_CLAVE }));
+if (!existsSync(RUTA_CLAVE)) console.log('👩‍🏫 Para usar el modo profe, crea datos/profe.json con tu clave: { "clave": "..." }');
+// Se lee cada vez: si cambias el archivo, no hace falta reiniciar el servidor
+function claveDelProfe() {
+  try { const j = JSON.parse(readFileSync(RUTA_CLAVE, 'utf8')); return typeof j.clave === 'string' ? j.clave : null; } catch (e) { return null; }
+}
+// Las preguntas de la clase se guardan en datos/preguntas.json (así siguen después de reiniciar)
+let preguntasClase = [];
+try { preguntasClase = leerPreguntas(JSON.parse(readFileSync(RUTA_PREGUNTAS, 'utf8'))) || []; } catch (e) {}
+const INTENTOS = 5, ESPERA_MS = 30000;   // después de 5 contraseñas malas, hay que esperar 30 segundos
 
 // ---------- Jugadores conectados ahora ----------
 const conectados = new Map();   // id → { id, nombre, color, x, y, z, rot, monedas, ws }
@@ -64,7 +79,7 @@ const servidor = Bun.serve({
     return new Response(Bun.file(new URL('.' + ruta, import.meta.url)), { headers: { 'Cache-Control': 'no-cache' } });
   },
   websocket: {
-    maxPayloadLength: 2048,
+    maxPayloadLength: 128 * 1024,   // (las preguntas del profe pueden ser largas; leerMensaje revisa el tamaño de verdad)
     message(ws, texto) {
       const m = leerMensaje(String(texto));
       if (!m) return;   // mensaje raro: lo ignoramos
@@ -85,7 +100,7 @@ const servidor = Bun.serve({
         // Al nuevo: quién es él, quiénes están ya, dónde quedó la última vez y cómo está el mundo
         ws.send(JSON.stringify({ tipo: 'bienvenida', id: j.id, jugadores: [...conectados.values()].map(sinWs),
           guardado: antes ? { x: antes.x, y: antes.y, z: antes.z, veces: antes.veces + 1 } : null,
-          anfitrion, fase: faseDeAhora(), dia: diaPueblo, monedas }));
+          anfitrion, fase: faseDeAhora(), dia: diaPueblo, monedas, preguntas: preguntasClase }));
         conectados.set(j.id, j);
         guardar(j);
         ws.subscribe('juego');
@@ -125,6 +140,22 @@ const servidor = Bun.serve({
         if (host && host.id !== yo.id) host.ws.send(JSON.stringify({ tipo: 'evento', que: m.que, nombre: yo.nombre }));
       } else if (m.tipo === 'disparo') {
         ws.publish('juego', JSON.stringify({ ...m, id: yo.id }));
+      } else if (m.tipo === 'preguntas') {
+        // El profe cambió las preguntas: solo si la contraseña es la de verdad (y nunca se la mandamos a nadie)
+        const responder = (ok, texto) => ws.send(JSON.stringify({ tipo: 'profe', ok, texto }));
+        if (yo.esperarHasta && Date.now() < yo.esperarHasta) return responder(false, 'Demasiados intentos: espera un ratito');
+        if (!claveCorrecta(m.clave, claveDelProfe())) {
+          yo.fallos = (yo.fallos || 0) + 1;
+          if (yo.fallos >= INTENTOS) { yo.fallos = 0; yo.esperarHasta = Date.now() + ESPERA_MS; }
+          console.log(`🔒 ${yo.nombre} probó una contraseña de profe incorrecta`);
+          return responder(false, claveDelProfe() ? 'Contraseña incorrecta' : 'El servidor no tiene contraseña de profe (crea datos/profe.json)');
+        }
+        yo.fallos = 0;
+        preguntasClase = m.lista;
+        writeFileSync(RUTA_PREGUNTAS, JSON.stringify(preguntasClase));
+        aTodos({ tipo: 'preguntas', lista: preguntasClase, quien: yo.nombre });   // a todos, sin la contraseña
+        responder(true, '');
+        console.log(`👩‍🏫 ${yo.nombre} cambió las preguntas de la clase (${preguntasClase.length})`);
       } else if (m.tipo === 'golpe') {
         const otro = conectados.get(m.a);
         if (otro && otro.id !== yo.id) otro.ws.send(JSON.stringify({ tipo: 'golpe', de: yo.nombre }));

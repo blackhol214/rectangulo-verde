@@ -633,6 +633,8 @@ export const SALON = {
   filasZ: [4.5, -0.5, -5.5],          // de adelante hacia atrás
   sillaAtras: 1.5,                    // la silla está 1,5 m detrás de su mesa
   puerta: { x: 0, ancho: 2.4 },       // la salida, en la pared de atrás
+  escritorio: { x0: -2, x1: 2, z0: 7.8, z1: 9.1 },   // el escritorio de la profe, adelante
+  profe: { x: 0, z: 10.3 },           // su silla: entre el escritorio y el pizarrón, mirando hacia las mesas
 };
 // Las 12 sillas. La primera (adelante a la izquierda) es la de "No mires abajo"; las demás, próximamente
 export function salonSillas() {
@@ -640,6 +642,8 @@ export function salonSillas() {
   for (const z of SALON.filasZ) for (const x of SALON.mesasX) out.push({ x, z: z - SALON.sillaAtras, modo: out.length === 0 ? 'nomires' : null });
   return out;
 }
+// ¿Estás junto a la silla de la profe? (ahí se abre el modo profe)
+export const cercaDeLaProfe = (x, z, cerca = 2) => Math.hypot(x - SALON.profe.x, z - SALON.profe.z) < cerca;
 // ¿Junto a qué silla estás? (la más cercana a menos de `cerca` metros; -1 = ninguna)
 export function sillaCercana(x, z, sillas, cerca = 2) {
   let mejor = -1, d = cerca;
@@ -941,6 +945,13 @@ export function escuelaSiguiente(anterior, rnd = Math.random, total = ESCUELA_PR
   const i = Math.floor(rnd() * (total - 1));   // elige entre todas menos una…
   return i >= anterior ? i + 1 : i;            // …y se salta la anterior
 }
+// Las preguntas del profe vienen como { p, r: [4 respuestas], ok: cuál es la correcta }.
+// Las pasamos al formato del banco: la correcta primero (después se mezclan igual que las normales).
+export const deLaProfe = q => ({ p: q.p, op: [q.r[q.ok], ...q.r.filter((_, i) => i !== q.ok)] });
+// Las preguntas que se usan en la torre: las del profe si hay; si no, las normales
+export const preguntasDeLaClase = lista => (Array.isArray(lista) && lista.length ? lista.map(deLaProfe) : ESCUELA_PREGUNTAS);
+// Para mostrar texto que escribió alguien sin que el navegador lo tome como HTML (por ejemplo "<img …>")
+export const escaparHTML = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 // Mezcla las opciones de una pregunta. Devuelve { opciones, correcta } (correcta = en qué lugar quedó la buena)
 export function escuelaMezclar(pregunta, rnd = Math.random) {
   const idx = pregunta.op.map((_, i) => i);

@@ -13,7 +13,7 @@ import {
   SWINGS, swingAngle, SLIDE, slidePoint,
   HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail,
   MINIGAMES, minigameOrigin, MAZE, generateMaze, mazePathLength, pickMaze, pickLemon, clampToArea, flowerTired, MEDIUM_HOUSE, insideRect, segmentHitsRect, detourAround, INVERTED, INVERTED_K, minigameDef, invertColor, fleeCoin, botSpeedAfter, CRATES, crateOutside, GARDEN, DROPPER, dropperLayers, dropperPad,
-  ESCUELA, ESCUELA_K, ESCUELA_PREGUNTAS, escuelaSiguiente, escuelaMezclar, SALON, salonSillas, sillaCercana,
+  ESCUELA, ESCUELA_K, ESCUELA_PREGUNTAS, escuelaSiguiente, escuelaMezclar, SALON, salonSillas, sillaCercana, cercaDeLaProfe, deLaProfe, preguntasDeLaClase, escaparHTML,
   NO_MIRES, torreNoMires, huecoEntre, separacion, huecoMaxDesde, subeDesdeTramp, cajasDe, decoracionTorre, ETAPAS, etapaDe, TRAMPOLIN, ALTO_JUGADOR, OVNI, ovniDesplazamiento, HIELO, alcanceSimple, alcanceDoble, huecoLejos, puedeDobleSalto, DOBLE_SALTO, deslizar, debeReaparecer, BATERIA, gastarBateria, cargarBateria, hayBateria,
   DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, nearVillageHouse, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot,
 } from '../src/logic.js';
@@ -1218,5 +1218,37 @@ describe('preguntas de la escuela', () => {
       lugares.add(m.correcta);
     }
     expect(lugares.size).toBe(4);   // la buena no está siempre en el mismo botón
+  });
+});
+
+describe('modo profe', () => {
+  it('la silla de la profe está entre su escritorio y el pizarrón, sin encimarse', () => {
+    const { profe, escritorio, largo } = SALON;
+    expect(profe.z - 0.5).toBeGreaterThan(escritorio.z1);   // el asiento mide 1 m: no toca el escritorio
+    expect(profe.z + 0.6).toBeLessThan(largo / 2);           // ni la pared del pizarrón
+    expect(cercaDeLaProfe(profe.x + 1.5, profe.z)).toBe(true);   // te paras al lado
+    expect(cercaDeLaProfe(0, 0)).toBe(false);
+    for (const s of salonSillas()) expect(cercaDeLaProfe(s.x, s.z)).toBe(false);   // no se confunde con las de los alumnos
+  });
+  it('las preguntas del profe se pasan al formato del banco (la correcta primero)', () => {
+    expect(deLaProfe({ p: '¿2 + 2?', r: ['3', '4', '5', '6'], ok: 1 })).toEqual({ p: '¿2 + 2?', op: ['4', '3', '5', '6'] });
+    const m = escuelaMezclar(deLaProfe({ p: 'x', r: ['a', 'b', 'c', 'd'], ok: 3 }), seededRandom(2));
+    expect(m.opciones[m.correcta]).toBe('d');
+  });
+  it('las del profe reemplazan a las normales; sin ellas vuelven las normales', () => {
+    const profe = [{ p: 'uno', r: ['a', 'b', 'c', 'd'], ok: 0 }, { p: 'dos', r: ['e', 'f', 'g', 'h'], ok: 2 }];
+    expect(preguntasDeLaClase(profe).map(q => q.p)).toEqual(['uno', 'dos']);
+    expect(preguntasDeLaClase([])).toBe(ESCUELA_PREGUNTAS);
+    expect(preguntasDeLaClase(null)).toBe(ESCUELA_PREGUNTAS);
+  });
+  it('con una sola pregunta del profe, igual se puede elegir la siguiente', () => {
+    expect(escuelaSiguiente(-1, () => 0.5, 1)).toBe(0);
+    expect(escuelaSiguiente(0, () => 0.5, 1)).toBe(0);
+  });
+  it('un texto con HTML se muestra como texto (no se convierte en una imagen ni corre nada)', () => {
+    const malo = '<img src=x onerror=alert(1)>';
+    expect(escaparHTML(malo)).toBe('&lt;img src=x onerror=alert(1)&gt;');
+    expect(escaparHTML('"Tom & Jerry"')).toBe('&quot;Tom &amp; Jerry&quot;');
+    expect(escaparHTML(malo)).not.toContain('<');
   });
 });

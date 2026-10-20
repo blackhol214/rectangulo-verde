@@ -131,6 +131,25 @@
   .esc-resultado { margin:0; min-height:1.4em; font:800 17px system-ui, sans-serif; text-align:center; }
   .esc-resultado.bien { color:#1f8a3b; } .esc-resultado.mal { color:#c8102e; }
   @media (pointer:coarse) { #escuela .keys { display:none; } }
+  /* Modo profe: el editor de las preguntas de la clase */
+  #profe .shop-card { width:min(720px, 100%); }
+  #profe .shop-head h2 { color:#d6338a; }
+  #profeCerrar { margin-left:auto; }
+  .profe-fila { display:flex; flex-wrap:wrap; gap:8px 12px; align-items:center; font:700 14px system-ui, sans-serif; color:#1d1640; }
+  .profe-fila select, .profe-fila input { font:600 16px system-ui, sans-serif; padding:8px 10px; border-radius:8px; border:2px solid #cfc8f3; background:#fff; color:#1d1640; }
+  .profe-fila input { flex:1 1 180px; min-width:0; }
+  #profeLista { display:flex; flex-direction:column; gap:10px; }
+  .profe-q { margin:0; border:2px solid #e4e0f7; border-radius:12px; padding:10px; display:flex; flex-direction:column; gap:6px; background:#fff; min-width:0; }
+  .profe-q legend { font:800 13px system-ui, sans-serif; color:#3f2bb8; padding:0 4px; }
+  .profe-q input[type=text] { width:100%; box-sizing:border-box; font:16px system-ui, sans-serif; padding:9px 10px; border:2px solid #d9d4f2; border-radius:8px; color:#1d1640; }
+  .profe-q input[type=text].falta { border-color:#c8102e; background:#fff0f2; }
+  .profe-r { display:flex; align-items:center; gap:8px; }
+  .profe-r input[type=radio] { width:24px; height:24px; flex:none; margin:0; accent-color:#1f8a3b; }
+  .profe-msj { margin:0; min-height:1.3em; font:700 14px system-ui, sans-serif; color:#1f8a3b; } .profe-msj.malo { color:#c8102e; }
+  .profe-botones { display:flex; flex-wrap:wrap; gap:8px; }
+  .profe-botones button { flex:1 1 200px; min-height:48px; border:0; border-radius:10px; font:800 15px system-ui, sans-serif; cursor:pointer; touch-action:manipulation; }
+  #profeGuardar { background:#5b3df5; color:#fff; } #profeNormales { background:#ece9fb; color:#3f2bb8; }
+  .profe-botones button:focus-visible, .profe-q input:focus-visible { outline:3px solid #1e6bff; outline-offset:2px; }
   @media (max-width:480px) { .esc-opciones { grid-template-columns:1fr; } .esc-opciones button { min-height:56px; } }
   .empty-note { margin:0; padding:12px; border-radius:10px; background:#fff; box-shadow:inset 0 0 0 1px #dde5df; font:14px/1.45 system-ui, sans-serif; color:#4a5f52; }
   /* Dormir */
@@ -246,6 +265,19 @@
     <button type="button" class="esc-salir" id="escSalirTorre">Salir de la torre (volver al salón)</button>
   </div>
 </div>
+<!-- Modo profe: el profe escribe las preguntas de la clase (silla rosada del salón) -->
+<div id="profe" class="panel" hidden role="dialog" aria-modal="true" aria-labelledby="profeTitle">
+  <div class="shop-card">
+    <div class="shop-head"><h2 id="profeTitle">👩‍🏫 MODO PROFE</h2><button type="button" id="profeCerrar">Cerrar</button></div>
+    <p class="esc-ayuda" id="profeDonde"></p>
+    <p class="esc-ayuda">Escribe cada pregunta y sus 4 respuestas, y marca con el circulito cuál es la <b>correcta</b>.</p>
+    <div class="profe-fila"><label for="profeCuantas">¿Cuántas preguntas?</label><select id="profeCuantas"></select></div>
+    <div id="profeLista"></div>
+    <div class="profe-fila" id="profeClaveFila"><label for="profeClave">Contraseña de profe</label><input id="profeClave" type="password" autocomplete="off" maxlength="60"></div>
+    <p class="profe-msj" id="profeMsj" aria-live="polite"></p>
+    <div class="profe-botones"><button type="button" id="profeGuardar">Guardar para la clase</button><button type="button" id="profeNormales">Volver a las preguntas normales</button></div>
+  </div>
+</div>
 <p id="actionPrompt" hidden></p>
 <p id="questHud" hidden></p>
 <p id="parkourHud" hidden></p>
@@ -260,9 +292,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module">
-import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, ESCUELA, ESCUELA_K, ESCUELA_PREGUNTAS, escuelaSiguiente, escuelaMezclar, SALON, salonSillas, sillaCercana, NO_MIRES, torreNoMires, seededRandom, debeReaparecer, ETAPAS, etapaDe, cajasDe, decoracionTorre, ovniDesplazamiento, HIELO, deslizar, puedeDobleSalto, gastarBateria, cargarBateria, hayBateria, BATERIA, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, squashStretch, ACHIEVEMENTS, achievementById, coinAchievementsFor, TROPHY_TABLE, trophySpot, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
-         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-21-etapas'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
-import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto, acercar, acercarAngulo, piezasExplosion } from './src/red.js?v=2026-10-20b';
+import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, ESCUELA, ESCUELA_K, escuelaSiguiente, escuelaMezclar, SALON, salonSillas, sillaCercana, cercaDeLaProfe, preguntasDeLaClase, escaparHTML, NO_MIRES, torreNoMires, seededRandom, debeReaparecer, ETAPAS, etapaDe, cajasDe, decoracionTorre, ovniDesplazamiento, HIELO, deslizar, puedeDobleSalto, gastarBateria, cargarBateria, hayBateria, BATERIA, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, squashStretch, ACHIEVEMENTS, achievementById, coinAchievementsFor, TROPHY_TABLE, trophySpot, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
+         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-21-profe'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
+import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto, acercar, acercarAngulo, piezasExplosion, leerPreguntas, revisarPreguntas, PROFE } from './src/red.js?v=2026-10-21-profe';
 (() => {
   // iPhone ignora user-scalable=no: aquí se bloquea el zoom con dos dedos y el doble toque
   for (const ev of ['gesturestart', 'gesturechange']) document.addEventListener(ev, e => e.preventDefault(), { passive: false });
@@ -691,6 +723,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
   let firstPerson = false, fpPitch = 0;
   addEventListener('keydown', e => {
     if (!loginEl.hidden) return;                 // en la pantalla de inicio: solo se escribe el usuario
+    if (!profeEl.hidden) { if (e.code === 'Escape') cerrarProfe(); return; }   // en el editor del profe se escribe: ninguna tecla del juego hace nada
     if (!escuelaEl.hidden) { escuelaTecla(e); return; }   // con el panel de la batería abierto, las teclas son para responder
     // Tienda: P la abre y la cierra (Esc también la cierra)
     if (e.code === 'KeyP' && !e.repeat) { e.preventDefault(); toggleShop(); return; }
@@ -2065,8 +2098,14 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     g.fillStyle = '#1e4d36'; g.fillRect(0, 0, 1024, 256); g.fillStyle = '#f4f1e6'; g.font = '800 130px system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('MODO ESCUELA', 512, 135);
     const pizarron = new THREE.Mesh(new THREE.PlaneGeometry(14.4, 3.6), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c) }));
     pizarron.rotation.y = Math.PI; pizarron.position.set(o.x, 3.05, o.z + l - 0.17); scene.add(pizarron);
-    // El escritorio de la profe
-    mgBox(o.x - 2, o.x + 2, 0, 1.15, o.z + l - 4.2, o.z + l - 2.9, madera);
+    // El escritorio de la profe, y su silla detrás (mirando hacia las mesas): es rosada, brilla y abre el modo profe
+    const E = SALON.escritorio, PF = SALON.profe, px = o.x + PF.x, pz = o.z + PF.z;
+    mgBox(o.x + E.x0, o.x + E.x1, 0, 1.15, o.z + E.z0, o.z + E.z1, madera);
+    MG.built.profeMat = new THREE.MeshLambertMaterial({ color: 0xff8fc8, emissive: 0x551133 });
+    mgBox(px - 0.5, px + 0.5, 0, 0.6, pz - 0.5, pz + 0.5, MG.built.profeMat);                // asiento
+    mgBox(px - 0.5, px + 0.5, 0.6, 1.6, pz + 0.4, pz + 0.55, MG.built.profeMat);             // respaldo (del lado del pizarrón)
+    const lp = new THREE.PointLight(0xff8fc8, 1.2, 6, 1.5); lp.position.set(px, 2, pz); scene.add(lp);
+    letrero('👩‍🏫 Modo profe', '#d6338a', '#ffffff', 3.2, px, 3, pz);
     // Mesas y sillas (todas sólidas). La silla del modo brilla y tiene su letrero.
     MG.built.sillaMat = new THREE.MeshLambertMaterial({ color: 0xffc83d, emissive: 0x553300 });
     SILLAS.forEach(s => {
@@ -2262,7 +2301,9 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
   }
   // E junto a una silla: la del modo te lleva a la torre; las demás todavía no tienen modo
   function sentarse() {
-    const o = minigameOrigin(MG.k), i = sillaCercana(ps.pos.x - o.x, ps.pos.z - o.z, SILLAS);
+    const o = minigameOrigin(MG.k);
+    if (cercaDeLaProfe(ps.pos.x - o.x, ps.pos.z - o.z)) { abrirProfe(); return; }   // la silla de la profe: el editor de preguntas
+    const i = sillaCercana(ps.pos.x - o.x, ps.pos.z - o.z, SILLAS);
     if (i < 0) return;
     if (SILLAS[i].modo === 'nomires') entrarTorre(o);
     else showToast('Próximamente: esta silla todavía no tiene modo');
@@ -2290,8 +2331,10 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
   }
   function updateSalon(o) {
     const t2 = MG.t * 3; MG.built.sillaMat.emissive.setRGB(0.35 + 0.2 * Math.sin(t2), 0.2 + 0.12 * Math.sin(t2), 0);   // la silla del modo brilla
+    mgHud.hidden = !profeEl.hidden;   // con el editor abierto, el letrero de arriba no tapa nada
+    MG.built.profeMat.emissive.setRGB(0.3 + 0.15 * Math.sin(t2 + 1), 0.05, 0.15 + 0.08 * Math.sin(t2 + 1));             // y la de la profe también
     const E = IS_TOUCH ? '<b>✋ Sentarse</b>' : '<b>E</b>';
-    mgHud.innerHTML = `<b>Modo Escuela</b> · ve a la <b>silla que brilla</b> (adelante a la izquierda) y pulsa ${E} · la <b>SALIDA</b> está atrás`;
+    mgHud.innerHTML = `<b>Modo Escuela</b> · ve a la <b>silla que brilla</b> (adelante a la izquierda) y pulsa ${E} · 👩‍🏫 la silla rosada es del profe · la <b>SALIDA</b> está atrás`;
     // Cruzar la puerta de atrás: vuelves a tu mundo
     const x = ps.pos.x - o.x, z = ps.pos.z - o.z;
     if (z < -SALON.largo / 2 + 0.2 && Math.abs(x - SALON.puerta.x) < SALON.puerta.ancho / 2) {
@@ -2818,6 +2861,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
       },
       prompt() {
         if (MG.state.fase !== 'salon') return '';
+        if (cercaDeLaProfe(ps.pos.x - minigameOrigin(MG.k).x, ps.pos.z - minigameOrigin(MG.k).z)) return 'Pulsa <kbd>E</kbd> para el modo profe';
         const i = sillaCercana(ps.pos.x - minigameOrigin(MG.k).x, ps.pos.z - minigameOrigin(MG.k).z, SILLAS);
         if (i < 0) return '';
         return SILLAS[i].modo ? `Pulsa <kbd>E</kbd> para jugar <b>No mires abajo</b>` : 'Pulsa <kbd>E</kbd> para ver esta silla';
@@ -2987,6 +3031,87 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
   }
   function closePanels() { styleShopEl.hidden = wardrobeEl.hidden = true; }
 
+  // ---------- Modo profe: el editor de las preguntas de la clase ----------
+  // En una sala, las preguntas son de toda la sala (las guarda el servidor, que revisa la contraseña).
+  // Jugando solo, se guardan en esta compu y no hay contraseña.
+  const profeEl = document.getElementById('profe'), profeLista = document.getElementById('profeLista'), profeCuantas = document.getElementById('profeCuantas');
+  const profeClave = document.getElementById('profeClave'), profeMsj = document.getElementById('profeMsj');
+  const PREGUNTAS_LOCAL = 'rectangulo-verde:preguntas-profe';
+  const profe = { sala: [], local: [], borrador: [] };   // sala: las del servidor · local: las de esta compu · borrador: lo que estás escribiendo
+  try { profe.local = leerPreguntas(JSON.parse(localStorage.getItem(PREGUNTAS_LOCAL) || '[]')) || []; } catch (e) {}
+  const enSala = () => red.id !== null;
+  const preguntasClase = () => preguntasDeLaClase(enSala() ? profe.sala : profe.local);
+  const preguntaVacia = () => ({ p: '', r: ['', '', '', ''], ok: 0 });
+  for (let n = 1; n <= PROFE.maxPreguntas; n++) profeCuantas.append(new Option(String(n), String(n)));
+  function abrirProfe() {
+    for (const k in keys) keys[k] = false;
+    if (isLocked()) document.exitPointerLock();
+    const actuales = enSala() ? profe.sala : profe.local;   // las que hay ahora, o una vacía para empezar
+    profe.borrador = actuales.length ? actuales.map(q => ({ p: q.p, r: [...q.r], ok: q.ok })) : [preguntaVacia()];
+    profeClave.value = '';
+    document.getElementById('profeClaveFila').hidden = !enSala();
+    document.getElementById('profeDonde').textContent = enSala() ? 'Estás en una sala: las preguntas son para todos (pide la contraseña de profe).' : 'Juegas solo: las preguntas se guardan en esta compu.';
+    mensajeProfe('');
+    pintarProfe();
+    profeEl.hidden = false;
+  }
+  function cerrarProfe() { profeEl.hidden = true; profeClave.value = ''; }   // la contraseña nunca se queda guardada
+  function mensajeProfe(texto, malo) { profeMsj.textContent = texto; profeMsj.className = 'profe-msj' + (malo ? ' malo' : ''); }
+  // Dibuja el editor con elementos de verdad: el texto va en .value y .textContent (nunca innerHTML con lo que escribió alguien)
+  function pintarProfe(faltan = []) {
+    profeCuantas.value = String(profe.borrador.length);
+    const marca = (i, campo) => faltan.some(f => f.i === i && f.campo === campo);
+    profeLista.replaceChildren(...profe.borrador.map((q, i) => {
+      const caja = document.createElement('fieldset'); caja.className = 'profe-q';
+      const titulo = document.createElement('legend'); titulo.textContent = `Pregunta ${i + 1}`; caja.append(titulo);
+      const texto = document.createElement('input');
+      Object.assign(texto, { type: 'text', maxLength: PROFE.maxPregunta, placeholder: 'Escribe la pregunta', value: q.p });
+      texto.setAttribute('aria-label', `Pregunta ${i + 1}`); texto.classList.toggle('falta', marca(i, 'p'));
+      texto.addEventListener('input', () => { q.p = texto.value; texto.classList.remove('falta'); });
+      caja.append(texto);
+      q.r.forEach((r, k) => {
+        const fila = document.createElement('div'); fila.className = 'profe-r';
+        const radio = document.createElement('input');
+        Object.assign(radio, { type: 'radio', name: `profe-ok-${i}`, checked: q.ok === k, title: 'Marca la correcta' });
+        radio.setAttribute('aria-label', `La respuesta ${'ABCD'[k]} es la correcta`);
+        radio.addEventListener('change', () => { q.ok = k; });
+        const resp = document.createElement('input');
+        Object.assign(resp, { type: 'text', maxLength: PROFE.maxRespuesta, placeholder: `Respuesta ${'ABCD'[k]}`, value: r });
+        resp.setAttribute('aria-label', `Pregunta ${i + 1}, respuesta ${'ABCD'[k]}`); resp.classList.toggle('falta', marca(i, 'r' + k));
+        resp.addEventListener('input', () => { q.r[k] = resp.value; resp.classList.remove('falta'); });
+        fila.append(radio, resp); caja.append(fila);
+      });
+      return caja;
+    }));
+  }
+  // Cambiar cuántas preguntas hay (se quedan las que ya escribiste; las nuevas salen vacías)
+  profeCuantas.addEventListener('change', () => {
+    const n = +profeCuantas.value;
+    while (profe.borrador.length < n) profe.borrador.push(preguntaVacia());
+    profe.borrador.length = n;
+    pintarProfe();
+  });
+  document.getElementById('profeCerrar').addEventListener('click', cerrarProfe);
+  document.getElementById('profeGuardar').addEventListener('click', () => {
+    const faltan = revisarPreguntas(profe.borrador);
+    if (faltan.length) { pintarProfe(faltan); mensajeProfe(`Falta escribir ${faltan.length === 1 ? '1 cosa' : faltan.length + ' cosas'} (lo que está en rojo)`, true); return; }
+    guardarProfe(profe.borrador.map(q => ({ p: q.p.trim(), r: q.r.map(t => t.trim()), ok: q.ok })));
+  });
+  document.getElementById('profeNormales').addEventListener('click', () => guardarProfe([]));   // lista vacía = las preguntas normales
+  function guardarProfe(lista) {
+    if (enSala()) {   // en una sala: lo manda al servidor con la contraseña (el servidor contesta si estaba bien)
+      if (!profeClave.value) { mensajeProfe('Escribe la contraseña de profe', true); profeClave.focus(); return; }
+      enviar({ tipo: 'preguntas', clave: profeClave.value, lista });
+      profeClave.value = '';
+      mensajeProfe('Enviando…');
+      return;
+    }
+    profe.local = lista;   // jugando solo: en esta compu
+    try { if (lista.length) localStorage.setItem(PREGUNTAS_LOCAL, JSON.stringify(lista)); else localStorage.removeItem(PREGUNTAS_LOCAL); } catch (e) {}
+    cerrarProfe();
+    showToast(lista.length ? `👩‍🏫 Guardaste ${lista.length} pregunta${lista.length > 1 ? 's' : ''} para la clase` : '👩‍🏫 Volvieron las preguntas normales', false, 3000);
+  }
+
   // ---------- Panel de la batería (No mires abajo): responde preguntas para cargarla ----------
   const escuelaEl = document.getElementById('escuela'), escOpciones = document.getElementById('escOpciones'), escResultado = document.getElementById('escResultado');
   const bateriaTexto = b => fmt(Math.max(0, Math.ceil(b - 0.001)));   // sin decimales (y sin el 1.901 que sale de 1.900,0000001)
@@ -3000,11 +3125,13 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
   // Una pregunta nueva (nunca la misma que la anterior), con las opciones mezcladas
   function escuelaNueva() {
     const st = MG.state;
-    st.pregunta = escuelaSiguiente(st.pregunta);
-    const q = ESCUELA_PREGUNTAS[st.pregunta], m = escuelaMezclar(q);
+    const banco = preguntasClase();   // las del profe, o las normales si no hay
+    st.pregunta = escuelaSiguiente(st.pregunta, Math.random, banco.length);
+    const q = banco[st.pregunta] || banco[0], m = escuelaMezclar(q);
     st.correcta = m.correcta; st.esperando = false;
     document.getElementById('escPregunta').textContent = q.p;
-    escOpciones.innerHTML = m.opciones.map((op, i) => `<button type="button" data-i="${i}"><kbd>${i + 1}</kbd>${op}</button>`).join('');
+    // (las respuestas pueden venir del profe por la red: se escapan, así "<img …>" se ve como texto y no corre nada)
+    escOpciones.innerHTML = m.opciones.map((op, i) => `<button type="button" data-i="${i}"><kbd>${i + 1}</kbd>${escaparHTML(op)}</button>`).join('');
     escResultado.textContent = ''; escResultado.className = 'esc-resultado';
     pintarBateria();
   }
@@ -3868,6 +3995,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
       const m = JSON.parse(e.data);
       if (m.tipo === 'bienvenida') {
         red.id = m.id; red.anfitrion = m.anfitrion;
+        profe.sala = leerPreguntas(m.preguntas) || [];   // las preguntas de la clase (se revisan igual que en el servidor)
         if (document.hidden) enviar({ tipo: 'visible', v: 0 });
         for (const j of m.jugadores) addFriend(j);
         // En una compu nueva (sin guardado en el navegador) apareces donde te dejó la base de datos
@@ -3915,6 +4043,13 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
       } else if (m.tipo === 'golpe') {
         red.aturdido = 2;
         showToast(`⚡ ¡${m.de} te aturdió con su láser!`, true, 2500);
+      } else if (m.tipo === 'preguntas') {
+        const lista = leerPreguntas(m.lista);
+        if (lista) { profe.sala = lista; showToast(lista.length ? '👩‍🏫 El profe cambió las preguntas de la clase' : '👩‍🏫 El profe volvió a las preguntas normales', false, 3500); }
+      } else if (m.tipo === 'profe') {
+        // El servidor contesta si la contraseña estaba bien
+        if (m.ok) { cerrarProfe(); showToast('👩‍🏫 ¡Listo! Las preguntas son para toda la clase', false, 3500); }
+        else mensajeProfe(String(m.texto || 'No se pudo guardar'), true);
       } else if (m.tipo === 'error') {
         red.error = true;   // (para que al cerrarse no diga "¿el servidor está encendido?")
         showToast(m.texto, true, 5000);

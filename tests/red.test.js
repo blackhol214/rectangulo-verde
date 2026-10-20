@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { limpiarNombre, leerMensaje, acercar, acercarAngulo, piezasExplosion, lugarMoneda, faseAhora, corto, BORDE, DIA_SEGUNDOS, leerLook, leerSala, salaDeHost, linkOficial } from '../src/red.js';
+import { limpiarNombre, leerMensaje, acercar, acercarAngulo, piezasExplosion, lugarMoneda, faseAhora, corto, BORDE, DIA_SEGUNDOS, leerLook, leerSala, salaDeHost, linkOficial, leerPreguntas, revisarPreguntas, claveCorrecta, PROFE, MAX_MENSAJE } from '../src/red.js';
 
 describe('limpiarNombre', () => {
   it('quita espacios de más y corta a 20 letras', () => {
@@ -136,5 +136,57 @@ describe('giros suaves y pestañas escondidas', () => {
     expect(leerMensaje(JSON.stringify({ tipo: 'visible', v: 0 }))).toEqual({ tipo: 'visible', v: 0 });
     expect(leerMensaje(JSON.stringify({ tipo: 'visible', v: 1 }))).toEqual({ tipo: 'visible', v: 1 });
     expect(leerMensaje(JSON.stringify({ tipo: 'visible' }))).toEqual({ tipo: 'visible', v: 1 });
+  });
+});
+
+describe('modo profe: las preguntas de la clase', () => {
+  const q = (extra = {}) => ({ p: '¿Cuánto es 2 + 2?', r: ['4', '3', '5', '22'], ok: 0, ...extra });
+  const msj = (lista, clave = 'algo') => JSON.stringify({ tipo: 'preguntas', clave, lista });
+  it('lee una lista buena (y recorta los espacios)', () => {
+    expect(leerMensaje(msj([q({ p: '  ¿Cuánto es 2 + 2?  ', r: [' 4 ', '3', '5', '22'] })])))
+      .toEqual({ tipo: 'preguntas', clave: 'algo', lista: [q()] });
+    expect(leerMensaje(msj([]))).toEqual({ tipo: 'preguntas', clave: 'algo', lista: [] });   // lista vacía = volver a las normales
+  });
+  it('acepta 30 preguntas largas (más grande que un mensaje normal)', () => {
+    const larga = q({ p: 'x'.repeat(PROFE.maxPregunta), r: Array(4).fill('y'.repeat(PROFE.maxRespuesta)) });
+    const texto = msj(Array(30).fill(larga));
+    expect(texto.length).toBeGreaterThan(MAX_MENSAJE);
+    expect(leerMensaje(texto).lista).toHaveLength(30);
+  });
+  it('si UNA cosa viene mal, rechaza el mensaje entero', () => {
+    const malas = [
+      Array(31).fill(q()),                     // más de 30
+      [q(), q({ p: '   ' })],                  // pregunta vacía
+      [q({ p: 'x'.repeat(121) })],             // pregunta de más de 120 letras
+      [q({ r: ['a', 'b', 'c'] })],             // solo 3 respuestas
+      [q({ r: ['a', 'b', 'c', ''] })],         // una respuesta vacía
+      [q({ r: ['a', 'b', 'c', 'z'.repeat(61)] })],   // respuesta de más de 60 letras
+      [q({ r: ['a', 'b', 'c', 7] })],          // una respuesta que no es texto
+      [q({ ok: 4 })], [q({ ok: 1.5 })], [q({ ok: '0' })],   // la correcta tiene que ser 0, 1, 2 o 3
+      [null], 'no soy una lista',
+    ];
+    for (const l of malas) expect(leerMensaje(msj(l))).toBeNull();
+    expect(leerMensaje(JSON.stringify({ tipo: 'preguntas', lista: [q()] }))).toBeNull();   // sin contraseña
+    expect(leerMensaje(msj([q()], 'c'.repeat(61)))).toBeNull();
+  });
+  it('los otros mensajes siguen siendo cortitos', () => {
+    expect(leerMensaje(JSON.stringify({ tipo: 'pos', x: 1, y: 0, z: 0, rot: 0, relleno: 'x'.repeat(2000) }))).toBeNull();
+  });
+  it('leerPreguntas también sirve para revisar lo que manda el servidor', () => {
+    expect(leerPreguntas([q()])).toEqual([q()]);
+    expect(leerPreguntas([q({ ok: -1 })])).toBeNull();
+    expect(leerPreguntas(undefined)).toBeNull();
+  });
+  it('dice qué le falta a lo que escribió el profe (para marcarlo en rojo)', () => {
+    expect(revisarPreguntas([q()])).toEqual([]);
+    expect(revisarPreguntas([q(), q({ p: '', r: ['a', ' ', 'c', 'd'.repeat(61)] })]))
+      .toEqual([{ i: 1, campo: 'p' }, { i: 1, campo: 'r1' }, { i: 1, campo: 'r3' }]);
+  });
+  it('la contraseña: solo vale si es igual a la de verdad (y tiene que haber una)', () => {
+    expect(claveCorrecta('aprendo', 'aprendo')).toBe(true);
+    expect(claveCorrecta('Aprendo', 'aprendo')).toBe(false);
+    expect(claveCorrecta('', '')).toBe(false);      // sin contraseña guardada, nadie entra
+    expect(claveCorrecta(undefined, 'x')).toBe(false);
+    expect(claveCorrecta('x', null)).toBe(false);
   });
 });
