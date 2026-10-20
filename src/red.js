@@ -45,19 +45,6 @@ export function leerLook(l) {
   if (!l || typeof l !== 'object') return { hat: null, glasses: null, blaster: 0 };
   return { hat: esId(l.hat) ? l.hat : null, glasses: esId(l.glasses) ? l.glasses : null, blaster: esEntero(l.blaster, 0, 2) ? l.blaster : 0 };
 }
-// Niveles de la tienda (lo que compró el equipo): { belt: 1, bigHouse: 1, ... }
-export function leerNiveles(n) {
-  const out = {};
-  if (!n || typeof n !== 'object') return out;
-  for (const [id, v] of Object.entries(n).slice(0, 40)) if (esId(id) && esEntero(v, 0, 50)) out[id] = v;
-  return out;
-}
-// Junta lo que compró cada uno: de cada cosa se queda el nivel más alto
-export function juntarNiveles(equipo, mios) {
-  const out = { ...equipo };
-  for (const [id, v] of Object.entries(mios)) out[id] = Math.max(out[id] || 0, v);
-  return out;
-}
 
 // Lee un mensaje que llegó por la red. Si viene roto o con trampas, devuelve null.
 export function leerMensaje(texto) {
@@ -68,8 +55,7 @@ export function leerMensaje(texto) {
   if (m.tipo === 'hola') {
     const nombre = limpiarNombre(m.nombre);
     if (!nombre || !esNumero(m.color)) return null;
-    return { tipo: 'hola', nombre, color: m.color, monedas: esEntero(m.monedas, 0, 1e9) ? m.monedas : 0, cajas: esEntero(m.cajas, 0, 1e9) ? m.cajas : 0,
-      niveles: leerNiveles(m.niveles), look: leerLook(m.look) };
+    return { tipo: 'hola', nombre, color: m.color, monedas: esEntero(m.monedas, 0, 1e9) ? m.monedas : 0, look: leerLook(m.look) };
   }
   if (m.tipo === 'pos') {
     if (![m.x, m.y, m.z, m.rot].every(esNumero)) return null;
@@ -77,15 +63,10 @@ export function leerMensaje(texto) {
   }
   // Cambió tu gorra, tus gafas o tu bláster
   if (m.tipo === 'look') return { tipo: 'look', look: leerLook(m.look) };
-  // Alguien compró algo para la base del equipo
-  if (m.tipo === 'nivel') {
-    if (!esId(m.id) || !esEntero(m.nivel, 1, 50)) return null;
-    return { tipo: 'nivel', id: m.id, nivel: m.nivel };
-  }
   // Agarraste la moneda número i
   if (m.tipo === 'moneda') {
     if (!Number.isInteger(m.i) || m.i < 0 || m.i >= NUM_MONEDAS) return null;
-    return { tipo: 'moneda', i: m.i, ayuda: m.ayuda === 1 ? 1 : 0 };   // ayuda: la agarró un asistente
+    return { tipo: 'moneda', i: m.i };
   }
   // Cambió la hora (alguien durmió y se saltó la noche)
   if (m.tipo === 'hora') {
@@ -101,8 +82,7 @@ export function leerMensaje(texto) {
   if (m.tipo === 'mundo') {
     const fila = (a, n) => Array.isArray(a) && a.length === n && a.every(esNumero);
     if (!fila(m.g, 6) || !Array.isArray(m.b) || m.b.length > 20 || !m.b.every(b => fila(b, 5))) return null;
-    const a = Array.isArray(m.a) && m.a.length <= 12 && m.a.every(r => fila(r, 4)) ? m.a : [];   // los asistentes del equipo
-    return { tipo: 'mundo', g: m.g, b: m.b, a };
+    return { tipo: 'mundo', g: m.g, b: m.b };
   }
   // Algo que solo puede resolver el anfitrión: el gigante te atrapó o le diste con el láser
   if (m.tipo === 'evento') {

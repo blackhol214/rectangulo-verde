@@ -896,11 +896,11 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
       if (d < PICKUP && c.position.y > ps.pos.y - 0.8 && c.position.y < ps.pos.y + H + 0.8) { takeCoin(c, i); sfxCoin(); }
     });
   }
-  function takeCoin(c, i, byAssistant = false) {
+  function takeCoin(c, i) {
     if (c.userData.taken) return;
     save.coins++; renderCoins();
     // En multijugador las monedas son las mismas para todos: el servidor decide dónde aparece la nueva
-    if (red.id !== null) { c.visible = false; c.userData.taken = true; enviar({ tipo: 'moneda', i, ayuda: byAssistant ? 1 : 0 }); }
+    if (red.id !== null) { c.visible = false; c.userData.taken = true; enviar({ tipo: 'moneda', i }); }
     else placeCoin(c); // aparece otra en un lugar nuevo
   }
 
@@ -991,7 +991,6 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     for (const [c, n] of Object.entries(cost)) save[c] -= n;
     save.levels[id]++; it.apply(save.levels[id]);
     unlock('compra');   // tu primera compra
-    enviar({ tipo: 'nivel', id, nivel: save.levels[id] });   // en multijugador la base es de todo el equipo
     renderCoins(); renderShop();
     showToast(it.max === 1 ? `¡Compraste: ${it.name}!` : `¡${it.name}: nivel ${save.levels[id]}!`);
   }
@@ -1494,18 +1493,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
       for (let j = i + 1; j < bodies.length; j++) separate(bodies[i][0], bodies[i][1](bodies[i][0]), bodies[j][0], bodies[j][1](bodies[j][0]));
   }
   function updateAssistant(dt) {
-    // Los asistentes son del equipo: los mueve el anfitrión y los demás solo los dibujan donde él dice
-    if (copia()) {
-      const k = dt * 12;
-      assistants.forEach((a, i) => {
-        const r = red.asistentes && red.asistentes[i]; if (!r) return;
-        a.pos.set(acercar(a.pos.x, r[0], k), acercar(a.pos.y, r[1], k), acercar(a.pos.z, r[2], k));
-        a.facing = r[3]; a.obj.rotation.y = r[3];
-        bendObj(a.obj, dt);
-        a.obj.children[0].position.y = 0.75 + Math.abs(Math.sin(t * 14 + a.pos.x)) * 0.05;
-      });
-      return;
-    }
+    // Tus asistentes son solo tuyos: los mueve tu compu y juntan monedas solo para ti
     const far = new THREE.Vector3(1e6, 0, 1e6);   // las monedas ya agarradas (esperando al servidor) no cuentan
     for (const a of assistants) {
       // Va por la moneda más cercana
@@ -1522,7 +1510,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
       }
       physics(a, dt, a.onGround && a.hitWall, JUMP); // si choca con algo, lo salta
       bendState(a, dt);
-      if (Math.hypot(c.position.x - a.pos.x, c.position.z - a.pos.z) < PICKUP) takeCoin(c, ci, true);   // (en multijugador, todos ganan esta moneda)
+      if (Math.hypot(c.position.x - a.pos.x, c.position.z - a.pos.z) < PICKUP) takeCoin(c, ci);   // la moneda es solo para su dueño
       a.obj.children[0].position.y = 0.75 + Math.abs(Math.sin(t * 14 + a.pos.x)) * 0.05; // camina
     }
   }
@@ -2808,7 +2796,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     if (!userName) return;
     try {
       // Tus monedas son tuyas siempre; las compras de la base del equipo no se mezclan con tu partida de solo
-      localStorage.setItem(saveKey(userName), serializeSave({ coins: save.coins, boxes: save.boxes, levels: red.soloLevels || save.levels, dayPhase, pos: MG.active ? MG.back : ps.pos, style: save.style, trophies: save.trophies }));
+      localStorage.setItem(saveKey(userName), serializeSave({ coins: save.coins, boxes: save.boxes, levels: save.levels, dayPhase, pos: MG.active ? MG.back : ps.pos, style: save.style, trophies: save.trophies }));
     } catch (e) {
       showToast('No se pudo guardar: este navegador no deja guardar datos', true);
       return;
@@ -3407,7 +3395,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     if (!ONLINE || red.ws) return;
     const ws = new WebSocket(SERVER_WS);
     red.ws = ws;
-    ws.onopen = () => ws.send(JSON.stringify({ tipo: 'hola', nombre: name, color: body.material.color.getHex(), monedas: save.coins, niveles: save.levels, look: myLook() }));
+    ws.onopen = () => ws.send(JSON.stringify({ tipo: 'hola', nombre: name, color: body.material.color.getHex(), monedas: save.coins, look: myLook() }));
     ws.onmessage = e => {
       const m = JSON.parse(e.data);
       if (m.tipo === 'bienvenida') {
@@ -3419,8 +3407,6 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
         dayPhase = m.fase; lastMinute = -1;
         newVillageDay(m.dia);
         // La base del equipo (tus monedas siguen siendo tuyas). Tus compras de solo se guardan aparte, para cuando vuelvas a jugar solo.
-        red.soloLevels = red.soloLevels || { ...save.levels };   // (si te reconectas, ya estaba guardado)
-        applyTeamLevels(m.niveles, null);
         m.monedas.forEach((p, i) => { const c = coins[i]; if (c) { c.position.set(p.x, 1.2, p.z); c.visible = true; c.userData.taken = false; } });
         const n = m.jugadores.length;
         showToast(n ? `¡Conectado! Hay ${n} amigo${n > 1 ? 's' : ''} jugando` : '¡Conectado! Eres el primero en llegar', false, 3000);
@@ -3432,8 +3418,6 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
       } else if (m.tipo === 'look') {
         const f = red.otros.get(m.id);
         if (f) setFriendLook(f, m.look);
-      } else if (m.tipo === 'nivel') {
-        applyTeamLevels({ [m.id]: m.nivel }, m.quien);
       } else if (m.tipo === 'sale') {
         const f = red.otros.get(m.id);
         if (f) { explode(f); red.otros.delete(m.id); }
@@ -3444,12 +3428,10 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
       } else if (m.tipo === 'mundo') {
         const g = m.g;
         red.gigante = { x: g[0], y: g[1], z: g[2], rot: g[3], stun: !!g[4], sleep: !!g[5] };
-        red.bots = m.b; red.asistentes = m.a;
+        red.bots = m.b;
       } else if (m.tipo === 'moneda') {
         const c = coins[m.i];
         if (c) { c.position.set(m.x, 1.2, m.z); c.visible = true; c.userData.taken = false; }
-        // La agarró un asistente del equipo: trabajan para todos, así que tú también ganas 1 (el anfitrión ya la contó)
-        if (m.ayuda && !esAnfitrion()) { save.coins++; renderCoins(); }
       } else if (m.tipo === 'hora') {
         dayPhase = m.fase; lastMinute = -1;
         if (m.quien && m.quien !== userName) showToast(`${m.quien} durmió y se saltó la noche: ¡buenos días!`, false, 3000);
@@ -3481,18 +3463,6 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
   }
   // Lo que llevas puesto, para que tus amigos te vean igual
   const myLook = () => ({ hat: save.style.equipped.hat || null, glasses: save.style.equipped.glasses || null, blaster: stats.blaster ? (blaster.particles ? 2 : 1) : 0 });
-  // Aplica las compras del equipo que tu compu todavía no tiene (en el orden de la tienda, como al cargar una partida)
-  function applyTeamLevels(levels, quien) {
-    quietToasts = !quien;
-    for (const it of SHOP) {
-      const lv = Math.min(levels[it.id] || 0, it.max);
-      if (lv <= save.levels[it.id]) continue;
-      save.levels[it.id] = lv; it.apply(lv);
-      if (quien) { quietToasts = false; setTimeout(() => showToast(`🤝 ${quien} compró para el equipo: ${it.name}`, false, 3500), 2000); }
-    }
-    quietToasts = false;
-    renderCoins();
-  }
   function updateRed(dt) {
     if (red.id !== null) {
       // ¿Te cambiaste la gorra, las gafas o el bláster?
@@ -3509,8 +3479,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
       if (red.quieto % ENVIOS_POR_SEGUNDO === 0) { enviar(pos); red.ultimaPos = txt; }
       if (esAnfitrion()) enviar({ tipo: 'mundo',
         g: [es.pos.x, es.pos.y, es.pos.z, es.obj.rotation.y].map(corto).concat(stunTime > 0 ? 1 : 0, enemyAwake ? 0 : 1),
-        b: dumbBots.map(b => [b.pos.x, b.pos.y, b.pos.z, b.obj.rotation.y].map(corto).concat(b.obj.visible ? 1 : 0)),
-        a: assistants.map(a => [a.pos.x, a.pos.y, a.pos.z, a.obj.rotation.y].map(corto)) });
+        b: dumbBots.map(b => [b.pos.x, b.pos.y, b.pos.z, b.obj.rotation.y].map(corto).concat(b.obj.visible ? 1 : 0)) });
     }
     // Aturdido por el láser de un amigo: tiemblas y no te puedes mover
     if (red.aturdido > 0) red.aturdido = Math.max(0, red.aturdido - dt);

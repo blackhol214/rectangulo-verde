@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { limpiarNombre, leerMensaje, acercar, piezasExplosion, lugarMoneda, faseAhora, corto, BORDE, DIA_SEGUNDOS, leerLook, leerNiveles, juntarNiveles, leerSala, salaDeHost, linkOficial } from '../src/red.js';
+import { limpiarNombre, leerMensaje, acercar, piezasExplosion, lugarMoneda, faseAhora, corto, BORDE, DIA_SEGUNDOS, leerLook, leerSala, salaDeHost, linkOficial } from '../src/red.js';
 
 describe('limpiarNombre', () => {
   it('quita espacios de más y corta a 20 letras', () => {
@@ -13,8 +13,8 @@ describe('limpiarNombre', () => {
 
 describe('leerMensaje', () => {
   it('lee un saludo', () => {
-    expect(leerMensaje(JSON.stringify({ tipo: 'hola', nombre: ' Leo ', color: 0x2fae4e, monedas: 5, cajas: 2, niveles: { belt: 1 }, look: { hat: 'capBlue', blaster: 1 } })))
-      .toEqual({ tipo: 'hola', nombre: 'Leo', color: 0x2fae4e, monedas: 5, cajas: 2, niveles: { belt: 1 }, look: { hat: 'capBlue', glasses: null, blaster: 1 } });
+    expect(leerMensaje(JSON.stringify({ tipo: 'hola', nombre: ' Leo ', color: 0x2fae4e, monedas: 5, look: { hat: 'capBlue', blaster: 1 } })))
+      .toEqual({ tipo: 'hola', nombre: 'Leo', color: 0x2fae4e, monedas: 5, look: { hat: 'capBlue', glasses: null, blaster: 1 } });
   });
   it('lee una posición', () => {
     expect(leerMensaje(JSON.stringify({ tipo: 'pos', x: 1, y: 0, z: -3, rot: 0.5, mg: 1 })))
@@ -69,8 +69,7 @@ describe('el mundo compartido', () => {
 describe('leerMensaje: mensajes del mundo', () => {
   const leer = m => leerMensaje(JSON.stringify(m));
   it('acepta monedas válidas y rechaza números de moneda que no existen', () => {
-    expect(leer({ tipo: 'moneda', i: 3 })).toEqual({ tipo: 'moneda', i: 3, ayuda: 0 });
-    expect(leer({ tipo: 'moneda', i: 3, ayuda: 1 })).toEqual({ tipo: 'moneda', i: 3, ayuda: 1 });   // la agarró un asistente
+    expect(leer({ tipo: 'moneda', i: 3 })).toEqual({ tipo: 'moneda', i: 3 });
     expect(leer({ tipo: 'moneda', i: 30 })).toBeNull();
     expect(leer({ tipo: 'moneda', i: -1 })).toBeNull();
     expect(leer({ tipo: 'moneda', i: 1.5 })).toBeNull();
@@ -81,8 +80,7 @@ describe('leerMensaje: mensajes del mundo', () => {
   });
   it('el mundo trae al gigante (6 números) y a los bots (5 números cada uno)', () => {
     const ok = { tipo: 'mundo', g: [1, 0, -20, 0.5, 0, 1], b: [[1, 0, 2, 0, 1], [3, 0, 4, 1, 0]] };
-    expect(leer(ok)).toEqual({ ...ok, a: [] });
-    expect(leer({ ...ok, a: [[5, 0, 5, 1]] }).a).toEqual([[5, 0, 5, 1]]);   // con un asistente
+    expect(leer(ok)).toEqual(ok);
     expect(leer({ ...ok, g: [1, 2, 3] })).toBeNull();
     expect(leer({ ...ok, b: [[1, 2]] })).toBeNull();
   });
@@ -98,23 +96,14 @@ describe('leerMensaje: mensajes del mundo', () => {
   });
 });
 
-describe('la base del equipo', () => {
-  it('juntarNiveles se queda con el nivel más alto de cada cosa', () => {
-    expect(juntarNiveles({ belt: 1, lineBox: 2 }, { lineBox: 4, bigHouse: 1 })).toEqual({ belt: 1, lineBox: 4, bigHouse: 1 });
-    expect(juntarNiveles({ belt: 1 }, { belt: 0 })).toEqual({ belt: 1 });   // nunca se pierde una compra
-  });
-  it('leerNiveles ignora nombres raros y niveles imposibles', () => {
-    expect(leerNiveles({ belt: 1, 'hack<script>': 1, turbo: 999, hopper: -1 })).toEqual({ belt: 1 });
-    expect(leerNiveles(null)).toEqual({});
-  });
+describe('cada uno con sus cosas', () => {
   it('leerLook arregla lo que venga mal', () => {
     expect(leerLook({ hat: 'topHat', glasses: 'glassesPixel', blaster: 2 })).toEqual({ hat: 'topHat', glasses: 'glassesPixel', blaster: 2 });
     expect(leerLook({ hat: 42, blaster: 7 })).toEqual({ hat: null, glasses: null, blaster: 0 });
   });
-  it('compras de la base (la plata es de cada uno: no hay billetera del equipo)', () => {
+  it('ya no hay compras del equipo ni billetera del equipo: esos mensajes se ignoran', () => {
+    expect(leerMensaje(JSON.stringify({ tipo: 'nivel', id: 'blaster', nivel: 1 }))).toBeNull();
     expect(leerMensaje(JSON.stringify({ tipo: 'cambio', monedas: -30, cajas: 2 }))).toBeNull();
-    expect(leerMensaje(JSON.stringify({ tipo: 'nivel', id: 'belt', nivel: 1 }))).toEqual({ tipo: 'nivel', id: 'belt', nivel: 1 });
-    expect(leerMensaje(JSON.stringify({ tipo: 'nivel', id: 'belt', nivel: 0 }))).toBeNull();
   });
 });
 
