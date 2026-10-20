@@ -118,11 +118,6 @@
   #parkourHud b { color:#ff7a1a; }
   #questHud { position:fixed; left:50%; top:calc(16px + env(safe-area-inset-top,0px)); transform:translateX(-50%); z-index:19; margin:0; padding:7px 14px; border-radius:999px; background:rgba(28,30,70,.86); color:#e9ecff; font:700 14px/1.3 system-ui, sans-serif; text-align:center; white-space:nowrap; max-width:calc(100% - 300px); overflow:hidden; text-overflow:ellipsis; pointer-events:none; }
   #questHud b { color:#ffd60a; }
-  #devAlert { position:fixed; left:50%; bottom:calc(110px + env(safe-area-inset-bottom,0px)); transform:translateX(-50%); z-index:22; width:min(640px, calc(100% - 32px)); display:flex; align-items:flex-start; gap:12px; margin:0; padding:12px 14px; border-radius:12px; background:#fff4d6; color:#5a3a00; box-shadow:0 0 0 2px #e0a800, 0 10px 26px rgba(0,0,0,.3); font:14px/1.45 system-ui, sans-serif; }
-  #devAlert strong { color:#b45309; letter-spacing:.04em; }
-  #devAlert p { margin:0; flex:1; }
-  #devAlert button { flex:none; border:0; border-radius:6px; padding:4px 9px; font:700 14px system-ui, sans-serif; background:#e0a800; color:#3a2600; cursor:pointer; }
-  #devAlert button:focus-visible { outline:3px solid #1e6bff; outline-offset:2px; }
   #actionPrompt, #bedPrompt { position:fixed; left:50%; top:62%; transform:translateX(-50%); margin:0; padding:8px 14px; border-radius:8px; background:rgba(22,48,31,.85); color:#fff; font:600 15px system-ui, sans-serif; pointer-events:none; white-space:nowrap; }
   #sleep { position:fixed; inset:0; display:grid; place-items:center; background:#05070f; opacity:0; pointer-events:none; transition:opacity 1s; }
   #sleep span { font:400 clamp(36px, 8vw, 72px)/1 Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif; color:#cdd8ff; letter-spacing:.04em; }
@@ -209,7 +204,6 @@
     <div id="wardrobeItems"></div>
   </div>
 </div>
-<div id="devAlert" role="status" hidden><p><strong>ALERTA:</strong> Este juego sigue en desarrollo. Cuando esté en su versión final, todo tu progreso se eliminará.</p><button type="button" id="devAlertClose" aria-label="Cerrar aviso">✕</button></div>
 <p id="actionPrompt" hidden></p>
 <p id="questHud" hidden></p>
 <p id="parkourHud" hidden></p>
@@ -845,7 +839,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
   try { localStorage.removeItem('rectangulo-verde-tienda'); } catch (e) {} // borra el guardado de versiones anteriores
   // Reinicio de avances: cuando cambia esta marca, las partidas guardadas en este navegador se borran una sola vez
   // (pasa igual en localhost y en github.io, porque cada navegador lo revisa al abrir el juego)
-  const SAVE_RESET = '2026-10-03-reinicio-1';
+  const SAVE_RESET = '2026-10-20-reinicio-2';
   try {
     if (localStorage.getItem('rectangulo-verde:reinicio') !== SAVE_RESET) {
       for (const k of Object.keys(localStorage)) if (k.startsWith('rectangulo-verde:partida:')) localStorage.removeItem(k);
@@ -2575,9 +2569,6 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
   renderCoins();
 
   // ---------- Sonido (todo hecho con el sintetizador del navegador, sin archivos) ----------
-  const devAlert = document.getElementById('devAlert');
-  let devAlertTimer = null;
-  document.getElementById('devAlertClose').addEventListener('click', () => { devAlert.hidden = true; });
   let audio = null;
   const AMBIENT_LEVEL = 0.32;
   function startAudio() {
@@ -2695,7 +2686,6 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     document.getElementById('playerName').textContent = name;
     loginEl.hidden = true; loginName.blur();
     startAudio();
-    devAlert.hidden = false; clearTimeout(devAlertTimer); devAlertTimer = setTimeout(() => { devAlert.hidden = true; }, 12000);
     const loaded = loadGame(name);
     loadedLocal = loaded;
     showToast(loaded ? `¡Hola de nuevo, ${name}! Seguiste donde guardaste` : `Hola, ${name}. Para guardar, pulsa GUARDAR (abajo a la derecha)`);
