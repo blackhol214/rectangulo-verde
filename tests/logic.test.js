@@ -4,7 +4,7 @@ import {
   upgradePrice, fmt, sunElevation, isNightPhase, clockText, hourToPhase,
   launchSpeedForHeight, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, productReward, BAG_VALUE, nearestIndex, assistantSpeed, ASSIST_SPEED_MAX,
   normalizeName, saveKey, serializeSave, parseSave,
-  BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, FACTORY, factoryLineSlot, inFactory, slabPieces, missingFor, canAfford,
+  BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, FACTORY, factoryLineSlot, inFactory, squashStretch, SQUASH, slabPieces, missingFor, canAfford,
   mountainRing, MOUNTAIN_WALL_INSET, seededRandom,
   blasterStats,
   COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, parseStyle, cosmeticById,
@@ -934,5 +934,24 @@ describe('fábrica subterránea', () => {
     expect(groundHeight(55, 30, true, true)).toBe(FACTORY.y);
     expect(groundHeight(25, 11, true, true)).toBe(BASEMENT.y);   // el sótano sigue igual
     expect(inFactory(30, 30)).toBe(false);
+  });
+});
+
+describe('estirar y aplastar al saltar', () => {
+  it('parado en el piso (hace rato) no cambia', () => {
+    expect(squashStretch(0, false, 5)).toEqual({ tall: 1, wide: 1 });
+  });
+  it('en el aire se estira, pero nunca más del máximo', () => {
+    expect(squashStretch(10, true, 0).tall).toBeGreaterThan(1);
+    expect(squashStretch(-200, true, 0).tall).toBeCloseTo(1 + SQUASH.maxStretch);
+  });
+  it('justo al caer se aplasta, y después vuelve a 1', () => {
+    expect(squashStretch(0, false, 0).tall).toBeCloseTo(1 - SQUASH.landSquash);
+    expect(squashStretch(0, false, SQUASH.landTime).tall).toBe(1);
+  });
+  it('si se estira hacia arriba se adelgaza (parece de goma)', () => {
+    const r = squashStretch(15, true, 0);
+    expect(r.wide).toBeLessThan(1);
+    expect(r.tall * r.wide * r.wide).toBeCloseTo(1);   // el "tamaño" total se mantiene
   });
 });

@@ -645,3 +645,15 @@ export function taskSpot(where, rnd) {
 }
 // ¿Ya está lista la misión para entregar?
 export const taskReady = (task, got) => (task.kind === 'fetch' ? got >= 1 : got >= task.count);
+
+// ---------- Estirar y aplastar al saltar (como en los dibujos animados) ----------
+// En el aire el personaje se estira un poquito (más mientras más rápido sube o cae);
+// al caer al piso se aplasta un instante y vuelve a la normalidad. Lo de ancho cambia al revés,
+// para que parezca de goma y no "crezca": si se estira hacia arriba, se adelgaza.
+export const SQUASH = { stretchPerSpeed: 0.012, maxStretch: 0.16, landSquash: 0.2, landTime: 0.18 };
+export function squashStretch(vy, airborne, landT) {
+  let tall = 1;
+  if (airborne) tall = 1 + Math.min(SQUASH.maxStretch, Math.abs(vy) * SQUASH.stretchPerSpeed);
+  else if (landT < SQUASH.landTime) tall = 1 - SQUASH.landSquash * (1 - landT / SQUASH.landTime);
+  return { tall, wide: 1 / Math.sqrt(tall) };
+}

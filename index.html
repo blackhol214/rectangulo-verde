@@ -218,8 +218,8 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module">
-import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
-         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-05c'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
+import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, squashStretch, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
+         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-20'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
 import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto, acercar, piezasExplosion } from './src/red.js?v=2026-10-03e';
 (() => {
   // iPhone ignora user-scalable=no: aquí se bloquea el zoom con dos dedos y el doble toque
@@ -753,6 +753,21 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
   const STEP_UP = 0.45; // altura máxima que se sube sin saltar
   const COLL = { PR, H, STEP_UP };
   const overlaps = (pl, x, z) => Math.abs(x - pl.x) < pl.hw + PR && Math.abs(z - pl.z) < pl.hd + PR;
+  // Estirar y aplastar al saltar (la regla está en logic.js). base: el tamaño normal (el gigante es 3 veces más grande)
+  function bendState(st, dt, base = 1) {   // para los que se mueven en esta compu (sabemos si están en el piso)
+    if (st.onGround && st.wasAir) st.landT = 0;
+    st.landT = (st.landT ?? 9) + dt; st.wasAir = !st.onGround;
+    const { tall, wide } = squashStretch(st.vel.y, !st.onGround, st.landT);
+    st.obj.scale.set(base * wide, base * tall, base * wide);
+  }
+  function bendObj(obj, dt, base = 1) {   // para los que mueve otra compu: se calcula con cuánto subió o bajó
+    const u = obj.userData, y = obj.position.y, vy = dt > 0 && u.lastY !== undefined ? (y - u.lastY) / dt : 0;
+    const air = Math.abs(vy) > 2;
+    if (u.air && !air) u.landT = 0;
+    u.landT = (u.landT ?? 9) + dt; u.air = air; u.lastY = y;
+    const { tall, wide } = squashStretch(vy, air, u.landT);
+    obj.scale.set(base * wide, base * tall, base * wide);
+  }
   const makeState = obj => ({ obj, pos: obj.position, vel: new THREE.Vector3(), walkX: 0, walkZ: 0, onGround: true, carrying: null, standing: null, hitWall: false, facing: 0 });
 
   // Empuje horizontal, choques laterales, gravedad, suelo y techo
@@ -887,36 +902,36 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
 
   // ---------- Tienda (P) ----------
   const SHOP = [
-    { id: 'belt', group: 'Cintas', name: 'Cinta transportadora', desc: 'Una cinta de 20 m en medio de tu mitad. Los pedazos amarillos pasan por la máquina y salen como cajas doradas: agárralas en el plato amarillo y guárdalas para comprar al asistente.',
+    { id: 'belt', group: 'Cintas', name: 'Cinta transportadora', desc: 'Te da cajas doradas',
       base: 100, max: 1, apply: l => { lines.box.setOwned(l > 0); document.querySelector('.boxes').hidden = !(l > 0); if (l) showToast('La cinta está en medio de tu mitad'); } },
-    { id: 'hopper', group: 'Cintas', name: 'Tolva (cinta de cajas)', desc: 'Va al final de tu cinta y recoge las cajas doradas sola, sin que tengas que ir por ellas.',
+    { id: 'hopper', group: 'Cintas', name: 'Tolva (cinta de cajas)', desc: 'Recoge las cajas por ti',
       currency: 'boxes', base: 5, max: 1, needs: 'belt', apply: l => { lines.box.setHopper(l > 0); if (l) showToast('La tolva recoge las cajas por ti'); } },
-    { id: 'belt2', group: 'Cintas', name: 'Cinta 2.0', desc: 'Tus cintas se ven igual, pero van un 50% más rápido.',
+    { id: 'belt2', group: 'Cintas', name: 'Cinta 2.0', desc: 'Tus cintas van un 50% más rápido',
       currency: 'boxes', base: 5, max: 1, needs: 'belt', apply: l => { applyBeltSpeeds(); if (l) showToast('Cinta 2.0: tus cintas van 50% más rápido'); } },
-    { id: 'turbo', group: 'Cintas', name: 'Cintas turbo', desc: 'Todas tus cintas van un 100% más rápido que al principio (el doble).',
+    { id: 'turbo', group: 'Cintas', name: 'Cintas turbo', desc: 'Tus cintas van el doble de rápido',
       base: 100, max: 1, needs: 'belt', apply: l => { applyBeltSpeeds(); if (l) showToast('¡Cintas turbo: el doble de rápido!'); } },
-    { id: 'lineBox', group: 'Cintas', name: 'Otra cinta de cajas', desc: 'Una cinta normal más (hace cajas doradas). Viene con su tolva y la velocidad de la Cinta 2.0. Máximo 5 cintas de cajas en total.',
+    { id: 'lineBox', group: 'Cintas', name: 'Otra cinta de cajas', desc: 'Más cintas de cajas',
       base: 50, flat: true, max: MAX_EXTRA_BOX_LINES, count: true, needs: 'belt', apply: l => { ensureExtraLines('box', l); if (l) showToast('Nueva cinta de cajas, con tolva y Cinta 2.0'); } },
-    { id: 'transformer', group: 'Cintas', name: 'Transformador', desc: 'Otra cinta de 15 m, aparte, al lado de la tuya. Sus pedazos amarillos se vuelven bolsas de monedas: cada bolsa vale 10 monedas.',
+    { id: 'transformer', group: 'Cintas', name: 'Transformador', desc: 'Te da bolsas de monedas',
       currency: 'boxes', base: 20, max: 1, needs: 'belt', apply: l => { lines.bag.setOwned(l > 0); if (l) showToast('Transformador listo: sus pedazos se vuelven bolsas de 10 monedas'); } },
-    { id: 'hopper2', group: 'Cintas', name: 'Tolva (transformador)', desc: 'Va al final del transformador y recoge las bolsas de monedas sola.',
+    { id: 'hopper2', group: 'Cintas', name: 'Tolva (transformador)', desc: 'Recoge las bolsas por ti',
       currency: 'boxes', base: 5, max: 1, needs: 'transformer', apply: l => { lines.bag.setHopper(l > 0); if (l) showToast('La tolva recoge las bolsas de monedas por ti'); } },
-    { id: 'lineBag', group: 'Cintas', name: 'Otro transformador', desc: 'Un transformador más (hace bolsas de 10 monedas). Viene con su tolva y la velocidad de la Cinta 2.0. Van en su propia zona, a la izquierda de tus cintas. Máximo 5 transformadores en total.',
+    { id: 'lineBag', group: 'Cintas', name: 'Otro transformador', desc: 'Más transformadores',
       base: 50, flat: true, max: MAX_EXTRA_BAG_LINES, count: true, needs: 'transformer', apply: l => { ensureExtraLines('bag', l); if (l) showToast('Nuevo transformador, con tolva y Cinta 2.0'); } },
-    { id: 'bigHouse', group: 'Tu base', name: 'Casa grande con sótano', desc: 'Tu casa crece y le sale un sótano debajo; baja por la escalera de la casa.',
+    { id: 'bigHouse', group: 'Tu base', name: 'Casa grande con sótano', desc: 'Ahora hay un sótano',
       cost: { boxes: 100, coins: 200 }, max: 1, apply: l => { if (l) { buildBigHouse(); showToast('¡Casa grande! Baja al sótano por la escalera'); } } },
     // Solo después del sótano (needs): si se pudiera comprar antes, la fábrica no tendría por dónde entrar
-    { id: 'factory', group: 'Tu base', name: 'Fábrica subterránea', desc: 'Un salón enorme al lado del sótano: todas tus cintas se mudan ahí, con pasillos para caminar y trabajadores con casco que las cuidan. Se entra por la puerta del sótano.',
+    { id: 'factory', group: 'Tu base', name: 'Fábrica subterránea', desc: 'Una enorme fábrica',
       cost: FACTORY.cost, max: 1, needs: 'bigHouse', apply: l => { if (l) { buildFactory(); showToast('¡Fábrica lista! Entra por la puerta del sótano'); } } },
-    { id: 'assistant', group: 'Asistentes', name: 'Asistente', desc: 'Un robot que va por las monedas por ti. Se paga con cajas doradas de la cinta.',
+    { id: 'assistant', group: 'Asistentes', name: 'Asistente', desc: 'Recoge monedas por ti',
       currency: 'boxes', base: 10, max: 1, apply: l => { ensureAssistants(); if (l) showToast('¡Tu asistente ya está buscando monedas!'); } },
-    { id: 'assistant2', group: 'Asistentes', name: 'Otro asistente', desc: 'Un segundo asistente que también va por las monedas (máximo 2 asistentes).',
+    { id: 'assistant2', group: 'Asistentes', name: 'Otro asistente', desc: 'Recoge monedas por ti',
       currency: 'boxes', base: 15, flat: true, max: 1, count: true, needs: 'assistant', apply: l => { ensureAssistants(); if (l) showToast('¡Otro asistente más!'); } },
-    { id: 'assistSpeed', group: 'Asistentes', name: 'Velocidad de los asistentes', desc: 'Tus asistentes corren 2 m/s más rápido por nivel (hasta el nivel 5).',
+    { id: 'assistSpeed', group: 'Asistentes', name: 'Velocidad de los asistentes', desc: 'Tus asistentes van más rápido',
       base: 20, max: ASSIST_SPEED_MAX, needs: 'assistant', apply: l => { for (const a of assistants) a.speed = assistantSpeed(l); } },
-    { id: 'blaster', group: 'Para ti', name: 'Bláster láser', desc: 'Dispara con clic. Aturde al gigante 2 segundos.',
+    { id: 'blaster', group: 'Para ti', name: 'Bláster láser', desc: 'Aturde al gigante con láseres',
       base: 20, max: 1, apply: l => { stats.blaster = l > 0; canvas.classList.toggle('aim', l > 0); handBlaster.visible = l > 0; document.getElementById('reload').hidden = !(l > 0); } },
-    { id: 'blaster2', group: 'Para ti', name: 'Bláster 2.0', desc: 'Igual al bláster, pero con las partes rojas. Dispara láseres rojos a 25 m/s (recarga en 1 s) que estallan en partículas rojas al chocar.',
+    { id: 'blaster2', group: 'Para ti', name: 'Bláster 2.0', desc: 'Sus láseres van más rápido',
       currency: 'boxes', base: 20, max: 1, needs: 'blaster', apply: l => setBlasterV2(l > 0) },
   ];
   const price = it => it.flat ? it.base : upgradePrice(it.base, save.levels[it.id]); // flat: siempre cuesta lo mismo
@@ -1483,6 +1498,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
         const r = red.asistentes && red.asistentes[i]; if (!r) return;
         a.pos.set(acercar(a.pos.x, r[0], k), acercar(a.pos.y, r[1], k), acercar(a.pos.z, r[2], k));
         a.facing = r[3]; a.obj.rotation.y = r[3];
+        bendObj(a.obj, dt);
         a.obj.children[0].position.y = 0.75 + Math.abs(Math.sin(t * 14 + a.pos.x)) * 0.05;
       });
       return;
@@ -1502,6 +1518,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
         turnTo(a, dx, dz, dt);
       }
       physics(a, dt, a.onGround && a.hitWall, JUMP); // si choca con algo, lo salta
+      bendState(a, dt);
       if (Math.hypot(c.position.x - a.pos.x, c.position.z - a.pos.z) < PICKUP) takeCoin(c, ci, true);   // (en multijugador, todos ganan esta moneda)
       a.obj.children[0].position.y = 0.75 + Math.abs(Math.sin(t * 14 + a.pos.x)) * 0.05; // camina
     }
@@ -1626,6 +1643,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
         const r = red.bots[i]; if (!r) return;
         b.pos.set(acercar(b.pos.x, r[0], k), acercar(b.pos.y, r[1], k), acercar(b.pos.z, r[2], k));
         b.facing = r[3]; b.obj.rotation.y = r[3]; b.obj.visible = !!r[4];
+        bendObj(b.obj, dt);
         b.body.position.y = H * BOT_SCALE / 2 + Math.abs(Math.sin(t * 14 + b.pos.x)) * 0.05;
       });
       return;
@@ -1677,6 +1695,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
       let jump = !b.visit && b.onGround && Math.random() < dt * 0.7;   // dentro de tu casa no saltan
       if (b.onGround && b.hitWall) { jump = true; if (!b.visit && Math.random() < 0.3) b.timer = 0; }
       physics(b, dt, jump, JUMP * 0.75);
+      bendState(b, dt);
       // Nunca cruzan a la mitad del gigante (ni pisan la línea amarilla)
       if (b.pos.z < BOT_MIN_Z - 1.5) { b.pos.z = BOT_MIN_Z - 1.5; b.timer = 0; }
       // Si alguno se cae al sótano, reaparece afuera
@@ -2779,6 +2798,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
         es.pos.set(acercar(es.pos.x, g.x, k), acercar(es.pos.y, g.y, k), acercar(es.pos.z, g.z, k));
         es.facing = g.rot; es.obj.rotation.y = g.rot;
         enemyLook(g.stun, g.sleep);
+        bendObj(es.obj, dt, ENEMY_SCALE);
       }
       return;
     }
@@ -2822,6 +2842,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
       if (prey && prey.y > es.pos.y + 0.5 && flatDist(prey, es.pos) < 8) wantJump = true;
     }
     physics(es, dt, wantJump, ENEMY_JUMP);
+    bendState(es, dt, ENEMY_SCALE);
     es.pos.x = Math.max(-EDGE + ENEMY_R, Math.min(EDGE - ENEMY_R, es.pos.x));
     es.pos.z = Math.max(-EDGE + ENEMY_R, Math.min(ENEMY_MAX_Z, es.pos.z));
     enemyBody.position.y = H/2 + (moving && es.onGround ? Math.abs(Math.sin(t * 8)) * 0.08 : 0);
@@ -3173,7 +3194,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     const A = village.active;
     if (!A || !A.carrying) return;
     A.carrying = false; const it = A.items[0];
-    it.mesh.position.set(it.spot.x, 0, it.spot.z); it.mesh.rotation.set(0, 0, 0); it.mesh.userData.beam.visible = true;
+    it.mesh.position.set(it.spot.x, 0, it.spot.z); it.mesh.rotation.set(0, 0, 0); it.mesh.scale.setScalar(1); it.mesh.userData.beam.visible = true;
     setTimeout(() => showToast(`¡Se te cayó ${A.task.name}! Volvió a donde estaba`, true, 3000), 1300);
   }
   const questHud = document.getElementById('questHud');
@@ -3194,7 +3215,10 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     if (!A) { questHud.hidden = true; return; }
     for (const it of A.items) {
       if (it.taken) continue;
-      if (A.carrying) { it.mesh.position.set(ps.pos.x, ps.pos.y + H + 0.15, ps.pos.z); it.mesh.rotation.y = ps.facing; continue; }   // la llevas encima de tu cabeza
+      if (A.carrying) {   // la llevas en las manos, frente a ti
+        it.mesh.position.set(ps.pos.x + Math.sin(ps.facing) * 0.75, ps.pos.y + 0.55, ps.pos.z + Math.cos(ps.facing) * 0.75);
+        it.mesh.rotation.y = ps.facing; it.mesh.scale.setScalar(0.8); continue;
+      }
       it.mesh.rotation.y += dt * 1.5;
       if (A.task.kind === 'collect' && Math.hypot(ps.pos.x - it.spot.x, ps.pos.z - it.spot.z) < 1.6 && Math.abs(ps.pos.y - it.spot.y) < 2) {
         it.taken = true; scene.remove(it.mesh); A.got++; sfxCoin(); showToast(`${A.task.name}: ${A.got}/${A.task.count}`);
@@ -3405,6 +3429,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
       const o = f.obj;
       o.position.set(acercar(o.position.x, f.x, k), acercar(o.position.y, f.y, k), acercar(o.position.z, f.z, k));
       o.rotation.y = f.rot;
+      bendObj(o, dt);
     }
     // Pedacitos de la explosión: vuelan, caen, giran y se desvanecen
     for (let i = red.pedazos.length - 1; i >= 0; i--) {
@@ -3483,6 +3508,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     if (onTrampoline(ps) && ps.vel.y <= 0) { trampolineLaunch(ps); showToast('¡BOING! 100 metros'); }
     updatePortal();
     physics(ps, dt, keys.Space && !busy && !(MG.active && MG.active.noJump), (MG.active && MG.active.jump) || stats.jump);
+    bendState(ps, dt);
 
     // Enemigo: funciona como un killbrick que te persigue
     updateEnemy(dt);
