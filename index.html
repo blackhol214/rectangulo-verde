@@ -2850,7 +2850,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
       // El cielo se pone oscuro en el espacio (con estrellas) y en el neón
       get sky() { if (MG.state.fase !== 'nomires') return undefined; const id = etapaDe(ps.pos.y).id; return id === 'espacio' ? 0x070a1f : id === 'neon' ? 0x0d0618 : undefined; },
       // Parado en hielo: resbalas (agarre chico). 0 = piso normal
-      get agarre() { return MG.state.fase === 'nomires' && MG.state.enHielo ? HIELO.agarre : 0; },   // (si saltas desde el hielo, el impulso sigue)
+      get agarre() { return MG.state.fase === 'nomires' && MG.state.enHielo && ps.onGround ? HIELO.agarre : 0; },   // solo resbalas con los pies en el hielo: al saltar, controlas tu salto normal
       get dobleSalto() { return MG.state.fase === 'nomires'; },   // el doble salto solo existe en la torre
       eLabel: '✋ Sentarse',
       look(o) { return { x: o.x, z: o.z + 30 }; },
