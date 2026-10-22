@@ -3338,7 +3338,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
       update(dt, o) { const f = MG.state.fase; return f === 'nomires' ? updateTorre(dt, o) : f === 'escondidas' ? updateEscondidas(dt, o) : updateSalon(o); },
       end() {
         cerrarCarga(); quitarTorre();
-        if (MG.state.esc || !escondEl.hidden) { if (enSalaEsc()) enviar({ tipo: 'esc', que: 'salir' }); escondEl.hidden = true; }
+        if (MG.state.esc || !escondEl.hidden) { levantarse(); escondEl.hidden = true; }
         quitarTerrenos(); escNegro.hidden = true; body.material.transparent = false; body.material.opacity = 1;
         if (MG.built.botEsc) MG.built.botEsc.obj.visible = false;
       },
@@ -3588,27 +3588,31 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
 
   // ---------- 🙈 Panel de Escondidas: elegir terreno y rol, la espera con amigos y el resultado ----------
   const escondEl = document.getElementById('escondidas'), escondMsj = document.getElementById('escondMsj');
-  const escond = { terreno: 0, rol: 'esconder', espera: [], enRonda: false };   // espera: [{ id, nombre }] (lo cuenta el servidor)
-  const enSalaEsc = () => red.id !== null;
+  const escond = { terreno: 0, rol: 'esconder', espera: [], enRonda: false, sentado: false };   // espera: [{ id, nombre }] (lo cuenta el servidor)
+  // Con amigos solo si hay alguien más conectado: si estás solo en la sala (aunque el servidor y el túnel estén prendidos), juegas contra el bot
+  const enSalaEsc = () => red.id !== null && red.otros.size > 0;
   function abrirEscondidas() {
     for (const k in keys) keys[k] = false;
     if (isLocked()) document.exitPointerLock();
     document.getElementById('escondElegir').hidden = false; document.getElementById('escondFin').hidden = true;
     escondMsj.textContent = '';
-    if (enSalaEsc()) enviar({ tipo: 'esc', que: 'entrar' });   // te sientas: quedas en la espera de la sala
-    pintarEscondidas();
+    pintarEscondidas();   // (si hay amigos, ahí te sientas en la espera de la sala)
     escondEl.hidden = false;
   }
   // Cerrar el panel. salir: además te levantas de la silla (sales de la espera de la sala)
+  // Te levantas de la silla: sales de la espera de la sala (si estabas sentado ahí)
+  function levantarse() { if (escond.sentado) { enviar({ tipo: 'esc', que: 'salir' }); escond.sentado = false; } }
   function cerrarEscondidas(salir = true) {
     if (escondEl.hidden) return;
     escondEl.hidden = true;
-    if (salir && enSalaEsc() && !MG.state.esc) enviar({ tipo: 'esc', que: 'salir' });
+    if (salir && !MG.state.esc) levantarse();
   }
   // Dibuja el panel con elementos de verdad (los nombres van con textContent: los escribió cada jugador)
   function pintarEscondidas() {
     const sala = enSalaEsc();
-    document.getElementById('escondModo').textContent = sala ? 'Juegas con los amigos de la sala: cuando haya 2 o más, cualquiera aprieta ¡Empezar! y el servidor elige al azar el terreno (todo 50 veces más grande) y quién busca.' : 'Juegas solo contra el bot.';
+    if (sala && !escond.sentado) { enviar({ tipo: 'esc', que: 'entrar' }); escond.sentado = true; }   // te sientas: quedas en la espera de la sala
+    if (!sala) levantarse();   // te quedaste solo: te levantas de la espera (así nadie te mete a una ronda mientras juegas contra el bot)
+    document.getElementById('escondModo').textContent = !sala && red.id !== null ? 'Estás solo en la sala: juegas contra el bot. Cuando entre un amigo, pueden jugar juntos.' : sala ? 'Juegas con los amigos de la sala: cuando haya 2 o más, cualquiera aprieta ¡Empezar! y el servidor elige al azar el terreno (todo 50 veces más grande) y quién busca.' : 'Juegas solo contra el bot.';
     document.getElementById('escondTerrenoFila').hidden = sala;   // con amigos, el terreno sale al azar
     document.getElementById('escondTerrenos').replaceChildren(...TERRENOS.map((T, i) => {
       const b = document.createElement('button'); b.type = 'button'; b.className = escond.terreno === i ? 'on' : '';
@@ -3641,11 +3645,11 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     escondEl.hidden = false;
   }
   function volverDelResultado(otra) {
-    const o = minigameOrigin(MG.k), sala = enSalaEsc();
+    const o = minigameOrigin(MG.k);
     escondEl.hidden = true;
     salirEscondidas(o);
     if (otra) abrirEscondidas();   // (en la sala sigues en la espera)
-    else if (sala) enviar({ tipo: 'esc', que: 'salir' });
+    else levantarse();
   }
   document.getElementById('escondOtra').addEventListener('click', () => volverDelResultado(true));
   document.getElementById('escondSalon').addEventListener('click', () => volverDelResultado(false));
@@ -3657,6 +3661,8 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     return c !== undefined ? c : MG.k + 1;
   }
   // Mensajes del servidor sobre las Escondidas
+  // Si el panel de elegir está abierto y entra o sale alguien, cambia entre "con amigos" y "contra el bot"
+  function repintarEscondidas() { if (!escondEl.hidden && !document.getElementById('escondElegir').hidden) pintarEscondidas(); }
   function mensajeEscondidas(m) {
     const st = MG.state, e = st && st.esc;
     if (m.tipo === 'escEspera') {
@@ -3728,7 +3734,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
   document.getElementById('escSalirTorre').addEventListener('click', () => {
     if (MG.state.fase !== 'escondidas') { salirTorre(minigameOrigin(MG.k), false); return; }
     salirEscondidas(minigameOrigin(MG.k));
-    if (enSalaEsc()) enviar({ tipo: 'esc', que: 'salir' });   // te vas de la ronda (si eras el buscador, ganan los camaleones)
+    levantarse();   // te vas de la ronda (si eras el buscador, ganan los camaleones)
   });
   // Teclado: 1-4 responden · Q o Esc cierran el panel
   function escuelaTecla(e) {
@@ -4694,6 +4700,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
         showToast(n ? `¡Conectado! Hay ${n} amigo${n > 1 ? 's' : ''} jugando` : '¡Conectado! Eres el primero en llegar', false, 3000);
       } else if (m.tipo === 'entra') {
         addFriend(m); showToast(`${m.nombre} entró al juego`);
+        repintarEscondidas();
       } else if (m.tipo === 'pos') {
         const f = red.otros.get(m.id);
         if (f) { f.x = m.x; f.y = m.y; f.z = m.z; f.rot = m.rot; f.body.material.color.setHex(m.color); if (f.mg !== m.mg) setFriendMinigame(f, m.mg); }
@@ -4704,6 +4711,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
         const f = red.otros.get(m.id);
         if (f) { explode(f); red.otros.delete(m.id); }
         showToast(`💥 ${m.nombre} se desconectó`, true, 3000);
+        repintarEscondidas();
       } else if (m.tipo === 'anfitrion') {
         red.anfitrion = m.id;
         if (m.id === red.id) takeOverWorld();
@@ -4747,6 +4755,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
       if (red.id === null) { red.ws = null; if (!red.error) showToast('No se pudo entrar a la sala: ¿el servidor está encendido? Juegas solo', true, 5000); red.error = false; return; }
       for (const f of red.otros.values()) scene.remove(f.obj);
       red.otros.clear(); red.ws = null; red.id = null; red.anfitrion = null;
+      escond.sentado = false;   // (el servidor ya no te tiene en la espera)
       // Sin servidor vuelves a jugar solo: tu compu mueve otra vez al gigante, a los bots y las monedas
       for (const c of coins) if (c.userData.taken) { placeCoin(c); c.visible = true; c.userData.taken = false; }
       takeOverWorld();
