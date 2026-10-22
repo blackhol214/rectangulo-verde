@@ -668,10 +668,11 @@ export const SALON = {
   escritorio: { x0: -2, x1: 2, z0: 7.8, z1: 9.1 },   // el escritorio de la profe, adelante
   profe: { x: 0, z: 10.3 },           // su silla: entre el escritorio y el pizarrón, mirando hacia las mesas
 };
-// Las 12 sillas. La primera (adelante a la izquierda) es la de "No mires abajo"; las demás, próximamente
+// Las 12 sillas. La primera (adelante a la izquierda) es "No mires abajo"; la última (atrás a la derecha,
+// mirando el salón desde arriba con el pizarrón arriba) es "Escondidas"; las demás, próximamente
 export function salonSillas() {
-  const out = [];
-  for (const z of SALON.filasZ) for (const x of SALON.mesasX) out.push({ x, z: z - SALON.sillaAtras, modo: out.length === 0 ? 'nomires' : null });
+  const out = [], modos = { 0: 'nomires', 11: 'escondidas' };
+  for (const z of SALON.filasZ) for (const x of SALON.mesasX) out.push({ x, z: z - SALON.sillaAtras, modo: modos[out.length] || null });
   return out;
 }
 // ¿Estás junto a la silla de la profe? (ahí se abre el modo profe)
@@ -1056,4 +1057,248 @@ export function trophySpot(id) {
   if (i < 0) return null;
   const T = TROPHY_TABLE, step = (T.z1 - T.z0) / onTable.length;
   return { x: (T.x0 + T.x1) / 2, z: T.z0 + step * (i + 0.5) };
+}
+
+// ---------- 🙈 Escondidas: terrenos gigantes (la segunda silla del Modo Escuela) ----------
+// Todo está construido 50 veces más grande que en la vida real; tú sigues de tu tamaño, como una hormiga.
+// Las medidas de abajo ya están en metros del juego (una mesa de 72 cm de verdad mide 36 m aquí).
+export const ESCALA = 50;
+// Cada pieza: { t: tipo, x, z (el centro), a (ancho, en x), l (largo, en z), h (alto), y (dónde empieza, 0 = el piso), ... }
+// Tipos: 'bloque' (sólido) · 'mesa' (tabla con 4 patas) · 'silla' (asiento, patas y respaldo) · 'cueva' (una caja con
+// lados abiertos: abierta = 'n' +z, 's' −z, 'e' +x, 'o' −x) · 'cama' · 'canasta' (sin techo, con escalera de mano)
+// · 'trampolin' · 'esfera' (choca como una caja) · 'decor' (solo se ve). estilo: cómo se dibuja.
+const PIEZAS_SALON = [
+  ...[-90, 0, 90].flatMap(x => [-35, 35].flatMap(z => [
+    { t: 'mesa', x, z, a: 30, l: 22, h: 36, estilo: 'pupitre' },
+    { t: 'silla', x, z: z - 22, a: 19, l: 19, h: 40, respaldo: 's', estilo: 'silla' },
+  ])),
+  { t: 'cueva', x: 0, z: 92, a: 60, l: 30, h: 37, abierta: 'n', estilo: 'escritorio' },            // el escritorio de la profe: debajo, un escondite
+  { t: 'cueva', x: -125, z: -60, a: 22, l: 30, h: 12, abierta: 'e', estilo: 'mochila', color: 0x2f7de1 },   // mochila tirada (abierta)
+  { t: 'cueva', x: 125, z: 5, a: 22, l: 30, h: 12, abierta: 'o', estilo: 'mochila', color: 0xe0475f },
+  { t: 'cueva', x: 45, z: -85, a: 12, l: 5, h: 3.2, abierta: 'eo', estilo: 'estuche', color: 0x8e5bd9 },    // un estuche: un túnel
+  { t: 'cueva', x: 125, z: 95, a: 15, l: 18, h: 15, abierta: 's', estilo: 'basurero', color: 0x7a8794 },    // el basurero, volcado
+  { t: 'cueva', x: -45, z: -95, a: 20, l: 14, h: 8, abierta: 'eo', estilo: 'libroAbierto', color: 0x2fae4e }, // libro abierto boca abajo
+  { t: 'cueva', x: -125, z: 85, a: 26, l: 26, h: 22, abierta: 'e', estilo: 'carton' },                      // caja de cartón
+  { t: 'bloque', x: -55, z: 0, a: 12, l: 17, h: 9, estilo: 'libros' },                                       // pila de libros
+  { t: 'bloque', x: 100, z: -100, a: 12, l: 9, h: 10, estilo: 'lonchera', color: 0xffc83d },
+  { t: 'decor', x: 20, z: -55, a: 9, l: 0.4, h: 0.4, estilo: 'lapiz', color: 0xffc400 },
+  { t: 'decor', x: -20, z: 60, a: 0.4, l: 9, h: 0.4, estilo: 'lapiz', color: 0x2f7de1 },
+  { t: 'decor', x: -85, z: 60, a: 15, l: 1.6, h: 0.15, estilo: 'regla' },
+  { t: 'decor', x: 0, z: 119, a: 150, l: 1, h: 60, y: 45, estilo: 'pizarron' },
+  // Trampolines tirados en el piso: te lanzan arriba de una mesa, de una silla o del escritorio de la profe
+  { t: 'trampolin', x: -69, z: -35, a: 8, l: 8, h: 2, salto: 40, color: 0xe0475f },   // → la mesa de la izquierda
+  { t: 'trampolin', x: 16, z: 13, a: 8, l: 8, h: 2, salto: 24, color: 0xffc400 },     // → el asiento de una silla
+  { t: 'trampolin', x: 35, z: 92, a: 8, l: 8, h: 2, salto: 41, color: 0x2fae4e },     // → el escritorio de la profe
+  { t: 'trampolin', x: 90, z: 51, a: 8, l: 8, h: 2, salto: 40, color: 0x8e5bd9 },     // → la mesa de la derecha
+];
+const PIEZAS_HABITACION = [
+  { t: 'cama', x: 77.5, z: 62.5, a: 45, l: 95, h: 27.5 },
+  { t: 'trampolin', x: 42, z: 45, a: 12, l: 12, h: 2, salto: 36 },                                   // ¡te lanza arriba de la cama!
+  { t: 'canasta', x: -70, z: 80, a: 18, l: 18, h: 14, escalera: 's', color: 0xd9a066 },
+  { t: 'canasta', x: -82, z: -82, a: 16, l: 16, h: 12, escalera: 'e', color: 0xc98a5a },
+  { t: 'cueva', x: 60, z: -80, a: 30, l: 22, h: 20, abierta: 'o', estilo: 'juguetes', color: 0xe0475f },    // caja de juguetes
+  { t: 'cueva', x: -30, z: 95, a: 7, l: 13, h: 5, abierta: 's', estilo: 'zapato', color: 0x3d6f96 },        // un zapato
+  { t: 'bloque', x: 18, z: 92, a: 9, l: 9, h: 9, estilo: 'cubo', color: 0xff6fa8 },
+  { t: 'bloque', x: 29, z: 95, a: 9, l: 9, h: 9, estilo: 'cubo', color: 0x4dd6c8 },
+  { t: 'bloque', x: 23, z: 93, a: 9, l: 9, h: 9, y: 9, estilo: 'cubo', color: 0xffd23f },
+  { t: 'esfera', x: -88, z: 20, a: 14, l: 14, h: 14, estilo: 'pelota', color: 0xff4b3e },
+  { t: 'bloque', x: 85, z: -30, a: 12, l: 16, h: 3, estilo: 'libros' },
+  { t: 'decor', x: -10, z: -20, a: 110, l: 95, h: 0.2, estilo: 'alfombra' },
+];
+const PIEZAS_COCINA = [
+  { t: 'mesa', x: 0, z: 10, a: 60, l: 40, h: 38, estilo: 'mesaCocina' },
+  ...[[-18, -22, 's'], [18, -22, 's'], [-18, 42, 'n'], [18, 42, 'n']].map(([x, z, respaldo]) => ({ t: 'silla', x, z, a: 20, l: 20, h: 45, respaldo, estilo: 'silla' })),
+  { t: 'bloque', x: 100, z: 80, a: 35, l: 35, h: 90, estilo: 'refri' },
+  { t: 'bloque', x: -65, z: 85, a: 70, l: 30, h: 45, estilo: 'gabinete' },
+  { t: 'cueva', x: -15, z: 85, a: 30, l: 30, h: 45, abierta: 's', estilo: 'gabineteAbierto' },             // un mueble con la puerta abierta
+  { t: 'bloque', x: 45, z: 85, a: 40, l: 30, h: 45, estilo: 'gabinete' },
+  { t: 'cueva', x: -80, z: -40, a: 15, l: 10, h: 3.5, abierta: 'e', estilo: 'cereal', color: 0xffb000 },    // caja de cereal volcada
+  { t: 'cueva', x: 60, z: -50, a: 5, l: 6, h: 4, abierta: 's', estilo: 'taza', color: 0xe8eef2 },           // una taza caída
+  { t: 'bloque', x: -100, z: -80, a: 15, l: 15, h: 15, estilo: 'balde', color: 0x2f7de1 },
+  { t: 'bloque', x: 100, z: -70, a: 10, l: 10, h: 3.5, estilo: 'tazon', color: 0xff8fc8 },
+  { t: 'esfera', x: 30, z: -80, a: 4, l: 4, h: 4, estilo: 'manzana', color: 0xd4161b },
+  { t: 'esfera', x: 38, z: -76, a: 4, l: 4, h: 4, estilo: 'manzana', color: 0x7cc242 },
+  // Terrones de azúcar para subirte arriba de las manzanas (la manzana mide 4 m y tu salto llega a 2,6 m)
+  { t: 'bloque', x: 24.5, z: -80, a: 3, l: 3, h: 2, estilo: 'azucar' },
+  { t: 'bloque', x: 43.5, z: -74, a: 3, l: 3, h: 2, estilo: 'azucar' },
+  { t: 'decor', x: -40, z: -60, a: 10, l: 2.4, h: 2, estilo: 'platano' },
+  { t: 'decor', x: 0, z: -40, a: 120, l: 70, h: 0.2, estilo: 'tapete' },
+];
+// Los 3 terrenos. spawn: dónde empiezan (el buscador en el centro, los demás alrededor).
+// escondites extra: lugares buenos que no son cuevas (alto: solo se llega trepando; el bot no busca ahí)
+export const TERRENOS = [
+  { id: 'salon', nombre: 'Salón gigante', emoji: '🏫', ancho: 300, largo: 240, alto: 130, spawn: { x: 0, z: -10 }, piezas: PIEZAS_SALON,
+    descripcion: 'Mesas, sillas, mochilas, libros y un basurero… ¡todo gigante!', extra: [] },
+  { id: 'habitacion', nombre: 'Habitación', emoji: '🧸', ancho: 200, largo: 230, alto: 130, spawn: { x: -20, z: 45 }, piezas: PIEZAS_HABITACION,
+    descripcion: 'Carros que se mueven, canastas con escaleras y un trampolín hasta la cama.',
+    extra: [{ x: 77, z: 40 }, { x: 88, z: 95 }, { x: 70, z: 100, y: 27.5, alto: true }, { x: -70, z: 76, alto: true }] },
+  { id: 'cocina', nombre: 'Cocina gigante', emoji: '🍳', ancho: 250, largo: 200, alto: 130, spawn: { x: 0, z: -45 }, piezas: PIEZAS_COCINA,
+    descripcion: 'Un refri enorme, una taza caída, cereal volcado y muebles abiertos.',
+    extra: [{ x: -100, z: -93 }, { x: 118, z: 55 }] },
+];
+// Los carros de juguete de la habitación: andan RÁPIDO por toda la habitación, siempre por el mismo circuito
+// (unos puntos por el espacio libre, sin pasar por la cama, las canastas ni la caja de juguetes). Dónde está cada uno
+// depende solo del reloj de la ronda: así todos los jugadores los ven en el mismo lugar.
+export const CIRCUITO = [[-45, -103], [30, -103], [30, -55], [65, -55], [65, 0], [20, 0], [20, 70], [-40, 70], [-40, 30], [-45, -40]];
+export const CARRO = { largo: 15, ancho: 8, cubierta: 1, cabina: 6, vel: 15, cabinaLargo: 6 };   // la cubierta a 1 m: te subes de un saltito
+export const CARROS = [{ color: 0xe0475f }, { color: 0x2f7de1 }, { color: 0x2fae4e }];   // los 3 separados por un tercio de vuelta
+const tramos = () => CIRCUITO.map((p, i) => { const q = CIRCUITO[(i + 1) % CIRCUITO.length]; return { p, q, largo: Math.hypot(q[0] - p[0], q[1] - p[1]) }; });
+export const largoCircuito = () => tramos().reduce((s, t) => s + t.largo, 0);
+// Dónde está el carro i en el segundo t, y hacia dónde mira (giro: 0 = hacia +z)
+export function carroPos(i, t) {
+  const T = tramos(), L = T.reduce((s, q) => s + q.largo, 0);
+  let d = (((CARRO.vel * t + (i * L) / CARROS.length) % L) + L) % L;
+  for (const { p, q, largo } of T) {
+    if (d <= largo) { const k = d / largo; return { x: p[0] + (q[0] - p[0]) * k, z: p[1] + (q[1] - p[1]) * k, giro: Math.atan2(q[0] - p[0], q[1] - p[1]) }; }
+    d -= largo;
+  }
+  const p = T[0].p; return { x: p[0], z: p[1], giro: 0 };
+}
+// Las partes del carro para chocar (relativas a su centro), según hacia dónde mira:
+// la cubierta (atrás, donde te subes) y la cabina (adelante, no se puede atravesar)
+export function partesCarro(giro) {
+  const dx = Math.sin(giro), dz = Math.cos(giro), C = CARRO, atras = C.largo - C.cabinaLargo;
+  const caja = (centro, largo, alto) => ({ x: dx * centro, z: dz * centro, hw: Math.abs(dx) * largo / 2 + Math.abs(dz) * C.ancho / 2, hd: Math.abs(dz) * largo / 2 + Math.abs(dx) * C.ancho / 2, top: alto });
+  return { cubierta: caja(-C.largo / 2 + atras / 2, atras, C.cubierta), cabina: caja(C.largo / 2 - C.cabinaLargo / 2, C.cabinaLargo, C.cabina) };
+}
+
+// Las cajas para chocar de una pieza: [{ x0, x1, y0, y1, z0, z1 }] (relativas al centro del terreno)
+const caja = (x0, x1, y0, y1, z0, z1, extra) => ({ x0, x1, y0, y1, z0, z1, ...extra });
+export function cajasPieza(p) {
+  const { x, z, a, l, h } = p, y = p.y || 0, X0 = x - a / 2, X1 = x + a / 2, Z0 = z - l / 2, Z1 = z + l / 2;
+  if (p.t === 'decor') return [];
+  if (p.t === 'bloque' || p.t === 'esfera') return [caja(X0, X1, y, y + h, Z0, Z1)];
+  if (p.t === 'trampolin') return [caja(X0, X1, 0, h, Z0, Z1, { salto: p.salto })];
+  if (p.t === 'mesa' || p.t === 'silla') {
+    const g = h * 0.06, pata = Math.max(1.2, a * 0.08), alto = p.t === 'silla' ? h * 0.5 : h;   // la silla: asiento a media altura
+    const out = [caja(X0, X1, alto - g, alto, Z0, Z1)];
+    for (const px of [X0, X1 - pata]) for (const pz of [Z0, Z1 - pata]) out.push(caja(px, px + pata, 0, alto - g, pz, pz + pata));
+    if (p.t === 'silla') out.push(p.respaldo === 'n' ? caja(X0, X1, alto, h, Z1 - pata, Z1) : caja(X0, X1, alto, h, Z0, Z0 + pata));
+    return out;
+  }
+  if (p.t === 'cueva') {
+    const g = Math.max(0.6, Math.min(a, l) * 0.08), ab = p.abierta || '', out = [caja(X0, X1, h - g, h, Z0, Z1)];   // el techo
+    if (!ab.includes('n')) out.push(caja(X0, X1, 0, h - g, Z1 - g, Z1));
+    if (!ab.includes('s')) out.push(caja(X0, X1, 0, h - g, Z0, Z0 + g));
+    if (!ab.includes('e')) out.push(caja(X1 - g, X1, 0, h - g, Z0, Z1));
+    if (!ab.includes('o')) out.push(caja(X0, X0 + g, 0, h - g, Z0, Z1));
+    return out;
+  }
+  if (p.t === 'cama') {
+    // Patas, la base (15 a 20 m), el colchón hasta h, la cabecera (+z) y la cobija colgando del lado −x (debajo queda una cueva)
+    const pata = 4, out = [];
+    for (const px of [X0, X1 - pata]) for (const pz of [Z0, Z1 - pata]) out.push(caja(px, px + pata, 0, 15, pz, pz + pata));
+    out.push(caja(X0, X1, 15, h, Z0, Z1));
+    out.push(caja(X0, X1, 0, h + 15, Z1, Z1 + 3));
+    out.push(caja(X0 - 1, X0, 3, h, Z0, Z1));
+    return out;
+  }
+  if (p.t === 'canasta') {
+    const g = 1.2, out = [caja(X0, X1, 0, h, Z1 - g, Z1), caja(X0, X1, 0, h, Z0, Z0 + g), caja(X1 - g, X1, 0, h, Z0, Z1), caja(X0, X0 + g, 0, h, Z0, Z1)];
+    out.push(...escaleraCanasta(p));
+    // Adentro: bloques de juguete como escalones para volver a salir
+    const n = Math.ceil(h / 2.4);
+    for (let k = 1; k <= n; k++) { const hk = Math.min(h, k * 2.4); out.push(caja(X0 + g, X0 + g + 3, 0, hk, Z0 + g + (k - 1) * 2.6, Z0 + g + k * 2.6)); }
+    return out;
+  }
+  return [];
+}
+// La escalera de mano de una canasta: peldaños que suben 1,4 m cada uno y se acercan 1,4 m a la canasta
+// (no se tapan uno al otro, así no te golpeas la cabeza). El último queda a la altura del borde.
+export function escaleraCanasta(p) {
+  const { x, z, a, l, h } = p, lado = p.escalera || 's', paso = 1.4, prof = 1.2, ancho = 4, n = Math.ceil(h / paso), out = [];
+  for (let k = 1; k <= n; k++) {
+    const y = Math.min(h, k * paso), lejos = (n - k) * paso + 0.2;   // el de más arriba, pegadito a la canasta
+    if (lado === 's') { const z1 = z - l / 2 - lejos; out.push(caja(x - ancho / 2, x + ancho / 2, y - 0.3, y, z1 - prof, z1, { peldano: true })); }
+    else if (lado === 'n') { const z0 = z + l / 2 + lejos; out.push(caja(x - ancho / 2, x + ancho / 2, y - 0.3, y, z0, z0 + prof, { peldano: true })); }
+    else if (lado === 'e') { const x0 = x + a / 2 + lejos; out.push(caja(x0, x0 + prof, y - 0.3, y, z - ancho / 2, z + ancho / 2, { peldano: true })); }
+    else { const x1 = x - a / 2 - lejos; out.push(caja(x1 - prof, x1, y - 0.3, y, z - ancho / 2, z + ancho / 2, { peldano: true })); }
+  }
+  return out;
+}
+// Todas las cajas del terreno, con las 4 paredes del cuarto
+export function cajasTerreno(T) {
+  const w = T.ancho / 2, l = T.largo / 2, g = 4;
+  return [caja(-w - g, w + g, 0, T.alto, l, l + g), caja(-w - g, w + g, 0, T.alto, -l - g, -l), caja(w, w + g, 0, T.alto, -l, l), caja(-w - g, -w, 0, T.alto, -l, l),
+    ...T.piezas.flatMap(cajasPieza)];
+}
+// Los escondites: adentro de cada cueva (con su entrada, para llegar caminando) y los extra del terreno
+export function escondites(T) {
+  const out = [];
+  for (const p of T.piezas) {
+    if (p.t !== 'cueva') continue;
+    const ab = p.abierta[0], d = { n: [0, 1], s: [0, -1], e: [1, 0], o: [-1, 0] }[ab];
+    const fondo = (ab === 'n' || ab === 's' ? p.l : p.a) * 0.15;   // un poco hacia el fondo de la cueva
+    out.push({ x: p.x - d[0] * fondo, z: p.z - d[1] * fondo, y: 0,
+      entrada: { x: p.x + d[0] * ((ab === 'n' || ab === 's' ? p.l : p.a) / 2 + 4), z: p.z + d[1] * ((ab === 'n' || ab === 's' ? p.l : p.a) / 2 + 4) } });
+  }
+  for (const e of T.extra) {
+    const lugar = { x: e.x, z: e.z, y: e.y || 0, alto: !!e.alto, entrada: null };
+    if (e.alto) Object.assign(lugar, rutasAlto(T, lugar));   // cómo subir (y bajar) hasta un escondite alto
+    out.push(lugar);
+  }
+  return out;
+}
+// Cómo llega el bot a un escondite alto: una lista de puntos por donde pasar ({ x, z, y: la altura a la que tiene que llegar }).
+// Arriba de la cama: al trampolín (tramp: true, te lanza), después sobre la cama y al escondite.
+// Adentro de una canasta: sube la escalera de mano peldaño por peldaño, camina por el borde y se deja caer adentro.
+// salida: cómo vuelve a salir (de la cama basta con caminar hasta el borde y caer; de la canasta, por los cubos de adentro).
+export function rutasAlto(T, e) {
+  const cama = T.piezas.find(p => p.t === 'cama'), tramp = T.piezas.find(p => p.t === 'trampolin');
+  if (cama && tramp && e.y >= cama.h - 1) {
+    const borde = { x: cama.x - cama.a / 2 + 5, z: Math.max(cama.z - cama.l / 2 + 5, Math.min(cama.z + cama.l / 2 - 5, tramp.z)), y: cama.h };
+    return { ruta: [{ x: tramp.x, z: tramp.z, y: 0, tramp: true }, borde, { x: e.x, z: e.z, y: e.y }], salida: [{ x: borde.x, z: borde.z, y: cama.h }, { x: cama.x - cama.a / 2 - 8, z: borde.z, y: 0 }] };
+  }
+  const c = T.piezas.find(p => p.t === 'canasta' && Math.abs(e.x - p.x) < p.a / 2 && Math.abs(e.z - p.z) < p.l / 2);
+  if (!c) return { ruta: null, salida: null };
+  const centro = q => ({ x: (q.x0 + q.x1) / 2, z: (q.z0 + q.z1) / 2, y: q.y1 });
+  const peldanos = escaleraCanasta(c).map(centro), pie = peldanos[0], arriba = peldanos[peldanos.length - 1], g = 1.2;
+  // El pie de la escalera (en el piso, un poco antes del primer peldaño) y el borde de la canasta (arriba de la pared)
+  const lejos = (q, k) => ({ x: q.x + (q.x - c.x) / Math.hypot(q.x - c.x, q.z - c.z) * k, z: q.z + (q.z - c.z) / Math.hypot(q.x - c.x, q.z - c.z) * k });
+  const piso = { ...lejos(pie, 2), y: 0 }, borde = { ...lejos(arriba, -(0.2 + 1.2 / 2 + g / 2 + 0.4)), y: c.h };
+  // Para salir: los cubos de adentro (del más bajito al más alto), el borde de atrás y afuera
+  const cubos = cajasPieza(c).filter(q => !q.peldano && q.x1 - q.x0 < 4 && q.z1 - q.z0 < 4).map(centro).sort((a, b) => a.y - b.y);
+  const ultimo = cubos[cubos.length - 1];
+  const bordeAtras = { x: ultimo.x, z: c.z + c.l / 2 - g / 2, y: c.h }, afuera = { x: ultimo.x, z: c.z + c.l / 2 + 5, y: 0 };
+  return { ruta: [piso, ...peldanos, borde, { x: e.x, z: e.z, y: 0 }], salida: [...cubos, bordeAtras, afuera] };
+}
+// Las cajas que tapan la vista: las que están a la altura de los ojos (1,6 m)
+export const OJO = 1.6;
+// (ojo: a qué altura están los ojos; si el bot está arriba de la cama, sus ojos están a 27,5 + 1,6 m)
+export const tapanVista = (cajas, ojo = OJO) => cajas.filter(c => c.y0 <= ojo && c.y1 >= ojo);
+// ¿Hay algo que tape la vista entre a y b?
+export const lineaDeVista = (a, b, tapan) => !tapan.some(c => segmentHitsRect(a.x, a.z, b.x, b.z, c));
+
+// ¿A qué plataforma te lleva un trampolín? La más alta que alcanzas (con 1,5 m de margen) y que está cerca
+// (a menos de 8 m de borde a borde: en el aire tienes tiempo de sobra para llegar). null = a ninguna
+export function destinoTrampolin(T, tramp) {
+  let mejor = null;
+  for (const c of cajasTerreno(T)) {
+    if (c.salto || c.y1 > tramp.salto - 1.5 || c.y1 < 3) continue;
+    const gx = Math.max(0, c.x0 - (tramp.x + tramp.a / 2), (tramp.x - tramp.a / 2) - c.x1), gz = Math.max(0, c.z0 - (tramp.z + tramp.l / 2), (tramp.z - tramp.l / 2) - c.z1);
+    if (Math.hypot(gx, gz) <= 8 && (!mejor || c.y1 > mejor.y1)) mejor = c;
+  }
+  return mejor;
+}
+
+// ---------- En los modos de juego siempre es de día ----------
+// El reloj de verdad sigue (el pueblo de afuera tiene su día y su noche normal, y la hora de la sala no cambia),
+// pero la luz de los minijuegos se dibuja como si fuera mediodía: así nunca está oscuro.
+export const MEDIODIA = 0.5;
+export const faseDeLuz = (fase, enModo) => (enModo ? MEDIODIA : fase);
+
+// ----- El bot de las escondidas (jugando solo) -----
+// Busca recorriendo escondites; si te VE (sin nada en medio y no muy lejos) o te OYE (muy cerca), te persigue.
+export const BOT_ESC = { busca: 7, persigue: 10.5, vista: 70, oido: 9, atrapa: 1.6, olvida: 3 };
+// cajas: todas las del terreno (mira solo las que están a la altura de SUS ojos, que dependen de dónde está parado)
+export function botVe(bot, yo, cajas) {
+  const d = Math.hypot(bot.x - yo.x, bot.z - yo.z);
+  if (Math.abs((bot.y || 0) - (yo.y || 0)) > 3) return false;   // si estás mucho más arriba o más abajo (en la cama y él en el piso), no te ve
+  return d <= BOT_ESC.oido || (d <= BOT_ESC.vista && lineaDeVista(bot, yo, tapanVista(cajas, (bot.y || 0) + OJO)));
+}
+// El orden en que el bot revisa los escondites (al azar; los altos solo si sabe cómo subir)
+export function ordenEscondites(lista, rnd = Math.random) {
+  const idx = lista.map((e, i) => i).filter(i => !lista[i].alto || lista[i].ruta);
+  for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
+  return idx;
 }

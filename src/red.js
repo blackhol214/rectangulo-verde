@@ -75,6 +75,39 @@ export function revisarPreguntas(lista) {
 // El servidor revisa la contraseña (la de verdad está en datos/profe.json, que no se sube a GitHub)
 export const claveCorrecta = (dada, real) => typeof dada === 'string' && typeof real === 'string' && real.length > 0 && dada === real;
 
+// ---------- ¿Dónde está cada jugador? (mg) ----------
+// 0 = en el mundo · 1 a 20 = en el minijuego número mg − 1 · 21 = en la torre "No mires abajo"
+// · 30, 31, 32 = en una ronda de Escondidas con amigos (en el terreno 0, 1 o 2) · 99 = jugando solo (no ve a nadie)
+export const MG_TORRE = 21, MG_ESCONDIDAS = 30, MG_SOLO = 99;
+// Dos jugadores se ven solo si están en el mismo lugar (y ninguno está jugando solo)
+export const seVen = (miMg, suMg) => miMg === suMg && miMg !== MG_SOLO;
+
+// ---------- 🙈 Escondidas con amigos (el servidor es el árbitro) ----------
+// 30 s para esconderse (el buscador no ve nada) y 100 s para buscar. Para encontrar, el buscador tiene que estar cerca.
+export const ESC = { esconderMs: 30000, buscarMs: 100000, encontrarDist: 4.5, terrenos: 3 };
+// El buscador: uno al azar entre los que están esperando
+export const elegirBuscador = (ids, azar = Math.random) => ids[Math.min(ids.length - 1, Math.floor(azar() * ids.length))];
+// El terreno de la ronda con amigos: también al azar (lo elige el servidor, no el que aprieta Empezar)
+export const elegirTerreno = (azar = Math.random) => Math.min(ESC.terrenos - 1, Math.floor(azar() * ESC.terrenos));
+// ¿En qué parte de la ronda vamos? (ms: cuánto pasó desde que empezó)
+export const faseRonda = ms => (ms < ESC.esconderMs ? 'esconder' : ms < ESC.esconderMs + ESC.buscarMs ? 'buscar' : 'fin');
+// ¿Está lo bastante cerca para encontrarlo? (con las últimas posiciones que conoce el servidor)
+export const puedeEncontrar = (a, b, max = ESC.encontrarDist) => Math.hypot(a.x - b.x, a.z - b.z) <= max && Math.abs(a.y - b.y) <= 4;
+// ¿Quién ganó? 'buscador' si encontró a todos · 'camaleones' si se acabó el tiempo y queda alguien (o si el buscador se fue)
+// · 'nadie' si todos los camaleones se fueron sin que encontrara a ninguno · null si sigue la ronda
+export function ganadorRonda({ camaleones, encontrados, ms, buscadorSeFue = false }) {
+  if (buscadorSeFue) return 'camaleones';
+  const quedan = camaleones.filter(id => !encontrados.includes(id));
+  if (!quedan.length) return encontrados.length ? 'buscador' : 'nadie';
+  return faseRonda(ms) === 'fin' ? 'camaleones' : null;
+}
+// El mg de un jugador lo decide el servidor durante la ronda: así nadie se vuelve invisible cambiándolo desde la consola.
+// terrenoRonda: el terreno de SU ronda (o null si no está jugando una). Fuera de la ronda nadie puede decir que está adentro.
+export function mgDelServidor(mg, terrenoRonda) {
+  if (terrenoRonda !== null) return MG_ESCONDIDAS + terrenoRonda;
+  return mg >= MG_ESCONDIDAS && mg < MG_ESCONDIDAS + ESC.terrenos ? MG_SOLO : mg;
+}
+
 // Lee un mensaje que llegó por la red. Si viene roto o con trampas, devuelve null.
 // Los mensajes son cortitos (1.500 letras), menos el de las preguntas del profe, que puede ser más largo.
 export const MAX_MENSAJE = 1500, MAX_MENSAJE_PREGUNTAS = 40000;
@@ -97,7 +130,7 @@ export function leerMensaje(texto) {
   }
   if (m.tipo === 'pos') {
     if (![m.x, m.y, m.z, m.rot].every(esNumero)) return null;
-    return { tipo: 'pos', x: m.x, y: m.y, z: m.z, rot: m.rot, color: esNumero(m.color) ? m.color : null, mg: m.mg === 1 ? 1 : 0 };
+    return { tipo: 'pos', x: m.x, y: m.y, z: m.z, rot: m.rot, color: esNumero(m.color) ? m.color : null, mg: esEntero(m.mg, 0, 99) ? m.mg : 0 };
   }
   // Cambió tu gorra, tus gafas o tu bláster
   if (m.tipo === 'look') return { tipo: 'look', look: leerLook(m.look) };
@@ -132,6 +165,13 @@ export function leerMensaje(texto) {
     const tres = a => Array.isArray(a) && a.length === 3 && a.every(esNumero);
     if (!tres(m.s) || !tres(m.d)) return null;
     return { tipo: 'disparo', s: m.s, d: m.d, v2: m.v2 === true };
+  }
+  // Escondidas: entrar a la espera, salir, empezar una ronda o encontrar al jugador a
+  if (m.tipo === 'esc') {
+    if (m.que === 'entrar' || m.que === 'salir') return { tipo: 'esc', que: m.que };
+    if (m.que === 'empezar') return { tipo: 'esc', que: 'empezar' };   // (el terreno lo elige el servidor al azar)
+    if (m.que === 'encontrar' && Number.isInteger(m.a)) return { tipo: 'esc', que: 'encontrar', a: m.a };
+    return null;
   }
   // Tu pestaña se escondió (v: 0) o volvió a verse (v: 1): una pestaña escondida no puede ser el anfitrión
   if (m.tipo === 'visible') return { tipo: 'visible', v: m.v === 0 ? 0 : 1 };

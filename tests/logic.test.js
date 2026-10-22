@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  ESCALA, TERRENOS, CARROS, CARRO, carroPos, CIRCUITO, largoCircuito, partesCarro, destinoTrampolin, MEDIODIA, faseDeLuz, cajasPieza, escaleraCanasta, cajasTerreno, escondites, OJO, tapanVista, lineaDeVista, BOT_ESC, botVe, ordenEscondites,
   collideWalls, moveAndCollide, boxHit,
   upgradePrice, fmt, sunElevation, isNightPhase, clockText, hourToPhase,
   launchSpeedForHeight, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, productReward, BAG_VALUE, nearestIndex, assistantSpeed, ASSIST_SPEED_MAX,
@@ -1001,11 +1002,14 @@ describe('modo Escuela', () => {
     }
     expect(Math.hypot(o.x, o.z)).toBeGreaterThan(1500);
   });
-  it('el salón tiene 12 sillas y solo la de adelante a la izquierda tiene modo', () => {
+  it('el salón tiene 12 sillas: adelante a la izquierda "No mires abajo" y atrás a la derecha "Escondidas"', () => {
     const sillas = salonSillas();
     expect(sillas).toHaveLength(12);
-    expect(sillas.filter(s => s.modo)).toEqual([sillas[0]]);
+    expect(sillas.filter(s => s.modo)).toEqual([sillas[0], sillas[11]]);
     expect(sillas[0].modo).toBe('nomires');
+    expect(sillas[11].modo).toBe('escondidas');
+    // la de Escondidas: la última fila (z más chico) y la más a la derecha (x más chico, mirando al pizarrón)
+    for (const s of sillas) { expect(s.z).toBeGreaterThanOrEqual(sillas[11].z); expect(s.x).toBeGreaterThanOrEqual(sillas[11].x); }
     // adelante = z más grande · izquierda (mirando al pizarrón) = x más grande
     for (const s of sillas) { expect(s.z).toBeLessThanOrEqual(sillas[0].z); expect(s.x).toBeLessThanOrEqual(sillas[0].x); }
     // todas caben dentro del salón
@@ -1280,5 +1284,182 @@ describe('por dentro de las casas del pueblo', () => {
   });
   it('la cama no tapa el camino de la puerta al tapete', () => {
     expect(H.bed.dx - H.bed.w / 2).toBeGreaterThan(H.door.w / 2);
+  });
+});
+
+describe('Escondidas: los terrenos gigantes', () => {
+  const dentro = (c, x, z, y = 0, r = 0.5) => x > c.x0 - r && x < c.x1 + r && z > c.z0 - r && z < c.z1 + r && y + 2 > c.y0 && y < c.y1;
+  it('hay 3 terrenos y todo es 50 veces más grande', () => {
+    expect(TERRENOS).toHaveLength(3);
+    expect(ESCALA).toBe(50);
+    const mesa = TERRENOS[0].piezas.find(p => p.t === 'mesa');
+    expect(mesa.h).toBe(0.72 * ESCALA);   // una mesa de 72 cm mide 36 m
+  });
+  for (const T of TERRENOS) {
+    const cajas = cajasTerreno(T), lugares = escondites(T);
+    it(`${T.nombre}: las piezas caben en el cuarto y no se enciman en el piso`, () => {
+      for (const p of T.piezas) {
+        expect(Math.abs(p.x) + p.a / 2).toBeLessThanOrEqual(T.ancho / 2);
+        expect(Math.abs(p.z) + p.l / 2).toBeLessThanOrEqual(T.largo / 2);
+      }
+      const solidas = T.piezas.filter(p => p.t !== 'decor' && !p.y);
+      for (let i = 0; i < solidas.length; i++) for (let j = i + 1; j < solidas.length; j++) {
+        const a = solidas[i], b = solidas[j];
+        const separadas = Math.abs(a.x - b.x) >= (a.a + b.a) / 2 || Math.abs(a.z - b.z) >= (a.l + b.l) / 2;
+        expect(separadas, `${a.estilo || a.t} y ${b.estilo || b.t}`).toBe(true);
+      }
+    });
+    it(`${T.nombre}: los escondites y el lugar de inicio están libres (no adentro de algo)`, () => {
+      expect(lugares.length).toBeGreaterThanOrEqual(4);
+      for (const e of lugares) {
+        expect(cajas.some(c => dentro(c, e.x, e.z, e.y)), `escondite ${e.x},${e.z}`).toBe(false);
+        if (e.entrada) expect(cajas.some(c => dentro(c, e.entrada.x, e.entrada.z)), `entrada ${e.entrada.x},${e.entrada.z}`).toBe(false);
+      }
+      expect(cajas.some(c => dentro(c, T.spawn.x, T.spawn.z))).toBe(false);
+      for (let k = 0; k < 8; k++) {   // los camaleones aparecen en un círculo alrededor del inicio
+        const a = k / 8 * Math.PI * 2;
+        expect(cajas.some(c => dentro(c, T.spawn.x + Math.cos(a) * 6, T.spawn.z + Math.sin(a) * 6))).toBe(false);
+      }
+    });
+    it(`${T.nombre}: en las cuevas cabes (2 m de alto y 1 m de ancho, como tú)`, () => {
+      for (const p of T.piezas.filter(q => q.t === 'cueva')) {
+        const g = Math.max(0.6, Math.min(p.a, p.l) * 0.08);
+        expect(p.h - g).toBeGreaterThan(2.2);
+        expect(Math.min(p.a, p.l) - 2 * g).toBeGreaterThan(1.5);
+      }
+    });
+  }
+  it('la escalera de mano: cada peldaño sube poquito y no tapa al de abajo (no te golpeas la cabeza)', () => {
+    for (const p of TERRENOS[1].piezas.filter(q => q.t === 'canasta')) {
+      const peldanos = escaleraCanasta(p);
+      expect(peldanos.at(-1).y1).toBe(p.h);   // el último, a la altura del borde
+      for (let i = 1; i < peldanos.length; i++) {
+        const a = peldanos[i - 1], b = peldanos[i];
+        expect(b.y1 - a.y1).toBeLessThanOrEqual(1.5);   // el salto llega a 2,6 m
+        const tapa = a.x0 < b.x1 && b.x0 < a.x1 && a.z0 < b.z1 && b.z0 < a.z1;
+        expect(tapa).toBe(false);
+      }
+    }
+  });
+  it('el trampolín de la habitación te lanza más alto que la cama', () => {
+    const T = TERRENOS[1], cama = T.piezas.find(p => p.t === 'cama'), tramp = T.piezas.find(p => p.t === 'trampolin');
+    expect(tramp.salto).toBeGreaterThan(cama.h + 4);
+    expect(cajasPieza(tramp)[0].salto).toBe(tramp.salto);
+  });
+  it('los trampolines del salón te llevan arriba de algo (una mesa, una silla o el escritorio)', () => {
+    const T = TERRENOS[0], tramps = T.piezas.filter(p => p.t === 'trampolin');
+    expect(tramps.length).toBeGreaterThanOrEqual(3);
+    for (const tr of tramps) {
+      const destino = destinoTrampolin(T, tr);
+      expect(destino, `trampolín en ${tr.x}, ${tr.z}`).not.toBeNull();
+      expect(destino.y1).toBeGreaterThan(15);              // algo alto que no alcanzas saltando
+      expect(tr.salto).toBeGreaterThanOrEqual(destino.y1 + 1.5);
+    }
+    const alturas = tramps.map(tr => destinoTrampolin(T, tr).y1);
+    expect(new Set(alturas).size).toBeGreaterThan(1);       // no todos llevan a la misma altura
+  });
+  it('a las manzanas de la cocina te puedes subir (con un terrón de azúcar de escalón)', () => {
+    const T = TERRENOS[2], cajas = cajasTerreno(T), salto = 12.5 ** 2 / 60;   // ~2,6 m
+    for (const m of T.piezas.filter(p => p.estilo === 'manzana')) {
+      const arriba = cajasPieza(m)[0];
+      expect(arriba.y1).toBeGreaterThan(salto);   // del piso no llegas…
+      // …pero hay algo al lado (a menos de 2 m) desde donde sí: más bajito que tu salto y que te deja a menos de 2,4 m de la manzana
+      const escalon = cajas.find(c => c !== arriba && c.y1 <= salto - 0.2 && arriba.y1 - c.y1 <= 2.4 &&
+        Math.hypot(Math.max(0, c.x0 - arriba.x1, arriba.x0 - c.x1), Math.max(0, c.z0 - arriba.z1, arriba.z0 - c.z1)) <= 2);
+      expect(escalon, `manzana en ${m.x}, ${m.z}`).toBeTruthy();
+    }
+  });
+  it('los carros andan rápido por toda la habitación, siempre igual según el reloj', () => {
+    expect(carroPos(0, 12.5)).toEqual(carroPos(0, 12.5));
+    expect(CARRO.vel).toBeGreaterThan(12);              // más rápido que tú corriendo
+    expect(largoCircuito()).toBeGreaterThan(400);       // una vuelta grande, no solo la alfombra
+    const xs = [], zs = [];
+    for (let t = 0; t < 60; t += 0.25) { const c = carroPos(0, t); xs.push(c.x); zs.push(c.z); }
+    expect(Math.max(...xs) - Math.min(...xs)).toBeGreaterThan(100);
+    expect(Math.max(...zs) - Math.min(...zs)).toBeGreaterThan(150);
+    // de un cuadro al siguiente se mueve poquito (no da saltos)
+    for (let t = 0; t < 60; t += 1 / 60) { const a = carroPos(1, t), b = carroPos(1, t + 1 / 60); expect(Math.hypot(b.x - a.x, b.z - a.z)).toBeLessThan(CARRO.vel / 60 + 0.01); }
+  });
+  it('los carros nunca se meten en los muebles ni se salen del cuarto', () => {
+    const T = TERRENOS[1], muebles = cajasTerreno(T).filter(c => c.y0 < CARRO.cabina && c.y1 > 0.5);
+    for (let i = 0; i < CARROS.length; i++) for (let t = 0; t < largoCircuito() / CARRO.vel; t += 0.2) {
+      const c = carroPos(i, t), { cubierta, cabina } = partesCarro(c.giro);
+      for (const parte of [cubierta, cabina]) {
+        const x0 = c.x + parte.x - parte.hw, x1 = c.x + parte.x + parte.hw, z0 = c.z + parte.z - parte.hd, z1 = c.z + parte.z + parte.hd;
+        expect(Math.abs(c.x) + 8).toBeLessThan(T.ancho / 2);
+        expect(Math.abs(c.z) + 8).toBeLessThan(T.largo / 2);
+        const choca = muebles.find(m => x0 < m.x1 && m.x0 < x1 && z0 < m.z1 && m.z0 < z1);
+        expect(choca, `carro ${i} en ${c.x.toFixed(0)}, ${c.z.toFixed(0)}`).toBeUndefined();
+      }
+    }
+  });
+  it('los 3 carros van separados (no chocan entre ellos)', () => {
+    for (let t = 0; t < 40; t += 0.5) for (let i = 0; i < CARROS.length; i++) for (let j = i + 1; j < CARROS.length; j++) {
+      const a = carroPos(i, t), b = carroPos(j, t);
+      expect(Math.hypot(a.x - b.x, a.z - b.z)).toBeGreaterThan(30);
+    }
+  });
+  it('subirse es fácil: la cubierta está bajita, atrás, y la cabina adelante', () => {
+    expect(CARRO.cubierta).toBeLessThan(1.5);
+    const { cubierta, cabina } = partesCarro(0);   // mirando hacia +z
+    expect(cubierta.z).toBeLessThan(0); expect(cabina.z).toBeGreaterThan(0);
+    expect(cabina.top).toBeGreaterThan(2.6);   // la cabina no se salta: es una pared
+    const giro90 = partesCarro(Math.PI / 2);     // mirando hacia +x: lo largo queda en x
+    expect(giro90.cubierta.hw).toBeGreaterThan(giro90.cubierta.hd);
+  });
+  it('la línea de vista: una pared en medio tapa, el aire no', () => {
+    const tapan = tapanVista([{ x0: -1, x1: 1, y0: 0, y1: 10, z0: -5, z1: 5 }, { x0: 10, x1: 12, y0: 20, y1: 30, z0: -5, z1: 5 }]);
+    expect(tapan).toHaveLength(1);   // la de arriba (de 20 a 30 m) no tapa los ojos
+    expect(lineaDeVista({ x: -5, z: 0 }, { x: 5, z: 0 }, tapan)).toBe(false);
+    expect(lineaDeVista({ x: -5, z: 8 }, { x: 5, z: 8 }, tapan)).toBe(true);
+  });
+  it('el bot te ve si no hay nada en medio, y te oye si estás muy cerca', () => {
+    const tapan = [{ x0: -1, x1: 1, y0: 0, y1: 10, z0: -5, z1: 5 }];
+    expect(botVe({ x: -30, z: 8 }, { x: 30, z: 8 }, tapan)).toBe(true);          // se ve de lejos
+    expect(botVe({ x: -50, z: 8 }, { x: 50, z: 8 }, tapan)).toBe(false);         // demasiado lejos
+    expect(botVe({ x: -5, z: 0 }, { x: 5, z: 0 }, tapan)).toBe(false);           // la pared tapa…
+    expect(botVe({ x: -3, z: 0 }, { x: 3, z: 0 }, tapan)).toBe(true);            // …pero tan cerca te oye
+    expect(botVe({ x: 0, z: 20 }, { x: 2, z: 20, y: 27 }, tapan)).toBe(false);   // desde el piso no te ve arriba de la cama…
+    expect(botVe({ x: 0, z: 20, y: 27 }, { x: 2, z: 20, y: 27.5 }, tapan)).toBe(true);   // …pero si él también subió, sí
+    // Las cosas que tapan dependen de la altura de los ojos: una pared de 0 a 10 m no tapa a 27 m
+    expect(botVe({ x: -30, z: 0, y: 27 }, { x: 30, z: 0, y: 27 }, tapan)).toBe(true);
+    expect(botVe({ x: -30, z: 0 }, { x: 30, z: 0 }, tapan)).toBe(false);
+  });
+  it('el bot recorre los escondites en desorden, también los altos (sabe cómo subir)', () => {
+    const lista = escondites(TERRENOS[1]), orden = ordenEscondites(lista, seededRandom(3));
+    expect(new Set(orden).size).toBe(orden.length);
+    expect(orden.length).toBe(lista.length);
+    expect(orden.some(i => lista[i].alto)).toBe(true);
+  });
+  it('arriba de la cama: el bot va al trampolín, que lo lanza más alto que la cama, y baja caminando hasta el borde', () => {
+    const T = TERRENOS[1], cama = T.piezas.find(p => p.t === 'cama'), tramp = T.piezas.find(p => p.t === 'trampolin');
+    const e = escondites(T).find(q => q.alto && q.y >= cama.h - 1);
+    expect(e.ruta[0]).toMatchObject({ x: tramp.x, z: tramp.z, tramp: true });
+    expect(tramp.salto).toBeGreaterThan(cama.h + 2);
+    expect(e.ruta.at(-1)).toMatchObject({ x: e.x, z: e.z, y: e.y });
+    const borde = e.ruta[1];   // el primer punto sobre la cama: arriba del colchón y cerca del trampolín
+    expect(Math.abs(borde.x - cama.x)).toBeLessThan(cama.a / 2);
+    expect(Math.hypot(borde.x - tramp.x, borde.z - tramp.z)).toBeLessThan(25);
+    expect(e.salida.at(-1).y).toBe(0);
+    expect(Math.abs(e.salida.at(-1).x - cama.x)).toBeGreaterThan(cama.a / 2);   // termina afuera de la cama
+  });
+  it('adentro de la canasta: sube la escalera (cada peldaño se alcanza saltando) y sale por los cubos', () => {
+    const T = TERRENOS[1], e = escondites(T).find(q => q.alto && q.y === 0), c = T.piezas.find(p => p.t === 'canasta' && Math.abs(e.x - p.x) < p.a / 2);
+    expect(e.ruta[0].y).toBe(0);
+    for (let i = 1; i < e.ruta.length - 1; i++) expect(e.ruta[i].y - e.ruta[i - 1].y).toBeLessThanOrEqual(1.5);   // el salto llega a 2,6 m
+    expect(e.ruta.at(-2).y).toBe(c.h);   // el borde
+    for (let i = 1; i < e.salida.length - 1; i++) expect(e.salida[i].y - e.salida[i - 1].y).toBeLessThanOrEqual(2.5);
+    expect(e.salida.at(-2).y).toBe(c.h);
+    const afuera = e.salida.at(-1);
+    expect(Math.abs(afuera.z - c.z) > c.l / 2 || Math.abs(afuera.x - c.x) > c.a / 2).toBe(true);
+  });
+});
+
+describe('en los modos de juego siempre es de día', () => {
+  it('afuera la luz sigue el reloj; en un modo, siempre mediodía', () => {
+    expect(faseDeLuz(0.1, false)).toBe(0.1);    // de noche en el pueblo
+    expect(faseDeLuz(0.1, true)).toBe(MEDIODIA); // pero en un modo, de día
+    expect(faseDeLuz(0.9, true)).toBe(0.5);
+    expect(isNightPhase(faseDeLuz(0.0, true))).toBe(false);
   });
 });

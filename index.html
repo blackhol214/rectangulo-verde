@@ -134,6 +134,31 @@
   .esc-resultado { margin:0; min-height:1.4em; font:800 17px system-ui, sans-serif; text-align:center; }
   .esc-resultado.bien { color:#1f8a3b; } .esc-resultado.mal { color:#c8102e; }
   @media (pointer:coarse) { #escuela .keys { display:none; } }
+  /* Escondidas: el aviso de esconderse va arriba del panel de preguntas (encima de todo lo del panel) */
+  .esc-aviso-panel { position:relative; z-index:2; margin:-4px 0 0; padding:10px 14px; border-radius:12px; background:#1d1640; color:#fff; text-align:center; font:900 clamp(18px, 5vw, 24px)/1.25 system-ui, sans-serif; font-variant-numeric:tabular-nums; }
+  .esc-aviso-panel b { color:#ffd84d; }
+  .esc-aviso-panel.rojo b { color:#ff4b4b; }
+  /* Escondidas: el panel para elegir terreno y rol, y la pantalla negra del buscador */
+  #escondidas .shop-card { width:min(680px, 100%); }
+  #escondidas .shop-head h2 { color:#8e5bd9; }
+  #escondCerrar { margin-left:auto; }
+  .escond-terrenos { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; }
+  .escond-terrenos button, .escond-roles button { border:2px solid #e4e0f7; border-radius:12px; padding:10px; background:#fff; cursor:pointer; text-align:left; font:600 13px/1.35 system-ui, sans-serif; color:#4a3f7a; touch-action:manipulation; }
+  .escond-terrenos button b { display:block; font:800 16px system-ui, sans-serif; color:#1d1640; margin:2px 0; }
+  .escond-terrenos button .em { display:block; font-size:28px; line-height:1.1; }
+  .escond-terrenos button.on, .escond-roles button.on { border-color:#8e5bd9; background:#f3edff; box-shadow:0 0 0 2px #8e5bd9 inset; }
+  .escond-roles { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .escond-roles button { text-align:center; font:800 15px system-ui, sans-serif; color:#1d1640; } .escond-roles small { font:600 12px system-ui, sans-serif; color:#4a3f7a; }
+  #escondLista { margin:0; padding-left:22px; font:600 15px/1.5 system-ui, sans-serif; color:#1d1640; }
+  .escond-empezar { width:100%; min-height:52px; border:0; border-radius:12px; background:#8e5bd9; color:#fff; font:900 18px system-ui, sans-serif; cursor:pointer; touch-action:manipulation; }
+  .escond-empezar:disabled { background:#d9dfdb; color:#6b7a70; cursor:not-allowed; }
+  .escond-terrenos button:focus-visible, .escond-roles button:focus-visible, .escond-empezar:focus-visible { outline:3px solid #1e6bff; outline-offset:2px; }
+  .escond-resultado { margin:8px 0; font:900 clamp(22px, 6vw, 30px)/1.25 system-ui, sans-serif; text-align:center; color:#1d1640; }
+  @media (max-width:520px) { .escond-terrenos { grid-template-columns:1fr; } }
+  #escNegro { position:fixed; inset:0; z-index:14; background:#000; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; padding:16px; text-align:center; pointer-events:none; }
+  #escNegro[hidden] { display:none; }
+  #escNegroNum { font:900 clamp(90px, 30vw, 200px)/1 system-ui, sans-serif; color:#ff2a2a; font-variant-numeric:tabular-nums; }
+  #escNegro p { margin:0; font:700 16px/1.4 system-ui, sans-serif; color:#ddd; }
   /* Modo profe: el editor de las preguntas de la clase */
   #profe .shop-card { width:min(720px, 100%); }
   #profe .shop-head h2 { color:#d6338a; }
@@ -260,6 +285,7 @@
 <!-- Modo Escuela: preguntas para cargar la batería de "No mires abajo" (Q) -->
 <div id="escuela" class="panel" hidden role="dialog" aria-modal="true" aria-labelledby="escTitle">
   <div class="shop-card">
+    <p class="esc-aviso-panel" id="escAvisoPanel" hidden aria-live="polite"></p>
     <div class="shop-head"><h2 id="escTitle">⚡ CARGAR BATERÍA</h2><span class="wallet" id="escBateria">🔋 0</span><button type="button" id="escCerrar">Cerrar <span class="keys">(Q)</span></button></div>
     <p class="esc-ayuda">Cada respuesta correcta da <b>+2.000 🔋</b>. Caminar y saltar gastan batería.</p>
     <p class="esc-pregunta" id="escPregunta"></p>
@@ -268,6 +294,27 @@
     <button type="button" class="esc-salir" id="escSalirTorre">Salir de la torre (volver al salón)</button>
   </div>
 </div>
+<!-- Escondidas: elegir terreno y rol (solo) o esperar a los amigos (sala); al final, el resultado -->
+<div id="escondidas" class="panel" hidden role="dialog" aria-modal="true" aria-labelledby="escondTitle">
+  <div class="shop-card">
+    <div class="shop-head"><h2 id="escondTitle">🙈 ESCONDIDAS</h2><button type="button" id="escondCerrar">Cerrar</button></div>
+    <div id="escondElegir">
+      <p class="esc-ayuda" id="escondModo"></p>
+      <div id="escondTerrenoFila"><p class="shop-group">Elige el terreno (¡todo es 50 veces más grande!)</p>
+      <div class="escond-terrenos" id="escondTerrenos"></div></div>
+      <div id="escondRolFila"><p class="shop-group">¿Qué quieres hacer?</p>
+        <div class="escond-roles"><button type="button" data-rol="esconder">🏃 Me escondo<br><small>el bot me busca</small></button><button type="button" data-rol="buscar">🔎 Busco<br><small>el bot se esconde</small></button></div></div>
+      <div id="escondSala"><p class="shop-group">Sentados en la silla de Escondidas</p><ul id="escondLista"></ul></div>
+      <p class="profe-msj" id="escondMsj" aria-live="polite"></p>
+      <button type="button" class="escond-empezar" id="escondEmpezar">¡Empezar!</button>
+    </div>
+    <div id="escondFin" hidden>
+      <p class="escond-resultado" id="escondResultado" aria-live="polite"></p>
+      <div class="profe-botones"><button type="button" id="escondOtra">Otra ronda</button><button type="button" id="escondSalon">Volver al salón</button></div>
+    </div>
+  </div>
+</div>
+<div id="escNegro" hidden><span id="escNegroNum">30</span><p>🙈 ¡No mires! Los demás se esconden…<br>Mientras, responde preguntas para tener batería</p></div>
 <!-- Modo profe: el profe escribe las preguntas de la clase (silla rosada del salón) -->
 <div id="profe" class="panel" hidden role="dialog" aria-modal="true" aria-labelledby="profeTitle">
   <div class="shop-card">
@@ -295,9 +342,9 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module">
-import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, ESCUELA, ESCUELA_K, escuelaSiguiente, escuelaMezclar, SALON, salonSillas, sillaCercana, cercaDeLaProfe, preguntasDeLaClase, escaparHTML, NO_MIRES, torreNoMires, seededRandom, debeReaparecer, ETAPAS, etapaDe, cajasDe, decoracionTorre, ovniDesplazamiento, HIELO, deslizar, puedeDobleSalto, gastarBateria, cargarBateria, hayBateria, BATERIA, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, VILLAGE_HOUSE, wallPieces, insideVillageHouse, villageBed, villageEntrance, villageExit, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, squashStretch, ACHIEVEMENTS, achievementById, coinAchievementsFor, TROPHY_TABLE, trophySpot, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
-         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-22-casas'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
-import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto, acercar, acercarAngulo, piezasExplosion, leerPreguntas, revisarPreguntas, PROFE } from './src/red.js?v=2026-10-21-profe';
+import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, ESCUELA, ESCUELA_K, escuelaSiguiente, escuelaMezclar, SALON, salonSillas, sillaCercana, faseDeLuz, TERRENOS, CARROS, CARRO, carroPos, partesCarro, cajasPieza, escaleraCanasta, cajasTerreno, escondites, BOT_ESC, botVe, ordenEscondites, cercaDeLaProfe, preguntasDeLaClase, escaparHTML, NO_MIRES, torreNoMires, seededRandom, debeReaparecer, ETAPAS, etapaDe, cajasDe, decoracionTorre, ovniDesplazamiento, HIELO, deslizar, puedeDobleSalto, gastarBateria, cargarBateria, hayBateria, BATERIA, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, VILLAGE_HOUSE, wallPieces, insideVillageHouse, villageBed, villageEntrance, villageExit, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, squashStretch, ACHIEVEMENTS, achievementById, coinAchievementsFor, TROPHY_TABLE, trophySpot, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
+         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-22-escondidas2'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
+import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto, acercar, acercarAngulo, piezasExplosion, leerPreguntas, revisarPreguntas, PROFE, seVen, MG_TORRE, MG_ESCONDIDAS, MG_SOLO, ESC } from './src/red.js?v=2026-10-22-escondidas2';
 (() => {
   // iPhone ignora user-scalable=no: aquí se bloquea el zoom con dos dedos y el doble toque
   for (const ev of ['gesturestart', 'gesturechange']) document.addEventListener(ev, e => e.preventDefault(), { passive: false });
@@ -726,7 +773,8 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
   let firstPerson = false, fpPitch = 0;
   addEventListener('keydown', e => {
     if (!loginEl.hidden) return;                 // en la pantalla de inicio: solo se escribe el usuario
-    if (!profeEl.hidden) { if (e.code === 'Escape') cerrarProfe(); return; }   // en el editor del profe se escribe: ninguna tecla del juego hace nada
+    if (!profeEl.hidden) { if (e.code === 'Escape') cerrarProfe(); return; }
+    if (!escondEl.hidden) { if (e.code === 'Escape') document.getElementById('escondCerrar').click(); return; }   // el panel de Escondidas se usa con el mouse o el dedo   // en el editor del profe se escribe: ninguna tecla del juego hace nada
     if (!escuelaEl.hidden) { escuelaTecla(e); return; }   // con el panel de la batería abierto, las teclas son para responder
     // Tienda: P la abre y la cierra (Esc también la cierra)
     if (e.code === 'KeyP' && !e.repeat) { e.preventDefault(); toggleShop(); return; }
@@ -932,12 +980,17 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
   // En el celular no hay teclas: los textos nombran los botones
   const IS_TOUCH = matchMedia('(pointer:coarse)').matches;
   const touchText = s => !IS_TOUCH ? s : s.replace(/pulsa E/g, 'toca ✋ Buscar').replace(/<b>E<\/b>/g, '<b>✋ Buscar</b>').replace(/con (<b>)?F(<\/b>)?/g, 'con $1💧 Agua$2');
-  function showToast(text, bad, ms = 1800) {
+  // delModo: el aviso es del modo de la Escuela en el que estás. Mientras juegas un modo de la Escuela,
+  // los avisos de afuera (el pueblo, los bots, el día, los amigos que entran…) no se muestran.
+  function showToast(text, bad, ms = 1800, delModo = false) {
     if (quietToasts) return;
+    if (!delModo && enModoEscuela()) return;
     ms = Math.max(ms, 1500 + text.length * 45);   // mientras más largo el texto, más tiempo se queda para leerlo
     toast.textContent = touchText(text); toast.classList.toggle('bad', !!bad); toast.classList.add('show');
     clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('show'), ms);
   }
+  const avisoModo = (text, bad, ms) => showToast(text, bad, ms, true);   // un aviso del modo en el que estás (siempre se ve)
+  const enModoEscuela = () => { try { return !!(MG.active && MG.active === MODES.escuela); } catch (e) { return false; } };   // (al arrancar el juego MG todavía no existe)
   // Progreso de esta partida: se guarda con el botón GUARDAR, por usuario
   const save = { coins: 0, boxes: 0, style: emptyStyle(), trophies: [], levels: { belt: 0, hopper: 0, belt2: 0, turbo: 0, bigHouse: 0, transformer: 0, hopper2: 0, lineBox: 0, lineBag: 0, factory: 0, assistant2: 0, assistant: 0, assistSpeed: 0, blaster: 0, blaster2: 0 } };
   try { localStorage.removeItem('rectangulo-verde-tienda'); } catch (e) {} // borra el guardado de versiones anteriores
@@ -2110,13 +2163,23 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     letrero('👩‍🏫 Modo profe', '#d6338a', '#ffffff', 3.2, px, 3, pz);
     // Mesas y sillas (todas sólidas). La silla del modo brilla y tiene su letrero.
     MG.built.sillaMat = new THREE.MeshLambertMaterial({ color: 0xffc83d, emissive: 0x553300 });
+    MG.built.escondMat = new THREE.MeshLambertMaterial({ color: 0x9fd6ff, emissive: 0x113355 });
     SILLAS.forEach(s => {
-      const x = o.x + s.x, z = o.z + s.z, tz = z + SALON.sillaAtras, mat = s.modo ? MG.built.sillaMat : madera;
+      const escondida = s.modo === 'escondidas';
+      const x = o.x + s.x, z = o.z + s.z, tz = z + SALON.sillaAtras, mat = escondida ? MG.built.escondMat : s.modo ? MG.built.sillaMat : madera;
       mgBox(x - 1.1, x + 1.1, 0, 1.1, tz - 0.6, tz + 0.6, madera);                      // mesa
       mgBox(x - 1.05, x + 1.05, 0, 0.05, tz - 0.55, tz + 0.55, metal, false);
-      mgBox(x - 0.5, x + 0.5, 0, 0.6, z - 0.5, z + 0.5, mat);                           // asiento
-      mgBox(x - 0.5, x + 0.5, 0.6, 1.6, z - 0.55, z - 0.4, mat);                        // respaldo
-      if (s.modo) {
+      const asiento = mgBox(x - 0.5, x + 0.5, 0, 0.6, z - 0.5, z + 0.5, mat);           // asiento
+      const respaldo = mgBox(x - 0.5, x + 0.5, 0.6, 1.6, z - 0.55, z - 0.4, mat);       // respaldo
+      if (escondida) {
+        // ¡La silla se está escondiendo! Inclinada detrás de una caja de cartón, asomándose con dos ojitos
+        for (const parte of [asiento, respaldo]) parte.mesh.rotation.z = -0.18;
+        mgBox(x - 2.1, x - 0.7, 0, 1.3, z - 1.2, z + 0.6, new THREE.MeshLambertMaterial({ color: 0xc9a06a }));   // la caja de cartón (la silla se asoma por un lado)
+        for (const ex of [0.15, 0.4]) { const ojo = new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 10), new THREE.MeshBasicMaterial({ color: 0xffffff })); ojo.position.set(x - 0.75 + ex, 1.45, z - 0.38); scene.add(ojo);
+          const nina = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 8), eyeMat); nina.position.set(x - 0.78 + ex, 1.45, z - 0.27); scene.add(nina); }
+        const l3 = new THREE.PointLight(0x9fd6ff, 1.2, 6, 1.5); l3.position.set(x, 2, z); scene.add(l3);
+        letrero('🙈 Escondidas', '#8e5bd9', '#ffffff', 3.4, x - 0.6, 3, z);
+      } else if (s.modo) {
         const l2 = new THREE.PointLight(0xffc83d, 1.4, 6, 1.5); l2.position.set(x, 2, z); scene.add(l2);
         letrero('⬇️ No mires abajo', '#5b3df5', '#ffffff', 3.6, x, 3, z);
       }
@@ -2301,6 +2364,397 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
       mv.grupo.position.x = x; mv.grupo.position.y = y;
     }
   }
+  // ===== 🙈 Escondidas: terrenos gigantes, el bot y las rondas =====
+  // Los 3 terrenos están dentro del mismo minijuego del Modo Escuela, lejos del salón y de la torre
+  const TERRENO_X = [700, 1200, 1700];
+  // ----- Texturas hechas con canvas (vetas de madera, tela, alfombra, plástico, papel…) -----
+  // Las que son grises se pintan del color de cada cosa (el color se multiplica por la textura)
+  const TEX = {};
+  function textura(nombre) {
+    if (TEX[nombre]) return TEX[nombre];
+    const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d'), r = seededRandom(nombre.length * 97 + 7);
+    const ruido = (n, a, tono = 0) => { for (let i = 0; i < n; i++) { const v = tono || Math.floor(r() * 255); g.fillStyle = `rgba(${v},${v},${v},${a * r()})`; g.fillRect(r() * 256, r() * 256, 1 + r() * 2, 1 + r() * 2); } };
+    const vetas = (fondo, linea) => {   // madera: líneas onduladas y algún nudo
+      g.fillStyle = fondo; g.fillRect(0, 0, 256, 256);
+      for (let i = 0; i < 70; i++) {
+        const y0 = r() * 256, amp = 2 + r() * 5, fr = 0.01 + r() * 0.03;
+        g.strokeStyle = linea + (0.12 + r() * 0.3) + ')'; g.lineWidth = 0.6 + r() * 1.8; g.beginPath();
+        for (let x = 0; x <= 256; x += 8) g.lineTo(x, y0 + Math.sin(x * fr + i) * amp);
+        g.stroke();
+      }
+      for (let k = 0; k < 2; k++) { g.strokeStyle = linea + '0.5)'; g.beginPath(); g.ellipse(r() * 256, r() * 256, 10, 4, 0, 0, Math.PI * 2); g.stroke(); }
+    };
+    if (nombre === 'madera') vetas('#b98250', 'rgba(90,50,20,');
+    else if (nombre === 'maderaClara') vetas('#c99a62', 'rgba(110,70,30,');
+    else if (nombre === 'pisoMadera') {   // tablas del piso
+      for (let y = 0; y < 256; y += 32) { const t = 150 + r() * 30; g.fillStyle = `rgb(${t},${t * 0.68},${t * 0.4})`; g.fillRect(0, y, 256, 32); g.fillStyle = 'rgba(60,35,15,0.6)'; g.fillRect(0, y, 256, 2); g.fillRect((y * 7) % 256, y, 2, 32); }
+      for (let i = 0; i < 90; i++) { g.strokeStyle = `rgba(80,45,20,${0.1 + r() * 0.2})`; const y = r() * 256; g.beginPath(); g.moveTo(0, y); g.bezierCurveTo(80, y + 3, 160, y - 3, 256, y + 1); g.stroke(); }
+    } else if (nombre === 'carton') { g.fillStyle = '#c9a06a'; g.fillRect(0, 0, 256, 256); ruido(2500, 0.25); for (let i = 0; i < 40; i++) { g.strokeStyle = 'rgba(120,80,40,0.25)'; g.beginPath(); g.moveTo(r() * 256, r() * 256); g.lineTo(r() * 256, r() * 256); g.stroke(); } g.fillStyle = 'rgba(210,190,150,0.6)'; g.fillRect(0, 110, 256, 36); }
+    else if (nombre === 'tela') {   // cuadros escoceses (gris: se pinta de color)
+      g.fillStyle = '#ffffff'; g.fillRect(0, 0, 256, 256);
+      for (let i = 0; i < 256; i += 64) { g.fillStyle = 'rgba(0,0,0,0.14)'; g.fillRect(i, 0, 24, 256); g.fillRect(0, i, 256, 24); g.fillStyle = 'rgba(0,0,0,0.08)'; g.fillRect(i + 40, 0, 4, 256); g.fillRect(0, i + 40, 256, 4); }
+      for (let y = 0; y < 256; y += 2) { g.fillStyle = `rgba(0,0,0,${0.03 + r() * 0.04})`; g.fillRect(0, y, 256, 1); }
+    } else if (nombre === 'lona') { g.fillStyle = '#ffffff'; g.fillRect(0, 0, 256, 256); for (let i = 0; i < 256; i += 4) { g.fillStyle = 'rgba(0,0,0,0.07)'; g.fillRect(i, 0, 1, 256); g.fillRect(0, i, 256, 1); } ruido(1500, 0.12); }
+    else if (nombre === 'alfombra') { g.fillStyle = '#ffffff'; g.fillRect(0, 0, 256, 256); ruido(9000, 0.35); g.strokeStyle = 'rgba(0,0,0,0.25)'; g.lineWidth = 10; g.strokeRect(14, 14, 228, 228); g.lineWidth = 3; g.strokeRect(34, 34, 188, 188); }
+    else if (nombre === 'plastico') { g.fillStyle = '#ffffff'; g.fillRect(0, 0, 256, 256); ruido(1200, 0.06); }
+    else if (nombre === 'papel') { g.fillStyle = '#fbfaf3'; g.fillRect(0, 0, 256, 256); g.fillStyle = 'rgba(70,120,220,0.45)'; for (let y = 20; y < 256; y += 16) g.fillRect(0, y, 256, 1.5); g.fillStyle = 'rgba(220,60,60,0.5)'; g.fillRect(36, 0, 2, 256); }
+    else if (nombre === 'baldosa') {   // baldosas de dos colores (como un tablero), con las juntas oscuras: que se noten aunque haya mucha luz
+      for (let y = 0; y < 256; y += 64) for (let x = 0; x < 256; x += 64) { g.fillStyle = (x + y) / 64 % 2 ? '#6f98c6' : '#e4d8c0'; g.fillRect(x, y, 64, 64); }
+      ruido(2500, 0.12);
+      g.fillStyle = '#6f6a60'; for (let i = 0; i < 256; i += 64) { g.fillRect(i, 0, 4, 256); g.fillRect(0, i, 256, 4); }
+    }
+    else if (nombre === 'pared') { g.fillStyle = '#f1e7d4'; g.fillRect(0, 0, 256, 256); ruido(3000, 0.07); for (let x = 0; x < 256; x += 3) { g.fillStyle = `rgba(160,140,110,${r() * 0.05})`; g.fillRect(x, 0, 2, 256); } }
+    else if (nombre === 'metal') { g.fillStyle = '#e9edf0'; g.fillRect(0, 0, 256, 256); for (let x = 0; x < 256; x++) { g.fillStyle = `rgba(120,130,140,${r() * 0.12})`; g.fillRect(x, 0, 1, 256); } }
+    else if (nombre === 'tejido') { g.fillStyle = '#ffffff'; g.fillRect(0, 0, 256, 256); for (let y = 0; y < 256; y += 16) for (let x = 0; x < 256; x += 16) { g.fillStyle = (x / 16 + y / 16) % 2 ? 'rgba(0,0,0,0.25)' : 'rgba(0,0,0,0.08)'; g.fillRect(x + 1, y + 1, 14, 14); } }
+    else if (nombre === 'peluche') { g.fillStyle = '#ffffff'; g.fillRect(0, 0, 256, 256); for (let i = 0; i < 6000; i++) { const v = 120 + r() * 135; g.strokeStyle = `rgba(${v},${v},${v},0.4)`; const x = r() * 256, y = r() * 256; g.beginPath(); g.moveTo(x, y); g.lineTo(x + r() * 4 - 2, y + 3 + r() * 3); g.stroke(); } }
+    else if (nombre === 'pizarron') { g.fillStyle = '#21503a'; g.fillRect(0, 0, 256, 256); ruido(800, 0.15, 230); g.fillStyle = 'rgba(240,240,230,0.9)'; g.font = '700 30px "Comic Sans MS", system-ui'; g.textAlign = 'center'; g.fillText('1, 2, 3…', 128, 90); g.fillText('¡a esconderse!', 128, 150); }
+    else if (nombre === 'cereal') { g.fillStyle = '#ffb000'; g.fillRect(0, 0, 256, 256); g.fillStyle = '#d4161b'; g.font = '900 52px system-ui'; g.textAlign = 'center'; g.fillText('CEREAL', 128, 110); g.fillStyle = '#7a3e10'; for (let i = 0; i < 14; i++) { g.beginPath(); g.arc(40 + r() * 176, 150 + r() * 80, 10, 0, Math.PI * 2); g.fill(); } }
+    else if (nombre === 'letras') { g.fillStyle = '#ffffff'; g.fillRect(0, 0, 256, 256); g.strokeStyle = 'rgba(0,0,0,0.3)'; g.lineWidth = 14; g.strokeRect(10, 10, 236, 236); g.fillStyle = 'rgba(0,0,0,0.45)'; g.font = '900 170px system-ui'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('A', 128, 138); }
+    const tx = new THREE.CanvasTexture(c); tx.wrapS = tx.wrapT = THREE.RepeatWrapping;
+    return (TEX[nombre] = tx);
+  }
+  // Materiales compartidos: uno por (textura, color, repeticiones). Lambert = sin brillo de plástico falso.
+  const MATS_ESC = new Map();
+  function matEsc(tex, color = 0xffffff, rep = 1) {
+    const k = `${tex}|${color}|${rep}`;
+    if (!MATS_ESC.has(k)) {
+      let map = null;
+      if (tex) { map = textura(tex).clone(); map.needsUpdate = true; map.repeat.set(rep, rep); }
+      MATS_ESC.set(k, new THREE.MeshLambertMaterial({ color, map }));
+    }
+    return MATS_ESC.get(k);
+  }
+  const GEO_ESC = { caja: new THREE.BoxGeometry(1, 1, 1), cil: new THREE.CylinderGeometry(0.5, 0.5, 1, 24), hex: new THREE.CylinderGeometry(0.5, 0.5, 1, 6), cono: new THREE.ConeGeometry(0.5, 1, 16),
+    esfera: new THREE.SphereGeometry(0.5, 24, 16), toro: new THREE.TorusGeometry(0.45, 0.05, 8, 32), arco: new THREE.TorusGeometry(0.45, 0.1, 10, 24, Math.PI * 0.75) };
+  // Una forma: geo, material, centro (x, y, z), tamaño, giro
+  function forma(grupo, geo, mat, x, y, z, sx, sy, sz, rx = 0, ry = 0, rz = 0) {
+    const m = new THREE.Mesh(GEO_ESC[geo], mat); m.position.set(x, y, z); m.scale.set(sx, sy, sz); m.rotation.set(rx, ry, rz);
+    m.castShadow = m.receiveShadow = true; grupo.add(m); return m;
+  }
+  const cajaForma = (g, mat, c) => forma(g, 'caja', mat, (c.x0 + c.x1) / 2, (c.y0 + c.y1) / 2, (c.z0 + c.z1) / 2, c.x1 - c.x0, c.y1 - c.y0, c.z1 - c.z0);
+  // Cómo se ve cada pieza (las cajas para chocar vienen de logic.js; aquí solo el dibujo)
+  function dibujarPieza(g, p) {
+    const cajas = cajasPieza(p), y0 = p.y || 0, col = p.color || 0xffffff, cx = p.x, cz = p.z;
+    const todas = mat => cajas.forEach(c => cajaForma(g, mat, c));
+    switch (p.estilo) {
+      case 'pupitre': case 'mesaCocina': {
+        const tabla = p.estilo === 'pupitre' ? matEsc('maderaClara', 0xffffff, 2) : matEsc('madera', 0xffffff, 2);
+        const patas = p.estilo === 'pupitre' ? matEsc('metal', 0x8a96a3) : matEsc('madera');
+        cajas.forEach((c, i) => cajaForma(g, i === 0 ? tabla : patas, c));
+        if (p.estilo === 'pupitre') { forma(g, 'hex', matEsc('plastico', 0xffd23f), cx - 6, p.h + 0.2, cz, 0.35, 9, 0.35, 0, 0, Math.PI / 2); forma(g, 'caja', matEsc('papel', 0xffffff), cx + 5, p.h + 0.1, cz + 2, 10, 0.2, 14); }
+        break;
+      }
+      case 'silla': {
+        const color = p.x % 2 ? 0x2f7de1 : 0xe0475f;
+        cajas.forEach((c, i) => cajaForma(g, i === 0 || i === 5 ? (TERRENOS[2].piezas.includes(p) ? matEsc('madera') : matEsc('plastico', color)) : matEsc('metal', 0x8a96a3), c));
+        break;
+      }
+      case 'escritorio': todas(matEsc('madera', 0xffffff, 2)); forma(g, 'cil', matEsc('plastico', 0x8a5a33), cx + 20, p.h + 3, cz, 6, 6, 6); forma(g, 'esfera', matEsc('plastico', 0xd4161b), cx + 20, p.h + 3 + 4, cz, 7, 7, 7); break;   // con una manzana para la profe
+      case 'mochila':
+        todas(matEsc('lona', col, 3));
+        forma(g, 'caja', matEsc('lona', col, 2), cx, 3.5, cz + (p.abierta === 'e' ? 0 : 0), p.a * 0.6, 7, 3, 0, 0, 0).position.x = cx + (p.abierta === 'e' ? -p.a / 2 - 1.5 : p.a / 2 + 1.5);
+        for (const s of [-1, 1]) forma(g, 'caja', matEsc('lona', 0x222222), cx, p.h + 0.3, cz + s * 6, p.a * 0.9, 0.6, 2.5);   // las correas
+        break;
+      case 'estuche': todas(matEsc('plastico', col)); forma(g, 'caja', matEsc('metal', 0xd8d8d8), cx, p.h + 0.05, cz, p.a, 0.1, 0.25); break;
+      case 'basurero': todas(matEsc('plastico', col)); for (let k = -2; k <= 2; k++) forma(g, 'caja', matEsc('plastico', 0x5a6470), cx + k * 2.8, p.h + 0.1, cz, 0.6, 0.2, p.l); forma(g, 'esfera', matEsc('papel'), cx, 2.5, cz - p.l / 2 - 3, 5, 4, 5); break;   // un papel arrugado afuera
+      case 'libroAbierto': cajas.forEach((c, i) => cajaForma(g, i === 0 ? matEsc('lona', col, 2) : matEsc('papel', 0xffffff, 2), c)); break;
+      case 'carton': todas(matEsc('carton', 0xffffff, 2)); break;
+      case 'juguetes': todas(matEsc('plastico', col)); forma(g, 'esfera', matEsc('plastico', 0xffd23f), cx + 4, p.h + 3, cz, 6, 6, 6); break;
+      case 'zapato': todas(matEsc('lona', col, 2)); forma(g, 'caja', matEsc('plastico', 0xffffff), cx, 0.4, cz, p.a + 0.6, 0.8, p.l + 0.6); for (let k = -2; k <= 2; k++) forma(g, 'caja', matEsc('plastico', 0xffffff), cx, p.h + 0.1, cz + k * 1.5, p.a * 0.8, 0.15, 0.25); break;
+      case 'gabinete': todas(matEsc('maderaClara', 0xffffff, 2)); for (let k = 0; k < Math.round(p.a / 20); k++) { const x = cx - p.a / 2 + 10 + k * 20; forma(g, 'caja', matEsc('metal', 0x9aa6b4), x, p.h * 0.75, cz - p.l / 2 - 0.4, 6, 1, 1); } forma(g, 'caja', matEsc('baldosa', 0xffffff, 3), cx, p.h + 0.75, cz, p.a + 1, 1.5, p.l + 1); break;
+      case 'gabineteAbierto': todas(matEsc('maderaClara', 0xffffff, 2)); forma(g, 'caja', matEsc('maderaClara', 0xffffff, 2), cx - p.a / 2 - 6, p.h / 2, cz - p.l / 2 - 6, 1, p.h * 0.9, p.a * 0.45, 0, -0.9, 0); forma(g, 'caja', matEsc('baldosa', 0xffffff, 3), cx, p.h + 0.75, cz, p.a + 1, 1.5, p.l + 1); break;   // la puerta abierta
+      case 'cereal': todas(matEsc('cereal')); for (let k = 0; k < 8; k++) forma(g, 'toro', matEsc('plastico', 0xd8a040), cx + p.a / 2 + 2 + (k % 3) * 1.6, 0.3, cz - 3 + k, 1, 1, 1, Math.PI / 2, 0, 0); break;   // aritos de cereal tirados
+      case 'taza': todas(matEsc('plastico', col)); forma(g, 'toro', matEsc('plastico', col), cx + p.a / 2 + 1, p.h / 2, cz, 4, 4, 6, 0, Math.PI / 2, 0); break;
+      case 'refri': todas(matEsc('metal', 0xffffff)); forma(g, 'caja', matEsc('metal', 0x5a6470), cx, p.h * 0.62, cz - p.l / 2 - 0.2, p.a, 0.6, 0.4); forma(g, 'caja', matEsc('metal', 0x9aa6b4), cx + p.a * 0.35, p.h * 0.45, cz - p.l / 2 - 1, 1.5, 22, 1.5); break;
+      case 'libros': { const cols = [0xe0475f, 0x2f7de1, 0x2fae4e]; const n = 3; for (let k = 0; k < n; k++) { const hk = p.h / n; forma(g, 'caja', matEsc('lona', cols[k]), cx + (k - 1) * 0.6, y0 + hk * (k + 0.5), cz, p.a, hk * 0.9, p.l); forma(g, 'caja', matEsc('papel'), cx + (k - 1) * 0.6 + 0.4, y0 + hk * (k + 0.5), cz, p.a - 0.5, hk * 0.75, p.l + 0.1); } break; }
+      case 'lonchera': todas(matEsc('plastico', col)); forma(g, 'toro', matEsc('plastico', 0x333333), cx, p.h + 1.6, cz, 6, 6, 6); break;
+      case 'cubo': todas(matEsc('letras', col)); break;
+      case 'balde': forma(g, 'cil', matEsc('plastico', col), cx, p.h / 2, cz, p.a, p.h, p.l); forma(g, 'toro', matEsc('metal', 0x9aa6b4), cx, p.h, cz, p.a * 1.05, p.a * 1.05, p.a * 1.05, Math.PI / 2, 0, 0); break;
+      case 'tazon': forma(g, 'cil', matEsc('plastico', col), cx, p.h / 2, cz, p.a, p.h, p.l); for (let k = 0; k < 6; k++) forma(g, 'esfera', matEsc('plastico', 0x8a5a33), cx + Math.cos(k) * 2.5, p.h + 0.2, cz + Math.sin(k) * 2.5, 1.2, 0.8, 1.2); break;
+      case 'pelota': forma(g, 'esfera', matEsc('plastico', col), cx, p.h / 2, cz, p.a, p.h, p.l); forma(g, 'toro', matEsc('plastico', 0xffffff), cx, p.h / 2, cz, p.a * 1.1, p.a * 1.1, p.a * 1.1, 0.4, 0, 0.3); break;
+      case 'azucar': forma(g, 'caja', matEsc('plastico', 0xfbfbf6), cx, p.h / 2, cz, p.a, p.h, p.l); for (let k = 0; k < 5; k++) forma(g, 'caja', matEsc('plastico', 0xffffff), cx - 1 + k * 0.5, p.h + 0.1, cz + (k % 2 ? 0.6 : -0.6), 0.3, 0.2, 0.3); break;   // un terrón de azúcar (con granitos)
+      case 'manzana': forma(g, 'esfera', matEsc('plastico', col), cx, p.h / 2, cz, p.a, p.h, p.l); forma(g, 'cil', matEsc('madera'), cx, p.h + 0.3, cz, 0.3, 0.9, 0.3); break;
+      case 'lapiz': { const largo = Math.max(p.a, p.l), rotY = p.a > p.l ? 0 : Math.PI / 2; const m = forma(g, 'hex', matEsc('plastico', col), cx, 0.2, cz, 0.4, largo, 0.4, 0, rotY, Math.PI / 2); forma(g, 'cono', matEsc('maderaClara'), cx + (rotY ? 0 : largo / 2 + 0.4), 0.2, cz + (rotY ? largo / 2 + 0.4 : 0), 0.4, 0.8, 0.4, rotY ? Math.PI / 2 : 0, 0, rotY ? 0 : -Math.PI / 2); break; }
+      case 'regla': forma(g, 'caja', matEsc('papel', 0xffe680, 2), cx, 0.08, cz, p.a, 0.15, p.l); break;
+      case 'pizarron': forma(g, 'caja', matEsc('pizarron'), cx, y0 + p.h / 2, cz, p.a, p.h, p.l); forma(g, 'caja', matEsc('madera'), cx, y0 - 1, cz - 1, p.a + 4, 2, 3); break;
+      case 'alfombra': forma(g, 'caja', matEsc('alfombra', 0x7fb2e0, 6), cx, 0.1, cz, p.a, 0.2, p.l); break;
+      case 'tapete': forma(g, 'caja', matEsc('tela', 0xe0a050, 3), cx, 0.1, cz, p.a, 0.2, p.l); break;
+      case 'platano': forma(g, 'arco', matEsc('plastico', 0xf3d03a), cx, 1, cz, 12, 12, 10, Math.PI / 2, 0, 0.6); break;   // un plátano (medio aro gordito)
+      default: todas(matEsc('plastico', col));
+    }
+  }
+  function dibujarCama(g, p) {
+    const cajas = cajasPieza(p), madera = matEsc('madera', 0xffffff, 2), cobija = matEsc('tela', 0x4f7fd0, 3);
+    cajas.forEach((c, i) => cajaForma(g, i < 4 || i === 5 ? madera : i === 4 ? matEsc('lona', 0xffffff, 3) : cobija, c));
+    const top = p.h, x0 = p.x - p.a / 2, z1 = p.z + p.l / 2;
+    forma(g, 'caja', cobija, p.x - 0.5, top + 0.15, p.z - 8, p.a + 1, 0.3, p.l - 30);                                    // la cobija encima
+    for (const s of [-1, 1]) forma(g, 'esfera', matEsc('lona', 0xffffff), p.x + s * 11, top + 3, z1 - 10, 18, 6, 11);   // dos almohadas
+    // El oso de peluche gigante (sentado contra la cabecera)
+    const oso = matEsc('peluche', 0xa86b3c, 2), bx = p.x, bz = z1 - 18, by = top;
+    forma(g, 'esfera', oso, bx, by + 7, bz, 14, 15, 12); forma(g, 'esfera', oso, bx, by + 19, bz - 1, 11, 11, 10);
+    for (const s of [-1, 1]) { forma(g, 'esfera', oso, bx + s * 4.5, by + 24, bz - 1, 4, 4, 2.5); forma(g, 'esfera', oso, bx + s * 8, by + 9, bz - 3, 5, 9, 5, 0.6, 0, s * 0.6); forma(g, 'esfera', oso, bx + s * 4, by + 2, bz - 7, 5.5, 5, 8); forma(g, 'esfera', matEsc(null, 0x111111), bx + s * 2.2, by + 20.5, bz - 5.6, 1.2, 1.2, 1.2); }
+    forma(g, 'esfera', matEsc('peluche', 0xe8c9a0), bx, by + 18, bz - 5.5, 4.5, 3.5, 3); forma(g, 'esfera', matEsc(null, 0x111111), bx, by + 18.8, bz - 7.2, 1.4, 1, 1);
+    void x0;
+  }
+  function dibujarCanasta(g, p) {
+    const tejido = matEsc('tejido', p.color, 3);
+    cajasPieza(p).forEach(c => cajaForma(g, c.peldano ? matEsc('madera') : (c.x1 - c.x0 < 4 && c.z1 - c.z0 < 4) ? matEsc('letras', [0xff6fa8, 0xffd23f, 0x4dd6c8][Math.floor(c.y1) % 3]) : tejido, c));
+    // Los rieles de la escalera de mano (inclinados, de arriba a abajo)
+    const pel = escaleraCanasta(p), a = pel[0], b = pel[pel.length - 1];
+    for (const s of [-1, 1]) {
+      const ax = (a.x0 + a.x1) / 2, az = (a.z0 + a.z1) / 2, bx = (b.x0 + b.x1) / 2, bz = (b.z0 + b.z1) / 2, ancho = p.escalera === 'e' || p.escalera === 'o';
+      const ox = ancho ? 0 : s * 2.2, oz = ancho ? s * 2.2 : 0, mx = (ax + bx) / 2 + ox, mz = (az + bz) / 2 + oz, my = (a.y1 + b.y1) / 2 - 0.3;
+      const largo = Math.hypot(bx - ax, bz - az, b.y1 - a.y1) + 3, ang = Math.atan2(b.y1 - a.y1, Math.hypot(bx - ax, bz - az));
+      const m = forma(g, 'caja', matEsc('madera'), mx, my, mz, 0.5, 0.5, largo);
+      m.rotation.order = 'YXZ'; m.rotation.y = Math.atan2(bx - ax, bz - az); m.rotation.x = -ang;
+    }
+  }
+  function dibujarTrampolin(g, p) {
+    const d = p.a;
+    forma(g, 'cil', matEsc(null, 0x1a1a1a), p.x, p.h - 0.1, p.z, d * 0.86, 0.1, d * 0.86); forma(g, 'toro', matEsc('plastico', p.color || 0x1e6bff), p.x, p.h, p.z, d, d, d, Math.PI / 2, 0, 0);
+    for (let k = 0; k < 4; k++) forma(g, 'cil', matEsc('metal', 0x777f88), p.x + Math.cos(k * 1.57 + 0.78) * d * 0.4, p.h / 2, p.z + Math.sin(k * 1.57 + 0.78) * d * 0.4, 0.3, p.h, 0.3);
+  }
+  // Un carro de juguete: la cubierta (donde te subes) y la cabina adelante; se mueve como un solo grupo
+  function hacerCarro(color) {
+    const c = new THREE.Group(), C = CARRO, plas = matEsc('plastico', color);
+    forma(c, 'caja', plas, 0, C.cubierta / 2 + 0.4, 0, C.ancho, C.cubierta - 0.4, C.largo);
+    forma(c, 'caja', plas, 0, C.cabina / 2 + 0.4, C.largo / 2 - 3, C.ancho, C.cabina - 0.4, 6);
+    forma(c, 'caja', matEsc(null, 0x9fd6ff), 0, C.cabina - 1.2, C.largo / 2 - 3, C.ancho + 0.1, 1.6, 4);   // ventanas
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) forma(c, 'cil', matEsc('plastico', 0x222222), sx * (C.ancho / 2 + 0.3), 0.8, sz * (C.largo / 2 - 3), 1.6, 1, 1.6, 0, 0, Math.PI / 2);   // ruedas chiquitas: la cubierta queda bajita
+    return c;
+  }
+  // Arma un terreno (la primera vez que se juega en él): se ve y choca solo durante la ronda
+  function construirTerreno(i, o) {
+    const T = TERRENOS[i], cx = o.x + TERRENO_X[i], cz = o.z, grupo = new THREE.Group(); grupo.position.set(cx, 0, cz); grupo.visible = false; scene.add(grupo);
+    const w = T.ancho / 2, l = T.largo / 2;
+    // Piso, paredes y techo
+    const piso = i === 2 ? matEsc('baldosa', 0xd9d9d9, 20) : matEsc('pisoMadera', 0xffffff, 12);   // (la baldosa un poco más oscura: con la luz del mediodía se veía toda blanca)
+    forma(grupo, 'caja', piso, 0, -0.5, 0, T.ancho, 1, T.largo);
+    const pared = matEsc('pared', i === 1 ? 0xd6e8ff : 0xffffff, 6);
+    for (const c of cajasTerreno(T).slice(0, 4)) cajaForma(grupo, pared, c);
+    const techo = forma(grupo, 'caja', matEsc('pared', 0xffffff, 6), 0, T.alto + 1, 0, T.ancho + 8, 2, T.largo + 8); techo.castShadow = false;
+    forma(grupo, 'caja', matEsc('madera'), 0, 2, l - 0.5, T.ancho, 4, 1); forma(grupo, 'caja', matEsc('madera'), 0, 2, -l + 0.5, T.ancho, 4, 1);   // zócalos
+    for (const p of T.piezas) {
+      if (p.t === 'cama') dibujarCama(grupo, p);
+      else if (p.t === 'canasta') dibujarCanasta(grupo, p);
+      else if (p.t === 'trampolin') dibujarTrampolin(grupo, p);
+      else dibujarPieza(grupo, p);
+    }
+    for (const lx of [-w / 2, w / 2]) { const luz = new THREE.PointLight(0xfff1dd, 0.25, 400, 1); luz.position.set(lx, T.alto * 0.8, 0); grupo.add(luz); }
+    // Para chocar: cada caja como una "platform" (en coordenadas del mundo)
+    const cajas = cajasTerreno(T), mundo = c => ({ x0: c.x0 + cx, x1: c.x1 + cx, y0: c.y0, y1: c.y1, z0: c.z0 + cz, z1: c.z1 + cz });
+    const pls = cajas.map(c => ({ x: (c.x0 + c.x1) / 2 + cx, z: (c.z0 + c.z1) / 2 + cz, hw: (c.x1 - c.x0) / 2, hd: (c.z1 - c.z0) / 2, top: c.y1, bottom: c.y0, salto: c.salto }));
+    // Los carros (solo en la habitación)
+    const carros = i === 1 ? CARROS.map(cr => {
+      const obj = hacerCarro(cr.color); grupo.add(obj);
+      // Para chocar: la cubierta (atrás, donde te subes y te lleva) y la cabina (adelante, una pared que se mueve)
+      const pl = { x: cx, z: cz, hw: 4, hd: 4, top: CARRO.cubierta, bottom: 0, move: true, dx: 0, dy: 0, dz: 0 };
+      const cabina = { x: cx, z: cz, hw: 4, hd: 4, top: CARRO.cabina, bottom: 0, move: true, dx: 0, dy: 0, dz: 0 };
+      pls.push(pl, cabina); return { obj, pl, cabina, giro: null };
+    }) : [];
+    const enMundo = q => q && ({ ...q, x: q.x + cx, z: q.z + cz });   // de coordenadas del terreno a coordenadas del mundo
+    const lugares = escondites(T).map(e => ({ ...enMundo(e), entrada: enMundo(e.entrada), ruta: e.ruta && e.ruta.map(enMundo), salida: e.salida && e.salida.map(enMundo) }));
+    MG.built.terrenos = MG.built.terrenos || [];
+    MG.built.terrenos[i] = { grupo, pls, carros, lugares, cajas: cajas.map(mundo), cx, cz, enUso: false };
+  }
+  function ponerTerreno(i, o) {
+    if (!MG.built.terrenos || !MG.built.terrenos[i]) construirTerreno(i, o);
+    const T = MG.built.terrenos[i];
+    if (!T.enUso) { platforms.push(...T.pls); T.grupo.visible = true; T.enUso = true; }
+    for (const c of T.carros || []) c.giro = null;   // los carros empiezan de cero en cada ronda
+    return T;
+  }
+  function quitarTerrenos() {
+    for (const T of MG.built.terrenos || []) {
+      if (!T || !T.enUso) continue;
+      const fuera = new Set(T.pls);
+      for (let k = platforms.length - 1; k >= 0; k--) if (fuera.has(platforms[k])) platforms.splice(k, 1);
+      T.grupo.visible = false; T.enUso = false;
+    }
+  }
+  // ----- La ronda de Escondidas -----
+  // MG.state.esc = { solo, rol ('esconder' o 'buscar': lo que haces TÚ), terreno, inicio, finEsconder, fin (en ms de performance.now()),
+  //                  jugadores, buscador (id), encontrados: Set, fantasma, resultado }
+  const escNegro = document.getElementById('escNegro'), escNegroNum = document.getElementById('escNegroNum');
+  const ahoraMs = () => performance.now();
+  const soyBuscador = () => { const e = MG.state.esc; return !!e && (e.solo ? e.rol === 'buscar' : e.buscador === red.id); };
+  function faseEsc() {
+    const e = MG.state.esc; if (!e) return null;
+    if (e.resultado) return 'fin';
+    const t = ahoraMs();
+    return t < e.finEsconder ? 'esconder' : t < e.fin ? 'buscar' : 'fin';
+  }
+  // El bot de las escondidas (jugando solo): un rectángulo morado con ojos
+  function hacerBotEsc() {
+    const g = new THREE.Group(), b = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), new THREE.MeshLambertMaterial({ color: 0x8e5bd9 }));
+    b.position.y = H / 2; b.castShadow = true; g.add(b);
+    for (const ex of [-0.22, 0.22]) { const e = new THREE.Mesh(eyeGeo, eyeMat); e.scale.z = 0.5; e.position.set(ex, H * 0.78, D / 2 + 0.02); g.add(e); }
+    g.visible = false; scene.add(g);
+    const st = makeState(g); st.cuerpo = b; return st;
+  }
+  // Empezar una ronda. solo: { rol, terreno } · con amigos: el mensaje escRonda del servidor
+  function empezarEscondidas(o, datos) {
+    const st = MG.state, solo = !!datos.solo, i = datos.terreno;
+    cerrarEscondidas(false);
+    const T = ponerTerreno(i, o), spawn = TERRENOS[i].spawn, t0 = ahoraMs();
+    const e = { solo, terreno: i, inicio: t0, finEsconder: t0 + (datos.esconderMs ?? ESC.esconderMs), fin: t0 + (datos.finMs ?? ESC.esconderMs + ESC.buscarMs),
+      jugadores: datos.jugadores || [], buscador: datos.buscador ?? null, rol: solo ? datos.rol : (datos.buscador === red.id ? 'buscar' : 'esconder'), encontrados: new Set(), fantasma: false, resultado: null, T };
+    Object.assign(st, { fase: 'escondidas', bateria: 0, esc: e });
+    // Dónde empiezas: el buscador en el centro; los demás en un círculo alrededor
+    const k = Math.max(0, e.jugadores.filter(id => id !== e.buscador).indexOf(red.id)), ang = k / 8 * Math.PI * 2;
+    const enCirculo = e.rol === 'esconder' && !solo;
+    placePlayer(T.cx + spawn.x + (enCirculo ? Math.cos(ang) * 6 : 0), 0, T.cz + spawn.z + (enCirculo ? Math.sin(ang) * 6 : 0));
+    camYaw = Math.PI;   // mirando hacia el fondo (+z)
+    if (solo) {   // el bot
+      if (!MG.built.botEsc) MG.built.botEsc = hacerBotEsc();
+      const bot = MG.built.botEsc; bot.obj.visible = true; bot.vel.set(0, 0, 0);
+      bot.orden = ordenEscondites(T.lugares); bot.paso = 0; bot.modo = 'contar'; bot.atascado = 0; bot.esquivar = 0; bot.ultimo = null;
+      if (e.rol === 'esconder') { bot.pos.set(T.cx + spawn.x, 0, T.cz + spawn.z + 4); bot.facing = Math.PI; bot.obj.rotation.y = Math.PI; }
+      else { const lugar = T.lugares[bot.orden[0]]; bot.pos.set(lugar.x, lugar.y, lugar.z); bot.modo = 'escondido'; }   // (puede ser arriba de la cama o adentro de una canasta)
+      bot.camino = null; bot.salida = null;
+    }
+    abrirCarga();   // el aviso de esconderse (con la cuenta) sale arriba de este panel
+  }
+  // El bot: mientras cuentas no se mueve; después revisa escondites y te persigue si te ve
+  function moverBotEsc(dt, e) {
+    const bot = MG.built.botEsc, T = e.T, fase = faseEsc();
+    if (bot.modo === 'escondido') { bot.cuerpo.position.y = H / 2 + Math.max(0, Math.sin(MG.t * 2)) * 0.15; physics(bot, dt, false, JUMP); return; }   // asomándose un poquito
+    if (fase === 'esconder') { physics(bot, dt, false, JUMP); return; }   // está contando, mirando a la pared
+    let meta;
+    // (en el aire no cambia de plan: si no, se cae a mitad del salto del trampolín)
+    const veo = !e.fantasma && (bot.onGround || bot.modo === 'perseguir') && botVe(bot.pos, ps.pos, T.cajas);
+    if (veo) { bot.modo = 'perseguir'; bot.olvido = BOT_ESC.olvida; bot.camino = null; }
+    else if (bot.modo === 'perseguir' && (bot.olvido -= dt) <= 0) bot.modo = 'buscar';
+    if (bot.modo === 'contar') bot.modo = 'buscar';
+    if (bot.modo === 'perseguir') meta = ps.pos;
+    else {
+      // Su camino: los puntos por donde pasar (la entrada de la cueva, o la ruta para subir a un escondite alto).
+      // Cuando termina, si estaba en algo alto, primero hace el camino de salida; después elige el siguiente escondite.
+      if (!bot.camino || !bot.camino.length) {
+        if (bot.salida) { bot.camino = [...bot.salida]; bot.salida = null; }
+        else {
+          const lugar = T.lugares[bot.orden[bot.paso++ % bot.orden.length]];
+          bot.camino = lugar.ruta ? [...lugar.ruta] : [lugar.entrada, lugar].filter(Boolean);
+          bot.salida = lugar.salida || null;
+        }
+      }
+      meta = bot.camino[0];
+      // Si lleva 8 segundos sin llegar a este punto (por ejemplo, uno alto que no alcanza), se lo salta
+      if (meta !== bot.metaVieja) { bot.metaVieja = meta; bot.tMeta = 0; }
+      if ((bot.tMeta += dt) > 8 && bot.camino.length > 1) { bot.camino.shift(); meta = bot.camino[0]; }
+      else if (bot.tMeta > 8) { bot.camino = null; bot.salida = null; bot.metaVieja = null; }
+      const cerca = Math.hypot(bot.pos.x - meta.x, bot.pos.z - meta.z) < 1.6;
+      if (bot.camino && ((meta.tramp && bot.pos.y > 4) || (cerca && (meta.y === undefined || Math.abs(bot.pos.y - meta.y) < 1.2)))) bot.camino.shift();   // llegó (o el trampolín ya lo lanzó)
+    }
+    let dx = meta.x - bot.pos.x, dz = meta.z - bot.pos.z;
+    const d = Math.hypot(dx, dz) || 1, vel = bot.modo === 'perseguir' ? BOT_ESC.persigue : BOT_ESC.busca;
+    dx /= d; dz /= d;
+    // ¿Se atascó contra algo? Camina un ratito de lado para rodearlo
+    if (bot.esquivar > 0) { bot.esquivar -= dt; [dx, dz] = [-dz * bot.lado, dx * bot.lado]; }
+    bot.walkX = dx * vel * dt; bot.walkZ = dz * vel * dt;
+    turnTo(bot, dx, dz, dt);
+    const antes = bot.pos.clone();
+    // Salta si choca con algo, o si lo que busca está un poco más arriba y cerca (los peldaños de la escalera)
+    const subir = (meta.y || 0) > bot.pos.y + 0.4 && d < 2.6;
+    physics(bot, dt, bot.onGround && (bot.hitWall || subir), JUMP);
+    // El trampolín también lo lanza a él
+    if (bot.onGround && bot.standing && bot.standing.salto) { bot.vel.y = launchSpeedForHeight(bot.standing.salto, GRAV); bot.onGround = false; }
+    if (bot.hitWall && bot.pos.distanceTo(antes) < vel * dt * 0.3) { if ((bot.atascado += dt) > 0.6) { bot.esquivar = 1.2; bot.lado = Math.random() < 0.5 ? 1 : -1; bot.atascado = 0; } }
+    else bot.atascado = 0;
+    // ¿Te atrapó?
+    if (!e.fantasma && Math.hypot(bot.pos.x - ps.pos.x, bot.pos.z - ps.pos.z) < BOT_ESC.atrapa && Math.abs(bot.pos.y - ps.pos.y) < 2) terminarSolo(false, '¡El bot te encontró! 🙈');
+  }
+  function terminarSolo(gane, texto) {
+    const e = MG.state.esc; if (!e || e.resultado) return;
+    e.resultado = { gane, texto };
+    mostrarResultado();
+  }
+  // E en la ronda: si buscas, encontrar al que esté cerca
+  function intentarEncontrar() {
+    const e = MG.state.esc;
+    if (!e || !soyBuscador() || faseEsc() !== 'buscar') return;
+    if (e.solo) {
+      const bot = MG.built.botEsc;
+      if (Math.hypot(bot.pos.x - ps.pos.x, bot.pos.z - ps.pos.z) < 3.5 && Math.abs(bot.pos.y - ps.pos.y) < 3) terminarSolo(true, '¡Encontraste al bot! 🎉');
+      else avisoModo('Aquí no hay nadie… ¡sigue buscando!');
+      return;
+    }
+    // Con amigos: el más cercano que todavía no encontraste (el servidor revisa que de verdad esté cerca)
+    let mejor = null, dmin = 4;
+    for (const [id, f] of red.otros) {
+      if (!e.jugadores.includes(id) || id === e.buscador || e.encontrados.has(id)) continue;
+      const d = Math.hypot(f.x - ps.pos.x, f.z - ps.pos.z);
+      if (d < dmin && Math.abs(f.y - ps.pos.y) < 4) { dmin = d; mejor = id; }
+    }
+    if (mejor === null) { avisoModo('Aquí no hay nadie… ¡sigue buscando!'); return; }
+    enviar({ tipo: 'esc', que: 'encontrar', a: mejor });
+  }
+  function updateEscondidas(dt, o) {
+    const st = MG.state, e = st.esc, T = e.T, fase = faseEsc(), inp = MG.input || {}, tRonda = (ahoraMs() - e.inicio) / 1000;
+    if (!e.fantasma) st.bateria = gastarBateria(st.bateria, dt, inp.moving, inp.jumped);
+    // Por si el aviso del final nunca llega (con amigos): 5 segundos después del tiempo, la ronda se da por terminada
+    if (!e.solo && !e.resultado && ahoraMs() > e.fin + 5000) { e.resultado = { gane: false, texto: 'La ronda terminó' }; mostrarResultado(); }
+    // Los carros de juguete: se mueven según el reloj de la ronda (todos los ven igual) y te llevan encima
+    e.T.carros.forEach((c, i) => {
+      const p = carroPos(i, tRonda), x = T.cx + p.x, z = T.cz + p.z, partes = partesCarro(p.giro);
+      if (c.giro === null) { c.giro = p.giro; c.x = x; c.z = z; }
+      // Si estás parado en la cubierta y el carro dobla, giras con él alrededor del centro del carro
+      if (p.giro !== c.giro && ps.standing === c.pl) {
+        const g = p.giro - c.giro, rx = ps.pos.x - c.x, rz = ps.pos.z - c.z;
+        ps.pos.x = c.x + rx * Math.cos(g) + rz * Math.sin(g); ps.pos.z = c.z - rx * Math.sin(g) + rz * Math.cos(g);
+        ps.facing += g; ps.obj.rotation.y = ps.facing;
+      }
+      // Cuánto avanzó el carro este cuadro (eso es lo que te lleva encima); las cajas van con su forma según hacia dónde mira
+      for (const [pl, parte] of [[c.pl, partes.cubierta], [c.cabina, partes.cabina]]) {
+        pl.dx = x - c.x; pl.dz = z - c.z; pl.dy = 0; pl.x = x + parte.x; pl.z = z + parte.z; pl.hw = parte.hw; pl.hd = parte.hd;
+      }
+      c.giro = p.giro; c.x = x; c.z = z;
+      c.obj.position.set(p.x, 0, p.z); c.obj.rotation.y = p.giro;
+    });
+    // El trampolín súper fuerte
+    const pie = ps.standing;
+    if (ps.onGround && pie && pie.salto) { ps.vel.y = launchSpeedForHeight(pie.salto, GRAV); ps.onGround = false; }
+    if (e.solo && !e.resultado) moverBotEsc(dt, e);
+    // El buscador, mientras los demás se esconden: pantalla negra con el contador en rojo
+    const ciego = fase === 'esconder' && soyBuscador();
+    escNegro.hidden = !ciego;
+    if (ciego) escNegroNum.textContent = String(Math.ceil((e.finEsconder - ahoraMs()) / 1000));
+    // El aviso arriba del panel de preguntas: mientras dura la parte de esconderse, con los segundos que quedan
+    const avisoPanel = document.getElementById('escAvisoPanel'), quedan = Math.max(0, Math.ceil((e.finEsconder - ahoraMs()) / 1000));
+    avisoPanel.hidden = fase !== 'esconder' || !!e.resultado;
+    if (!avisoPanel.hidden) {
+      const lugar = `<small>${TERRENOS[e.terreno].emoji} ${TERRENOS[e.terreno].nombre}</small><br>`;   // (con amigos el terreno sale al azar: aquí ves cuál tocó)
+      const html = lugar + (soyBuscador() ? `🙈 ¡Tú buscas! Cuenta hasta 30… <b>${quedan}</b><br><small>mientras, responde para tener batería</small>` : `🏃 ¡Escóndete! Quedan <b>${quedan} s</b>`);
+      if (avisoPanel.innerHTML !== html) avisoPanel.innerHTML = html;   // (texto fijo nuestro, no lo escribe nadie más)
+      avisoPanel.classList.toggle('rojo', soyBuscador());
+    }
+    // Fin del tiempo (jugando solo: lo decide esta compu; con amigos, el servidor)
+    if (e.solo && fase === 'fin' && !e.resultado) terminarSolo(e.rol === 'esconder', e.rol === 'esconder' ? '¡El bot no te encontró! 🎉' : 'Se acabó el tiempo: el bot se escondió muy bien');
+    // El letrero de arriba
+    const seg = Math.max(0, Math.ceil(((fase === 'esconder' ? e.finEsconder : e.fin) - ahoraMs()) / 1000));
+    const Q = IS_TOUCH ? '<b>RESPONDER</b>' : '<b>Q</b>', E = IS_TOUCH ? '<b>✋ Encontrar</b>' : '<b>E</b>';
+    const bat = e.fantasma ? '👻 eres un fantasma' : hayBateria(st.bateria) ? `🔋 <b>${bateriaTexto(st.bateria)}</b>` : `🔋 <b style="color:#ff5a5a">Sin batería</b>: ${Q}`;
+    let txt;
+    if (e.resultado) txt = e.resultado.texto;
+    else if (fase === 'esconder') txt = soyBuscador() ? `🙈 Cuentas hasta 30… <b>${seg}</b>` : `🏃 ¡Escóndete! <b>${seg} s</b>`;
+    else if (soyBuscador()) txt = `🔎 ¡Busca! Acércate y pulsa ${E} · <b>${seg} s</b>` + (e.solo ? '' : ` · encontrados ${e.encontrados.size}/${e.jugadores.length - 1}`);
+    else txt = `🤫 ¡Que no te encuentren! <b>${seg} s</b>`;
+    mgHud.innerHTML = `${TERRENOS[e.terreno].emoji} ${txt} · ${bat}`;
+    mgHud.hidden = !escuelaEl.hidden || !escondEl.hidden;
+    // Si te encontraron: eres un fantasma (casi transparente)
+    body.material.transparent = e.fantasma; body.material.opacity = e.fantasma ? 0.35 : 1;
+  }
+  // Volver al salón (termina la ronda para ti)
+  function salirEscondidas(o) {
+    const st = MG.state, e = st.esc;
+    cerrarCarga(); quitarTerrenos(); escNegro.hidden = true;
+    if (MG.built.botEsc) MG.built.botEsc.obj.visible = false;
+    body.material.transparent = false; body.material.opacity = 1;
+    st.fase = 'salon'; st.esc = null;
+    const s = SILLAS[11]; placePlayer(o.x + s.x + 2, 0, o.z + s.z);
+    camYaw = Math.PI;
+    void e;
+  }
   // E junto a una silla: la del modo te lleva a la torre; las demás todavía no tienen modo
   function sentarse() {
     const o = minigameOrigin(MG.k);
@@ -2308,7 +2762,8 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     const i = sillaCercana(ps.pos.x - o.x, ps.pos.z - o.z, SILLAS);
     if (i < 0) return;
     if (SILLAS[i].modo === 'nomires') entrarTorre(o);
-    else showToast('Próximamente: esta silla todavía no tiene modo');
+    else if (SILLAS[i].modo === 'escondidas') abrirEscondidas();
+    else avisoModo('Próximamente: esta silla todavía no tiene modo');
   }
   function entrarTorre(o) {
     ponerTorre(o);
@@ -2316,7 +2771,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     Object.assign(st, { fase: 'nomires', bateria: 0, checkpoint: ini, etapaVista: 1 });   // empiezas sin batería: ¡a responder!
     placePlayer(ini.x, ini.y, ini.z);
     const sig = MG.built.torre[1]; camYaw = Math.atan2(ps.pos.x - sig.x, ps.pos.z - sig.z);   // mirando a la primera plataforma
-    showToast(`${NO_MIRES.nombre} · Etapa 1/10: ${ETAPAS[0].nombre}. ¡Tienes doble salto: salta otra vez en el aire!`, false, 3500);
+    avisoModo(`${NO_MIRES.nombre} · Etapa 1/10: ${ETAPAS[0].nombre}. ¡Tienes doble salto: salta otra vez en el aire!`, false, 3500);
     abrirCarga();
   }
   // Volver al salón (ganaste: te llevas el premio)
@@ -2328,15 +2783,16 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     if (gano) {
       save.coins += NO_MIRES.premio.coins; renderCoins();
       flashWarn('¡LO LOGRASTE!', 2);
-      showToast(`¡Llegaste a ${fmt(NO_MIRES.altura)} m! +${NO_MIRES.premio.coins} monedas`);
+      avisoModo(`¡Llegaste a ${fmt(NO_MIRES.altura)} m! +${NO_MIRES.premio.coins} monedas`);
     }
   }
   function updateSalon(o) {
     const t2 = MG.t * 3; MG.built.sillaMat.emissive.setRGB(0.35 + 0.2 * Math.sin(t2), 0.2 + 0.12 * Math.sin(t2), 0);   // la silla del modo brilla
-    mgHud.hidden = !profeEl.hidden;   // con el editor abierto, el letrero de arriba no tapa nada
+    mgHud.hidden = !profeEl.hidden || !escondEl.hidden;   // con el editor del profe o el panel de Escondidas abierto, el letrero de arriba no tapa nada
+    MG.built.escondMat.emissive.setRGB(0.05, 0.12 + 0.08 * Math.sin(t2 + 2), 0.25 + 0.12 * Math.sin(t2 + 2));
     MG.built.profeMat.emissive.setRGB(0.3 + 0.15 * Math.sin(t2 + 1), 0.05, 0.15 + 0.08 * Math.sin(t2 + 1));             // y la de la profe también
     const E = IS_TOUCH ? '<b>✋ Sentarse</b>' : '<b>E</b>';
-    mgHud.innerHTML = `<b>Modo Escuela</b> · ve a la <b>silla que brilla</b> (adelante a la izquierda) y pulsa ${E} · 👩‍🏫 la silla rosada es del profe · la <b>SALIDA</b> está atrás`;
+    mgHud.innerHTML = `<b>Modo Escuela</b> · ve a la <b>silla que brilla</b> (adelante a la izquierda) o a la que <b>se esconde</b> 🙈 (atrás a la derecha) y pulsa ${E} · 👩‍🏫 la silla rosada es del profe · la <b>SALIDA</b> está atrás`;
     // Cruzar la puerta de atrás: vuelves a tu mundo
     const x = ps.pos.x - o.x, z = ps.pos.z - o.z;
     if (z < -SALON.largo / 2 + 0.2 && Math.abs(x - SALON.puerta.x) < SALON.puerta.ancho / 2) {
@@ -2356,16 +2812,16 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     const torre = MG.built.torre, meta = torre[torre.length - 1];
     if (parado(meta)) { salirTorre(o, true); return; }
     for (const p of MG.built.torreCps) {
-      if (p.y > st.checkpoint.y && parado(p)) { st.checkpoint = p; showToast(`Checkpoint ${fmt(p.y)} m`); }
+      if (p.y > st.checkpoint.y && parado(p)) { st.checkpoint = p; avisoModo(`Checkpoint ${fmt(p.y)} m`); }
     }
     // ¿Caíste al vacío? Vuelves a tu último checkpoint (o al inicio). Si caes en otra plataforma, sigues desde ahí.
     if (debeReaparecer(ps.pos.y, ps.onGround)) {
       const c = st.checkpoint; placePlayer(c.x, c.y, c.z);
-      showToast(c.tipo === 'checkpoint' ? `¡No mires abajo! Vuelves al checkpoint de ${fmt(c.y)} m` : '¡No mires abajo! Vuelves al inicio', true);
+      avisoModo(c.tipo === 'checkpoint' ? `¡No mires abajo! Vuelves al checkpoint de ${fmt(c.y)} m` : '¡No mires abajo! Vuelves al inicio', true);
     }
     // ¿Etapa nueva? (solo avisa la primera vez que llegas)
     const et = etapaDe(ps.pos.y);
-    if (et.n > st.etapaVista) { st.etapaVista = et.n; showToast(`¡Etapa ${et.n}/10: ${et.nombre}!`, false, 2500); }
+    if (et.n > st.etapaVista) { st.etapaVista = et.n; avisoModo(`¡Etapa ${et.n}/10: ${et.nombre}!`, false, 2500); }
     const Q = IS_TOUCH ? '<b>RESPONDER</b>' : '<b>Q</b> o <b>RESPONDER</b>';
     const bat = hayBateria(st.bateria) ? `🔋 <b>${bateriaTexto(st.bateria)}</b>` : `🔋 <b style="color:#ff5a5a">Sin batería</b>: ${IS_TOUCH ? 'toca' : 'pulsa'} ${Q} para responder`;
     const cp = st.checkpoint.tipo === 'checkpoint' ? `${fmt(st.checkpoint.y)} m` : 'ninguno';
@@ -2844,17 +3300,27 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     // Modo Escuela: un salón con mesas y sillas. Cada silla es un modo (por ahora solo "No mires abajo").
     // El salón y la torre son el MISMO minijuego: MG.state.fase dice dónde estás ('salon' o 'nomires').
     escuela: {
-      get area() { return MG.state.fase === 'nomires' ? TORRE_AREA : SALON_AREA; },
-      get noMove() { return MG.state.fase === 'nomires' && !hayBateria(MG.state.bateria); },   // sin batería no caminas…
+      get area() {
+        const st = MG.state;
+        if (st.fase === 'escondidas') { const T = TERRENOS[st.esc.terreno], x = TERRENO_X[st.esc.terreno]; return { x0: x - T.ancho / 2 + 1, x1: x + T.ancho / 2 - 1, z0: -T.largo / 2 + 1, z1: T.largo / 2 - 1 }; }
+        return st.fase === 'nomires' ? TORRE_AREA : SALON_AREA;
+      },
+      get noMove() {
+        const st = MG.state, e = st.esc;
+        if (st.fase === 'escondidas') return !!e.resultado || (faseEsc() === 'esconder' && soyBuscador()) || (!e.fantasma && !hayBateria(st.bateria));   // el buscador no se mueve mientras cuenta; el fantasma no necesita batería
+        return st.fase === 'nomires' && !hayBateria(st.bateria);   // sin batería no caminas…
+      },
       get noJump() { return this.noMove; },                                                   // …ni saltas (pero sí te caes)
-      get onE() { return MG.state.fase === 'salon' ? sentarse : null; },      // E: sentarse en la silla de al lado
-      get onQ() { return MG.state.fase === 'nomires' ? abrirCarga : null; },  // Q: responder para cargar batería
+      get onE() { return MG.state.fase === 'salon' ? sentarse : MG.state.fase === 'escondidas' && soyBuscador() && faseEsc() === 'buscar' ? intentarEncontrar : null; },   // E: sentarse · en Escondidas, encontrar
+      get onQ() { const st = MG.state; return st.fase === 'nomires' || (st.fase === 'escondidas' && !st.esc.fantasma && !st.esc.resultado) ? abrirCarga : null; },  // Q: responder para cargar batería
+      get eLabel() { return MG.state.fase === 'escondidas' ? '✋ Encontrar' : '✋ Sentarse'; },
+      // ¿Dónde estoy? (para la red: con quién te ves) · torre: 21 · Escondidas con amigos: 30 + terreno · solo: 99 (no ves a nadie)
+      get mgCodigo() { const st = MG.state; if (st.fase === 'nomires') return MG_TORRE; if (st.fase === 'escondidas') return st.esc.solo ? MG_SOLO : MG_ESCONDIDAS + st.esc.terreno; return undefined; },
       // El cielo se pone oscuro en el espacio (con estrellas) y en el neón
-      get sky() { if (MG.state.fase !== 'nomires') return undefined; const id = etapaDe(ps.pos.y).id; return id === 'espacio' ? 0x070a1f : id === 'neon' ? 0x0d0618 : undefined; },
+      get sky() { if (MG.state.fase === 'escondidas') return 0xefe6d6; if (MG.state.fase !== 'nomires') return undefined; const id = etapaDe(ps.pos.y).id; return id === 'espacio' ? 0x070a1f : id === 'neon' ? 0x0d0618 : undefined; },
       // Parado en hielo: resbalas (agarre chico). 0 = piso normal
       get agarre() { return MG.state.fase === 'nomires' && MG.state.enHielo && ps.onGround ? HIELO.agarre : 0; },   // solo resbalas con los pies en el hielo: al saltar, controlas tu salto normal
       get dobleSalto() { return MG.state.fase === 'nomires'; },   // el doble salto solo existe en la torre
-      eLabel: '✋ Sentarse',
       look(o) { return { x: o.x, z: o.z + 30 }; },
       build(o) { construirSalon(o); },   // la torre se arma recién cuando entras a ella
       start(o) {
@@ -2866,10 +3332,16 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
         if (cercaDeLaProfe(ps.pos.x - minigameOrigin(MG.k).x, ps.pos.z - minigameOrigin(MG.k).z)) return 'Pulsa <kbd>E</kbd> para el modo profe';
         const i = sillaCercana(ps.pos.x - minigameOrigin(MG.k).x, ps.pos.z - minigameOrigin(MG.k).z, SILLAS);
         if (i < 0) return '';
-        return SILLAS[i].modo ? `Pulsa <kbd>E</kbd> para jugar <b>No mires abajo</b>` : 'Pulsa <kbd>E</kbd> para ver esta silla';
+        const modo = SILLAS[i].modo;
+        return modo === 'nomires' ? `Pulsa <kbd>E</kbd> para jugar <b>No mires abajo</b>` : modo === 'escondidas' ? 'Pulsa <kbd>E</kbd> para jugar <b>Escondidas</b>' : 'Pulsa <kbd>E</kbd> para ver esta silla';
       },
-      update(dt, o) { return MG.state.fase === 'nomires' ? updateTorre(dt, o) : updateSalon(o); },
-      end() { cerrarCarga(); quitarTorre(); },
+      update(dt, o) { const f = MG.state.fase; return f === 'nomires' ? updateTorre(dt, o) : f === 'escondidas' ? updateEscondidas(dt, o) : updateSalon(o); },
+      end() {
+        cerrarCarga(); quitarTorre();
+        if (MG.state.esc || !escondEl.hidden) { if (enSalaEsc()) enviar({ tipo: 'esc', que: 'salir' }); escondEl.hidden = true; }
+        quitarTerrenos(); escNegro.hidden = true; body.material.transparent = false; body.material.opacity = 1;
+        if (MG.built.botEsc) MG.built.botEsc.obj.visible = false;
+      },
     },
     // Coral (mezcla): nubes que suben + lava + bot que te sigue
     mix: {
@@ -2926,7 +3398,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     const look = mode.look ? mode.look(o) : { x: o.x, z: o.z + 30 };
     MG.yaw = camYaw; camYaw = Math.atan2(ps.pos.x - look.x, ps.pos.z - look.z);
     mgHud.hidden = false;
-    showToast(`${def.intro || 'Bot ' + def.bot}: ${def.goal}`);
+    showToast(`${def.intro || 'Bot ' + def.bot}: ${def.goal}`, false, 1800, true);   // (el aviso de este mismo modo)
   }
   function endMinigame(won, msg) {
     const def = minigameDef(MG.k), mode = MG.active;
@@ -3111,7 +3583,106 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     profe.local = lista;   // jugando solo: en esta compu
     try { if (lista.length) localStorage.setItem(PREGUNTAS_LOCAL, JSON.stringify(lista)); else localStorage.removeItem(PREGUNTAS_LOCAL); } catch (e) {}
     cerrarProfe();
-    showToast(lista.length ? `👩‍🏫 Guardaste ${lista.length} pregunta${lista.length > 1 ? 's' : ''} para la clase` : '👩‍🏫 Volvieron las preguntas normales', false, 3000);
+    avisoModo(lista.length ? `👩‍🏫 Guardaste ${lista.length} pregunta${lista.length > 1 ? 's' : ''} para la clase` : '👩‍🏫 Volvieron las preguntas normales', false, 3000);
+  }
+
+  // ---------- 🙈 Panel de Escondidas: elegir terreno y rol, la espera con amigos y el resultado ----------
+  const escondEl = document.getElementById('escondidas'), escondMsj = document.getElementById('escondMsj');
+  const escond = { terreno: 0, rol: 'esconder', espera: [], enRonda: false };   // espera: [{ id, nombre }] (lo cuenta el servidor)
+  const enSalaEsc = () => red.id !== null;
+  function abrirEscondidas() {
+    for (const k in keys) keys[k] = false;
+    if (isLocked()) document.exitPointerLock();
+    document.getElementById('escondElegir').hidden = false; document.getElementById('escondFin').hidden = true;
+    escondMsj.textContent = '';
+    if (enSalaEsc()) enviar({ tipo: 'esc', que: 'entrar' });   // te sientas: quedas en la espera de la sala
+    pintarEscondidas();
+    escondEl.hidden = false;
+  }
+  // Cerrar el panel. salir: además te levantas de la silla (sales de la espera de la sala)
+  function cerrarEscondidas(salir = true) {
+    if (escondEl.hidden) return;
+    escondEl.hidden = true;
+    if (salir && enSalaEsc() && !MG.state.esc) enviar({ tipo: 'esc', que: 'salir' });
+  }
+  // Dibuja el panel con elementos de verdad (los nombres van con textContent: los escribió cada jugador)
+  function pintarEscondidas() {
+    const sala = enSalaEsc();
+    document.getElementById('escondModo').textContent = sala ? 'Juegas con los amigos de la sala: cuando haya 2 o más, cualquiera aprieta ¡Empezar! y el servidor elige al azar el terreno (todo 50 veces más grande) y quién busca.' : 'Juegas solo contra el bot.';
+    document.getElementById('escondTerrenoFila').hidden = sala;   // con amigos, el terreno sale al azar
+    document.getElementById('escondTerrenos').replaceChildren(...TERRENOS.map((T, i) => {
+      const b = document.createElement('button'); b.type = 'button'; b.className = escond.terreno === i ? 'on' : '';
+      const em = document.createElement('span'); em.className = 'em'; em.textContent = T.emoji;
+      const nom = document.createElement('b'); nom.textContent = T.nombre;
+      b.append(em, nom, document.createTextNode(T.descripcion));
+      b.addEventListener('click', () => { escond.terreno = i; pintarEscondidas(); });
+      return b;
+    }));
+    document.getElementById('escondRolFila').hidden = sala;
+    for (const b of escondEl.querySelectorAll('[data-rol]')) b.classList.toggle('on', b.dataset.rol === escond.rol);
+    document.getElementById('escondSala').hidden = !sala;
+    if (sala) document.getElementById('escondLista').replaceChildren(...escond.espera.map(j => { const li = document.createElement('li'); li.textContent = j.nombre + (j.id === red.id ? ' (tú)' : ''); return li; }));
+    const boton = document.getElementById('escondEmpezar');
+    boton.disabled = sala && (escond.espera.length < 2 || escond.enRonda);
+    boton.textContent = !sala ? '¡Empezar!' : escond.enRonda ? 'Hay una ronda jugándose…' : escond.espera.length < 2 ? 'Esperando a otro jugador…' : `¡Empezar! (${escond.espera.length} jugadores)`;
+  }
+  for (const b of escondEl.querySelectorAll('[data-rol]')) b.addEventListener('click', () => { escond.rol = b.dataset.rol; pintarEscondidas(); });
+  document.getElementById('escondEmpezar').addEventListener('click', () => {
+    if (enSalaEsc()) { enviar({ tipo: 'esc', que: 'empezar' }); escondMsj.textContent = 'Empezando…'; }
+    else empezarEscondidas(minigameOrigin(MG.k), { solo: true, terreno: escond.terreno, rol: escond.rol });
+  });
+  // El resultado: ¿ganaste? (+25 monedas)
+  function mostrarResultado() {
+    const e = MG.state.esc; if (!e || !e.resultado) return;
+    cerrarCarga(); escNegro.hidden = true;
+    if (e.resultado.gane && !e.premio) { e.premio = true; save.coins += 25; renderCoins(); flashWarn('¡GANASTE!', 2); }
+    document.getElementById('escondResultado').textContent = e.resultado.texto + (e.resultado.gane ? ' +25 monedas' : '');
+    document.getElementById('escondElegir').hidden = true; document.getElementById('escondFin').hidden = false;
+    escondEl.hidden = false;
+  }
+  function volverDelResultado(otra) {
+    const o = minigameOrigin(MG.k), sala = enSalaEsc();
+    escondEl.hidden = true;
+    salirEscondidas(o);
+    if (otra) abrirEscondidas();   // (en la sala sigues en la espera)
+    else if (sala) enviar({ tipo: 'esc', que: 'salir' });
+  }
+  document.getElementById('escondOtra').addEventListener('click', () => volverDelResultado(true));
+  document.getElementById('escondSalon').addEventListener('click', () => volverDelResultado(false));
+  document.getElementById('escondCerrar').addEventListener('click', () => { if (MG.state.esc && MG.state.esc.resultado) volverDelResultado(false); else cerrarEscondidas(); });
+  // ¿Dónde estoy? (para decidir a quién ves en la sala)
+  function miMg() {
+    if (!MG.active) return 0;
+    const c = MG.active.mgCodigo;
+    return c !== undefined ? c : MG.k + 1;
+  }
+  // Mensajes del servidor sobre las Escondidas
+  function mensajeEscondidas(m) {
+    const st = MG.state, e = st && st.esc;
+    if (m.tipo === 'escEspera') {
+      escond.espera = Array.isArray(m.jugadores) ? m.jugadores.filter(j => j && Number.isInteger(j.id) && typeof j.nombre === 'string') : [];
+      escond.enRonda = !!m.enRonda;
+      if (!escondEl.hidden && !document.getElementById('escondElegir').hidden) pintarEscondidas();
+    } else if (m.tipo === 'escRonda') {
+      const ok = Number.isInteger(m.terreno) && m.terreno >= 0 && m.terreno < TERRENOS.length && Array.isArray(m.jugadores) && Number.isInteger(m.buscador) && Number.isFinite(m.esconderMs) && Number.isFinite(m.finMs);
+      if (!ok || !m.jugadores.includes(red.id) || MG.active !== MODES.escuela) return;
+      if (e) salirEscondidas(minigameOrigin(MG.k));
+      empezarEscondidas(minigameOrigin(MG.k), { terreno: m.terreno, jugadores: m.jugadores, buscador: m.buscador, esconderMs: m.esconderMs, finMs: m.finMs });
+    } else if (m.tipo === 'escEncontrado') {
+      if (!e || e.solo || !Number.isInteger(m.id)) return;
+      e.encontrados.add(m.id);
+      const nombre = m.id === red.id ? 'tú' : (red.otros.get(m.id) || {}).nombre || 'alguien';
+      if (m.id === red.id) { e.fantasma = true; cerrarCarga(); avisoModo('👻 ¡Te encontraron! Ahora eres un fantasma: solo el buscador te ve', true, 4000); }
+      else avisoModo(soyBuscador() ? `🎯 ¡Encontraste a ${nombre}!` : `🎯 Encontraron a ${nombre}`, false, 2500);
+    } else if (m.tipo === 'escFin') {
+      if (!e || e.solo || e.resultado) return;
+      const ganaBuscador = m.gana === 'buscador', gane = m.gana !== 'nadie' && ganaBuscador === soyBuscador();
+      e.resultado = { gane, texto: m.gana === 'nadie' ? 'Se fueron todos los camaleones: nadie gana esta vez' : ganaBuscador ? (soyBuscador() ? '¡Encontraste a todos! 🎉' : '¡El buscador encontró a todos!') : (soyBuscador() ? 'Se acabó el tiempo: no encontraste a todos' : '¡Ganan los camaleones! 🦎') };
+      mostrarResultado();
+    } else if (m.tipo === 'escAviso') {
+      const texto = String(m.texto || '');
+      if (!escondEl.hidden) escondMsj.textContent = texto; else avisoModo(texto, true);
+    }
   }
 
   // ---------- Panel de la batería (No mires abajo): responde preguntas para cargarla ----------
@@ -3121,6 +3692,8 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
   function abrirCarga() {
     for (const k in keys) keys[k] = false;
     if (isLocked()) document.exitPointerLock();   // para poder usar el mouse en el panel
+    if (MG.state.fase !== 'escondidas') document.getElementById('escAvisoPanel').hidden = true;
+    document.getElementById('escSalirTorre').textContent = MG.state.fase === 'escondidas' ? 'Salir de las escondidas (volver al salón)' : 'Salir de la torre (volver al salón)';
     escuelaEl.hidden = false; escuelaNueva();
   }
   function cerrarCarga() { escuelaEl.hidden = true; clearTimeout(MG.state.espera); }
@@ -3152,7 +3725,11 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
   }
   escOpciones.addEventListener('click', e => { const b = e.target.closest('button'); if (b && !b.disabled) escuelaResponde(+b.dataset.i); });
   document.getElementById('escCerrar').addEventListener('click', cerrarCarga);
-  document.getElementById('escSalirTorre').addEventListener('click', () => salirTorre(minigameOrigin(MG.k), false));
+  document.getElementById('escSalirTorre').addEventListener('click', () => {
+    if (MG.state.fase !== 'escondidas') { salirTorre(minigameOrigin(MG.k), false); return; }
+    salirEscondidas(minigameOrigin(MG.k));
+    if (enSalaEsc()) enviar({ tipo: 'esc', que: 'salir' });   // te vas de la ronda (si eras el buscador, ganan los camaleones)
+  });
   // Teclado: 1-4 responden · Q o Esc cierran el panel
   function escuelaTecla(e) {
     if (e.repeat) return;
@@ -3393,7 +3970,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
       // Tus monedas son tuyas siempre; las compras de la base del equipo no se mezclan con tu partida de solo
       localStorage.setItem(saveKey(userName), serializeSave({ coins: save.coins, boxes: save.boxes, levels: save.levels, dayPhase, pos: MG.active ? MG.back : ps.pos, style: save.style, trophies: save.trophies }));
     } catch (e) {
-      showToast('No se pudo guardar: este navegador no deja guardar datos', true);
+      avisoModo('No se pudo guardar: este navegador no deja guardar datos', true);
       return;
     }
     savedEl.classList.add('show');
@@ -3689,9 +4266,10 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
   const sunDir = new THREE.Vector3(), tmpColor = new THREE.Color();
   let lastMinute = -1;
   function updateDayNight(dt) {
-    dayPhase = (dayPhase + dt / DAY_LEN) % 1;
-    const ang = dayPhase * Math.PI * 2;
-    const elev = sunElevation(dayPhase);                // -1 medianoche, 0 amanecer/atardecer, 1 mediodía
+    dayPhase = (dayPhase + dt / DAY_LEN) % 1;   // el reloj de verdad sigue (el pueblo y la hora de la sala no cambian)
+    const luz = faseDeLuz(dayPhase, !!MG.active);   // pero en un modo de juego la luz es siempre de mediodía: nunca está oscuro
+    const ang = luz * Math.PI * 2;
+    const elev = sunElevation(luz);                     // -1 medianoche, 0 amanecer/atardecer, 1 mediodía
     const day = THREE.MathUtils.smoothstep(elev, -0.15, 0.25);
     setAmbientDay(day);
     const dusk = Math.max(0, 1 - Math.abs(elev) / 0.3); // color naranja cerca del horizonte
@@ -3713,7 +4291,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     moon.position.set(p.x - sunDir.x * 50, p.y + 40, p.z - sunDir.z * 50);
     moon.target.position.copy(p);
     const wasNight = isNight;
-    isNight = elev < -0.05;
+    isNight = sunElevation(dayPhase) < -0.05;   // la noche de verdad (para el gigante, dormir y el reloj), aunque estés en un modo
     if (isNight && !wasNight) { enemyAwake = false; showToast('Se hizo de noche: el gigante se durmió'); }
     if (!isNight && wasNight) { showToast('¡Amaneció! El gigante despertó. Los bots del pueblo necesitan ayuda', true);
       // En multijugador el anfitrión decide el día nuevo del pueblo, para que todos tengan las mismas misiones
@@ -4067,11 +4645,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     if (f.blaster) { f.blaster.visible = look.blaster > 0; f.blaster.userData.accent.color.setHex(look.blaster === 2 ? 0xff2a2a : 0x3d8bff); }
   }
   // En un minijuego tu amigo está en un lugar que solo existe en su compu: se esconde y su cartel lo avisa
-  function setFriendMinigame(f, mg) {
-    f.mg = mg ? 1 : 0;
-    f.look.visible = f.label.visible = !f.mg;
-    f.mgLabel.visible = !!f.mg;
-  }
+  function setFriendMinigame(f, mg) { f.mg = Number.isInteger(mg) ? mg : 0; }   // (a quién ves se decide en cada cuadro: mira "¿A quién ves?")
   // ¡BOOM! El rectángulo se rompe en pedacitos de su color que salen volando
   const pieceGeo = new THREE.BoxGeometry(0.25, 0.25, 0.25);
   function explode(f) {
@@ -4106,6 +4680,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
       if (m.tipo === 'bienvenida') {
         red.id = m.id; red.anfitrion = m.anfitrion;
         profe.sala = leerPreguntas(m.preguntas) || [];   // las preguntas de la clase (se revisan igual que en el servidor)
+        escond.enRonda = !!(m.escondidas && m.escondidas.enRonda);
         if (document.hidden) enviar({ tipo: 'visible', v: 0 });
         for (const j of m.jugadores) addFriend(j);
         // En una compu nueva (sin guardado en el navegador) apareces donde te dejó la base de datos
@@ -4155,14 +4730,16 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
         showToast(`⚡ ¡${m.de} te aturdió con su láser!`, true, 2500);
       } else if (m.tipo === 'preguntas') {
         const lista = leerPreguntas(m.lista);
-        if (lista) { profe.sala = lista; showToast(lista.length ? '👩‍🏫 El profe cambió las preguntas de la clase' : '👩‍🏫 El profe volvió a las preguntas normales', false, 3500); }
+        if (lista) { profe.sala = lista; avisoModo(lista.length ? '👩‍🏫 El profe cambió las preguntas de la clase' : '👩‍🏫 El profe volvió a las preguntas normales', false, 3500); }
       } else if (m.tipo === 'profe') {
         // El servidor contesta si la contraseña estaba bien
-        if (m.ok) { cerrarProfe(); showToast('👩‍🏫 ¡Listo! Las preguntas son para toda la clase', false, 3500); }
+        if (m.ok) { cerrarProfe(); avisoModo('👩‍🏫 ¡Listo! Las preguntas son para toda la clase', false, 3500); }
         else mensajeProfe(String(m.texto || 'No se pudo guardar'), true);
+      } else if (m.tipo.startsWith('esc')) {
+        mensajeEscondidas(m);
       } else if (m.tipo === 'error') {
         red.error = true;   // (para que al cerrarse no diga "¿el servidor está encendido?")
-        showToast(m.texto, true, 5000);
+        avisoModo(m.texto, true, 5000);
       }
     };
     ws.onclose = () => {
@@ -4173,7 +4750,10 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
       // Sin servidor vuelves a jugar solo: tu compu mueve otra vez al gigante, a los bots y las monedas
       for (const c of coins) if (c.userData.taken) { placeCoin(c); c.visible = true; c.userData.taken = false; }
       takeOverWorld();
-      showToast('Se cortó la conexión con el servidor', true, 4000);
+      // Si estabas en una ronda con amigos, termina (el árbitro era el servidor y ya no está)
+      const e = MG.state && MG.state.esc;
+      if (e && !e.solo && !e.resultado) { e.resultado = { gane: false, texto: 'Se cortó la conexión: la ronda terminó' }; mostrarResultado(); }
+      avisoModo('Se cortó la conexión con el servidor', true, 4000);
     };
   }
   // Lo que llevas puesto, para que tus amigos te vean igual
@@ -4188,7 +4768,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     if (red.id !== null && (red.envio -= dt) <= 0) {
       red.envio = 1 / ENVIOS_POR_SEGUNDO;
       // Si no te moviste, no hace falta repetirlo 10 veces por segundo: basta una vez por segundo (para que el servidor sepa que sigues ahí)
-      const pos = { tipo: 'pos', x: corto(ps.pos.x), y: corto(ps.pos.y), z: corto(ps.pos.z), rot: corto(ps.facing), color: body.material.color.getHex(), mg: MG.active ? 1 : 0 };
+      const pos = { tipo: 'pos', x: corto(ps.pos.x), y: corto(ps.pos.y), z: corto(ps.pos.z), rot: corto(ps.facing), color: body.material.color.getHex(), mg: miMg() };   // mg: en qué lugar estás
       const txt = JSON.stringify(pos);
       red.quieto = txt === red.ultimaPos ? (red.quieto || 0) + 1 : 0;
       if (red.quieto % ENVIOS_POR_SEGUNDO === 0) { enviar(pos); red.ultimaPos = txt; }
@@ -4201,6 +4781,14 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     body.rotation.z = red.aturdido > 0 ? Math.sin(t * 30) * 0.06 : 0;
     // Los amigos se deslizan suave hacia donde dijo el servidor
     const k = dt * 12;
+    // ¿A quién ves? A los que están en el mismo lugar que tú. En una ronda de Escondidas, los encontrados son fantasmas:
+    // solo el buscador los ve (medio transparentes). Y en la ronda no hay nombres flotando (se verían a través de las paredes).
+    const yoMg = miMg(), esc = MG.state && MG.state.esc, enRonda = !!(esc && !esc.solo);
+    for (const [id, f] of red.otros) {
+      const fantasma = enRonda && esc.encontrados.has(id), ve = seVen(yoMg, f.mg) && (!fantasma || soyBuscador());
+      f.look.visible = ve; f.label.visible = ve && !enRonda; f.mgLabel.visible = !ve && yoMg === 0 && f.mg !== 0;
+      if (f.body.material.transparent !== fantasma) { f.body.material.transparent = fantasma; f.body.material.opacity = fantasma ? 0.35 : 1; }
+    }
     for (const f of red.otros.values()) {
       const o = f.obj;
       o.position.set(acercar(o.position.x, f.x, k), acercar(o.position.y, f.y, k), acercar(o.position.z, f.z, k));

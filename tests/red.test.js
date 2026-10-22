@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { limpiarNombre, leerMensaje, acercar, acercarAngulo, piezasExplosion, lugarMoneda, faseAhora, corto, BORDE, DIA_SEGUNDOS, leerLook, leerSala, salaDeHost, linkOficial, leerPreguntas, revisarPreguntas, claveCorrecta, PROFE, MAX_MENSAJE } from '../src/red.js';
+import { limpiarNombre, leerMensaje, acercar, acercarAngulo, piezasExplosion, lugarMoneda, faseAhora, corto, BORDE, DIA_SEGUNDOS, leerLook, leerSala, salaDeHost, linkOficial, leerPreguntas, revisarPreguntas, claveCorrecta, PROFE, MAX_MENSAJE, seVen, MG_SOLO, MG_ESCONDIDAS, ESC, elegirBuscador, elegirTerreno, faseRonda, puedeEncontrar, ganadorRonda, mgDelServidor } from '../src/red.js';
 
 describe('limpiarNombre', () => {
   it('quita espacios de más y corta a 20 letras', () => {
@@ -188,5 +188,75 @@ describe('modo profe: las preguntas de la clase', () => {
     expect(claveCorrecta('', '')).toBe(false);      // sin contraseña guardada, nadie entra
     expect(claveCorrecta(undefined, 'x')).toBe(false);
     expect(claveCorrecta('x', null)).toBe(false);
+  });
+});
+
+describe('dónde está cada jugador (mg) y quién ve a quién', () => {
+  it('pos acepta mg de 0 a 99 (lo demás cuenta como 0)', () => {
+    const pos = mg => leerMensaje(JSON.stringify({ tipo: 'pos', x: 0, y: 0, z: 0, rot: 0, mg })).mg;
+    expect(pos(31)).toBe(31); expect(pos(1)).toBe(1); expect(pos(0)).toBe(0);
+    expect(pos(100)).toBe(0); expect(pos(-1)).toBe(0); expect(pos(2.5)).toBe(0); expect(pos('31')).toBe(0);
+  });
+  it('se ven los que están en el mismo lugar; jugando solo no ves a nadie', () => {
+    expect(seVen(0, 0)).toBe(true);
+    expect(seVen(MG_ESCONDIDAS + 1, MG_ESCONDIDAS + 1)).toBe(true);
+    expect(seVen(MG_ESCONDIDAS + 1, MG_ESCONDIDAS + 2)).toBe(false);
+    expect(seVen(0, 5)).toBe(false);
+    expect(seVen(MG_SOLO, MG_SOLO)).toBe(false);
+  });
+});
+
+describe('Escondidas con amigos: la ronda', () => {
+  it('lee los mensajes de las escondidas (y rechaza los raros)', () => {
+    const esc = m => leerMensaje(JSON.stringify({ tipo: 'esc', ...m }));
+    expect(esc({ que: 'entrar' })).toEqual({ tipo: 'esc', que: 'entrar' });
+    expect(esc({ que: 'salir' })).toEqual({ tipo: 'esc', que: 'salir' });
+    expect(esc({ que: 'empezar' })).toEqual({ tipo: 'esc', que: 'empezar' });
+    expect(esc({ que: 'empezar', terreno: 2 })).toEqual({ tipo: 'esc', que: 'empezar' });   // el terreno que mande alguien no cuenta
+    expect(esc({ que: 'encontrar', a: 7 })).toEqual({ tipo: 'esc', que: 'encontrar', a: 7 });
+    expect(esc({ que: 'encontrar', a: 'Leo' })).toBeNull();
+    expect(esc({ que: 'ganar' })).toBeNull();
+  });
+  it('el buscador sale al azar entre los que esperan', () => {
+    expect(elegirBuscador([4, 7, 9], () => 0)).toBe(4);
+    expect(elegirBuscador([4, 7, 9], () => 0.5)).toBe(7);
+    expect(elegirBuscador([4, 7, 9], () => 0.9999)).toBe(9);
+    const vistos = new Set(); for (let i = 0; i < 200; i++) vistos.add(elegirBuscador([1, 2, 3]));
+    expect(vistos.size).toBe(3);
+  });
+  it('el terreno de la ronda con amigos también sale al azar', () => {
+    expect(elegirTerreno(() => 0)).toBe(0);
+    expect(elegirTerreno(() => 0.5)).toBe(1);
+    expect(elegirTerreno(() => 0.9999)).toBe(2);
+    const vistos = new Set(); for (let i = 0; i < 200; i++) vistos.add(elegirTerreno());
+    expect([...vistos].sort()).toEqual([0, 1, 2]);
+  });
+  it('los tiempos: 30 s para esconderse y 100 s para buscar', () => {
+    expect(faseRonda(0)).toBe('esconder');
+    expect(faseRonda(29999)).toBe('esconder');
+    expect(faseRonda(30000)).toBe('buscar');
+    expect(faseRonda(129999)).toBe('buscar');
+    expect(faseRonda(130000)).toBe('fin');
+  });
+  it('para encontrar a alguien hay que estar cerca', () => {
+    expect(puedeEncontrar({ x: 0, y: 0, z: 0 }, { x: 3, y: 0, z: 2 })).toBe(true);
+    expect(puedeEncontrar({ x: 0, y: 0, z: 0 }, { x: 6, y: 0, z: 0 })).toBe(false);
+    expect(puedeEncontrar({ x: 0, y: 0, z: 0 }, { x: 1, y: 20, z: 0 })).toBe(false);   // arriba de la cama no cuenta
+  });
+  it('quién gana', () => {
+    expect(ganadorRonda({ camaleones: [2, 3], encontrados: [2, 3], ms: 50000 })).toBe('buscador');   // encontró a todos
+    expect(ganadorRonda({ camaleones: [2, 3], encontrados: [2], ms: 50000 })).toBeNull();            // sigue la ronda
+    expect(ganadorRonda({ camaleones: [2, 3], encontrados: [2], ms: 130000 })).toBe('camaleones');   // se acabó el tiempo
+    expect(ganadorRonda({ camaleones: [2, 3], encontrados: [3, 2], ms: 130000 })).toBe('buscador');
+    expect(ganadorRonda({ camaleones: [2, 3], encontrados: [], ms: 50000, buscadorSeFue: true })).toBe('camaleones');   // el buscador se salió
+    expect(ganadorRonda({ camaleones: [], encontrados: [], ms: 50000 })).toBe('nadie');      // se fueron todos sin que encontrara a nadie
+    expect(ganadorRonda({ camaleones: [], encontrados: [2], ms: 50000 })).toBe('buscador');  // encontró a uno y los demás se fueron
+  });
+  it('el servidor decide el mg durante la ronda (nadie se hace invisible ni se mete a una ronda ajena)', () => {
+    expect(mgDelServidor(MG_SOLO, 1)).toBe(MG_ESCONDIDAS + 1);       // un tramposo en la ronda que manda 99
+    expect(mgDelServidor(0, 2)).toBe(MG_ESCONDIDAS + 2);
+    expect(mgDelServidor(MG_ESCONDIDAS + 1, null)).toBe(MG_SOLO);   // uno de afuera que dice estar en la ronda
+    expect(mgDelServidor(12, null)).toBe(12);                       // en el salón: como siempre
+    expect(mgDelServidor(MG_SOLO, null)).toBe(MG_SOLO);
   });
 });

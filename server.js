@@ -3,10 +3,11 @@
 // 2) Reparte en tiempo real dónde está cada jugador (WebSocket)
 // 3) Guarda a todos los jugadores en una base de datos SQLite (datos/jugadores.sqlite)
 // 4) Es el dueño del mundo compartido: la hora, las monedas, quién es el anfitrión, las preguntas del profe
+//    y el árbitro de las Escondidas (quién busca, a quién encontraron y quién gana)
 //    (lo que compra cada uno y sus monedas son solo suyos)
 import { Database } from 'bun:sqlite';
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
-import { PUERTO, MAX_JUGADORES, NUM_MONEDAS, leerMensaje, lugarMoneda, faseAhora, corto, salaDeHost, linkOficial, leerPreguntas, claveCorrecta } from './src/red.js';
+import { PUERTO, MAX_JUGADORES, NUM_MONEDAS, leerMensaje, lugarMoneda, faseAhora, corto, salaDeHost, linkOficial, leerPreguntas, claveCorrecta, ESC, elegirBuscador, elegirTerreno, faseRonda, puedeEncontrar, ganadorRonda, mgDelServidor } from './src/red.js';
 
 // ---------- Base de datos ----------
 mkdirSync(new URL('./datos', import.meta.url), { recursive: true });
@@ -51,6 +52,45 @@ let siguienteId = 1;
 // El anfitrión es el jugador cuya compu mueve al gigante y a los bots (el primero que llegó)
 let anfitrion = null, ultimoMundo = Date.now();
 const aTodos = datos => servidor.publish('juego', JSON.stringify(datos));
+
+// ---------- 🙈 Escondidas ----------
+// espera: los que están sentados en la silla de Escondidas · ronda: la que se está jugando (o null)
+const esc = { espera: new Set(), ronda: null };
+const avisoEsc = (ws, texto) => ws.send(JSON.stringify({ tipo: 'escAviso', texto }));
+// A todos: quién está esperando y si hay una ronda (con nombres, para mostrarlos en el panel)
+function avisarEspera() {
+  aTodos({ tipo: 'escEspera', jugadores: [...esc.espera].filter(id => conectados.has(id)).map(id => ({ id, nombre: conectados.get(id).nombre })), enRonda: !!esc.ronda });
+}
+function empezarRonda(terreno) {
+  const ids = [...esc.espera].filter(id => conectados.has(id));
+  const buscador = elegirBuscador(ids);
+  esc.ronda = { terreno, buscador, jugadores: ids, camaleones: ids.filter(id => id !== buscador), encontrados: [], inicio: Date.now() };
+  // Los tiempos van como "falta tanto" (en ms), así cada compu cuenta igual aunque su reloj esté adelantado
+  aTodos({ tipo: 'escRonda', terreno, buscador, jugadores: ids, esconderMs: ESC.esconderMs, finMs: ESC.esconderMs + ESC.buscarMs });
+  console.log(`🙈 Empieza una ronda de Escondidas: busca ${conectados.get(buscador).nombre} (${ids.length} jugadores)`);
+  avisarEspera();
+}
+function revisarFinRonda() {
+  const r = esc.ronda;
+  if (!r) return;
+  const gana = ganadorRonda({ camaleones: r.camaleones, encontrados: r.encontrados, ms: Date.now() - r.inicio, buscadorSeFue: !conectados.has(r.buscador) || !esc.espera.has(r.buscador) });
+  if (!gana) return;
+  const quedan = r.camaleones.filter(id => !r.encontrados.includes(id));
+  aTodos({ tipo: 'escFin', gana, buscador: r.buscador, quedan, encontrados: r.encontrados });
+  console.log(`🏁 Fin de la ronda de Escondidas: ${gana === 'buscador' ? 'gana el buscador' : gana === 'camaleones' ? 'ganan los camaleones' : 'nadie gana (se fueron todos)'}`);
+  esc.ronda = null;
+  avisarEspera();
+}
+// Alguien se fue (cerró o salió de la silla): ya no juega en la ronda
+function sacarDeEscondidas(id) {
+  esc.espera.delete(id);
+  const r = esc.ronda;
+  if (r) {
+    if (r.buscador !== id && r.camaleones.includes(id)) r.camaleones = r.camaleones.filter(c => c !== id);
+    if (r.jugadores.includes(id)) revisarFinRonda();   // si se fue el buscador, ganan los camaleones
+  }
+  if (esc.ronda === r) avisarEspera();   // (si la ronda terminó, revisarFinRonda ya avisó)
+}
 const sinWs = ({ ws, ...j }) => j;
 
 // ---------- El mundo compartido ----------
@@ -100,7 +140,8 @@ const servidor = Bun.serve({
         // Al nuevo: quién es él, quiénes están ya, dónde quedó la última vez y cómo está el mundo
         ws.send(JSON.stringify({ tipo: 'bienvenida', id: j.id, jugadores: [...conectados.values()].map(sinWs),
           guardado: antes ? { x: antes.x, y: antes.y, z: antes.z, veces: antes.veces + 1 } : null,
-          anfitrion, fase: faseDeAhora(), dia: diaPueblo, monedas, preguntas: preguntasClase }));
+          anfitrion, fase: faseDeAhora(), dia: diaPueblo, monedas, preguntas: preguntasClase,
+          escondidas: { espera: [...esc.espera], enRonda: !!esc.ronda } }));
         conectados.set(j.id, j);
         guardar(j);
         ws.subscribe('juego');
@@ -112,9 +153,11 @@ const servidor = Bun.serve({
 
       yo.ultimo = Date.now();   // sigue jugando (no cerró ni cambió de pestaña)
       if (m.tipo === 'pos') {
-        yo.x = m.x; yo.y = m.y; yo.z = m.z; yo.rot = m.rot; yo.mg = m.mg;
+        // El mg lo pone el servidor si estás jugando una ronda (y nadie de afuera puede decir que está adentro)
+        const r = esc.ronda, enRonda = r && r.jugadores.includes(yo.id) && esc.espera.has(yo.id);
+        yo.x = m.x; yo.y = m.y; yo.z = m.z; yo.rot = m.rot; yo.mg = mgDelServidor(m.mg, enRonda ? r.terreno : null);
         if (m.color !== null) yo.color = m.color;
-        ws.publish('juego', JSON.stringify({ tipo: 'pos', id: yo.id, x: m.x, y: m.y, z: m.z, rot: m.rot, color: yo.color, mg: m.mg }));
+        ws.publish('juego', JSON.stringify({ tipo: 'pos', id: yo.id, x: m.x, y: m.y, z: m.z, rot: m.rot, color: yo.color, mg: yo.mg }));
       } else if (m.tipo === 'visible') {
         // Una pestaña escondida no corre el juego: si era el anfitrión, otro toma el control ya mismo (sin esperar 3 segundos)
         yo.visible = m.v;
@@ -140,6 +183,25 @@ const servidor = Bun.serve({
         if (host && host.id !== yo.id) host.ws.send(JSON.stringify({ tipo: 'evento', que: m.que, nombre: yo.nombre }));
       } else if (m.tipo === 'disparo') {
         ws.publish('juego', JSON.stringify({ ...m, id: yo.id }));
+      } else if (m.tipo === 'esc') {
+        const r = esc.ronda;
+        if (m.que === 'entrar') { esc.espera.add(yo.id); avisarEspera(); }
+        else if (m.que === 'salir') sacarDeEscondidas(yo.id);
+        else if (m.que === 'empezar') {
+          if (r) return avisoEsc(ws, 'Ya hay una ronda jugándose: espera a que termine');
+          if (!esc.espera.has(yo.id)) return avisoEsc(ws, 'Siéntate primero en la silla de Escondidas');
+          if (esc.espera.size < 2) return avisoEsc(ws, 'Hacen falta al menos 2 jugadores');
+          empezarRonda(elegirTerreno());   // el terreno sale al azar
+        } else if (m.que === 'encontrar') {
+          // Solo el buscador, solo en la parte de buscar, solo a un camaleón que no encontró antes y que esté cerca
+          if (!r || r.buscador !== yo.id || faseRonda(Date.now() - r.inicio) !== 'buscar') return;
+          const otro = conectados.get(m.a);
+          if (!otro || !r.camaleones.includes(m.a) || r.encontrados.includes(m.a)) return;
+          if (!puedeEncontrar(yo, otro)) return avisoEsc(ws, '¡Casi! Acércate más');
+          r.encontrados.push(m.a);
+          aTodos({ tipo: 'escEncontrado', id: m.a, por: yo.id });
+          revisarFinRonda();
+        }
       } else if (m.tipo === 'preguntas') {
         // El profe cambió las preguntas: solo si la contraseña es la de verdad (y nunca se la mandamos a nadie)
         const responder = (ok, texto) => ws.send(JSON.stringify({ tipo: 'profe', ok, texto }));
@@ -169,6 +231,7 @@ const servidor = Bun.serve({
       aTodos({ tipo: 'sale', id: yo.id, nombre: yo.nombre });   // ¡BOOM! en la pantalla de todos
       // Si se fue el anfitrión, el siguiente que llegó toma el control del gigante y los bots
       if (anfitrion === yo.id) cambiarAnfitrion();
+      sacarDeEscondidas(yo.id);
       console.log(`💥 ${yo.nombre} se desconectó (${conectados.size} jugando)`);
     },
   },
@@ -190,6 +253,9 @@ function cambiarAnfitrion() {
 setInterval(() => {
   if (anfitrion && conectados.size > 1 && Date.now() - ultimoMundo > 3000) cambiarAnfitrion();
 }, 1000);
+
+// ¿Se acabó el tiempo de la ronda de Escondidas?
+setInterval(revisarFinRonda, 250);
 
 // Cada 10 segundos guarda a todos (por si la compu se apaga de golpe) y corrige la hora de todos
 setInterval(() => {
