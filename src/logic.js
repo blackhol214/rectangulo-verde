@@ -371,6 +371,38 @@ export const VILLAGE = {
   houses: [-80, -56, -32, -8, 16].flatMap(x => [{ x, z: 48 }, { x, z: 70 }]).sort((a, b) => a.z - b.z || a.x - b.x),
 };
 export const villageDoor = i => ({ x: VILLAGE.houses[i].x, z: VILLAGE.houses[i].z - VILLAGE.doorOut });
+// ---------- Por dentro de las casas del pueblo ----------
+// La puerta está en la pared de adelante (la que mira hacia el bot). Hay ventanas de vidrio, un tapete y la cama del bot.
+export const VILLAGE_HOUSE = {
+  wall: 0.25, height: 3.6,
+  door: { w: 1.4, h: 2.3 },                    // el hueco de la puerta, en medio de la pared de adelante
+  window: { w: 1.1, y0: 1.5, y1: 2.5 },         // las ventanas (huecos con vidrio)
+  bed: { dx: 1.9, dz: 2.0, w: 1.3, l: 2.3, top: 0.55 },   // la cama, al fondo a la derecha
+  rug: { dz: -0.2, r: 1.5 },                    // el tapete redondo, en el medio
+};
+// Pedazos de una pared con huecos (puertas y ventanas). La pared va de a0 a a1; cada hueco es { c0, c1, y0, y1 }.
+// Devuelve cajitas { a0, a1, y0, y1 }: columnas enteras entre huecos, y debajo y encima de cada hueco.
+export function wallPieces(a0, a1, holes, height = VILLAGE_HOUSE.height) {
+  const out = [];
+  let cur = a0;
+  for (const h of [...holes].sort((p, q) => p.c0 - q.c0)) {
+    if (h.c0 > cur) out.push({ a0: cur, a1: h.c0, y0: 0, y1: height });
+    if (h.y0 > 0) out.push({ a0: h.c0, a1: h.c1, y0: 0, y1: h.y0 });
+    if (h.y1 < height) out.push({ a0: h.c0, a1: h.c1, y0: h.y1, y1: height });
+    cur = h.c1;
+  }
+  if (cur < a1) out.push({ a0: cur, a1, y0: 0, y1: height });
+  return out;
+}
+// ¿Estás dentro de la casa i? (entre las paredes)
+export function insideVillageHouse(x, z, i) {
+  const h = VILLAGE.houses[i], m = VILLAGE.size / 2 - VILLAGE_HOUSE.wall;
+  return Math.abs(x - h.x) < m && Math.abs(z - h.z) < m;
+}
+// La cama del bot, la entrada (justo adentro de la puerta) y la salida (afuera, frente a la puerta)
+export const villageBed = i => ({ x: VILLAGE.houses[i].x + VILLAGE_HOUSE.bed.dx, z: VILLAGE.houses[i].z + VILLAGE_HOUSE.bed.dz });
+export const villageEntrance = i => ({ x: VILLAGE.houses[i].x, z: VILLAGE.houses[i].z - VILLAGE.size / 2 + 1 });
+export const villageExit = i => ({ x: VILLAGE.houses[i].x, z: VILLAGE.houses[i].z - VILLAGE.size / 2 - 1.5 });
 export const nearVillageHouse = (x, z, margin = 2) => VILLAGE.houses.some(h => Math.abs(x - h.x) < VILLAGE.size / 2 + margin && Math.abs(z - h.z) < VILLAGE.size / 2 + margin);
 // ¿Puede un bot ir a (x, z)? Solo en tu mitad, lejos de las montañas, de la casa y de la tienda de estilo
 export function botCanGo(x, z) {

@@ -4,7 +4,7 @@ import {
   upgradePrice, fmt, sunElevation, isNightPhase, clockText, hourToPhase,
   launchSpeedForHeight, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, productReward, BAG_VALUE, nearestIndex, assistantSpeed, ASSIST_SPEED_MAX,
   normalizeName, saveKey, serializeSave, parseSave,
-  BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, FACTORY, factoryLineSlot, inFactory, squashStretch, SQUASH, ACHIEVEMENTS, achievementById, coinAchievementsFor, TROPHY_TABLE, trophySpot, slabPieces, missingFor, canAfford,
+  BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, FACTORY, factoryLineSlot, inFactory, squashStretch, SQUASH, ACHIEVEMENTS, achievementById, coinAchievementsFor, TROPHY_TABLE, trophySpot, VILLAGE_HOUSE, wallPieces, insideVillageHouse, villageBed, villageEntrance, villageExit, slabPieces, missingFor, canAfford,
   mountainRing, MOUNTAIN_WALL_INSET, seededRandom,
   blasterStats,
   COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, parseStyle, cosmeticById,
@@ -1250,5 +1250,35 @@ describe('modo profe', () => {
     expect(escaparHTML(malo)).toBe('&lt;img src=x onerror=alert(1)&gt;');
     expect(escaparHTML('"Tom & Jerry"')).toBe('&quot;Tom &amp; Jerry&quot;');
     expect(escaparHTML(malo)).not.toContain('<');
+  });
+});
+
+describe('por dentro de las casas del pueblo', () => {
+  const H = VILLAGE_HOUSE;
+  it('una pared con una puerta y dos ventanas deja los huecos libres y tapa todo lo demás', () => {
+    const holes = [{ c0: -0.7, c1: 0.7, y0: 0, y1: 2.3 }, { c0: -2.75, c1: -1.65, y0: 1.5, y1: 2.5 }, { c0: 1.65, c1: 2.75, y0: 1.5, y1: 2.5 }];
+    const pieces = wallPieces(-3.5, 3.5, holes);
+    const area = pieces.reduce((s, p) => s + (p.a1 - p.a0) * (p.y1 - p.y0), 0);
+    const huecos = holes.reduce((s, h) => s + (h.c1 - h.c0) * (h.y1 - h.y0), 0);
+    expect(area).toBeCloseTo(7 * H.height - huecos);   // toda la pared menos los huecos
+    // por el hueco de la puerta se pasa: ninguna pieza tapa la puerta abajo
+    expect(pieces.some(p => p.a0 < 0.7 && p.a1 > -0.7 && p.y0 < 2.3)).toBe(false);
+  });
+  it('sin huecos es una sola pared entera', () => {
+    expect(wallPieces(0, 5, [])).toEqual([{ a0: 0, a1: 5, y0: 0, y1: H.height }]);
+  });
+  it('la cama, la entrada y el tapete quedan adentro; la salida queda afuera, frente a la puerta', () => {
+    for (let i = 0; i < VILLAGE.houses.length; i++) {
+      const b = villageBed(i), e = villageEntrance(i), x = villageExit(i), h = VILLAGE.houses[i];
+      expect(insideVillageHouse(b.x, b.z, i)).toBe(true);
+      expect(insideVillageHouse(e.x, e.z, i)).toBe(true);
+      expect(insideVillageHouse(h.x, h.z + H.rug.dz, i)).toBe(true);
+      expect(insideVillageHouse(x.x, x.z, i)).toBe(false);
+      expect(x.z).toBeLessThan(h.z - VILLAGE.size / 2);   // la salida está del lado de la puerta
+      expect(Math.abs(x.x - h.x)).toBeLessThan(H.door.w / 2);   // derecho por la puerta
+    }
+  });
+  it('la cama no tapa el camino de la puerta al tapete', () => {
+    expect(H.bed.dx - H.bed.w / 2).toBeGreaterThan(H.door.w / 2);
   });
 });

@@ -55,8 +55,11 @@
   .clock #clockIcon { font:400 16px Impact, "Arial Narrow Bold", sans-serif; letter-spacing:.04em; color:#c98a00; }
   .clock.night #clockIcon { color:#3b4fa8; }
   .coins i { width:20px; height:20px; border-radius:50%; background:radial-gradient(circle at 35% 35%, #fff3a8, #ffc400 55%, #c98a00); box-shadow:inset 0 0 0 2px #b07800; }
-  #toast { position:fixed; left:50%; bottom:calc(28px + env(safe-area-inset-bottom,0px)); transform:translate(-50%, 10px); margin:0; padding:10px 18px; border-radius:999px; background:rgba(22,48,31,.88); color:#fff; font:700 16px system-ui, sans-serif; white-space:nowrap; opacity:0; pointer-events:none; transition:opacity .2s, transform .2s; }
-  #toast.show { opacity:1; transform:translate(-50%, 0); }
+  /* Los avisos y lo que dicen los bots salen en el CENTRO de la pantalla (más fácil de leer) */
+  #toast { position:fixed; left:50%; top:42%; transform:translate(-50%, -50%) scale(.96); z-index:24; margin:0; padding:14px 22px; border-radius:16px; background:rgba(22,48,31,.9); color:#fff;
+    font:700 20px/1.35 system-ui, sans-serif; text-align:center; white-space:normal; width:max-content; max-width:min(560px, calc(100% - 32px)); box-shadow:0 8px 24px rgba(0,0,0,.3);
+    opacity:0; pointer-events:none; transition:opacity .2s, transform .2s; }
+  #toast.show { opacity:1; transform:translate(-50%, -50%) scale(1); }
   #toast.bad { background:rgba(150,20,20,.9); }
   #cross { position:fixed; left:50%; top:50%; width:22px; height:22px; margin:-11px 0 0 -11px; pointer-events:none; display:none; }
   #cross::before, #cross::after { content:""; position:absolute; background:#fff; box-shadow:0 0 0 1px rgba(0,0,0,.5); }
@@ -188,10 +191,10 @@
   @media (pointer:coarse) { #responderBtn { bottom:calc(276px + env(safe-area-inset-bottom,0px)); } }   /* en el celular, encima de GUARDAR (abajo están el joystick y 👁️) */
   @media (pointer:coarse) { #stick, #jump, #camStick, #fpBtn { display:block; } #shootBtn:not([hidden]) { display:block; } .hud .keys { display:none; } #saveBtn { left:16px; right:auto; bottom:calc(220px + env(safe-area-inset-bottom,0px)); padding:10px 16px; font-size:18px; }
     #touchActions { display:flex; bottom:calc(220px + env(safe-area-inset-bottom,0px)); } #actionPrompt, #bedPrompt { display:none; }
-    #toast { bottom:auto; top:calc(196px + env(safe-area-inset-top,0px)); } }
+    #toast { font-size:17px; } }
   /* Pantallas angostas: la ayuda deja sitio a las monedas y el reloj; los avisos pueden ocupar 2 líneas */
   @media (max-width:600px) { .hud { max-width:calc(100% - 150px); font-size:12px; } #parkourHud { top:calc(108px + env(safe-area-inset-top,0px)); white-space:normal; font-size:13px; border-radius:14px; width:max-content; }
-    #questHud { top:calc(108px + env(safe-area-inset-top,0px)); white-space:normal; font-size:12px; border-radius:14px; width:max-content; max-width:calc(100% - 32px); } #toast { white-space:normal; text-align:center; width:max-content; max-width:calc(100% - 32px); border-radius:14px; } }
+    #questHud { top:calc(108px + env(safe-area-inset-top,0px)); white-space:normal; font-size:12px; border-radius:14px; width:max-content; max-width:calc(100% - 32px); } } 
 </style>
 </head>
 <body>
@@ -292,8 +295,8 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module">
-import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, ESCUELA, ESCUELA_K, escuelaSiguiente, escuelaMezclar, SALON, salonSillas, sillaCercana, cercaDeLaProfe, preguntasDeLaClase, escaparHTML, NO_MIRES, torreNoMires, seededRandom, debeReaparecer, ETAPAS, etapaDe, cajasDe, decoracionTorre, ovniDesplazamiento, HIELO, deslizar, puedeDobleSalto, gastarBateria, cargarBateria, hayBateria, BATERIA, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, squashStretch, ACHIEVEMENTS, achievementById, coinAchievementsFor, TROPHY_TABLE, trophySpot, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
-         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-21-profe'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
+import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, ESCUELA, ESCUELA_K, escuelaSiguiente, escuelaMezclar, SALON, salonSillas, sillaCercana, cercaDeLaProfe, preguntasDeLaClase, escaparHTML, NO_MIRES, torreNoMires, seededRandom, debeReaparecer, ETAPAS, etapaDe, cajasDe, decoracionTorre, ovniDesplazamiento, HIELO, deslizar, puedeDobleSalto, gastarBateria, cargarBateria, hayBateria, BATERIA, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, VILLAGE_HOUSE, wallPieces, insideVillageHouse, villageBed, villageEntrance, villageExit, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, squashStretch, ACHIEVEMENTS, achievementById, coinAchievementsFor, TROPHY_TABLE, trophySpot, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
+         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-22-casas'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
 import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto, acercar, acercarAngulo, piezasExplosion, leerPreguntas, revisarPreguntas, PROFE } from './src/red.js?v=2026-10-21-profe';
 (() => {
   // iPhone ignora user-scalable=no: aquí se bloquea el zoom con dos dedos y el doble toque
@@ -931,6 +934,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
   const touchText = s => !IS_TOUCH ? s : s.replace(/pulsa E/g, 'toca ✋ Buscar').replace(/<b>E<\/b>/g, '<b>✋ Buscar</b>').replace(/con (<b>)?F(<\/b>)?/g, 'con $1💧 Agua$2');
   function showToast(text, bad, ms = 1800) {
     if (quietToasts) return;
+    ms = Math.max(ms, 1500 + text.length * 45);   // mientras más largo el texto, más tiempo se queda para leerlo
     toast.textContent = touchText(text); toast.classList.toggle('bad', !!bad); toast.classList.add('show');
     clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('show'), ms);
   }
@@ -1214,12 +1218,10 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
   // Lo que ganas al recoger en cada tipo de cinta
   const REWARD = {
     box: () => {
-      const r = productReward('box'); save.boxes += r.boxes; renderCoins();
-      showToast(save.levels.assistant || save.boxes >= 10 ? '+1 caja dorada' : `+1 caja dorada (${save.boxes}/10 para el asistente)`);
+      const r = productReward('box'); save.boxes += r.boxes; renderCoins();   // sin aviso: el contador de cajas de arriba ya lo muestra
     },
     bag: () => {
-      const r = productReward('bag'); save.coins += r.coins; renderCoins();
-      showToast(`+${r.coins} monedas`);
+      const r = productReward('bag'); save.coins += r.coins; renderCoins();   // sin aviso: el contador de monedas ya lo muestra
     },
   };
   const LINE_SPECS = {
@@ -3766,21 +3768,60 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     return new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false });
   };
   const MARK = { '!': markerTex('!'), '?': markerTex('?') };
+  // Una casa del pueblo por dentro: paredes con puerta y ventanas de vidrio, techo, piso, tapete y la cama del bot
+  const glassMat = new THREE.MeshLambertMaterial({ color: 0xbfe6ff, transparent: true, opacity: 0.28, depthWrite: false });
+  function buildVillageHouse(h, i, color) {
+    const S = VILLAGE.size / 2, V = VILLAGE_HOUSE, T = V.wall, wallMat = new THREE.MeshLambertMaterial({ color: color.clone().lerp(new THREE.Color(0xffffff), 0.45) });
+    const ventana = c => ({ c0: c - V.window.w / 2, c1: c + V.window.w / 2, y0: V.window.y0, y1: V.window.y1 });
+    // Adelante (puerta en el medio y dos ventanas), atrás y a los lados (una ventana en cada una)
+    const paredes = [
+      { eje: 'x', fijo: [h.z - S, h.z - S + T], huecos: [{ c0: -V.door.w / 2, c1: V.door.w / 2, y0: 0, y1: V.door.h }, ventana(-2.2), ventana(2.2)] },
+      { eje: 'x', fijo: [h.z + S - T, h.z + S], huecos: [ventana(0)] },
+      { eje: 'z', fijo: [h.x - S, h.x - S + T], huecos: [ventana(0)] },
+      { eje: 'z', fijo: [h.x + S - T, h.x + S], huecos: [ventana(-0.6)] },
+    ];
+    for (const w of paredes) {
+      const c = w.eje === 'x' ? h.x : h.z;
+      for (const p of wallPieces(-S, S, w.huecos)) {
+        if (w.eje === 'x') addBox(c + p.a0, c + p.a1, p.y0, p.y1, w.fijo[0], w.fijo[1], wallMat);
+        else addBox(w.fijo[0], w.fijo[1], p.y0, p.y1, c + p.a0, c + p.a1, wallMat);
+      }
+      for (const v of w.huecos.filter(q => q.y0 > 0)) {   // el vidrio de cada ventana (se ve a través, pero no se puede pasar)
+        const mid = (w.fijo[0] + w.fijo[1]) / 2, cx = c + (v.c0 + v.c1) / 2, alto = v.y1 - v.y0;
+        const g = new THREE.Mesh(new THREE.BoxGeometry(w.eje === 'x' ? v.c1 - v.c0 : 0.04, alto, w.eje === 'x' ? 0.04 : v.c1 - v.c0), glassMat);
+        if (w.eje === 'x') g.position.set(cx, (v.y0 + v.y1) / 2, mid); else g.position.set(mid, (v.y0 + v.y1) / 2, cx);
+        scene.add(g);
+        if (w.eje === 'x') platforms.push({ x: cx, z: mid, hw: (v.c1 - v.c0) / 2, hd: T / 2, top: v.y1, bottom: v.y0 });
+        else platforms.push({ x: mid, z: cx, hw: T / 2, hd: (v.c1 - v.c0) / 2, top: v.y1, bottom: v.y0 });
+      }
+    }
+    addBox(h.x - S, h.x + S, V.height, V.height + 0.15, h.z - S, h.z + S, wallMat);   // techo (por dentro), se puede pisar arriba
+    // Piso de madera, el tapete del color de la casa y la cama del bot
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(VILLAGE.size - 2 * T, VILLAGE.size - 2 * T), new THREE.MeshLambertMaterial({ color: 0xb0814f }));
+    floor.rotation.x = -Math.PI / 2; floor.position.set(h.x, 0.02, h.z); floor.receiveShadow = true; scene.add(floor);
+    const rug = new THREE.Mesh(new THREE.CylinderGeometry(V.rug.r, V.rug.r, 0.03, 40), new THREE.MeshLambertMaterial({ color: BOT_COLORS[i] }));
+    rug.position.set(h.x, 0.035, h.z + V.rug.dz); rug.receiveShadow = true; scene.add(rug);
+    const borde = new THREE.Mesh(new THREE.TorusGeometry(V.rug.r - 0.1, 0.05, 6, 40), new THREE.MeshLambertMaterial({ color: color.clone().lerp(new THREE.Color(0xffffff), 0.6) }));
+    borde.rotation.x = Math.PI / 2; borde.position.set(h.x, 0.06, h.z + V.rug.dz); scene.add(borde);
+    const b = villageBed(i), B = V.bed;
+    addBox(b.x - B.w / 2, b.x + B.w / 2, 0, B.top - 0.15, b.z - B.l / 2, b.z + B.l / 2, new THREE.MeshLambertMaterial({ color: 0x6b4226 }));   // base de la cama
+    const colchon = new THREE.Mesh(new THREE.BoxGeometry(B.w - 0.1, 0.15, B.l - 0.1), new THREE.MeshLambertMaterial({ color: 0xf7f4ee })); colchon.position.set(b.x, B.top - 0.075, b.z); scene.add(colchon);
+    const cobija = new THREE.Mesh(new THREE.BoxGeometry(B.w - 0.06, 0.08, B.l * 0.55), new THREE.MeshLambertMaterial({ color: BOT_COLORS[i] })); cobija.position.set(b.x, B.top + 0.02, b.z - B.l * 0.18); scene.add(cobija);
+    const almohada = new THREE.Mesh(new THREE.BoxGeometry(B.w * 0.7, 0.12, 0.4), new THREE.MeshLambertMaterial({ color: 0xffffff })); almohada.position.set(b.x, B.top + 0.04, b.z + B.l / 2 - 0.3); scene.add(almohada);
+  }
   function buildVillage() {
     VILLAGE.houses.forEach((h, i) => {
       const color = new THREE.Color(BOT_COLORS[i]), S = VILLAGE.size / 2;
-      addBox(h.x - S, h.x + S, 0, 3.6, h.z - S, h.z + S, new THREE.MeshLambertMaterial({ color: color.clone().lerp(new THREE.Color(0xffffff), 0.45) }));
+      buildVillageHouse(h, i, color);
       const roof = new THREE.Mesh(new THREE.ConeGeometry(S * 1.55, 2.8, 4), new THREE.MeshLambertMaterial({ color: color.clone().multiplyScalar(0.7) }));
       roof.rotation.y = Math.PI / 4; roof.position.set(h.x, 3.6 + 1.4, h.z); roof.castShadow = true; scene.add(roof);
-      const door = new THREE.Mesh(new THREE.BoxGeometry(1.4, 2.3, 0.1), new THREE.MeshLambertMaterial({ color: 0x5a3820 })); door.position.set(h.x, 1.15, h.z - S - 0.05); scene.add(door);
-      for (const wx of [-2.2, 2.2]) { const w = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1, 0.1), new THREE.MeshLambertMaterial({ color: 0x9fd3ff, emissive: 0x000000 })); w.position.set(h.x + wx, 2, h.z - S - 0.05); scene.add(w); }
       // El bot grande (de tu altura) que vive ahí
       const g = new THREE.Group(), body = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), new THREE.MeshLambertMaterial({ color: BOT_COLORS[i] }));
       body.position.y = H / 2; body.castShadow = true; g.add(body);
       for (const ex of [-0.22, 0.22]) { const e = new THREE.Mesh(eyeGeo, eyeMat); e.scale.z = 0.5; e.position.set(ex, H * 0.78, D / 2 + 0.02); g.add(e); }
       const d = villageDoor(i); g.position.set(d.x, 0, d.z); g.rotation.y = Math.PI; scene.add(g);
       const mark = new THREE.Sprite(MARK['!']); mark.scale.set(1, 1, 1); mark.position.y = H + 0.9; g.add(mark);
-      village.bots.push({ g, body, mark });
+      village.bots.push({ g, body, mark, eyes: g.children.filter(c => c.geometry === eyeGeo), fase: 'puerta', echando: false });
       const z = new THREE.Sprite(zzz.material); z.scale.set(3, 1.5, 1); z.position.set(h.x + 1.5, 7.4, h.z); z.visible = false; scene.add(z); village.zzz.push(z);
     });
     newVillageDay();
@@ -3871,12 +3912,81 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     setTimeout(() => showToast(`¡Se te cayó ${A.task.name}! Volvió a donde estaba`, true, 3000), 1300);
   }
   const questHud = document.getElementById('questHud');
+  // ---------- Los bots grandes: sólidos, y de noche entran a dormir a su casa (y te sacan si estás adentro) ----------
+  const BIG_BOT_SPEED = 3.5, PUSH_SPEED = 4.5;
+  // Camina hacia un punto; devuelve true cuando llegó
+  function walkBigBot(b, to, dt, speed = BIG_BOT_SPEED) {
+    const p = b.g.position, dx = to.x - p.x, dz = to.z - p.z, d = Math.hypot(dx, dz);
+    if (d < 0.15) return true;
+    const step = Math.min(speed * dt, d);
+    p.x += dx / d * step; p.z += dz / d * step; b.g.rotation.y = Math.atan2(dx, dz);
+    b.body.position.y = H / 2 + Math.abs(Math.sin(t * 9 + p.x)) * 0.06;   // camina dando saltitos
+    return false;
+  }
+  function standUp(b) { b.g.rotation.set(0, b.g.rotation.y, 0); b.g.position.y = 0; for (const e of b.eyes) e.scale.y = 1; }
+  function updateBigBot(b, i, dt) {
+    const p = b.g.position, h = VILLAGE.houses[i], z = village.zzz[i];
+    // Adentro, o todavía en el marco de la puerta (el bot te saca hasta afuera del todo)
+    const enPuerta = Math.abs(ps.pos.x - h.x) < VILLAGE_HOUSE.door.w / 2 + 0.3 && ps.pos.z > h.z - VILLAGE.size / 2 - 0.9 && ps.pos.z < h.z - VILLAGE.size / 2 + 1;
+    const youInside = (insideVillageHouse(ps.pos.x, ps.pos.z, i) || (b.echando && enPuerta)) && ps.pos.y < VILLAGE_HOUSE.height && ps.pos.y > -1;
+    const botInside = insideVillageHouse(p.x, p.z, i);
+    b.g.visible = true;
+    if (isNight) {
+      if (youInside) {
+        // ¡Estás en su casa de noche! Se levanta, te alcanza y te empuja hasta la puerta
+        if (b.fase === 'cama') standUp(b);
+        b.fase = 'echando'; z.visible = false;
+        if (!b.echando) { b.echando = true; showToast(`😤 Bot ${botName(i)}: ¡Es hora de dormir! Fuera de mi casa`, true, 3000); }
+        // Hacia dónde te va a sacar: primero hacia la entrada (si estás lejos de la puerta) y después hacia afuera
+        const exit = Math.abs(ps.pos.x - h.x) < VILLAGE_HOUSE.door.w / 2 - 0.2 || ps.pos.z < h.z - VILLAGE.size / 2 + 1.2 ? villageExit(i) : villageEntrance(i);
+        const ex = exit.x - ps.pos.x, ez = exit.z - ps.pos.z, el = Math.hypot(ex, ez) || 1;
+        // El bot se pone DETRÁS de ti (del lado contrario a la puerta) para empujarte hacia afuera
+        const atras = { x: ps.pos.x - ex / el * 1.1, z: ps.pos.z - ez / el * 1.1 };
+        if (!botInside && !enPuerta) walkBigBot(b, villageEntrance(i), dt);   // primero entra por la puerta
+        else if (Math.hypot(atras.x - p.x, atras.z - p.z) > 0.5) walkBigBot(b, atras, dt, BIG_BOT_SPEED * 1.4);
+        else {
+          ps.walkX += ex / el * PUSH_SPEED * dt; ps.walkZ += ez / el * PUSH_SPEED * dt;   // ¡empujón!
+          walkBigBot(b, atras, dt, PUSH_SPEED * 1.2);
+          b.g.rotation.y = Math.atan2(ex, ez);   // te mira mientras te empuja
+        }
+        return;
+      }
+      b.echando = false;
+      if (b.fase === 'cama') { z.visible = true; z.position.set(p.x, 2.6 + Math.sin(t * 2 + i) * 0.2, p.z); return; }
+      // Entra y va a su cama
+      b.fase = 'acostarse'; z.visible = false;
+      const bed = villageBed(i);
+      if (!botInside) { walkBigBot(b, villageEntrance(i), dt); return; }
+      if (!walkBigBot(b, { x: bed.x, z: bed.z + VILLAGE_HOUSE.bed.l / 2 - 0.1 }, dt)) return;
+      // Se acuesta: boca arriba, con la cabeza en la almohada y los ojos cerrados
+      b.fase = 'cama'; b.g.rotation.set(Math.PI / 2, Math.PI, 0); p.set(bed.x, VILLAGE_HOUSE.bed.top + D / 2, bed.z + VILLAGE_HOUSE.bed.l / 2 - 0.2 - H);
+      for (const e of b.eyes) e.scale.y = 0.15;
+      return;
+    }
+    // De día: se levanta, sale y vuelve a esperar frente a su puerta
+    z.visible = false; b.echando = false;
+    if (b.fase === 'puerta') return;
+    if (b.fase === 'cama') { standUp(b); const bed = villageBed(i); p.set(bed.x - 1, 0, bed.z); }
+    b.fase = 'saliendo';
+    // Una sola orden a la vez: si todavía no está alineado con la puerta, va a la entrada; si ya lo está, sale derecho
+    if (botInside) { walkBigBot(b, Math.abs(p.x - h.x) < 0.3 ? villageExit(i) : villageEntrance(i), dt); return; }
+    if (walkBigBot(b, villageDoor(i), dt)) b.fase = 'puerta';
+  }
+  // Los bots grandes son sólidos: si te metes en uno, te saca hacia afuera (ellos no se mueven)
+  function solidBigBots() {
+    for (const b of village.bots) {
+      if (!b.g.visible || b.fase === 'cama') continue;
+      const p = b.g.position, box = { x: p.x, z: p.z, hw: W / 2, hd: D / 2, a: b.g.rotation.y, y0: p.y, y1: p.y + H };
+      const hit = boxHit(boxOf(ps), box);
+      if (hit) { ps.pos.x -= hit.nx * hit.depth; ps.pos.z -= hit.nz * hit.depth; }   // (la flecha del choque va de ti hacia el bot: te mueves al revés)
+    }
+  }
   function updateVillage(dt) {
+    solidBigBots();
     const A = village.active;
     village.bots.forEach((b, i) => {
-      b.g.visible = !isNight;   // de noche están dentro de su casa, durmiendo
-      village.zzz[i].visible = isNight; if (isNight) village.zzz[i].position.y = 7.4 + Math.sin(t * 2 + i) * 0.3;
-      if (isNight) return;
+      updateBigBot(b, i, dt);
+      if (isNight || b.fase !== 'puerta') return;
       b.mark.visible = !village.done.has(i) && (!A || A.i === i);
       b.mark.material = A && A.i === i ? MARK['?'] : MARK['!'];
       b.mark.position.y = H + 0.9 + Math.sin(t * 3 + i) * 0.12;
