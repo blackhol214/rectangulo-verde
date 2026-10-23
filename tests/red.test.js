@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { limpiarNombre, leerMensaje, acercar, acercarAngulo, piezasExplosion, lugarMoneda, faseAhora, corto, BORDE, DIA_SEGUNDOS, leerLook, leerSala, salaDeHost, linkOficial, leerPreguntas, revisarPreguntas, claveCorrecta, PROFE, MAX_MENSAJE, seVen, MG_SOLO, MG_ESCONDIDAS, ESC, elegirBuscador, elegirTerreno, faseRonda, puedeEncontrar, ganadorRonda, mgDelServidor } from '../src/red.js';
+import { limpiarNombre, leerMensaje, acercar, acercarAngulo, piezasExplosion, lugarMoneda, faseAhora, corto, BORDE, DIA_SEGUNDOS, leerLook, leerSala, salaDeHost, linkOficial, leerPreguntas, revisarPreguntas, claveCorrecta, PROFE, MAX_MENSAJE, seVen, MG_SOLO, MG_ESCONDIDAS, ESC, elegirBuscador, elegirTerreno, faseRonda, puedeEncontrar, ganadorRonda, mgDelServidor, nuevoSuavizador, agregarMuestra, valoresEn, mezclar, RETRASO_MS, RETRASO_MAX, retrasoDe, TELETRANSPORTE } from '../src/red.js';
 
 describe('limpiarNombre', () => {
   it('quita espacios de más y corta a 20 letras', () => {
@@ -18,7 +18,9 @@ describe('leerMensaje', () => {
   });
   it('lee una posición', () => {
     expect(leerMensaje(JSON.stringify({ tipo: 'pos', x: 1, y: 0, z: -3, rot: 0.5, mg: 1 })))
-      .toEqual({ tipo: 'pos', x: 1, y: 0, z: -3, rot: 0.5, color: null, mg: 1 });
+      .toEqual({ tipo: 'pos', x: 1, y: 0, z: -3, rot: 0.5, color: null, mg: 1, t: null });
+    expect(leerMensaje(JSON.stringify({ tipo: 'pos', x: 1, y: 0, z: -3, rot: 0.5, t: 1234 })).t).toBe(1234);   // la hora del que lo mandó
+    expect(leerMensaje(JSON.stringify({ tipo: 'pos', x: 1, y: 0, z: -3, rot: 0.5, t: 'ayer' })).t).toBeNull();
   });
   it('rechaza mensajes rotos, raros o gigantes', () => {
     expect(leerMensaje('no soy json')).toBeNull();
@@ -80,7 +82,8 @@ describe('leerMensaje: mensajes del mundo', () => {
   });
   it('el mundo trae al gigante (6 números) y a los bots (5 números cada uno)', () => {
     const ok = { tipo: 'mundo', g: [1, 0, -20, 0.5, 0, 1], b: [[1, 0, 2, 0, 1], [3, 0, 4, 1, 0]] };
-    expect(leer(ok)).toEqual(ok);
+    expect(leer(ok)).toEqual({ ...ok, t: null });
+    expect(leer({ ...ok, t: 500 }).t).toBe(500);
     expect(leer({ ...ok, g: [1, 2, 3] })).toBeNull();
     expect(leer({ ...ok, b: [[1, 2]] })).toBeNull();
   });
@@ -258,5 +261,60 @@ describe('Escondidas con amigos: la ronda', () => {
     expect(mgDelServidor(MG_ESCONDIDAS + 1, null)).toBe(MG_SOLO);   // uno de afuera que dice estar en la ronda
     expect(mgDelServidor(12, null)).toBe(12);                       // en el salón: como siempre
     expect(mgDelServidor(MG_SOLO, null)).toBe(MG_SOLO);
+  });
+});
+
+describe('movimiento suave (interpolación)', () => {
+  // Un amigo que camina 1 m cada 100 ms, con su reloj 5000 ms adelantado al nuestro y 50 ms de viaje por internet
+  const llega = (s, n, viaje = 50) => agregarMuestra(s, [n, 0, 0, 0], 5000 + n * 100, n * 100 + viaje);
+  it('dibuja al amigo entre dos posiciones que ya llegaron', () => {
+    const s = nuevoSuavizador();
+    for (let n = 0; n <= 5; n++) llega(s, n);
+    // todos llegan igual de rápido: se dibuja poquito en el pasado. Si dibujo su posición de los 300 ms (más el viaje) → 2,5 m
+    expect(retrasoDe(s)).toBeLessThan(150);
+    expect(valoresEn(s, 300 + retrasoDe(s), null)[0]).toBeCloseTo(2.5);
+  });
+  it('aunque los mensajes lleguen amontonados, el camino sigue parejo', () => {
+    const parejo = nuevoSuavizador(), amontonado = nuevoSuavizador();
+    for (let n = 0; n <= 6; n++) llega(parejo, n);
+    // los mensajes 2 y 3 se atrasaron y llegaron juntos con el 4
+    for (const n of [0, 1]) llega(amontonado, n);
+    for (const n of [2, 3]) llega(amontonado, n, 50 + (4 - n) * 100);
+    for (const n of [4, 5, 6]) llega(amontonado, n);
+    expect(retrasoDe(amontonado)).toBeGreaterThan(300);   // se dio cuenta de que hay que esperar más
+    // dibujando con ese retraso, el amontonado avanza parejo: lo mismo en cada pasito de 50 ms
+    const pasos = [700, 750, 800, 850, 900].map(a => valoresEn(amontonado, a)[0]);
+    for (let i = 1; i < pasos.length; i++) expect(pasos[i] - pasos[i - 1]).toBeCloseTo(0.5, 1);
+  });
+  it('si dejan de llegar mensajes, se queda en el último (no inventa)', () => {
+    const s = nuevoSuavizador();
+    for (let n = 0; n <= 3; n++) llega(s, n);
+    expect(valoresEn(s, 5000, null)[0]).toBe(3);
+  });
+  it('si estuvo quieto un segundo, no se desliza despacito todo ese segundo', () => {
+    const s = nuevoSuavizador();
+    agregarMuestra(s, [0, 0, 0, 0], 0, 50);
+    agregarMuestra(s, [1, 0, 0, 0], 1000, 1050);   // se quedó quieto y recién ahora se movió 1 m
+    expect(valoresEn(s, 500 + 50 + retrasoDe(s))[0]).toBe(0);   // a la mitad de ese segundo sigue quieto
+  });
+  it('gira por el camino más corto, teletransporta lo lejano y no mezcla los "sí/no"', () => {
+    const clase = i => (i === 1 ? 'giro' : i === 2 ? 'fijo' : null);
+    const v = mezclar([0, 3.0, 0], [10, -3.0, 1], 0.5, clase);
+    expect(v[0]).toBe(5);
+    expect(Math.abs(Math.sin(v[1]))).toBeLessThan(0.2);   // de 3 a -3 rad pasa por π (atrás), no por 0
+    expect(v[2]).toBe(0);
+    expect(mezclar([0], [TELETRANSPORTE + 5], 0.5)[0]).toBe(TELETRANSPORTE + 5);
+  });
+  it('el retraso nunca pasa de medio segundo', () => {
+    const s = nuevoSuavizador();
+    agregarMuestra(s, [0, 0, 0, 0], 0, 0);
+    agregarMuestra(s, [1, 0, 0, 0], 100, 5000);   // llegó 5 segundos tarde
+    expect(retrasoDe(s)).toBe(RETRASO_MAX);
+  });
+  it('sin muestras no hay posición, y un juego viejo (sin hora) también funciona', () => {
+    const s = nuevoSuavizador();
+    expect(valoresEn(s, 100)).toBeNull();
+    agregarMuestra(s, [7, 0, 0, 0], null, 100);
+    expect(valoresEn(s, 1000)[0]).toBe(7);
   });
 });

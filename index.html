@@ -367,7 +367,7 @@
 <script type="module">
 import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, ESCUELA, ESCUELA_K, escuelaSiguiente, escuelaMezclar, SALON, salonSillas, sillaCercana, faseDeLuz, TERRENOS, CARROS, CARRO, carroPos, partesCarro, cajasPieza, escaleraCanasta, cajasTerreno, escondites, BOT_ESC, botVe, ordenEscondites, cercaDeLaProfe, preguntasDeLaClase, escaparHTML, NO_MIRES, torreNoMires, seededRandom, debeReaparecer, GUIA_COMO, textoQueHago, lugarDelGuia, GUIA_COLORES, siguienteColorGuia, lugaresArboles, lugaresPasto, libreDePasto, ARBOLES, sombreroDeBot, ETAPAS, etapaDe, cajasDe, decoracionTorre, ovniDesplazamiento, HIELO, deslizar, puedeDobleSalto, gastarBateria, cargarBateria, hayBateria, BATERIA, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, VILLAGE_HOUSE, wallPieces, insideVillageHouse, villageBed, villageEntrance, villageExit, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, squashStretch, ACHIEVEMENTS, achievementById, coinAchievementsFor, TROPHY_TABLE, trophySpot, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
          upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-23-guia'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
-import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto, acercar, acercarAngulo, piezasExplosion, leerPreguntas, revisarPreguntas, PROFE, seVen, MG_TORRE, MG_ESCONDIDAS, MG_SOLO, ESC } from './src/red.js?v=2026-10-22-escondidas2';
+import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, valoresEn, DIA_SEGUNDOS, lugarMoneda, corto, acercar, acercarAngulo, piezasExplosion, leerPreguntas, revisarPreguntas, PROFE, seVen, MG_TORRE, MG_ESCONDIDAS, MG_SOLO, ESC } from './src/red.js?v=2026-10-23-suave';
 (() => {
   // iPhone ignora user-scalable=no: aquí se bloquea el zoom con dos dedos y el doble toque
   for (const ev of ['gesturestart', 'gesturechange']) document.addEventListener(ev, e => e.preventDefault(), { passive: false });
@@ -797,7 +797,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
   const ONLINE = !!SALA || location.port === String(PUERTO);
   const SERVER_WS = SALA ? `wss://${SALA}.trycloudflare.com/ws` : `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`;
   // otros: id → { obj, body, nombre, x, y, z, rot } · gigante y bots: lo último que contó el anfitrión
-  const red = { ws: null, id: null, anfitrion: null, otros: new Map(), envio: 0, pedazos: [], gigante: null, bots: null, aturdido: 0 };
+  const red = { ws: null, id: null, anfitrion: null, otros: new Map(), envio: 0, pedazos: [], gigante: null, bots: null, aturdido: 0, suaveMundo: nuevoSuavizador() };
   // ¿Estamos conectados y otra compu (el anfitrión) mueve al gigante y a los bots?
   const copia = () => !!(red.id !== null && red.anfitrion !== red.id);
   const esAnfitrion = () => red.id !== null && red.anfitrion === red.id;
@@ -1836,12 +1836,11 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     idleSwings(dt);
     // Si otra compu es el anfitrión, los bots solo se dibujan donde ella dice
     if (copia()) {
-      if (!red.bots) return;
-      const k = dt * 12;
+      if (!red.bots) return;   // (leerMundo ya los puso en su lugar suave, en updateEnemy)
       dumbBots.forEach((b, i) => {
         const r = red.bots[i]; if (!r) return;
-        b.pos.set(acercar(b.pos.x, r[0], k), acercar(b.pos.y, r[1], k), acercar(b.pos.z, r[2], k));
-        b.facing = acercarAngulo(b.facing, r[3], k); b.obj.rotation.y = b.facing; b.obj.visible = !!r[4];   // gira suave
+        b.pos.set(r[0], r[1], r[2]);
+        b.facing = r[3]; b.obj.rotation.y = b.facing; b.obj.visible = !!r[4];
         bendObj(b.obj, dt);
         b.body.position.y = H * BOT_SCALE / 2 + Math.abs(Math.sin(t * 14 + b.pos.x)) * 0.05;
       });
@@ -2035,9 +2034,18 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
   }
 
   // ---------- Minijuegos: uno por cada bot tonto (se elige según quién está en tu casa) ----------
-  const MG = { active: null, k: -1, t: 0, back: null, trail: [], trailT: 0, follower: null, followers: [], built: {}, done: new Set(), state: {} };
+  const MG = { active: null, k: -1, t: 0, back: null, trail: [], trailT: 0, follower: null, followers: [], built: {}, done: new Set(), state: {}, guardadas: {} };
   // built: las cosas de cada nivel · done: qué niveles ya se construyeron
-  const mgHud = document.getElementById('parkourHud');
+  // El letrero de arriba de los minijuegos. Cada minijuego lo escribe 60 veces por segundo: aquí solo se cambia
+  // de verdad cuando el texto es distinto (armar HTML nuevo cada cuadro hace trabajar al navegador sin motivo)
+  const mgHudEl = document.getElementById('parkourHud');
+  const mgHud = {
+    texto: '',
+    get innerHTML() { return this.texto; },
+    set innerHTML(html) { html = touchText(html); if (html !== this.texto) { this.texto = html; mgHudEl.innerHTML = html; } },
+    get hidden() { return mgHudEl.hidden; },
+    set hidden(v) { mgHudEl.hidden = v; },
+  };
   const mgMat = c => new THREE.MeshLambertMaterial({ color: c });
   // Caja sólida para los minijuegos (coordenadas absolutas). solid=false: solo se ve.
   function mgBox(x0, x1, y0, y1, z0, z1, mat, solid = true, blockCam = false) {
@@ -3454,6 +3462,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
   function startMinigame(k) {
     const def = minigameDef(k), mode = MODES[def.id], o = minigameOrigin(k);
     if (!MG.done.has(def.id)) { mode.build(o); MG.done.add(def.id); }
+    else platforms.push(...(MG.guardadas[k] || []));   // vuelven las paredes y pisos de este minijuego (ver endMinigame)
     MG.back = ps.pos.clone(); MG.active = mode; MG.k = k; MG.t = 0; MG.state = {};
     document.documentElement.classList.toggle('al-reves', !!mode.invertScreen);   // el mundo al revés da vuelta toda la pantalla
     for (const f of MG.followers) scene.remove(f);
@@ -3475,6 +3484,11 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
   function endMinigame(won, msg) {
     const def = minigameDef(MG.k), mode = MG.active;
     if (mode.end) mode.end();
+    // Las paredes y pisos del minijuego se guardan aparte: así los choques del mundo (tú, el gigante, los bots…)
+    // no tienen que revisar cientos de piezas que están a kilómetros. Todos los minijuegos están lejos del mapa (a más de 300 m)
+    const lejos = pl => Math.abs(pl.x) > 300 || Math.abs(pl.z) > 300;
+    MG.guardadas[MG.k] = platforms.filter(lejos);
+    for (let i = platforms.length - 1; i >= 0; i--) if (lejos(platforms[i])) platforms.splice(i, 1);
     MG.active = null; for (const f of MG.followers) f.visible = false; mgHud.hidden = true;
     document.documentElement.classList.remove('al-reves');
     ps.pos.copy(MG.back); ps.vel.set(0, 0, 0); ps.carrying = null; camYaw = MG.yaw;
@@ -3494,7 +3508,6 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     if (mode.area) { const c = clampToArea(ps.pos.x - o.x, ps.pos.z - o.z, mode.area); ps.pos.x = o.x + c.x; ps.pos.z = o.z + c.z; }
     if (ps.pos.y < -30) { endMinigame(false, '¡Te caíste del mapa! Vuelve a intentarlo'); return; }
     const r = mode.update(dt, o);
-    if (IS_TOUCH) mgHud.innerHTML = touchText(mgHud.innerHTML);
     if (r) endMinigame(r.won, r.msg);
   }
 
@@ -4124,11 +4137,11 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
   function updateEnemy(dt) {
     // Si otra compu es el anfitrión, el gigante solo se dibuja donde ella dice
     if (copia()) {
+      leerMundo();
       const g = red.gigante;
       if (g) {
-        const k = dt * 12;
-        es.pos.set(acercar(es.pos.x, g.x, k), acercar(es.pos.y, g.y, k), acercar(es.pos.z, g.z, k));
-        es.facing = acercarAngulo(es.facing, g.rot, k); es.obj.rotation.y = es.facing;   // gira suave, no a saltitos
+        es.pos.set(g.x, g.y, g.z);
+        es.facing = g.rot; es.obj.rotation.y = es.facing;
         enemyLook(g.stun, g.sleep);
         bendObj(es.obj, dt, ENEMY_SCALE);
       }
@@ -4821,7 +4834,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     obj.add(look, label, mgLabel);
     obj.position.set(j.x, j.y, j.z); obj.rotation.y = j.rot || 0;
     scene.add(obj);
-    const f = { obj, body: b, look, label, mgLabel, wear: [], blaster: null, nombre: j.nombre, x: j.x, y: j.y, z: j.z, rot: j.rot || 0, mg: 0 };
+    const f = { obj, body: b, look, label, mgLabel, wear: [], blaster: null, nombre: j.nombre, x: j.x, y: j.y, z: j.z, rot: j.rot || 0, mg: 0, suave: nuevoSuavizador() };
     red.otros.set(j.id, f);
     setFriendLook(f, j.look);
     setFriendMinigame(f, j.mg);
@@ -4860,6 +4873,14 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     scene.remove(f.obj);
   }
   // Cuando tu compu pasa a ser el anfitrión: los bots empiezan a pensar desde donde están
+  // Dónde dibujar al gigante y a los bots ahora (si otra compu es el anfitrión). La lista es [gigante: x y z giro aturdido dormido, bot: x y z giro visible, …]
+  const claseMundo = i => { const j = i < 6 ? i : (i - 6) % 5; return j === 3 ? 'giro' : (i < 6 ? j >= 4 : j === 4) ? 'fijo' : null; };
+  function leerMundo() {
+    const v = valoresEn(red.suaveMundo, performance.now(), claseMundo);
+    if (!v) return;
+    red.gigante = { x: v[0], y: v[1], z: v[2], rot: v[3], stun: !!v[4], sleep: !!v[5] };
+    red.bots = []; for (let i = 6; i + 5 <= v.length; i += 5) red.bots.push(v.slice(i, i + 5));
+  }
   function takeOverWorld() {
     for (const b of dumbBots) { if (b.play) endPlay(b); b.visit = null; b.timer = 0; b.body.rotation.set(0, 0, 0); }
     houseVisitor = null; enemyWait = 0; stunTime = red.gigante && red.gigante.stun ? 2 : 0;
@@ -4894,7 +4915,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
         repintarEscondidas();
       } else if (m.tipo === 'pos') {
         const f = red.otros.get(m.id);
-        if (f) { f.x = m.x; f.y = m.y; f.z = m.z; f.rot = m.rot; f.body.material.color.setHex(m.color); if (f.mg !== m.mg) setFriendMinigame(f, m.mg); }
+        if (f) { f.x = m.x; f.y = m.y; f.z = m.z; f.rot = m.rot; f.body.material.color.setHex(m.color); if (f.mg !== m.mg) setFriendMinigame(f, m.mg); agregarMuestra(f.suave, [m.x, m.y, m.z, m.rot], m.t, performance.now()); }
       } else if (m.tipo === 'look') {
         const f = red.otros.get(m.id);
         if (f) setFriendLook(f, m.look);
@@ -4905,11 +4926,11 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
         repintarEscondidas();
       } else if (m.tipo === 'anfitrion') {
         red.anfitrion = m.id;
+        red.suaveMundo = nuevoSuavizador();   // el nuevo anfitrión tiene otro reloj: empezamos a guardar de nuevo
         if (m.id === red.id) takeOverWorld();
       } else if (m.tipo === 'mundo') {
-        const g = m.g;
-        red.gigante = { x: g[0], y: g[1], z: g[2], rot: g[3], stun: !!g[4], sleep: !!g[5] };
-        red.bots = m.b;
+        // El gigante y los bots, todo en una sola lista: [6 del gigante, 5 de cada bot…] (se dibuja suave en leerMundo)
+        agregarMuestra(red.suaveMundo, m.g.concat(...m.b), m.t, performance.now());
       } else if (m.tipo === 'moneda') {
         const c = coins[m.i];
         if (c) { c.position.set(m.x, 1.2, m.z); c.visible = true; c.userData.taken = false; }
@@ -4966,21 +4987,22 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     }
     // Mandar tu posición (y, si eres el anfitrión, cómo está el mundo) unas 10 veces por segundo
     if (red.id !== null && (red.envio -= dt) <= 0) {
-      red.envio = 1 / ENVIOS_POR_SEGUNDO;
+      red.envio = Math.max(red.envio + 1 / ENVIOS_POR_SEGUNDO, 0);   // sumar (no reemplazar): así salen 10 por segundo de verdad, no 8
       // Si no te moviste, no hace falta repetirlo 10 veces por segundo: basta una vez por segundo (para que el servidor sepa que sigues ahí)
       const pos = { tipo: 'pos', x: corto(ps.pos.x), y: corto(ps.pos.y), z: corto(ps.pos.z), rot: corto(ps.facing), color: body.material.color.getHex(), mg: miMg() };   // mg: en qué lugar estás
       const txt = JSON.stringify(pos);
+      pos.t = Math.round(performance.now());   // tu hora: los demás la usan para dibujarte suave (va aparte para que "¿te moviste?" no cambie siempre)
       red.quieto = txt === red.ultimaPos ? (red.quieto || 0) + 1 : 0;
       if (red.quieto % ENVIOS_POR_SEGUNDO === 0) { enviar(pos); red.ultimaPos = txt; }
-      if (esAnfitrion()) enviar({ tipo: 'mundo',
+      if (esAnfitrion()) enviar({ tipo: 'mundo', t: Math.round(performance.now()),
         g: [es.pos.x, es.pos.y, es.pos.z, es.obj.rotation.y].map(corto).concat(stunTime > 0 ? 1 : 0, enemyAwake ? 0 : 1),
         b: dumbBots.map(b => [b.pos.x, b.pos.y, b.pos.z, b.obj.rotation.y].map(corto).concat(b.obj.visible ? 1 : 0)) });
     }
     // Aturdido por el láser de un amigo: tiemblas y no te puedes mover
     if (red.aturdido > 0) red.aturdido = Math.max(0, red.aturdido - dt);
     body.rotation.z = red.aturdido > 0 ? Math.sin(t * 30) * 0.06 : 0;
-    // Los amigos se deslizan suave hacia donde dijo el servidor
-    const k = dt * 12;
+    // Los amigos se dibujan un poquito en el pasado, entre dos posiciones que ya llegaron (ver valoresEn en red.js)
+    const ahora = performance.now(), giroAmigo = i => (i === 3 ? 'giro' : null);
     // ¿A quién ves? A los que están en el mismo lugar que tú. En una ronda de Escondidas, los encontrados son fantasmas:
     // solo el buscador los ve (medio transparentes). Y en la ronda no hay nombres flotando (se verían a través de las paredes).
     const yoMg = miMg(), esc = MG.state && MG.state.esc, enRonda = !!(esc && !esc.solo);
@@ -4991,8 +5013,8 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     }
     for (const f of red.otros.values()) {
       const o = f.obj;
-      o.position.set(acercar(o.position.x, f.x, k), acercar(o.position.y, f.y, k), acercar(o.position.z, f.z, k));
-      o.rotation.y = acercarAngulo(o.rotation.y, f.rot, k);   // gira suave
+      const v = valoresEn(f.suave, ahora, giroAmigo);
+      if (v) { o.position.set(v[0], v[1], v[2]); o.rotation.y = v[3]; }
       bendObj(o, dt);
     }
     // Pedacitos de la explosión: vuelan, caen, giran y se desvanecen

@@ -157,7 +157,7 @@ const servidor = Bun.serve({
         const r = esc.ronda, enRonda = r && r.jugadores.includes(yo.id) && esc.espera.has(yo.id);
         yo.x = m.x; yo.y = m.y; yo.z = m.z; yo.rot = m.rot; yo.mg = mgDelServidor(m.mg, enRonda ? r.terreno : null);
         if (m.color !== null) yo.color = m.color;
-        ws.publish('juego', JSON.stringify({ tipo: 'pos', id: yo.id, x: m.x, y: m.y, z: m.z, rot: m.rot, color: yo.color, mg: yo.mg }));
+        ws.publish('juego', JSON.stringify({ tipo: 'pos', id: yo.id, x: m.x, y: m.y, z: m.z, rot: m.rot, color: yo.color, mg: yo.mg, t: m.t }));   // t: su hora, para dibujarlo suave
       } else if (m.tipo === 'visible') {
         // Una pestaña escondida no corre el juego: si era el anfitrión, otro toma el control ya mismo (sin esperar 3 segundos)
         yo.visible = m.v;
@@ -241,12 +241,13 @@ const servidor = Bun.serve({
 // Solo sirve alguien con la pestaña a la vista y que esté jugando ahora. Si no hay nadie así, se queda el mismo
 // (pasarle el control a otra pestaña escondida solo haría que el gigante y los bots salten de una compu a otra).
 function cambiarAnfitrion() {
+  const antes = anfitrion;
   const activos = [...conectados.values()].filter(j => j.id !== anfitrion && j.visible && Date.now() - (j.ultimo || 0) < 2000);
   const nuevo = activos[0] || (conectados.has(anfitrion) ? null : [...conectados.values()][0]);
   if (nuevo) anfitrion = nuevo.id;
   else if (!conectados.has(anfitrion)) anfitrion = null;
   ultimoMundo = Date.now();
-  if (anfitrion) aTodos({ tipo: 'anfitrion', id: anfitrion });
+  if (anfitrion && anfitrion !== antes) aTodos({ tipo: 'anfitrion', id: anfitrion });   // si sigue el mismo, no se avisa (si no, sus bots se reinician cada 3 segundos)
   if (nuevo) console.log(`👑 ${nuevo.nombre} ahora es el anfitrión`);
 }
 // Si el anfitrión se quedó callado 3 segundos (cambió de pestaña o se le trabó la compu), otro toma el control

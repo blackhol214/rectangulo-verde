@@ -111,6 +111,8 @@ export function mgDelServidor(mg, terrenoRonda) {
 // Lee un mensaje que llegó por la red. Si viene roto o con trampas, devuelve null.
 // Los mensajes son cortitos (1.500 letras), menos el de las preguntas del profe, que puede ser más largo.
 export const MAX_MENSAJE = 1500, MAX_MENSAJE_PREGUNTAS = 40000;
+// t: la hora (en ms) de la compu que mandó el mensaje. Es opcional: los juegos viejos no la mandan
+const horaDe = t => esNumero(t) && t >= 0 ? t : null;
 export function leerMensaje(texto) {
   if (typeof texto !== 'string' || texto.length > MAX_MENSAJE_PREGUNTAS) return null;
   let m;
@@ -130,7 +132,7 @@ export function leerMensaje(texto) {
   }
   if (m.tipo === 'pos') {
     if (![m.x, m.y, m.z, m.rot].every(esNumero)) return null;
-    return { tipo: 'pos', x: m.x, y: m.y, z: m.z, rot: m.rot, color: esNumero(m.color) ? m.color : null, mg: esEntero(m.mg, 0, 99) ? m.mg : 0 };
+    return { tipo: 'pos', x: m.x, y: m.y, z: m.z, rot: m.rot, color: esNumero(m.color) ? m.color : null, mg: esEntero(m.mg, 0, 99) ? m.mg : 0, t: horaDe(m.t) };
   }
   // Cambió tu gorra, tus gafas o tu bláster
   if (m.tipo === 'look') return { tipo: 'look', look: leerLook(m.look) };
@@ -153,7 +155,7 @@ export function leerMensaje(texto) {
   if (m.tipo === 'mundo') {
     const fila = (a, n) => Array.isArray(a) && a.length === n && a.every(esNumero);
     if (!fila(m.g, 6) || !Array.isArray(m.b) || m.b.length > 20 || !m.b.every(b => fila(b, 5))) return null;
-    return { tipo: 'mundo', g: m.g, b: m.b };
+    return { tipo: 'mundo', g: m.g, b: m.b, t: horaDe(m.t) };
   }
   // Algo que solo puede resolver el anfitrión: el gigante te atrapó o le diste con el láser
   if (m.tipo === 'evento') {
@@ -209,4 +211,56 @@ export function piezasExplosion(cantidad, azar = Math.random) {
 export function acercarAngulo(desde, hacia, k) {
   const d = Math.atan2(Math.sin(hacia - desde), Math.cos(hacia - desde));
   return desde + d * Math.min(1, Math.max(0, k));
+}
+
+// ---------- Movimiento suave: dibujar lo que llega por la red un poquito en el pasado ----------
+// Por internet los mensajes llegan a tirones (dos juntos y después nada). Si dibujas siempre "lo último que llegó",
+// tus amigos avanzan a saltitos. El truco: guardar las últimas posiciones con su hora y dibujarlos RETRASO_MS atrás,
+// en un punto entre dos posiciones conocidas. Así siempre hay "una posición siguiente" hacia donde ir.
+export const RETRASO_MS = 100;     // lo mínimo que se dibuja en el pasado (si internet anda a tirones, se atrasa más: ver retrasoDe)
+export const RETRASO_MAX = 500;    // pero nunca más de medio segundo
+export const TELETRANSPORTE = 15;  // si algo se movió más que esto (en metros) entre dos mensajes, aparece allá de golpe
+const INTERVALO_MS = 1000 / ENVIOS_POR_SEGUNDO;
+export const nuevoSuavizador = () => ({ muestras: [], desfase: null, atraso: 0 });
+// v = lista de números (x, y, z, giro…) · t = la hora del que lo mandó · ahora = mi hora al recibirlo
+export function agregarMuestra(s, v, t, ahora) {
+  if (t === null || t === undefined) t = ahora;   // un juego viejo que no manda su hora: usamos la hora en que llegó
+  // Las dos compus tienen relojes distintos: el mensaje que llegó más rápido dice cuánto se diferencian.
+  // (Sube despacito, por si internet se puso más lento para siempre)
+  const d = ahora - t;
+  s.desfase = s.desfase === null ? d : Math.min(d, s.desfase + 0.5);
+  // ¿Cuánto más tarde que el más rápido llegó este? El peor atraso de los últimos mensajes dice cuánto hay que esperar
+  // (va bajando de a poquito si internet se arregla)
+  s.atraso = Math.max(d - s.desfase, s.atraso * 0.98);
+  const hora = t + s.desfase, m = s.muestras, ult = m[m.length - 1];
+  if (ult && hora <= ult.t) return;   // llegó tarde o repetido: ya tenemos algo más nuevo
+  // Si estuvo quieto, solo manda una vez por segundo: copiamos su última posición justo antes de esta,
+  // para que no se deslice despacito durante todo ese segundo
+  if (ult && hora - ult.t > INTERVALO_MS * 1.5) m.push({ t: hora - INTERVALO_MS, v: ult.v });
+  m.push({ t: hora, v });
+  if (m.length > 30) m.splice(0, m.length - 30);
+}
+// Mezcla dos posiciones: f = 0 es la primera, f = 1 la segunda. clase(i) dice qué es cada número:
+// 'giro' (va por el camino más corto), 'fijo' (no se mezcla, como "está dormido") o nada (un número normal)
+export function mezclar(a, b, f, clase = null) {
+  if (a.length !== b.length) return b;
+  return a.map((x, i) => {
+    const c = clase && clase(i), y = b[i];
+    if (c === 'fijo') return f < 1 ? x : y;
+    if (c === 'giro') return acercarAngulo(x, y, f);
+    return Math.abs(y - x) > TELETRANSPORTE ? y : x + (y - x) * f;
+  });
+}
+// Cuánto en el pasado hay que dibujarlo: lo que se atrasan los mensajes, más el tiempo entre dos mensajes
+// (para dibujar ENTRE dos posiciones, la siguiente ya tiene que haber llegado), más un poquito de margen
+export const retrasoDe = s => Math.min(RETRASO_MAX, Math.max(RETRASO_MS, s.atraso + INTERVALO_MS + 20));
+// ¿Dónde dibujarlo ahora? null si todavía no llegó nada
+export function valoresEn(s, ahora, clase) {
+  const m = s.muestras, t = ahora - retrasoDe(s);
+  if (!m.length) return null;
+  while (m.length > 2 && m[1].t <= t) m.shift();   // las muestras viejas ya no sirven
+  if (t <= m[0].t || m.length === 1) return m[0].v;
+  const [a, b] = m;
+  if (t >= b.t) return b.v;   // se acabaron las muestras (internet se trabó): se queda en la última, sin inventar
+  return mezclar(a.v, b.v, (t - a.t) / (b.t - a.t), clase);
 }
