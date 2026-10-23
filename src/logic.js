@@ -1302,3 +1302,54 @@ export function ordenEscondites(lista, rnd = Math.random) {
   for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
   return idx;
 }
+
+// ---------- 🌳 Pasto y árboles del mundo ----------
+// Donde NO va pasto alto ni árboles: las casas, la fábrica, el parque, el pueblo, los portales, el trampolín,
+// la línea amarilla y donde apareces. (Los rectángulos son { x0, x1, z0, z1 } en metros)
+const zona = (x, z, a, l = a) => ({ x0: x - a, x1: x + a, z0: z - l, z1: z + l });
+export const ZONAS_SIN_PASTO = [
+  { x0: BIG_HOUSE.x0, x1: BIG_HOUSE.x1, z0: BIG_HOUSE.z0, z1: BIG_HOUSE.z1 },   // la casa (chica o grande)
+  { x0: FACTORY.x0, x1: FACTORY.x1, z0: FACTORY.z0, z1: FACTORY.z1 },           // la fábrica y las cintas
+  zona(STYLE_STALL.x, STYLE_STALL.z, 4),                                         // la tienda de estilo
+  zona(SWINGS.x, SWINGS.z, 4, 3),                                                // los columpios
+  { x0: SLIDE.x0 - 2, x1: SLIDE.x0 + 9, z0: SLIDE.z - 3, z1: SLIDE.z + 3 },     // el tobogán
+  ...VILLAGE.houses.map(h => ({ x0: h.x - 5, x1: h.x + 5, z0: h.z - VILLAGE.doorOut - 4, z1: h.z + 5 })),   // las casas del pueblo y su puerta
+  { x0: 70, x1: 77, z0: 71, z1: 86 },                                            // los portales (Mundo al Revés y Escuela)
+  zona(82, 82, 5),                                                               // el trampolín
+  { x0: -100, x1: 100, z0: -3, z1: 6 },                                          // la línea amarilla
+  zona(0, 15, 4),                                                                // donde apareces
+];
+export const libreDePasto = (x, z, zonas = ZONAS_SIN_PASTO, margen = 0) =>
+  !zonas.some(r => x > r.x0 - margen && x < r.x1 + margen && z > r.z0 - margen && z < r.z1 + margen);
+// Los árboles: casi todos en el borde, cerca de las montañas, y unos pocos en la mitad del gigante (para esconderte de él)
+export const ARBOLES = { borde: 26, gigante: 8, desde: 84, hasta: 94, separacion: 9, semilla: 11, tronco: 0.35 };
+export function lugaresArboles(libre = (x, z) => libreDePasto(x, z, ZONAS_SIN_PASTO, 3), rnd = seededRandom(ARBOLES.semilla)) {
+  const A = ARBOLES, out = [];
+  const lejos = (x, z) => out.every(p => Math.hypot(p.x - x, p.z - z) >= A.separacion);
+  const poner = (n, elegir) => {
+    for (let i = 0, puestos = 0; i < 400 && puestos < n; i++) {
+      const p = elegir();
+      if (libre(p.x, p.z) && lejos(p.x, p.z)) { out.push({ ...p, tipo: rnd() < 0.5 ? 'redondo' : 'pino', alto: 5 + rnd() * 3 }); puestos++; }
+    }
+  };
+  // En el borde: un punto al azar en la franja de 84 a 94 m del centro
+  poner(A.borde, () => {
+    const lado = Math.floor(rnd() * 4), a = (rnd() * 2 - 1) * A.hasta, b = (A.desde + rnd() * (A.hasta - A.desde)) * (lado % 2 ? 1 : -1);
+    return lado < 2 ? { x: a, z: b } : { x: b, z: a };
+  });
+  // En la mitad del gigante (z negativa), lejos de la línea amarilla
+  poner(A.gigante, () => ({ x: (rnd() * 2 - 1) * 70, z: -20 - rnd() * 55 }));
+  return out;
+}
+// Matas de pasto y florecitas: puntos al azar en todo el campo, solo donde hay lugar
+export function lugaresPasto(n, libre = (x, z) => libreDePasto(x, z), rnd = Math.random, borde = 96) {
+  const out = [];
+  for (let i = 0; i < n * 3 && out.length < n; i++) {
+    const x = (rnd() * 2 - 1) * borde, z = (rnd() * 2 - 1) * borde;
+    if (libre(x, z)) out.push({ x, z, giro: rnd() * Math.PI * 2, tam: 0.7 + rnd() * 0.6 });
+  }
+  return out;
+}
+// Los mini sombreros de los bots chiquitos: uno distinto para cada bot (se repiten en orden)
+export const SOMBREROS_BOTS = ['helice', 'gorra', 'lana'];
+export const sombreroDeBot = i => SOMBREROS_BOTS[i % SOMBREROS_BOTS.length];

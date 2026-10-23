@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  lugaresArboles, lugaresPasto, libreDePasto, ZONAS_SIN_PASTO, ARBOLES, sombreroDeBot, SOMBREROS_BOTS, VILLAGE as VILLAGE_P, BIG_HOUSE as BIG_HOUSE_P,
   ESCALA, TERRENOS, CARROS, CARRO, carroPos, CIRCUITO, largoCircuito, partesCarro, destinoTrampolin, MEDIODIA, faseDeLuz, cajasPieza, escaleraCanasta, cajasTerreno, escondites, OJO, tapanVista, lineaDeVista, BOT_ESC, botVe, ordenEscondites,
   collideWalls, moveAndCollide, boxHit,
   upgradePrice, fmt, sunElevation, isNightPhase, clockText, hourToPhase,
@@ -1461,5 +1462,44 @@ describe('en los modos de juego siempre es de día', () => {
     expect(faseDeLuz(0.1, true)).toBe(MEDIODIA); // pero en un modo, de día
     expect(faseDeLuz(0.9, true)).toBe(0.5);
     expect(isNightPhase(faseDeLuz(0.0, true))).toBe(false);
+  });
+});
+
+describe('🌳 pasto, árboles y mini sombreros', () => {
+  const arboles = lugaresArboles();
+  it('pone los árboles dentro del mapa, en lugares libres y separados', () => {
+    expect(arboles.length).toBeGreaterThanOrEqual(25);
+    for (const a of arboles) {
+      expect(Math.abs(a.x)).toBeLessThanOrEqual(ARBOLES.hasta);
+      expect(Math.abs(a.z)).toBeLessThanOrEqual(ARBOLES.hasta);
+      expect(libreDePasto(a.x, a.z, ZONAS_SIN_PASTO, 3)).toBe(true);
+      expect(['redondo', 'pino']).toContain(a.tipo);
+    }
+    for (let i = 0; i < arboles.length; i++) for (let j = i + 1; j < arboles.length; j++)
+      expect(Math.hypot(arboles[i].x - arboles[j].x, arboles[i].z - arboles[j].z)).toBeGreaterThanOrEqual(ARBOLES.separacion);
+  });
+  it('siempre salen los mismos árboles (así todos los amigos ven el mismo bosque)', () => {
+    expect(lugaresArboles()).toEqual(arboles);
+  });
+  it('hay algunos árboles en la mitad del gigante para esconderse', () => {
+    expect(arboles.filter(a => a.z < -15 && Math.abs(a.x) < 80).length).toBeGreaterThanOrEqual(4);
+  });
+  it('no pone pasto ni árboles en las casas, el pueblo ni la línea amarilla', () => {
+    expect(libreDePasto((BIG_HOUSE_P.x0 + BIG_HOUSE_P.x1) / 2, (BIG_HOUSE_P.z0 + BIG_HOUSE_P.z1) / 2)).toBe(false);
+    const h = VILLAGE_P.houses[0];
+    expect(libreDePasto(h.x, h.z)).toBe(false);
+    expect(libreDePasto(h.x, h.z - VILLAGE_P.doorOut)).toBe(false);   // la puerta, donde espera el bot grande
+    expect(libreDePasto(40, 1)).toBe(false);                          // la línea amarilla
+    expect(libreDePasto(-60, -50)).toBe(true);                        // el campo del gigante
+  });
+  it('las matas de pasto caen solo donde hay lugar', () => {
+    const matas = lugaresPasto(500, (x, z) => libreDePasto(x, z));
+    expect(matas.length).toBe(500);
+    for (const p of matas) { expect(libreDePasto(p.x, p.z)).toBe(true); expect(Math.abs(p.x)).toBeLessThanOrEqual(96); }
+  });
+  it('cada bot chiquito tiene un sombrero, y los 3 tipos aparecen', () => {
+    const tipos = Array.from({ length: 10 }, (_, i) => sombreroDeBot(i));
+    expect(new Set(tipos)).toEqual(new Set(SOMBREROS_BOTS));
+    expect(tipos[0]).toBe('helice'); expect(tipos[1]).toBe('gorra'); expect(tipos[2]).toBe('lana');
   });
 });

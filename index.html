@@ -342,8 +342,8 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module">
-import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, ESCUELA, ESCUELA_K, escuelaSiguiente, escuelaMezclar, SALON, salonSillas, sillaCercana, faseDeLuz, TERRENOS, CARROS, CARRO, carroPos, partesCarro, cajasPieza, escaleraCanasta, cajasTerreno, escondites, BOT_ESC, botVe, ordenEscondites, cercaDeLaProfe, preguntasDeLaClase, escaparHTML, NO_MIRES, torreNoMires, seededRandom, debeReaparecer, ETAPAS, etapaDe, cajasDe, decoracionTorre, ovniDesplazamiento, HIELO, deslizar, puedeDobleSalto, gastarBateria, cargarBateria, hayBateria, BATERIA, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, VILLAGE_HOUSE, wallPieces, insideVillageHouse, villageBed, villageEntrance, villageExit, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, squashStretch, ACHIEVEMENTS, achievementById, coinAchievementsFor, TROPHY_TABLE, trophySpot, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
-         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-22-escondidas2'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
+import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, ESCUELA, ESCUELA_K, escuelaSiguiente, escuelaMezclar, SALON, salonSillas, sillaCercana, faseDeLuz, TERRENOS, CARROS, CARRO, carroPos, partesCarro, cajasPieza, escaleraCanasta, cajasTerreno, escondites, BOT_ESC, botVe, ordenEscondites, cercaDeLaProfe, preguntasDeLaClase, escaparHTML, NO_MIRES, torreNoMires, seededRandom, debeReaparecer, lugaresArboles, lugaresPasto, libreDePasto, ARBOLES, sombreroDeBot, ETAPAS, etapaDe, cajasDe, decoracionTorre, ovniDesplazamiento, HIELO, deslizar, puedeDobleSalto, gastarBateria, cargarBateria, hayBateria, BATERIA, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, VILLAGE_HOUSE, wallPieces, insideVillageHouse, villageBed, villageEntrance, villageExit, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, squashStretch, ACHIEVEMENTS, achievementById, coinAchievementsFor, TROPHY_TABLE, trophySpot, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
+         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-23-pasto'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
 import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto, acercar, acercarAngulo, piezasExplosion, leerPreguntas, revisarPreguntas, PROFE, seVen, MG_TORRE, MG_ESCONDIDAS, MG_SOLO, ESC } from './src/red.js?v=2026-10-22-escondidas2';
 (() => {
   // iPhone ignora user-scalable=no: aquí se bloquea el zoom con dos dedos y el doble toque
@@ -394,16 +394,28 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
   // Todo lo sólido (paredes, pisos, muebles) y lo que tapa la cámara
   const platforms = [];
   const cameraBlockers = [];
-  // Gran zona plana con textura de cuadrícula
+  // Gran zona plana con textura de pasto: manchas de distintos verdes y muchas hojitas dibujadas
   const SIZE = 200;
   const tex = (() => {
-    const c = document.createElement('canvas'); c.width = c.height = 128;
-    const g = c.getContext('2d');
-    g.fillStyle = '#5fa83a'; g.fillRect(0,0,128,128);
-    g.fillStyle = '#56a034'; g.fillRect(0,0,64,64); g.fillRect(64,64,64,64);
-    g.strokeStyle = 'rgba(20,60,10,.18)'; g.lineWidth = 2; g.strokeRect(0,0,128,128);
+    const N = 256, c = document.createElement('canvas'); c.width = c.height = N;
+    const g = c.getContext('2d'), rnd = seededRandom(21);
+    g.fillStyle = '#5aa636'; g.fillRect(0, 0, N, N);
+    // Manchas suaves (se dibujan 3 veces corridas para que la textura se pueda repetir sin que se note el corte)
+    const enTodos = f => { for (const dx of [-N, 0, N]) for (const dy of [-N, 0, N]) f(dx, dy); };
+    for (let i = 0; i < 26; i++) {
+      const x = rnd() * N, y = rnd() * N, r = 18 + rnd() * 40, col = rnd() < 0.5 ? 'rgba(70,140,40,.35)' : 'rgba(120,190,70,.25)';
+      enTodos((dx, dy) => { const gr = g.createRadialGradient(x + dx, y + dy, 0, x + dx, y + dy, r); gr.addColorStop(0, col); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(x + dx - r, y + dy - r, r * 2, r * 2); });
+    }
+    // Hojitas de pasto: rayitas cortas inclinadas, claras y oscuras
+    const verdes = ['#4b9a2e', '#6dbb45', '#3f8a28', '#7cc753', '#58a838'];
+    g.lineWidth = 1.4; g.lineCap = 'round';
+    for (let i = 0; i < 2600; i++) {
+      const x = rnd() * N, y = rnd() * N, l = 3 + rnd() * 5, a = -Math.PI / 2 + (rnd() - 0.5) * 0.9;
+      g.strokeStyle = verdes[Math.floor(rnd() * verdes.length)];
+      enTodos((dx, dy) => { g.beginPath(); g.moveTo(x + dx, y + dy); g.lineTo(x + dx + Math.cos(a) * l, y + dy + Math.sin(a) * l); g.stroke(); });
+    }
     const t = new THREE.CanvasTexture(c);
-    t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(1/8, 1/8); // un cuadro cada 8 m
+    t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(1/6, 1/6); // la textura se repite cada 6 m
     t.anisotropy = renderer.capabilities.getMaxAnisotropy();
     return t;
   })();
@@ -1653,7 +1665,38 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
   }
 
   // ---------- Bots tontos: 10 de colores, la mitad de tu tamaño, juegan solo en tu mitad ----------
-  const dumbBots = BOT_COLORS.map(color => {
+  // Mini sombreros (pocas piezas, para que no se ponga lento): gorro de hélice rojo y blanco, gorra negra o gorro de lana gris.
+  // La cúpula mide 0,4 m de ancho, justo para la cabeza de un bot chiquito (que mide 0,5 × 0,3)
+  const SOMBRERO = {
+    rojo: new THREE.MeshLambertMaterial({ color: 0xe23b3b }), blanco: new THREE.MeshLambertMaterial({ color: 0xffffff }),
+    verde: new THREE.MeshLambertMaterial({ color: 0x3fb34f }), negro: new THREE.MeshLambertMaterial({ color: 0x1d1d1f }),
+    gris: new THREE.MeshLambertMaterial({ color: 0x8a8d93 }), grisOscuro: new THREE.MeshLambertMaterial({ color: 0x6f7278 }),
+    palo: new THREE.MeshLambertMaterial({ color: 0x333333 }), amarillo: new THREE.MeshLambertMaterial({ color: 0xffd23f }),
+  };
+  // Un gajo de la cúpula (un cuarto de media esfera)
+  const gajo = k => new THREE.SphereGeometry(0.2, 8, 6, k * Math.PI / 2, Math.PI / 2, 0, Math.PI / 2);
+  function hacerSombrero(tipo) {
+    const g = new THREE.Group(), M = SOMBRERO;
+    const pieza = (geo, mat, x = 0, y = 0, z = 0) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = true; g.add(m); return m; };
+    if (tipo === 'helice') {
+      for (let k = 0; k < 4; k++) pieza(gajo(k), k % 2 ? M.blanco : M.rojo);   // gajos rojo, blanco, rojo, blanco
+      pieza(new THREE.CylinderGeometry(0.205, 0.205, 0.03, 16), M.rojo, 0, 0.015, 0);
+      pieza(new THREE.CylinderGeometry(0.012, 0.012, 0.1, 6), M.palo, 0, 0.24, 0);
+      const helice = new THREE.Group(); helice.position.y = 0.29; g.add(helice);
+      for (const lado of [-1, 1]) { const aspa = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.012, 0.05), M.verde); aspa.position.x = lado * 0.08; aspa.rotation.x = lado * 0.25; helice.add(aspa); }
+      const boton = new THREE.Mesh(new THREE.SphereGeometry(0.02, 6, 4), M.amarillo); helice.add(boton);
+      g.userData.helice = helice;
+    } else if (tipo === 'gorra') {
+      for (let k = 0; k < 4; k++) pieza(gajo(k), M.negro);
+      const visera = pieza(new THREE.BoxGeometry(0.26, 0.02, 0.2), M.negro, 0, 0.02, 0.24); visera.rotation.x = 0.12;   // hacia adelante (donde están los ojos)
+      pieza(new THREE.SphereGeometry(0.018, 6, 4), M.palo, 0, 0.2, 0);
+    } else {   // lana
+      for (let k = 0; k < 4; k++) pieza(gajo(k), M.gris).scale.y = 1.25;
+      pieza(new THREE.CylinderGeometry(0.215, 0.215, 0.07, 16), M.grisOscuro, 0, 0.035, 0);   // el borde tejido
+    }
+    return g;
+  }
+  const dumbBots = BOT_COLORS.map((color, i) => {
     const g = new THREE.Group();
     const b = new THREE.Mesh(new THREE.BoxGeometry(W * BOT_SCALE, H * BOT_SCALE, D * BOT_SCALE), new THREE.MeshLambertMaterial({ color }));
     b.position.y = H * BOT_SCALE / 2; b.castShadow = true; g.add(b);
@@ -1661,8 +1704,11 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
       const eye = new THREE.Mesh(eyeGeo, eyeMat); eye.scale.set(0.5, 0.5, 0.25);
       eye.position.set(ex, H * BOT_SCALE * 0.78 - H * BOT_SCALE / 2, D * BOT_SCALE / 2 + 0.01); b.add(eye);
     }
+    const sombrero = hacerSombrero(sombreroDeBot(i));
+    sombrero.position.y = H * BOT_SCALE / 2; sombrero.scale.z = 0.8; b.add(sombrero);   // arriba de la cabeza (un poco aplastado: la cabeza es angosta)
     scene.add(g);
     const st = makeState(g);
+    st.helice = sombrero.userData.helice || null;
     st.body = b; st.target = randomBotTarget(Math.random); st.timer = 0;
     const p0 = randomBotTarget(Math.random); st.pos.set(p0.x, 0, p0.z);
     return st;
@@ -1777,6 +1823,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
       return;
     }
     for (const b of dumbBots) {
+      if (b.helice) b.helice.rotation.y += dt * 12;   // la hélice del gorro siempre gira
       if ((isNight || b.asleep) && goToBed(b, dumbBots.indexOf(b), dt)) continue;   // de noche se van a dormir a su casa
       // Ya está en el columpio o en el tobogán
       if (b.play && b.play.active) { playing(b, dt); continue; }
@@ -4606,6 +4653,60 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     }
   }
   buildVillage();
+
+  // ---------- 🌳 Pasto y árboles: matas de pasto, florecitas y árboles con sombra ----------
+  // No van donde hay algo construido (casas, parque, pueblo…): eso lo revisan libreDePasto y las paredes que ya existen
+  (() => {
+    const tapado = (x, z, m) => platforms.some(pl => pl.bottom < 1 && Math.abs(x - pl.x) < pl.hw + m && Math.abs(z - pl.z) < pl.hd + m);
+    // Árboles: tronco sólido (no se atraviesa) y copa redonda o de pino
+    const tronco = new THREE.MeshLambertMaterial({ color: 0x7a4b2a });
+    const hojas = [0x2f8f3a, 0x3aa346, 0x2a7d35].map(color => new THREE.MeshLambertMaterial({ color, flatShading: true }));
+    const troncoGeo = new THREE.CylinderGeometry(0.28, 0.38, 1, 7); troncoGeo.translate(0, 0.5, 0);
+    const bola = new THREE.IcosahedronGeometry(1, 1), cono = new THREE.ConeGeometry(1, 1, 8); cono.translate(0, 0.5, 0);
+    const parte = (geo, mat, x, y, z, sx, sy = sx, sz = sx) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.scale.set(sx, sy, sz); m.castShadow = m.receiveShadow = true; scene.add(m); return m; };
+    for (const a of lugaresArboles((x, z) => libreDePasto(x, z, undefined, 3) && !tapado(x, z, 3))) {
+      const h = a.alto, tr = a.tipo === 'pino' ? h * 0.3 : h * 0.45;
+      parte(troncoGeo, tronco, a.x, 0, a.z, 1, tr, 1);
+      if (a.tipo === 'pino') {
+        parte(cono, hojas[2], a.x, tr * 0.7, a.z, h * 0.32, h * 0.45);
+        parte(cono, hojas[0], a.x, tr * 0.7 + h * 0.28, a.z, h * 0.24, h * 0.4);
+      } else {
+        const r = h * 0.3;
+        parte(bola, hojas[0], a.x, tr + r * 0.8, a.z, r);
+        parte(bola, hojas[1], a.x - r * 0.6, tr + r * 0.4, a.z + r * 0.2, r * 0.65);
+        parte(bola, hojas[1], a.x + r * 0.55, tr + r * 0.45, a.z - r * 0.25, r * 0.6);
+      }
+      platforms.push({ x: a.x, z: a.z, hw: ARBOLES.tronco, hd: ARBOLES.tronco, top: tr, bottom: 0 });   // el tronco: no lo atraviesas
+    }
+    // Matas de pasto: 5 hojitas en forma de abanico, miles de copias en un solo InstancedMesh (una sola llamada de dibujo)
+    const pos = [];
+    for (let k = 0; k < 5; k++) {
+      const a = k / 5 * Math.PI * 2, c = Math.cos(a), sn = Math.sin(a), ancho = 0.06, alto = 0.32 + (k % 2) * 0.12, inclina = 0.12;
+      const A = [-ancho * sn, 0, -ancho * c], B = [ancho * sn, 0, ancho * c], C = [c * inclina, alto, -sn * inclina];
+      pos.push(...A, ...B, ...C, ...B, ...A, ...C);   // un triángulo parado, por delante y por detrás
+    }
+    // (las dos caras tienen la normal hacia arriba: así las hojitas se iluminan como el piso por los dos lados y no se ven negras)
+    const mataGeo = new THREE.BufferGeometry(); mataGeo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    mataGeo.setAttribute('normal', new THREE.Float32BufferAttribute(pos.map((_, i) => (i % 3 === 1 ? 1 : 0)), 3));
+    const libreMata = (x, z) => libreDePasto(x, z) && !tapado(x, z, 0.5);
+    const matas = lugaresPasto(TOUCH_GPU ? 2500 : 5000, libreMata, seededRandom(31));
+    const mataMesh = new THREE.InstancedMesh(mataGeo, new THREE.MeshLambertMaterial({ color: 0xffffff }), matas.length);
+    const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), esc = new THREE.Vector3(), lugar = new THREE.Vector3(), eje = new THREE.Vector3(0, 1, 0), col = new THREE.Color();
+    const tonos = [0x5fb03a, 0x6dbb45, 0x4fa232, 0x7cc753];
+    matas.forEach((p, i) => {
+      q.setFromAxisAngle(eje, p.giro); esc.set(p.tam, p.tam, p.tam); lugar.set(p.x, 0, p.z);
+      mataMesh.setMatrixAt(i, m4.compose(lugar, q, esc)); mataMesh.setColorAt(i, col.setHex(tonos[i % tonos.length]));
+    });
+    scene.add(mataMesh);
+    // Florecitas blancas y amarillas
+    const flores = lugaresPasto(300, libreMata, seededRandom(41));
+    const florMesh = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.09, 0), new THREE.MeshLambertMaterial({ color: 0xffffff }), flores.length);
+    flores.forEach((p, i) => {
+      lugar.set(p.x, 0.12, p.z); esc.set(1, 0.6, 1); q.identity();
+      florMesh.setMatrixAt(i, m4.compose(lugar, q, esc)); florMesh.setColorAt(i, col.setHex(i % 2 ? 0xffe36b : 0xffffff));
+    });
+    scene.add(florMesh);
+  })();
 
   // ---------- Multijugador: tus amigos en tiempo real ----------
   // Cartelito con el nombre encima de la cabeza
