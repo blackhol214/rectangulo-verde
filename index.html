@@ -220,6 +220,18 @@
   /* Pantallas angostas: la ayuda deja sitio a las monedas y el reloj; los avisos pueden ocupar 2 líneas */
   @media (max-width:600px) { .hud { max-width:calc(100% - 150px); font-size:12px; } #parkourHud { top:calc(108px + env(safe-area-inset-top,0px)); white-space:normal; font-size:13px; border-radius:14px; width:max-content; }
     #questHud { top:calc(108px + env(safe-area-inset-top,0px)); white-space:normal; font-size:12px; border-radius:14px; width:max-content; max-width:calc(100% - 32px); } } 
+  /* 🤖 Bot guía: su globo de diálogo (abajo al centro; en el celular, arriba para no tapar los botones) */
+  #guia { position:fixed; left:50%; bottom:calc(16px + env(safe-area-inset-bottom,0px)); transform:translateX(-50%); z-index:25; width:min(460px, calc(100% - 32px)); box-sizing:border-box; padding:14px 16px 12px; border-radius:16px; background:#fbfaf5; color:#16301f; border:3px solid #16301f; box-shadow:0 6px 0 #16301f, 0 12px 26px rgba(0,0,0,.3); font:15px/1.45 system-ui, sans-serif; }
+  #guia .guia-quien { margin:0 0 4px; font:800 13px system-ui, sans-serif; color:#1f8a3b; letter-spacing:.03em; }
+  #guia .guia-texto { margin:0 0 10px; }
+  #guia .guia-botones { display:flex; flex-wrap:wrap; gap:8px; }
+  #guia button { border:0; border-radius:10px; padding:9px 12px; font:700 14px system-ui, sans-serif; color:#fff; background:#2fae4e; cursor:pointer; touch-action:manipulation; }
+  #guia button.otro { background:#5b3df5; }
+  #guia button.chico { background:#e6e9e4; color:#16301f; }
+  #guia button.elegido { box-shadow:inset 0 0 0 3px #ffd60a; }
+  #guia button:focus-visible { outline:3px solid #1e6bff; outline-offset:2px; }
+  #guiaCerrar { position:absolute; right:8px; top:8px; width:28px; height:28px; padding:0 !important; }
+  @media (pointer:coarse) { #guia { bottom:auto; top:calc(150px + env(safe-area-inset-top,0px)); font-size:14px; } }
 </style>
 </head>
 <body>
@@ -249,11 +261,22 @@
   </form>
 </div>
 <p id="saved" aria-live="polite">CAMBIOS GUARDADOS</p>
+<div id="guia" hidden role="dialog" aria-labelledby="guiaQuien">
+  <button type="button" id="guiaCerrar" class="chico" aria-label="Cerrar el diálogo del bot guía">×</button>
+  <p class="guia-quien" id="guiaQuien">🤖 BOT GUÍA</p>
+  <p class="guia-texto" id="guiaTexto" aria-live="polite"></p>
+  <div class="guia-botones">
+    <button type="button" id="guiaComo">¿Cómo juego?</button>
+    <button type="button" id="guiaQue" class="otro">¿Qué tengo que hacer?</button>
+    <button type="button" id="guiaColor" class="chico" aria-label="Cambiar el color del bot guía">🎨 Color</button>
+  </div>
+</div>
 <button type="button" id="helpOpen" aria-label="Ver cómo se juega" hidden>?</button>
 <button type="button" id="saveBtn">GUARDAR</button>
 <button type="button" id="responderBtn" hidden>RESPONDER</button>
 <div id="touchActions">
   <button type="button" class="shop" data-act="shop">🛒 Tienda</button>
+  <button type="button" data-act="guia">🤖 Guía</button>
   <button type="button" data-act="wardrobe" hidden>👕 Armario</button>
   <button type="button" data-act="stall" hidden>🎩 Tienda de estilo</button>
   <button type="button" class="red" data-act="red" hidden>🔴 Botón rojo</button>
@@ -342,8 +365,8 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module">
-import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, ESCUELA, ESCUELA_K, escuelaSiguiente, escuelaMezclar, SALON, salonSillas, sillaCercana, faseDeLuz, TERRENOS, CARROS, CARRO, carroPos, partesCarro, cajasPieza, escaleraCanasta, cajasTerreno, escondites, BOT_ESC, botVe, ordenEscondites, cercaDeLaProfe, preguntasDeLaClase, escaparHTML, NO_MIRES, torreNoMires, seededRandom, debeReaparecer, lugaresArboles, lugaresPasto, libreDePasto, ARBOLES, sombreroDeBot, ETAPAS, etapaDe, cajasDe, decoracionTorre, ovniDesplazamiento, HIELO, deslizar, puedeDobleSalto, gastarBateria, cargarBateria, hayBateria, BATERIA, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, VILLAGE_HOUSE, wallPieces, insideVillageHouse, villageBed, villageEntrance, villageExit, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, squashStretch, ACHIEVEMENTS, achievementById, coinAchievementsFor, TROPHY_TABLE, trophySpot, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
-         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-23-pasto'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
+import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, ESCUELA, ESCUELA_K, escuelaSiguiente, escuelaMezclar, SALON, salonSillas, sillaCercana, faseDeLuz, TERRENOS, CARROS, CARRO, carroPos, partesCarro, cajasPieza, escaleraCanasta, cajasTerreno, escondites, BOT_ESC, botVe, ordenEscondites, cercaDeLaProfe, preguntasDeLaClase, escaparHTML, NO_MIRES, torreNoMires, seededRandom, debeReaparecer, GUIA_COMO, textoQueHago, lugarDelGuia, GUIA_COLORES, siguienteColorGuia, lugaresArboles, lugaresPasto, libreDePasto, ARBOLES, sombreroDeBot, ETAPAS, etapaDe, cajasDe, decoracionTorre, ovniDesplazamiento, HIELO, deslizar, puedeDobleSalto, gastarBateria, cargarBateria, hayBateria, BATERIA, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, VILLAGE_HOUSE, wallPieces, insideVillageHouse, villageBed, villageEntrance, villageExit, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, squashStretch, ACHIEVEMENTS, achievementById, coinAchievementsFor, TROPHY_TABLE, trophySpot, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
+         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-23-guia'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
 import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto, acercar, acercarAngulo, piezasExplosion, leerPreguntas, revisarPreguntas, PROFE, seVen, MG_TORRE, MG_ESCONDIDAS, MG_SOLO, ESC } from './src/red.js?v=2026-10-22-escondidas2';
 (() => {
   // iPhone ignora user-scalable=no: aquí se bloquea el zoom con dos dedos y el doble toque
@@ -796,6 +819,8 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     keys[e.code] = true;
     if (e.code === 'Space' || e.code.startsWith('Arrow')) e.preventDefault();
     if (e.code === 'KeyV' && !e.repeat) setFirstPerson(!firstPerson);
+    if (e.code === 'KeyH' && !e.repeat) guiaMostrar(!guiaVisible);   // H: esconde o llama al bot guía
+    if (e.code === 'KeyC' && !e.repeat) guiaCambiarColor();          // C: el bot guía cambia de color
     if (e.code === 'KeyE' && !e.repeat) { if (MG.active) { if (MG.active.onE) MG.active.onE(); } else if (!tryRedButton() && !tryTrophy() && !tryStyleInteract() && !tryVillage()) trySleep(); }
     if (e.code === 'KeyF' && !e.repeat && MG.active && MG.active.onF) MG.active.onF();
     if (e.code === 'KeyQ' && !e.repeat && MG.active && MG.active.onQ) MG.active.onQ();   // Q: cargar batería (No mires abajo)
@@ -3810,6 +3835,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     b.addEventListener('click', () => {
       const act = b.dataset.act;
       if (act === 'shop') toggleShop();
+      else if (act === 'guia') guiaMostrar(!guiaVisible);
       else if (act === 'red') tryRedButton();
       else if (act === 'stall' || act === 'wardrobe') tryStyleInteract();
       else if (act === 'sleep') trySleep();
@@ -4013,6 +4039,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     const loaded = loadGame(name);
     loadedLocal = loaded;
     showToast(loaded ? `¡Hola de nuevo, ${name}! Seguiste donde guardaste` : `Hola, ${name}. Para guardar, pulsa GUARDAR (abajo a la derecha)`);
+    guiaMostrar(true, `¡Hola, ${name}! Soy tu bot guía 🤖. `);   // al empezar, el bot aparece a tu lado y te explica cómo se juega
     conectarRed(name);
   });
   const saveBtn = document.getElementById('saveBtn');
@@ -4689,7 +4716,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     const mataGeo = new THREE.BufferGeometry(); mataGeo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
     mataGeo.setAttribute('normal', new THREE.Float32BufferAttribute(pos.map((_, i) => (i % 3 === 1 ? 1 : 0)), 3));
     const libreMata = (x, z) => libreDePasto(x, z) && !tapado(x, z, 0.5);
-    const matas = lugaresPasto(TOUCH_GPU ? 2500 : 5000, libreMata, seededRandom(31));
+    const matas = lugaresPasto(TOUCH_GPU ? 1250 : 2500, libreMata, seededRandom(31));
     const mataMesh = new THREE.InstancedMesh(mataGeo, new THREE.MeshLambertMaterial({ color: 0xffffff }), matas.length);
     const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), esc = new THREE.Vector3(), lugar = new THREE.Vector3(), eje = new THREE.Vector3(0, 1, 0), col = new THREE.Color();
     const tonos = [0x5fb03a, 0x6dbb45, 0x4fa232, 0x7cc753];
@@ -4707,6 +4734,69 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     });
     scene.add(florMesh);
   })();
+
+  // ---------- 🤖 Bot guía: un cubito que flota a tu lado y te explica el juego ----------
+  // Cada jugador tiene el suyo (solo lo ves tú). H lo esconde o lo llama · C le cambia el color · × cierra el diálogo (él te sigue igual)
+  const guiaEl = document.getElementById('guia'), guiaTexto = document.getElementById('guiaTexto');
+  const guiaBot = (() => {
+    const g = new THREE.Group(), L = 0.55;
+    const cubo = new THREE.Mesh(new THREE.BoxGeometry(L, L, L), new THREE.MeshLambertMaterial({ color: 0xffffff }));
+    g.add(cubo);
+    for (const ex of [-0.12, 0.12]) { const e = new THREE.Mesh(eyeGeo, eyeMat); e.scale.set(0.6, 0.6, 0.3); e.position.set(ex, 0.07, L / 2 + 0.01); cubo.add(e); }
+    const palo = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.22, 6), new THREE.MeshLambertMaterial({ color: 0x333333 }));
+    palo.position.y = L / 2 + 0.11; cubo.add(palo);   // la antenita…
+    const luz = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 6), new THREE.MeshBasicMaterial({ color: 0xff3b3b }));
+    luz.position.y = L / 2 + 0.25; cubo.add(luz);     // …con su lucecita (parpadea mientras te habla)
+    g.visible = false; scene.add(g);
+    return { obj: g, cubo, luz, t: 0 };
+  })();
+  let guiaVisible = false, guiaColor = 0, guiaElegido = null, guiaLugar = null;
+  try { guiaColor = Math.floor(+localStorage.getItem('rectangulo-verde:guia-color')) % GUIA_COLORES.length || 0; } catch (e) {}
+  guiaBot.cubo.material.color.setHex(GUIA_COLORES[guiaColor]);
+  function guiaCambiarColor() {
+    guiaColor = siguienteColorGuia(guiaColor);
+    guiaBot.cubo.material.color.setHex(GUIA_COLORES[guiaColor]);
+    try { localStorage.setItem('rectangulo-verde:guia-color', guiaColor); } catch (e) {}   // tu color se recuerda en este navegador
+  }
+  // ¿Dónde estás? (así «¿Qué tengo que hacer?» explica el minijuego o el modo de la Escuela en el que estás)
+  function lugarActual() {
+    if (!MG.active) return 'mundo';
+    const e = MG.state.esc;
+    return lugarDelGuia({ id: minigameDef(MG.k).id, fase: MG.state.fase, rol: e && soyBuscador() ? 'buscar' : 'esconder', fantasma: !!(e && e.fantasma) });
+  }
+  // En el celular no hay teclas: el texto nombra los botones de la pantalla
+  const textoTouch = s => !IS_TOUCH ? s : s.replace(/pulsa E/g, `toca ${(MG.active && MG.active.eLabel) || '✋ Buscar'}`).replace(/pulsa Q/g, 'toca RESPONDER').replace(/con F/g, 'con 💧 Agua').replace('(P)', '(🛒 Tienda)');
+  function guiaDecir(boton, antes = '') {
+    guiaElegido = boton; guiaLugar = lugarActual();
+    const texto = boton === 'guiaQue' ? textoQueHago(guiaLugar) : GUIA_COMO[IS_TOUCH ? 'touch' : 'teclado'];
+    guiaTexto.textContent = antes + textoTouch(texto);
+    for (const b of guiaEl.querySelectorAll('button')) b.classList.toggle('elegido', b.id === boton);
+  }
+  // Mostrar = aparece a tu lado con el diálogo abierto · esconder = se van él y el diálogo
+  function guiaMostrar(on, saludo = '') {
+    if (on && !guiaVisible) guiaBot.t = -1;   // -1: en el próximo cuadro aparece justo a tu lado (no viene volando desde lejos)
+    guiaVisible = on; guiaBot.obj.visible = on; guiaEl.hidden = !on;
+    if (on) guiaDecir('guiaComo', saludo);
+  }
+  document.getElementById('guiaComo').addEventListener('click', e => { guiaDecir('guiaComo'); e.currentTarget.blur(); });   // blur: que Espacio siga siendo saltar
+  document.getElementById('guiaQue').addEventListener('click', e => { guiaDecir('guiaQue'); e.currentTarget.blur(); });
+  document.getElementById('guiaColor').addEventListener('click', e => { guiaCambiarColor(); e.currentTarget.blur(); });
+  document.getElementById('guiaCerrar').addEventListener('click', () => { guiaEl.hidden = true; });
+  const guiaMeta = new THREE.Vector3();
+  function updateGuia(dt) {
+    if (!guiaVisible) return;
+    const b = guiaBot, k = MG.active && MG.active.giant ? 3 : 1;   // si eres gigante, flota más lejos y más alto
+    b.t = b.t < 0 ? 0 : b.t + dt;
+    // Flota a tu derecha (mirando desde la cámara), un poco más arriba de tu cabeza, subiendo y bajando
+    guiaMeta.set(ps.pos.x + Math.cos(camYaw) * 1.3 * k, ps.pos.y + (1.9 + Math.sin(b.t * 2.5) * 0.12) * k, ps.pos.z - Math.sin(camYaw) * 1.3 * k);
+    if (b.t === 0 || b.obj.position.distanceTo(guiaMeta) > 25) b.obj.position.copy(guiaMeta);   // recién llamado o te teletransportaste: aparece ahí
+    else b.obj.position.lerp(guiaMeta, Math.min(1, dt * 5));                                   // si no, te sigue suave
+    b.obj.scale.setScalar(k);
+    b.obj.rotation.y = camYaw + Math.sin(b.t * 1.7) * 0.25;   // te mira (hacia la cámara) y se balancea un poquito
+    b.luz.visible = guiaEl.hidden || Math.floor(b.t * 3) % 2 === 0;
+    // Si estás leyendo «¿Qué tengo que hacer?» y cambias de lugar, el texto se actualiza solo
+    if (!guiaEl.hidden && guiaElegido === 'guiaQue' && lugarActual() !== guiaLugar) guiaDecir('guiaQue');
+  }
 
   // ---------- Multijugador: tus amigos en tiempo real ----------
   // Cartelito con el nombre encima de la cabeza
@@ -5016,6 +5106,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, DIA_SEGUNDOS, lugarMoneda, corto,
     updateDumbBots(dt);
     updateVillage(dt);
     updateMinigame(dt);
+    updateGuia(dt);
     updateAnillo(dt);
     updateRed(dt);
     updatePreviews(dt);

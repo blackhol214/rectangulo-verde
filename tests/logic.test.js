@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  GUIA_COMO, GUIA_QUE_HAGO, textoQueHago, lugarDelGuia, GUIA_COLORES, siguienteColorGuia, MINIGAMES as MINIGAMES_G,
   lugaresArboles, lugaresPasto, libreDePasto, ZONAS_SIN_PASTO, ARBOLES, sombreroDeBot, SOMBREROS_BOTS, VILLAGE as VILLAGE_P, BIG_HOUSE as BIG_HOUSE_P,
   ESCALA, TERRENOS, CARROS, CARRO, carroPos, CIRCUITO, largoCircuito, partesCarro, destinoTrampolin, MEDIODIA, faseDeLuz, cajasPieza, escaleraCanasta, cajasTerreno, escondites, OJO, tapanVista, lineaDeVista, BOT_ESC, botVe, ordenEscondites,
   collideWalls, moveAndCollide, boxHit,
@@ -1501,5 +1502,41 @@ describe('🌳 pasto, árboles y mini sombreros', () => {
     const tipos = Array.from({ length: 10 }, (_, i) => sombreroDeBot(i));
     expect(new Set(tipos)).toEqual(new Set(SOMBREROS_BOTS));
     expect(tipos[0]).toBe('helice'); expect(tipos[1]).toBe('gorra'); expect(tipos[2]).toBe('lana');
+  });
+});
+
+describe('🤖 bot guía', () => {
+  it('«¿Cómo juego?» explica WASD, las flechas y ESPACIO', () => {
+    expect(GUIA_COMO.teclado).toContain('WASD');
+    expect(GUIA_COMO.teclado).toContain('flechas izquierda/derecha');
+    expect(GUIA_COMO.teclado).toContain('ESPACIO');
+  });
+  it('en el mundo normal explica el objetivo: monedas y mejoras', () => {
+    expect(lugarDelGuia()).toBe('mundo');
+    expect(textoQueHago('mundo')).toMatch(/monedas/);
+    expect(textoQueHago('mundo')).toMatch(/mejoras/);
+  });
+  it('cada minijuego tiene su resumen', () => {
+    for (const m of MINIGAMES_G) { expect(lugarDelGuia({ id: m.id })).toBe(m.id); expect(GUIA_QUE_HAGO[m.id]).toBeTruthy(); }
+    expect(lugarDelGuia({ id: 'inverted' })).toBe('inverted');
+  });
+  it('en el Modo Escuela dice algo distinto en el salón, la torre y Escondidas', () => {
+    expect(lugarDelGuia({ id: 'escuela', fase: 'salon' })).toBe('salon');
+    expect(lugarDelGuia({ id: 'escuela', fase: 'nomires' })).toBe('nomires');
+    expect(lugarDelGuia({ id: 'escuela', fase: 'escondidas', rol: 'buscar' })).toBe('buscar');
+    expect(lugarDelGuia({ id: 'escuela', fase: 'escondidas', rol: 'esconder' })).toBe('esconder');
+    expect(lugarDelGuia({ id: 'escuela', fase: 'escondidas', rol: 'esconder', fantasma: true })).toBe('fantasma');
+    const textos = ['salon', 'nomires', 'buscar', 'esconder', 'fantasma'].map(textoQueHago);
+    expect(new Set(textos).size).toBe(5);
+  });
+  it('un lugar desconocido no rompe nada: explica el mundo normal', () => {
+    expect(lugarDelGuia({ id: 'no-existe' })).toBe('mundo');
+    expect(textoQueHago('no-existe')).toBe(GUIA_QUE_HAGO.mundo);
+  });
+  it('C pasa por todos los colores y vuelve al primero', () => {
+    let i = 0; const vistos = new Set([i]);
+    for (let n = 0; n < GUIA_COLORES.length - 1; n++) { i = siguienteColorGuia(i); vistos.add(i); }
+    expect(vistos.size).toBe(GUIA_COLORES.length);
+    expect(siguienteColorGuia(GUIA_COLORES.length - 1)).toBe(0);
   });
 });

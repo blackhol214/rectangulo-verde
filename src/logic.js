@@ -1353,3 +1353,42 @@ export function lugaresPasto(n, libre = (x, z) => libreDePasto(x, z), rnd = Math
 // Los mini sombreros de los bots chiquitos: uno distinto para cada bot (se repiten en orden)
 export const SOMBREROS_BOTS = ['helice', 'gorra', 'lana'];
 export const sombreroDeBot = i => SOMBREROS_BOTS[i % SOMBREROS_BOTS.length];
+
+// ---------- 🤖 El bot guía: un cubito que te sigue y te explica el juego ----------
+// Lo que dice cuando pulsas «¿Cómo juego?» (en el celular no hay teclas: nombra los botones)
+export const GUIA_COMO = {
+  teclado: 'Para moverte usa WASD, las flechas izquierda/derecha para mover la cámara, y ESPACIO para saltar. Extra: P = tienda · E = usar · H = esconderme o llamarme · C = cambiar mi color.',
+  touch: 'Para moverte usa el círculo de abajo a la izquierda, arrastra el dedo (o el círculo CÁMARA) para mover la cámara, y toca SALTAR para saltar. Los botones de la derecha sirven para usar cosas.',
+};
+// Lo que dice cuando pulsas «¿Qué tengo que hacer?», según dónde estás (un resumen cortito de cada lugar)
+export const GUIA_QUE_HAGO = {
+  mundo: 'Recolecta monedas en la zona del gigante rojo (pasando la línea amarilla) y úsalas en la tienda (P) para conseguir mejoras en tu base. ¡Que el gigante no te atrape! Detrás de la línea amarilla estás a salvo.',
+  maze: 'Laberinto: encuentra el camino hasta la casa del bot amarillo (la esquina del fondo). Él te sigue. Aquí no se salta.',
+  crates: 'Cajas grandes: empuja las 5 cajas hasta sacarlas de la casa del bot naranja.',
+  flower: 'La flor que corre: alcanza a la flor rosada y riégala con F. Corre más que tú, pero a veces se cansa.',
+  dropper: 'Dropper: déjate caer 200 m sin tocar lo rojo y aterriza en lo verde.',
+  dolphins: 'Delfines: salta sobre los 10 delfines cuando están fuera del agua y recoge la gorra sobre la ballena dormida.',
+  clouds: 'Nubes: salta por las 10 nubes y lleva al bot celeste hasta su casa.',
+  lava: '50 escalones: sube con el bot turquesa hasta arriba antes de que la lava los alcance.',
+  trees: 'Los 20 árboles: pulsa E junto a cada árbol hasta encontrar el círculo amarillo entre los rojos.',
+  meteors: 'Meteoritos: sobrevive 30 segundos alejándote de las sombras rojas (ahí cae un meteorito).',
+  mix: 'Nubes y lava: sube por las nubes con los bots celeste, turquesa y coral sin que la lava alcance a nadie.',
+  inverted: 'Mundo al revés: ahora TÚ eres el gigante. Atrapa 10 veces al jugador en tu mitad (salta para alcanzarlo).',
+  salon: 'Modo Escuela: cada silla es un juego. Acércate a una y pulsa E: la que brilla es «No mires abajo» y la que se esconde es «Escondidas». La SALIDA está atrás.',
+  nomires: 'No mires abajo: sube la torre de 10 etapas sin caerte. Caminar y saltar gasta batería: pulsa Q y responde preguntas para cargarla. ¡Aquí hay doble salto!',
+  esconder: 'Escondidas: ¡te toca esconderte! Busca un buen escondite antes de que el buscador termine de contar. Moverte gasta batería: pulsa Q y responde preguntas.',
+  buscar: 'Escondidas: ¡eres el buscador! Mientras cuentas, los demás se esconden; después búscalos y pulsa E cuando estés cerca de alguien.',
+  fantasma: 'Escondidas: ya te encontraron, ahora eres un fantasma 👻. Mira cómo sigue la ronda hasta que termine.',
+};
+// ¿Dónde estás? id = el minijuego (null = el mundo normal) · fase = la del Modo Escuela · rol / fantasma = en Escondidas
+export function lugarDelGuia({ id = null, fase = null, rol = null, fantasma = false } = {}) {
+  if (!id) return 'mundo';
+  if (id !== 'escuela') return id in GUIA_QUE_HAGO ? id : 'mundo';
+  if (fase === 'nomires') return 'nomires';
+  if (fase === 'escondidas') return fantasma ? 'fantasma' : rol === 'buscar' ? 'buscar' : 'esconder';
+  return 'salon';
+}
+export const textoQueHago = lugar => GUIA_QUE_HAGO[lugar] || GUIA_QUE_HAGO.mundo;
+// Colores del bot guía: C pasa al siguiente (y después del último vuelve al primero)
+export const GUIA_COLORES = [0xffffff, 0x64d2ff, 0xffd60a, 0xff6bb5, 0x9b6bff, 0xff8a3d];
+export const siguienteColorGuia = i => (i + 1) % GUIA_COLORES.length;
