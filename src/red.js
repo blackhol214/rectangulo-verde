@@ -78,7 +78,7 @@ export const claveCorrecta = (dada, real) => typeof dada === 'string' && typeof 
 // ---------- ¿Dónde está cada jugador? (mg) ----------
 // 0 = en el mundo · 1 a 20 = en el minijuego número mg − 1 · 21 = en la torre "No mires abajo"
 // · 30, 31, 32 = en una ronda de Escondidas con amigos (en el terreno 0, 1 o 2) · 99 = jugando solo (no ve a nadie)
-export const MG_TORRE = 21, MG_ESCONDIDAS = 30, MG_SOLO = 99;
+export const MG_TORRE = 21, MG_ESCONDIDAS = 30, MG_ATRAPADAS = 40, MG_SOLO = 99;
 // Dos jugadores se ven solo si están en el mismo lugar (y ninguno está jugando solo)
 export const seVen = (miMg, suMg) => miMg === suMg && miMg !== MG_SOLO;
 
@@ -103,9 +103,121 @@ export function ganadorRonda({ camaleones, encontrados, ms, buscadorSeFue = fals
 }
 // El mg de un jugador lo decide el servidor durante la ronda: así nadie se vuelve invisible cambiándolo desde la consola.
 // terrenoRonda: el terreno de SU ronda (o null si no está jugando una). Fuera de la ronda nadie puede decir que está adentro.
-export function mgDelServidor(mg, terrenoRonda) {
+// enAtrapadas: si está jugando una ronda de Atrapadas Nocivas (lo sabe el servidor)
+export function mgDelServidor(mg, terrenoRonda, enAtrapadas = false) {
+  if (enAtrapadas) return MG_ATRAPADAS;
   if (terrenoRonda !== null) return MG_ESCONDIDAS + terrenoRonda;
-  return mg >= MG_ESCONDIDAS && mg < MG_ESCONDIDAS + ESC.terrenos ? MG_SOLO : mg;
+  return (mg >= MG_ESCONDIDAS && mg < MG_ESCONDIDAS + ESC.terrenos) || mg === MG_ATRAPADAS ? MG_SOLO : mg;
+}
+
+// ---------- 👽 Atrapadas Nocivas: la mancha verde alien (el servidor es el árbitro) ----------
+// El que tiene la mancha (el portador) tiene 15 s para pasársela a otro tocándolo. Si no, ¡explota! y queda de fantasma.
+// El que te la pasó no la puede recibir de vuelta durante 1 s. Gana el último que queda.
+// inmuneMs: cuánto tiempo no se la puedes devolver al que te la pasó (cambiar aquí si hace falta más o menos).
+// empuje: al recibirla sales volando lejos del que te la pasó (vel en m/s + un salto): unos 20 m, ¡así no se quedan pegados!
+// mareoMs: y quedas mareado 2 s (no te mueves ni la puedes pasar): el que te la pasó tiene tiempo de escaparse
+// vel: en Atrapadas todos corren a 15 m/s (en el resto del juego, 12)
+export const AN = { tiempoMs: 15000, tocar: 1.5, tocarServidor: 2.5, inmuneMs: 1000, vel: 15,
+  empuje: { vel: 28, salto: 10, extraM: 24, extraMs: 3000 }, mareoMs: 2000 };
+export const elegirPortador = elegirBuscador;   // al azar, igual que el buscador
+// Una ronda nueva: todos vivos, uno al azar con la mancha y 15 s en su reloj. salieron: los que se fueron de la ronda
+export function nuevaRondaAN(ids, ahora, azar = Math.random) {
+  return { jugadores: [...ids], vivos: [...ids], salieron: [], portador: elegirPortador(ids, azar), fin: ahora + AN.tiempoMs, ultimoPase: null, inicio: ahora };
+}
+// ¿Sigue en la ronda? (vivo o fantasma, pero NO si se fue: aunque se vuelva a sentar, ya no entra a esta ronda)
+export const sigueEnRondaAN = (r, id) => !!(r && r.jugadores.includes(id) && !(r.salieron || []).includes(id));
+// ¿Está mareado? (el que recién recibió la mancha, durante 2 s)
+export const mareadoAN = (r, id, ahora) => !!(r && r.mareado && r.mareado.id === id && ahora < r.mareado.hasta);
+// ¿Puede "de" pasarle la mancha a "a"? Solo el portador (si no está mareado), a alguien vivo que no es él,
+// y no de vuelta al que se la acaba de pasar
+export function puedePasarAN(r, de, a, ahora) {
+  if (!r || de !== r.portador || a === de || !r.vivos.includes(a) || mareadoAN(r, de, ahora)) return false;
+  const u = r.ultimoPase;
+  return !(u && u.de === a && u.a === de && ahora - u.t < AN.inmuneMs);
+}
+// Pasar la mancha: devuelve la ronda nueva (con 15 s nuevos para el que la recibe), o null si no se puede
+export function pasarAN(r, de, a, ahora) {
+  if (!puedePasarAN(r, de, a, ahora)) return null;
+  return { ...r, portador: a, fin: ahora + AN.tiempoMs, ultimoPase: { de, a, t: ahora }, mareado: { id: a, hasta: ahora + AN.mareoMs } };
+}
+// El empujón: hacia dónde sale volando el que la recibe (del que se la pasó hacia él). Si están uno encima del otro, al azar.
+export function empujeAN(de, a, azar = Math.random) {
+  let dx = a.x - de.x, dz = a.z - de.z, d = Math.hypot(dx, dz);
+  if (d < 0.05) { const ang = azar() * Math.PI * 2; dx = Math.cos(ang); dz = Math.sin(ang); d = 1; }
+  const v = AN.empuje.vel;
+  return { x: Math.round(dx / d * v * 100) / 100, z: Math.round(dz / d * v * 100) / 100 };
+}
+// Se acabó el reloj del portador: explota. Devuelve { ronda (o null si terminó), exploto, ganador (o null) }
+export function explotarAN(r, ahora, azar = Math.random) {
+  const vivos = r.vivos.filter(id => id !== r.portador);
+  if (vivos.length <= 1) return { ronda: null, exploto: r.portador, ganador: vivos[0] ?? null };
+  return { ronda: { ...r, vivos, portador: elegirPortador(vivos, azar), fin: ahora + AN.tiempoMs, ultimoPase: null, mareado: null }, exploto: r.portador, ganador: null };
+}
+// Alguien se fue de la ronda (cerró el juego o se levantó). que:
+//  null: no estaba · 'fantasma': ya había explotado (nadie se entera) · 'sale': estaba vivo
+//  'explota': ¡se fue con la mancha! Cuenta como explotar (no se salva yéndose)
+export function salirAN(r, id, ahora, azar = Math.random) {
+  if (!sigueEnRondaAN(r, id)) return { ronda: r, que: null, ganador: null };
+  const r2 = { ...r, salieron: [...(r.salieron || []), id] };
+  if (!r.vivos.includes(id)) return { ronda: r2, que: 'fantasma', ganador: null };
+  if (r.portador === id) { const e = explotarAN(r2, ahora, azar); return { ronda: e.ronda, que: 'explota', ganador: e.ganador }; }
+  const vivos = r.vivos.filter(v => v !== id);
+  if (vivos.length <= 1) return { ronda: null, que: 'sale', ganador: vivos[0] ?? null };
+  return { ronda: { ...r2, vivos }, que: 'sale', ganador: null };
+}
+// ¿Lo tocó? (con las posiciones: el servidor da un poquito más de margen, por lo que tarda internet)
+export const seTocan = (a, b, max = AN.tocar) => Math.hypot(a.x - b.x, a.z - b.z) <= max && Math.abs(a.y - b.y) <= 2.5;
+
+// ---------- 🛡️ El servidor vigila que nadie corra más de la cuenta ----------
+// antes: la última posición que aceptó { x, y, z, t, llego, saldo, saldoY } · nuevo: la que mandó la compu
+// zona: ver zonaAN / zonaEsc (logic.js) · extra: metros de más por un empujón, que solo valen hacia dirExtra ({x,z})
+// Devuelve { pos (la que acepta), extra, corregido }. Reglas:
+//  · al empezar la ronda solo puede "aparecer" en su lugar de salida (y si no llega a tiempo, el servidor lo pone ahí)
+//  · no sale del cuadrado de la zona ni de su altura (piso..lo más alto + un salto)
+//  · no corre más rápido que zona.velMax ni SUBE más rápido que un salto (caerse sí, eso es libre)
+//  · solo salta lejos (o alto) si entró a un portal y sale por su par, a la altura de verdad de la salida
+// saldo y saldoY: como alcancías de metros. Se llenan con el tiempo (hasta un máximo) y cada paso gasta lo que avanza o sube.
+export const VIGILA = { maxSaldo: 3, maxSaldoY: 3.5, subeVel: 13, salto: 3.2, portalEntrada: 2.2, portalSalida: 2.5, cosEmpuje: 0.7, llegarMs: 3000 };
+export function vigilarPos(antes, nuevo, ahora, zona, extra = 0, dirExtra = null) {
+  const ok = (p, ex, saldo, saldoY, corregido = false) => ({ pos: { x: p.x, y: p.y, z: p.z, t: ahora, llego: true, saldo, saldoY }, extra: ex, corregido });
+  const dentro = p => p.x >= zona.x0 && p.x <= zona.x1 && p.z >= zona.z0 && p.z <= zona.z1;
+  const piso = zona.yMin ?? 0, techo = zona.yMax ?? Infinity;
+  if (!antes || !antes.llego) {
+    const l = zona.llegada, enSuLugar = { x: l.x, y: piso, z: l.z };
+    if (Math.hypot(nuevo.x - l.x, nuevo.z - l.z) <= l.radio && nuevo.y <= piso + 1) return ok(nuevo, extra, VIGILA.maxSaldo, VIGILA.maxSaldoY);   // llegó a su lugar
+    const tarde = zona.llegarHasta !== undefined && ahora > zona.llegarHasta;
+    if (!dentro(nuevo) && !tarde) return { pos: { x: nuevo.x, y: nuevo.y, z: nuevo.z, t: ahora, llego: false }, extra, corregido: false };   // todavía en el salón
+    return ok(enSuLugar, extra, VIGILA.maxSaldo, VIGILA.maxSaldoY, true);   // apareció en otro lado (o no llegó a tiempo): lo ponemos en su lugar
+  }
+  const p = { x: Math.min(zona.x1, Math.max(zona.x0, nuevo.x)), y: Math.min(techo, Math.max(piso, nuevo.y)), z: Math.min(zona.z1, Math.max(zona.z0, nuevo.z)) };
+  let corregido = p.x !== nuevo.x || p.y !== nuevo.y || p.z !== nuevo.z;
+  const dt = Math.max(0, (ahora - antes.t) / 1000);
+  // ¿Un portal? Desde cerca de la entrada (a su altura) hasta su par, a la altura de la salida
+  const cerca = (a, b, r) => Math.hypot(a.x - b.x, a.z - b.z) <= r;
+  if (zona.saltos.some(s => cerca(antes, s.desde, VIGILA.portalEntrada) && antes.y >= s.desde.y - 0.5 && antes.y <= s.desde.y + 2.5
+    && cerca(p, s.hasta, VIGILA.portalSalida) && Math.abs(p.y - s.hasta.y) <= 1)) return ok(p, extra, VIGILA.maxSaldo, VIGILA.maxSaldoY, corregido);
+  // Lo de los costados
+  const saldo = Math.min(VIGILA.maxSaldo, (antes.saldo ?? VIGILA.maxSaldo) + zona.velMax * dt);
+  const mx = p.x - antes.x, mz = p.z - antes.z, d = Math.hypot(mx, mz);
+  // el empujón solo vale para moverse hacia donde te empujaron (con un poquito de margen)
+  const haciaEmpuje = dirExtra && d > 0 ? (mx * dirExtra.x + mz * dirExtra.z) / (d * (Math.hypot(dirExtra.x, dirExtra.z) || 1)) >= VIGILA.cosEmpuje : !dirExtra;
+  const usable = haciaEmpuje ? extra : 0;
+  let x = p.x, z = p.z, saldoNuevo, extraNuevo = extra;
+  if (d <= saldo) saldoNuevo = saldo - d;
+  else if (d <= saldo + usable) { saldoNuevo = 0; extraNuevo = extra - (d - saldo); }
+  else { const k = (saldo + usable) / d; x = antes.x + mx * k; z = antes.z + mz * k; saldoNuevo = 0; extraNuevo = haciaEmpuje ? 0 : extra; corregido = true; }
+  // Lo de subir (bajar es libre: caerse no es trampa)
+  const saldoY = Math.min(VIGILA.maxSaldoY, (antes.saldoY ?? VIGILA.maxSaldoY) + VIGILA.subeVel * dt);
+  let y = p.y, saldoYNuevo = saldoY;
+  const sube = p.y - antes.y;
+  if (sube > saldoY) { y = antes.y + saldoY; saldoYNuevo = 0; corregido = true; }
+  else if (sube > 0) saldoYNuevo = saldoY - sube;
+  // ¿Está volando? Más de un salto por encima de lo que tiene abajo: no puede seguir subiendo (caerse sí)
+  if (zona.soporte) {
+    const lim = zona.soporte(x, z) + VIGILA.salto;
+    if (y > lim && y > antes.y) { y = Math.max(antes.y, lim); corregido = true; }
+  }
+  return ok({ x, y, z }, extraNuevo, saldoNuevo, saldoYNuevo, corregido);
 }
 
 // Lee un mensaje que llegó por la red. Si viene roto o con trampas, devuelve null.
@@ -175,6 +287,12 @@ export function leerMensaje(texto) {
     if (m.que === 'encontrar' && Number.isInteger(m.a)) return { tipo: 'esc', que: 'encontrar', a: m.a };
     return null;
   }
+  // Atrapadas Nocivas: entrar a la espera, salir, empezar, o pasarle la mancha al jugador a
+  if (m.tipo === 'an') {
+    if (m.que === 'entrar' || m.que === 'salir' || m.que === 'empezar') return { tipo: 'an', que: m.que };
+    if (m.que === 'pasar' && Number.isInteger(m.a)) return { tipo: 'an', que: 'pasar', a: m.a };
+    return null;
+  }
   // Tu pestaña se escondió (v: 0) o volvió a verse (v: 1): una pestaña escondida no puede ser el anfitrión
   if (m.tipo === 'visible') return { tipo: 'visible', v: m.v === 0 ? 0 : 1 };
   // Tu láser le dio a un amigo
@@ -242,8 +360,11 @@ export function agregarMuestra(s, v, t, ahora) {
 }
 // Mezcla dos posiciones: f = 0 es la primera, f = 1 la segunda. clase(i) dice qué es cada número:
 // 'giro' (va por el camino más corto), 'fijo' (no se mezcla, como "está dormido") o nada (un número normal)
+// Si las 3 primeras (x, y, z) saltaron más de TELETRANSPORTE (un portal, reaparecer…), aparece allá de golpe ENTERO
+// (si no, una parte se deslizaría: por ejemplo la altura, al subir 10 m por un portal)
 export function mezclar(a, b, f, clase = null) {
   if (a.length !== b.length) return b;
+  if (a.length >= 3 && Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]) > TELETRANSPORTE) return b;
   return a.map((x, i) => {
     const c = clase && clase(i), y = b[i];
     if (c === 'fijo') return f < 1 ? x : y;

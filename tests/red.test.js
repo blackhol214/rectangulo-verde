@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { limpiarNombre, leerMensaje, acercar, acercarAngulo, piezasExplosion, lugarMoneda, faseAhora, corto, BORDE, DIA_SEGUNDOS, leerLook, leerSala, salaDeHost, linkOficial, leerPreguntas, revisarPreguntas, claveCorrecta, PROFE, MAX_MENSAJE, seVen, MG_SOLO, MG_ESCONDIDAS, ESC, elegirBuscador, elegirTerreno, faseRonda, puedeEncontrar, ganadorRonda, mgDelServidor, nuevoSuavizador, agregarMuestra, valoresEn, mezclar, RETRASO_MS, RETRASO_MAX, retrasoDe, TELETRANSPORTE } from '../src/red.js';
+import { limpiarNombre, leerMensaje, acercar, acercarAngulo, piezasExplosion, lugarMoneda, faseAhora, corto, BORDE, DIA_SEGUNDOS, leerLook, leerSala, salaDeHost, linkOficial, leerPreguntas, revisarPreguntas, claveCorrecta, PROFE, MAX_MENSAJE, seVen, MG_SOLO, MG_ESCONDIDAS, MG_ATRAPADAS, AN, nuevaRondaAN, puedePasarAN, pasarAN, explotarAN, salirAN, seTocan, elegirPortador, sigueEnRondaAN, mareadoAN, empujeAN, vigilarPos, VIGILA, ESC, elegirBuscador, elegirTerreno, faseRonda, puedeEncontrar, ganadorRonda, mgDelServidor, nuevoSuavizador, agregarMuestra, valoresEn, mezclar, RETRASO_MS, RETRASO_MAX, retrasoDe, TELETRANSPORTE } from '../src/red.js';
 
 describe('limpiarNombre', () => {
   it('quita espacios de más y corta a 20 letras', () => {
@@ -316,5 +316,230 @@ describe('movimiento suave (interpolación)', () => {
     expect(valoresEn(s, 100)).toBeNull();
     agregarMuestra(s, [7, 0, 0, 0], null, 100);
     expect(valoresEn(s, 1000)[0]).toBe(7);
+  });
+});
+
+describe('Atrapadas Nocivas: la ronda', () => {
+  const r0 = () => nuevaRondaAN([1, 2, 3, 4], 1000, () => 0);   // con azar 0 empieza el 1
+  it('lee los mensajes (y rechaza los raros)', () => {
+    const an = m => leerMensaje(JSON.stringify({ tipo: 'an', ...m }));
+    for (const que of ['entrar', 'salir', 'empezar']) expect(an({ que })).toEqual({ tipo: 'an', que });
+    expect(an({ que: 'pasar', a: 3 })).toEqual({ tipo: 'an', que: 'pasar', a: 3 });
+    expect(an({ que: 'pasar', a: 'Leo' })).toBeNull();
+    expect(an({ que: 'explotar' })).toBeNull();
+  });
+  it('empieza con todos vivos, uno con la mancha y 15 s', () => {
+    const r = r0();
+    expect(r.vivos).toEqual([1, 2, 3, 4]); expect(r.portador).toBe(1); expect(r.fin).toBe(1000 + 15000);
+    const vistos = new Set(); for (let i = 0; i < 100; i++) vistos.add(nuevaRondaAN([1, 2, 3], 0).portador);
+    expect(vistos.size).toBe(3);
+  });
+  it('pasar la mancha: solo el portador, a otro vivo, con 15 s nuevos', () => {
+    let r = r0();
+    expect(pasarAN(r, 2, 3, 2000)).toBeNull();     // el 2 no la tiene
+    expect(pasarAN(r, 1, 1, 2000)).toBeNull();     // a sí mismo no
+    expect(pasarAN(r, 1, 9, 2000)).toBeNull();     // a alguien que no juega no
+    r = pasarAN(r, 1, 2, 2000);
+    expect(r.portador).toBe(2); expect(r.fin).toBe(2000 + AN.tiempoMs);
+  });
+  it('no te la pueden devolver durante 1 s', () => {
+    let r = { ...pasarAN(r0(), 1, 2, 2000), mareado: null };   // (sin el mareo, para ver solo esta regla)
+    expect(puedePasarAN(r, 2, 1, 2500)).toBe(false);   // devolverla al toque: no
+    expect(puedePasarAN(r, 2, 3, 2500)).toBe(true);    // a otro sí
+    expect(puedePasarAN(r, 2, 1, 3001)).toBe(true);    // pasado 1 s, sí
+  });
+  it('si se acaba el reloj, el portador explota y la mancha va a otro al azar (con 15 s)', () => {
+    const { ronda, exploto, ganador } = explotarAN(r0(), 16000, () => 0);
+    expect(exploto).toBe(1); expect(ganador).toBeNull();
+    expect(ronda.vivos).toEqual([2, 3, 4]); expect(ronda.portador).toBe(2); expect(ronda.fin).toBe(16000 + AN.tiempoMs);
+  });
+  it('gana el último que queda', () => {
+    let r = nuevaRondaAN([1, 2], 0, () => 0);
+    const fin = explotarAN(r, 15000);
+    expect(fin.ronda).toBeNull(); expect(fin.ganador).toBe(2);
+  });
+  it('si se va el que tiene la mancha: ¡cuenta como explotar!', () => {
+    const { ronda, que } = salirAN(r0(), 1, 5000, () => 0);
+    expect(que).toBe('explota');
+    expect(ronda.vivos).toEqual([2, 3, 4]); expect(ronda.portador).toBe(2); expect(ronda.fin).toBe(5000 + AN.tiempoMs);
+    expect(ronda.salieron).toEqual([1]);
+    const dos = salirAN(nuevaRondaAN([1, 2], 0, () => 0), 1, 100);
+    expect(dos.que).toBe('explota'); expect(dos.ronda).toBeNull(); expect(dos.ganador).toBe(2);
+  });
+  it('si se va uno vivo sin la mancha: sale (y el portador sigue igual)', () => {
+    const { ronda, que } = salirAN(r0(), 3, 5000);
+    expect(que).toBe('sale'); expect(ronda.portador).toBe(1); expect(ronda.fin).toBe(16000); expect(ronda.vivos).toEqual([1, 2, 4]);
+    const dos = salirAN(nuevaRondaAN([1, 2], 0, () => 0), 2, 100);
+    expect(dos.que).toBe('sale'); expect(dos.ronda).toBeNull(); expect(dos.ganador).toBe(1);
+  });
+  it('si se va un fantasma: nadie se entera, y no vuelve a la ronda aunque se siente de nuevo', () => {
+    const r = explotarAN(r0(), 16000, () => 0).ronda;   // explotó el 1
+    expect(sigueEnRondaAN(r, 1)).toBe(true);           // fantasma: sigue en la ronda (todos lo ven)
+    const { ronda, que } = salirAN(r, 1, 17000);
+    expect(que).toBe('fantasma'); expect(ronda.vivos).toEqual(r.vivos); expect(ronda.portador).toBe(r.portador);
+    expect(sigueEnRondaAN(ronda, 1)).toBe(false);
+    expect(salirAN(ronda, 1, 18000).que).toBeNull();   // irse dos veces no hace nada
+    expect(sigueEnRondaAN(ronda, 99)).toBe(false);     // alguien que no jugaba
+    expect(sigueEnRondaAN(null, 1)).toBe(false);
+  });
+  it('el empujón: lejos del que te la pasó, siempre igual de fuerte', () => {
+    const e = empujeAN({ x: 0, z: 0 }, { x: 1, z: 0 });
+    expect(e.x).toBeCloseTo(AN.empuje.vel); expect(e.z).toBeCloseTo(0);
+    const d = empujeAN({ x: 5, z: 5 }, { x: 4, z: 4 });
+    expect(d.x).toBeLessThan(0); expect(d.z).toBeLessThan(0); expect(Math.hypot(d.x, d.z)).toBeCloseTo(AN.empuje.vel, 1);
+    const encima = empujeAN({ x: 3, z: 3 }, { x: 3, z: 3 }, () => 0.25);   // uno encima del otro: al azar
+    expect(encima.x).toBeCloseTo(0, 1); expect(encima.z).toBeCloseTo(AN.empuje.vel, 1);
+  });
+  it('el empujón te lleva unos 20 m (con la física del juego: gravedad 30, freno 0,4 en el aire y 6 en el piso)', () => {
+    let x = 0, y = 0, vx = AN.empuje.vel, vy = AN.empuje.salto; const dt = 1 / 60;
+    for (let i = 0; i < 300; i++) {
+      x += vx * dt; const piso = y <= 0 && vy <= 0; vx *= Math.exp(-(piso ? 6 : 0.4) * dt);
+      vy -= 30 * dt; y = Math.max(0, y + vy * dt); if (y === 0) vy = Math.max(0, vy);
+    }
+    expect(x).toBeGreaterThan(18); expect(x).toBeLessThan(22);
+    expect(AN.empuje.extraM).toBeGreaterThanOrEqual(x);   // el servidor deja moverse todo eso (hacia allá)
+  });
+  it('el que recibe la mancha queda mareado 2 s: no la puede pasar (y después sí)', () => {
+    const r = pasarAN(r0(), 1, 2, 1000);
+    expect(mareadoAN(r, 2, 1500)).toBe(true); expect(mareadoAN(r, 1, 1500)).toBe(false);
+    expect(puedePasarAN(r, 2, 3, 1500)).toBe(false);                 // mareado: no puede pasársela a nadie
+    expect(puedePasarAN(r, 2, 3, 1000 + AN.mareoMs)).toBe(true);     // pasados 2 s, sí
+    expect(r.fin).toBe(1000 + AN.tiempoMs);                          // el reloj igual arranca en 15 s
+    expect(AN.mareoMs).toBe(2000);
+    const e = explotarAN({ ...r, portador: 2 }, 20000, () => 0).ronda;   // si explota, el nuevo no empieza mareado
+    expect(e.mareado).toBeNull();
+  });
+  it('el inmune es fácil de cambiar (sigue en 1 s)', () => {
+    expect(AN.inmuneMs).toBe(1000);
+  });
+  it('tocarse: cerca y a la misma altura', () => {
+    expect(seTocan({ x: 0, y: 0, z: 0 }, { x: 1, y: 0, z: 1 })).toBe(true);
+    expect(seTocan({ x: 0, y: 0, z: 0 }, { x: 2, y: 0, z: 0 })).toBe(false);
+    expect(seTocan({ x: 0, y: 0, z: 0 }, { x: 2, y: 0, z: 0 }, AN.tocarServidor)).toBe(true);   // el servidor da margen
+    expect(seTocan({ x: 0, y: 0, z: 0 }, { x: 0.5, y: 10, z: 0 })).toBe(false);
+  });
+  it('el mg de Atrapadas lo decide el servidor', () => {
+    expect(mgDelServidor(0, null, true)).toBe(MG_ATRAPADAS);
+    expect(mgDelServidor(MG_ATRAPADAS, null, false)).toBe(MG_SOLO);   // no puedes decir que estás adentro si no estás
+    expect(mgDelServidor(12, null, false)).toBe(12);
+    expect(elegirPortador([5, 6], () => 0.9)).toBe(6);
+  });
+});
+
+describe('🛡️ vigilarPos: el servidor no deja hacer trampa con la velocidad', () => {
+  const zona = { x0: -50, x1: 50, z0: -50, z1: 50, velMax: 16, llegada: { x: 10, z: 0, radio: 4 },
+    yMin: 0, yMax: 35, saltos: [{ desde: { x: -20, y: 0, z: 20 }, hasta: { x: 40, y: 10, z: 40 } }] };
+  const en = (x, z, t = 0) => ({ x, y: 0, z, t, llego: true });
+  it('al empezar: solo puede aparecer en su lugar de salida', () => {
+    expect(vigilarPos(null, { x: 11, y: 0, z: 1 }, 0, zona)).toMatchObject({ pos: { x: 11, z: 1, llego: true }, corregido: false });
+    const lejos = vigilarPos(null, { x: -40, y: 0, z: -40 }, 0, zona);   // apareció al lado de otro: ¡no!
+    expect(lejos.pos).toMatchObject({ x: 10, z: 0, llego: true }); expect(lejos.corregido).toBe(true);
+    const salon = vigilarPos(null, { x: 900, y: 0, z: 0 }, 0, zona);     // todavía no llegó (sigue en el salón)
+    expect(salon.pos).toMatchObject({ x: 900, llego: false });
+    expect(vigilarPos(salon.pos, { x: 9, y: 0, z: 0 }, 100, zona).pos.llego).toBe(true);
+  });
+  it('caminar o correr normal: lo deja', () => {
+    const v = vigilarPos(en(0, 0, 0), { x: 1.2, y: 0, z: 0 }, 100, zona);
+    expect(v.pos.x).toBe(1.2); expect(v.corregido).toBe(false);
+    // 1,5 m cada 0,1 s (a 15 m/s) durante 3 s: nunca lo corrige
+    let p = en(0, 0, 0), corr = false;
+    for (let i = 1; i <= 30; i++) { const v = vigilarPos(p, { x: 1.5 * i, y: 0, z: 0 }, i * 100, zona); corr = corr || v.corregido; p = v.pos; }
+    expect(corr).toBe(false); expect(p.x).toBeCloseTo(45);
+  });
+  it('¡XTREMO! muy rápido: solo avanza lo que se puede', () => {
+    const v = vigilarPos(en(0, 0, 0), { x: 40, y: 0, z: 0 }, 100, zona);   // 40 m en 0,1 s
+    expect(v.corregido).toBe(true);
+    expect(v.pos.x).toBeCloseTo(VIGILA.maxSaldo);   // solo lo que tenía en la alcancía
+    // Y si sigue corriendo a 60 m/s, en 2 s avanza como mucho velMax (16) por segundo + la alcancía
+    let p = v.pos;
+    for (let i = 2; i <= 21; i++) p = vigilarPos(p, { x: p.x + 6, y: 0, z: 0 }, i * 100, zona).pos;
+    expect(p.x).toBeLessThanOrEqual(VIGILA.maxSaldo + 16 * 2 + 0.01);
+  });
+  it('caerse sí vale (lo vertical no se revisa)', () => {
+    expect(vigilarPos({ ...en(0, 0, 0), y: 30 }, { x: 0, y: 0, z: 0 }, 100, zona).corregido).toBe(false);
+  });
+  it('dejar de mandar mucho rato no da "metros guardados" (la alcancía tiene un máximo)', () => {
+    const v = vigilarPos(en(0, 0, 0), { x: 45, y: 0, z: 0 }, 10000, zona);
+    expect(v.corregido).toBe(true); expect(v.pos.x).toBeCloseTo(VIGILA.maxSaldo);
+  });
+  it('no puede salirse de la zona', () => {
+    const v = vigilarPos(en(49, 0, 0), { x: 52, y: 0, z: 0 }, 1000, zona);
+    expect(v.pos.x).toBe(50); expect(v.corregido).toBe(true);
+  });
+  it('un portal: de la entrada a la salida de su par sí vale; a otro lado, no', () => {
+    expect(vigilarPos(en(-19, 21, 0), { x: 40, y: 10, z: 41 }, 100, zona).corregido).toBe(false);   // la salida está a 10 m
+    expect(vigilarPos(en(-19, 21, 0), { x: -40, y: 0, z: -41 }, 100, zona).corregido).toBe(true);   // no es la salida
+    expect(vigilarPos(en(0, 0, 0), { x: 40, y: 10, z: 41 }, 100, zona).corregido).toBe(true);       // no estaba en la entrada
+    expect(vigilarPos(en(-17, 20, 0), { x: 40, y: 10, z: 41 }, 100, zona).corregido).toBe(true);    // a 3 m de la entrada: muy lejos
+  });
+  it('un portal: solo a la altura de verdad (ni volando por encima de la entrada, ni saliendo más arriba)', () => {
+    const volando = { ...en(-19, 21, 0), y: 20 };
+    expect(vigilarPos(volando, { x: 40, y: 10, z: 41 }, 100, zona).corregido).toBe(true);
+    const v = vigilarPos(en(-19, 21, 0), { x: 40, y: 30, z: 41 }, 100, zona);
+    expect(v.corregido).toBe(true); expect(v.pos.y).toBeLessThan(5);
+  });
+  it('¡no se puede volar! (y=300 de golpe): queda en el techo de la zona y sube como mucho un salto', () => {
+    const v = vigilarPos(en(0, 0, 0), { x: 0, y: 300, z: 0 }, 100, zona);
+    expect(v.corregido).toBe(true); expect(v.pos.y).toBeLessThanOrEqual(VIGILA.maxSaldoY + 0.01);
+    // y si sigue mandando y=300 diez segundos: nunca pasa del techo (35)
+    let p = v.pos;
+    for (let i = 2; i <= 100; i++) p = vigilarPos(p, { x: 0, y: 300, z: 0 }, i * 100, zona).pos;
+    expect(p.y).toBeLessThanOrEqual(35);
+  });
+  it('volar despacito (subiendo de a poco por mucho rato) tampoco: no puede estar a más de un salto de lo que tiene abajo', () => {
+    const z2 = { ...zona, soporte: (x, z) => (Math.abs(x - 20) < 3 && Math.abs(z) < 3 ? 10 : 0) };   // una plataforma a 10 m en x=20
+    let p = en(0, 0, 0);
+    for (let i = 1; i <= 50; i++) p = vigilarPos(p, { x: 0, y: i * 0.5, z: 0 }, i * 100, z2).pos;   // sube 5 m/s durante 5 s
+    expect(p.y).toBeLessThanOrEqual(VIGILA.salto + 0.01);
+    // arriba de la plataforma sí puede estar a 10 m (+ un salto)
+    expect(vigilarPos({ ...en(20, 0, 0), y: 10 }, { x: 20, y: 12.5, z: 0 }, 200, z2).pos.y).toBeCloseTo(12.5);
+    // y si se cae del borde (queda alto sin nada abajo) puede bajar, pero no subir
+    const borde = { ...en(24, 0, 0), y: 10 };
+    expect(vigilarPos(borde, { x: 24, y: 9, z: 0 }, 100, z2).corregido).toBe(false);
+    expect(vigilarPos(borde, { x: 24, y: 11, z: 0 }, 100, z2).pos.y).toBe(10);
+  });
+  it('saltar de verdad sí vale (sube 2,6 m en 0,4 s), y caerse de muy alto también', () => {
+    let p = en(0, 0, 0), corr = false;
+    const alturas = [1.1, 1.9, 2.4, 2.6, 2.3, 1.6, 0.6, 0];   // un salto con la física del juego, cada 0,1 s
+    alturas.forEach((y, i) => { const v = vigilarPos(p, { x: 0, y, z: 0 }, (i + 1) * 100, zona); corr = corr || v.corregido; p = v.pos; });
+    expect(corr).toBe(false);
+    expect(vigilarPos({ ...en(0, 0, 0), y: 30 }, { x: 0, y: 0, z: 0 }, 100, zona).corregido).toBe(false);
+  });
+  it('no llegar a tu lugar al empezar: a los 3 s el servidor te pone ahí igual', () => {
+    const z2 = { ...zona, llegarHasta: 3000 };
+    expect(vigilarPos(null, { x: 900, y: 0, z: 0 }, 1000, z2).pos.llego).toBe(false);   // todavía en el salón: vale
+    const tarde = vigilarPos(null, { x: 900, y: 0, z: 0 }, 3500, z2);
+    expect(tarde.pos).toMatchObject({ x: 10, y: 0, z: 0, llego: true }); expect(tarde.corregido).toBe(true);
+  });
+  it('teletransportes cortos (al lado de alguien a 5 m) tampoco: la alcancía es chiquita', () => {
+    const v = vigilarPos(en(0, 0, 0), { x: 5, y: 0, z: 0 }, 50, zona);
+    expect(v.corregido).toBe(true); expect(v.pos.x).toBeLessThanOrEqual(VIGILA.maxSaldo + 16 * 0.05 + 0.01);
+  });
+  it('el empujón: los metros de más valen, pero se gastan', () => {
+    const gastada = { ...en(0, 0, 0), saldo: 0 };   // ya venía corriendo (sin metros en la alcancía)
+    const hacia = { x: 1, z: 0 };   // te empujaron hacia +x
+    const v = vigilarPos(gastada, { x: 8, y: 0, z: 0 }, 100, zona, AN.empuje.extraM, hacia);
+    expect(v.corregido).toBe(false); expect(v.extra).toBeCloseTo(AN.empuje.extraM - (8 - 1.6));
+    expect(vigilarPos(gastada, { x: 8, y: 0, z: 0 }, 100, zona, 0).corregido).toBe(true);   // sin empujón, no
+    expect(vigilarPos(gastada, { x: 7, y: 0, z: 3 }, 100, zona, AN.empuje.extraM, hacia).corregido).toBe(false);   // un poquito de costado: vale
+  });
+  it('el empujón solo vale hacia donde te empujaron (no para teletransportarte para otro lado)', () => {
+    const gastada = { ...en(0, 0, 0), saldo: 0 }, hacia = { x: 1, z: 0 };
+    const atras = vigilarPos(gastada, { x: -8, y: 0, z: 0 }, 100, zona, AN.empuje.extraM, hacia);
+    expect(atras.corregido).toBe(true); expect(atras.pos.x).toBeCloseTo(-1.6); expect(atras.extra).toBe(AN.empuje.extraM);   // no gasta el empujón
+    expect(vigilarPos(gastada, { x: 0, y: 0, z: 8 }, 100, zona, AN.empuje.extraM, hacia).corregido).toBe(true);   // de costado tampoco
+  });
+  it('la ronda nueva recuerda cuándo empezó (para el "no llegaste a tiempo")', () => {
+    expect(nuevaRondaAN([1, 2], 5000).inicio).toBe(5000);
+  });
+});
+
+describe('suavizar a los amigos: los portales se ven de golpe', () => {
+  it('si saltó lejos (un portal a una isla), aparece allá entero, sin deslizar la altura', () => {
+    const a = [0, 0, 0, 0], b = [30, 10, 5, 1];   // 30 m de costado y 10 m arriba
+    expect(mezclar(a, b, 0.5)).toEqual(b);
+  });
+  it('si se movió poquito, se mezcla suave como siempre', () => {
+    expect(mezclar([0, 0, 0], [2, 1, 0], 0.5)).toEqual([1, 0.5, 0]);
   });
 });

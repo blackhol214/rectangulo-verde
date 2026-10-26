@@ -653,7 +653,7 @@ export const botSpeedAfter = upgrades => Math.min(INVERTED.botMaxSpeed, INVERTED
 // junto a una silla pulsas E para jugar su modo. Por ahora hay uno: "No mires abajo".
 export const ESCUELA = {
   id: 'escuela', bot: 'profe', intro: 'Modo Escuela', name: 'Modo Escuela',
-  goal: 'Acércate a la silla que brilla y pulsa E para jugar', reward: {},   // el premio lo da cada modo al ganarlo
+  goal: '', reward: {},   // sin cartel al entrar (lo explica el bot guía) · el premio lo da cada modo al ganarlo
 };
 export const ESCUELA_K = MINIGAMES.length + 1;   // su "número de minijuego" (el Mundo al Revés es MINIGAMES.length)
 
@@ -671,7 +671,7 @@ export const SALON = {
 // Las 12 sillas. La primera (adelante a la izquierda) es "No mires abajo"; la última (atrás a la derecha,
 // mirando el salón desde arriba con el pizarrón arriba) es "Escondidas"; las demás, próximamente
 export function salonSillas() {
-  const out = [], modos = { 0: 'nomires', 11: 'escondidas' };
+  const out = [], modos = { 0: 'nomires', 3: 'atrapadas', 11: 'escondidas' };
   for (const z of SALON.filasZ) for (const x of SALON.mesasX) out.push({ x, z: z - SALON.sillaAtras, modo: modos[out.length] || null });
   return out;
 }
@@ -1357,12 +1357,12 @@ export const sombreroDeBot = i => SOMBREROS_BOTS[i % SOMBREROS_BOTS.length];
 // ---------- 🤖 El bot guía: un cubito que te sigue y te explica el juego ----------
 // Lo que dice cuando pulsas «¿Cómo juego?» (en el celular no hay teclas: nombra los botones)
 export const GUIA_COMO = {
-  teclado: 'Para moverte usa WASD, las flechas izquierda/derecha para mover la cámara, y ESPACIO para saltar. Extra: P = tienda · E = usar · H = esconderme o llamarme · C = cambiar mi color.',
-  touch: 'Para moverte usa el círculo de abajo a la izquierda, arrastra el dedo (o el círculo CÁMARA) para mover la cámara, y toca SALTAR para saltar. Los botones de la derecha sirven para usar cosas.',
+  teclado: 'Para moverte usa WASD, las flechas izquierda/derecha (o arrastrar el mouse) para mover la cámara, y ESPACIO para saltar. Extra: P = tienda · E = usar (dormir en tu cama de noche, la tienda de estilo detrás de tu casa, el armario de tu casa) · V = primera persona · clic = láser · ENTER = abrir o cerrar este diálogo · H = esconderme o llamarme · C = cambiar mi color. Para guardar, pulsa el botón verde GUARDAR.',
+  touch: 'Para moverte usa el círculo de abajo a la izquierda, arrastra el dedo (o el círculo CÁMARA) para mover la cámara, y toca SALTAR para saltar. Los botones de la derecha sirven para usar cosas (el de 🤖 Guía abre o cierra este diálogo). Para guardar, toca GUARDAR.',
 };
 // Lo que dice cuando pulsas «¿Qué tengo que hacer?», según dónde estás (un resumen cortito de cada lugar)
 export const GUIA_QUE_HAGO = {
-  mundo: 'Recolecta monedas en la zona del gigante rojo (pasando la línea amarilla) y úsalas en la tienda (P) para conseguir mejoras en tu base. ¡Que el gigante no te atrape! Detrás de la línea amarilla estás a salvo.',
+  mundo: 'Recolecta monedas en la zona del gigante rojo (pasando la línea amarilla) y úsalas en la tienda (P) para conseguir mejoras en tu base. ¡Que el gigante no te atrape! El gigante no puede cruzar la línea amarilla: detrás de ella estás a salvo. De noche el gigante duerme: no te acerques o se despierta.',
   maze: 'Laberinto: encuentra el camino hasta la casa del bot amarillo (la esquina del fondo). Él te sigue. Aquí no se salta.',
   crates: 'Cajas grandes: empuja las 5 cajas hasta sacarlas de la casa del bot naranja.',
   flower: 'La flor que corre: alcanza a la flor rosada y riégala con F. Corre más que tú, pero a veces se cansa.',
@@ -1374,7 +1374,9 @@ export const GUIA_QUE_HAGO = {
   meteors: 'Meteoritos: sobrevive 30 segundos alejándote de las sombras rojas (ahí cae un meteorito).',
   mix: 'Nubes y lava: sube por las nubes con los bots celeste, turquesa y coral sin que la lava alcance a nadie.',
   inverted: 'Mundo al revés: ahora TÚ eres el gigante. Atrapa 10 veces al jugador en tu mitad (salta para alcanzarlo).',
-  salon: 'Modo Escuela: cada silla es un juego. Acércate a una y pulsa E: la que brilla es «No mires abajo» y la que se esconde es «Escondidas». La SALIDA está atrás.',
+  salon: 'Modo Escuela: cada silla es un juego. Acércate a una y pulsa E: la que brilla es «No mires abajo», la que se esconde es «Escondidas» y la que tiene la mancha verde es «Atrapadas Nocivas». La SALIDA está atrás.',
+  atrapadas: 'Atrapadas Nocivas: el que tiene la mancha verde alien tiene 15 segundos para pasársela a otro tocándolo. ¡Si se le acaba el tiempo, explota! Gana el último que quede. Usa los portales verdes y las plataformas. Moverte gasta batería: pulsa Q y responde preguntas.',
+  fantasmaAN: 'Atrapadas Nocivas: explotaste 💥 y ahora eres un fantasma. Todos te ven, pero ya no puedes tocar a nadie: mira cómo termina la ronda.',
   nomires: 'No mires abajo: sube la torre de 10 etapas sin caerte. Caminar y saltar gasta batería: pulsa Q y responde preguntas para cargarla. ¡Aquí hay doble salto!',
   esconder: 'Escondidas: ¡te toca esconderte! Busca un buen escondite antes de que el buscador termine de contar. Moverte gasta batería: pulsa Q y responde preguntas.',
   buscar: 'Escondidas: ¡eres el buscador! Mientras cuentas, los demás se esconden; después búscalos y pulsa E cuando estés cerca de alguien.',
@@ -1386,9 +1388,100 @@ export function lugarDelGuia({ id = null, fase = null, rol = null, fantasma = fa
   if (id !== 'escuela') return id in GUIA_QUE_HAGO ? id : 'mundo';
   if (fase === 'nomires') return 'nomires';
   if (fase === 'escondidas') return fantasma ? 'fantasma' : rol === 'buscar' ? 'buscar' : 'esconder';
+  if (fase === 'atrapadas') return fantasma ? 'fantasmaAN' : 'atrapadas';
   return 'salon';
 }
 export const textoQueHago = lugar => GUIA_QUE_HAGO[lugar] || GUIA_QUE_HAGO.mundo;
 // Colores del bot guía: C pasa al siguiente (y después del último vuelve al primero)
 export const GUIA_COLORES = [0xffffff, 0x64d2ff, 0xffd60a, 0xff6bb5, 0x9b6bff, 0xff8a3d];
 export const siguienteColorGuia = i => (i + 1) % GUIA_COLORES.length;
+
+// ---------- 👽 Atrapadas Nocivas: la mancha verde alien (la tercera silla del Modo Escuela) ----------
+// Un espacio verde azulado oscuro con plataformas negras flotando (algunas se mueven) y portales verdes de a pares.
+// Todo se calcula con números fijos (semilla) y el reloj de la ronda: así todos ven lo mismo.
+export const ARENA_AN = { mitad: 70, cadenas: 4, pasos: 11, sube: 1.5, lado: 6, hueco: 1.6, radio: 46, cima: { y: 18, lado: 16 }, seed: 23 };
+// Las plataformas: 4 escaleras en espiral (una en cada esquina) que suben hasta 16,5 m, puentes hasta la CIMA del centro
+// (a 18 m) e islas flotantes que solo se alcanzan por los portales. mueve: { eje: 'x' | 'y', amp, periodo } (como los ovnis)
+export function plataformasAN() {
+  const A = ARENA_AN, rnd = seededRandom(A.seed), out = [];
+  for (let c = 0; c < A.cadenas; c++) {
+    let ang = c * Math.PI / 2 + Math.PI / 4, y = A.sube, r = A.radio;
+    const mueven = Array.from({ length: A.pasos }, (_, k) => (k % 4 === 3 ? (k === 3 ? { eje: 'y', amp: 0.7, periodo: 4 + rnd() * 2 } : { eje: 'x', amp: 1, periodo: 5 + rnd() * 2 }) : null));
+    for (let k = 0; k < A.pasos; k++) {
+      const mueve = mueven[k];
+      out.push({ x: Math.cos(ang) * r, z: Math.sin(ang) * r, y, lado: A.lado, mueve, tipo: 'escalera', cadena: c });
+      // Hasta la siguiente: un hueco normal, más lo que se mueve la de ahora o la siguiente (para que no se choquen)
+      const extra = (mueve ? mueve.amp * 1.5 + 0.6 : 0) + (mueven[k + 1] ? mueven[k + 1].amp * 1.5 + 0.6 : 0);
+      y += A.sube; ang += (A.lado + A.hueco + extra) / r; r -= 1.2;
+    }
+    // El puente hacia la cima: derecho hacia el centro, ya a la altura de la cima
+    const fin = out[out.length - 1], a = Math.atan2(fin.z, fin.x), r0 = Math.hypot(fin.x, fin.z);
+    for (let j = 1; j <= 3; j++) out.push({ x: Math.cos(a) * (r0 - j * 7), z: Math.sin(a) * (r0 - j * 7), y: A.cima.y, lado: A.lado, mueve: null, tipo: 'puente', cadena: c });
+  }
+  out.push({ x: 0, z: 0, y: A.cima.y, lado: A.cima.lado, mueve: null, tipo: 'cima' });
+  // Islas flotantes (se llega por los portales): dos con portal no se mueven; las otras, sí
+  const islas = [[-50, 0, 10], [50, 0, 12], [0, 52, 24], [0, -52, 26], [-25, -25, 30], [0, 0, 32]];
+  islas.forEach(([x, z, y], i) => out.push({ x, z, y, lado: 9, mueve: i >= 4 ? { eje: i === 4 ? 'x' : 'y', amp: 2, periodo: 7 } : null, tipo: 'isla' }));
+  return out;
+}
+// Dónde está una plataforma en el segundo t de la ronda (desplazamiento desde su lugar)
+export const desplazamientoAN = (p, t) => (p.mueve ? p.mueve.amp * Math.sin((t / p.mueve.periodo) * Math.PI * 2) : 0);
+// Los portales verdes, de a pares: entras por uno y sales por el otro. Unos en el piso y otros arriba de islas o de la cima.
+// { x, y, z, par: el número del otro, salida: { x, z } (un poco adelante del portal, para no volver a entrar) }
+export function portalesAN() {
+  const P = plataformasAN(), islas = P.filter(p => p.tipo === 'isla'), cima = P.find(p => p.tipo === 'cima');
+  const arriba = p => ({ x: p.x, y: p.y, z: p.z - 1.5, salida: { x: p.x, z: p.z + 2 } });
+  const piso = (x, z) => ({ x, y: 0, z, salida: { x, z: z + 3 } });
+  const pares = [
+    [piso(-20, 20), arriba(islas[0])], [piso(20, -20), arriba(islas[1])], [piso(20, 20), arriba(islas[2])],
+    [piso(-20, -20), arriba(islas[3])], [piso(0, -14), arriba(cima)],
+  ];
+  const out = [];
+  pares.forEach(([a, b]) => { const i = out.length; out.push({ ...a, par: i + 1 }, { ...b, par: i }); });
+  return out;
+}
+// ¿Estás adentro de un portal? (devuelve su número, o -1)
+export function portalCerca(pos, portales) {
+  return portales.findIndex(p => Math.abs(pos.x - p.x) < 1.2 && Math.abs(pos.z - p.z) < 1.2 && pos.y >= p.y - 0.5 && pos.y < p.y + 2);
+}
+
+// ---------- 🛡️ Zonas que vigila el servidor (para que nadie haga trampa con la velocidad) ----------
+// Dónde está cada cosa en el mundo de verdad (las mismas cuentas que usa el juego para dibujarlas)
+// Lo más rápido que se puede ir en la arena: corres a 15 (AN.vel en red.js) + lo que te llevan las plataformas que se mueven
+export const ARENA_VEL_MAX = 19;
+export const ARENA_AN_X = 2300;   // la arena está dentro del minijuego del Modo Escuela, lejos de todo lo demás
+export const TERRENO_X = [700, 1200, 1700];   // los 3 terrenos de Escondidas, igual
+export const centroArenaAN = () => { const o = minigameOrigin(ESCUELA_K); return { x: o.x + ARENA_AN_X, z: o.z }; };
+// Dónde empieza el jugador número k de n: en un círculo de 12 m en el piso, alrededor del centro
+export function salidaAN(k, n) {
+  const c = centroArenaAN(), ang = (k / Math.max(1, n)) * Math.PI * 2;
+  return { x: c.x + Math.cos(ang) * 12, z: c.z + Math.sin(ang) * 12 };
+}
+// Lo más alto que se puede estar en la arena: la plataforma más alta (con lo que sube si se mueve) + un salto (12,5² / 2·30 ≈ 2,6 m)
+export const alturaMaxAN = () => Math.max(...plataformasAN().map(p => p.y + (p.mueve && p.mueve.eje === 'y' ? p.mueve.amp : 0))) + 3;
+// ¿Qué tan alto está lo más alto que hay debajo de (x, z), o cerquita? (en la arena, desde su centro). Sirve para saber que no estás volando:
+// nadie puede estar a más de un salto por encima de eso (salvo cayéndose). "Cerquita" = 7 m: lo que avanzas mientras subes en un salto
+// (15 m/s × 0,42 s), para que saltar de un escalón al siguiente nunca cuente como volar. Cuenta lo que se mueven las plataformas.
+const ARENA_PLATS = plataformasAN().map(p => {
+  const ax = p.mueve && p.mueve.eje === 'x' ? p.mueve.amp : 0, ay = p.mueve && p.mueve.eje === 'y' ? p.mueve.amp : 0;
+  return { x: p.x, z: p.z, medio: p.lado / 2 + ax + 7, top: p.y + ay };
+});
+export function soporteAN(x, z) {
+  let alto = 0;
+  for (const p of ARENA_PLATS) if (Math.abs(x - p.x) <= p.medio && Math.abs(z - p.z) <= p.medio && p.top > alto) alto = p.top;
+  return alto;
+}
+// La zona de una ronda: el cuadrado donde se juega, la velocidad máxima, dónde puede "aparecer" al llegar
+// y los saltos que sí valen (entrar a un portal y salir por su par)
+export function zonaAN(k, n) {
+  const c = centroArenaAN(), m = ARENA_AN.mitad - 1, P = portalesAN();
+  const saltos = P.map(p => { const d = P[p.par]; return { desde: { x: c.x + p.x, y: p.y, z: c.z + p.z }, hasta: { x: c.x + d.salida.x, y: d.y, z: c.z + d.salida.z } }; });
+  return { x0: c.x - m, x1: c.x + m, z0: c.z - m, z1: c.z + m, yMin: 0, yMax: alturaMaxAN(), velMax: ARENA_VEL_MAX, llegada: { ...salidaAN(k, n), radio: 4 }, saltos,
+    soporte: (x, z) => soporteAN(x - c.x, z - c.z) };
+}
+// Escondidas: el terreno entero. Ahí hay carros que te llevan (15 m/s) y encima puedes correr: por eso deja más rápido
+export function zonaEsc(i) {
+  const o = minigameOrigin(ESCUELA_K), T = TERRENOS[i], x = o.x + TERRENO_X[i];
+  return { x0: x - T.ancho / 2 + 1, x1: x + T.ancho / 2 - 1, z0: o.z - T.largo / 2 + 1, z1: o.z + T.largo / 2 - 1,
+    yMin: 0, yMax: T.alto, velMax: 12 + CARRO.vel + 4, llegada: { x: x + T.spawn.x, z: o.z + T.spawn.z, radio: 10 }, saltos: [] };
+}

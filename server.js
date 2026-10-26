@@ -4,10 +4,12 @@
 // 3) Guarda a todos los jugadores en una base de datos SQLite (datos/jugadores.sqlite)
 // 4) Es el dueño del mundo compartido: la hora, las monedas, quién es el anfitrión, las preguntas del profe
 //    y el árbitro de las Escondidas (quién busca, a quién encontraron y quién gana)
+//    y de Atrapadas Nocivas (quién tiene la mancha, los relojes, quién explota y quién gana)
 //    (lo que compra cada uno y sus monedas son solo suyos)
 import { Database } from 'bun:sqlite';
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
-import { PUERTO, MAX_JUGADORES, NUM_MONEDAS, leerMensaje, lugarMoneda, faseAhora, corto, salaDeHost, linkOficial, leerPreguntas, claveCorrecta, ESC, elegirBuscador, elegirTerreno, faseRonda, puedeEncontrar, ganadorRonda, mgDelServidor } from './src/red.js';
+import { PUERTO, MAX_JUGADORES, NUM_MONEDAS, leerMensaje, lugarMoneda, faseAhora, corto, salaDeHost, linkOficial, leerPreguntas, claveCorrecta, ESC, elegirBuscador, elegirTerreno, faseRonda, puedeEncontrar, ganadorRonda, mgDelServidor, AN, nuevaRondaAN, pasarAN, explotarAN, salirAN, seTocan, sigueEnRondaAN, empujeAN, vigilarPos, VIGILA } from './src/red.js';
+import { zonaAN, zonaEsc } from './src/logic.js';
 
 // ---------- Base de datos ----------
 mkdirSync(new URL('./datos', import.meta.url), { recursive: true });
@@ -64,6 +66,7 @@ function avisarEspera() {
 function empezarRonda(terreno) {
   const ids = [...esc.espera].filter(id => conectados.has(id));
   const buscador = elegirBuscador(ids);
+  olvidarPos(ids);
   esc.ronda = { terreno, buscador, jugadores: ids, camaleones: ids.filter(id => id !== buscador), encontrados: [], inicio: Date.now() };
   // Los tiempos van como "falta tanto" (en ms), así cada compu cuenta igual aunque su reloj esté adelantado
   aTodos({ tipo: 'escRonda', terreno, buscador, jugadores: ids, esconderMs: ESC.esconderMs, finMs: ESC.esconderMs + ESC.buscarMs });
@@ -92,6 +95,54 @@ function sacarDeEscondidas(id) {
   if (esc.ronda === r) avisarEspera();   // (si la ronda terminó, revisarFinRonda ya avisó)
 }
 const sinWs = ({ ws, ...j }) => j;
+
+// ---------- 👽 Atrapadas Nocivas ----------
+// espera: los sentados en la silla · ronda: { jugadores, vivos, portador, fin (hora en ms), ultimoPase } (ver red.js)
+const an = { espera: new Set(), ronda: null };
+const avisoAN = (ws, texto) => ws.send(JSON.stringify({ tipo: 'anAviso', texto }));
+// En la ronda = vivo o fantasma que no se fue (si se fue y se vuelve a sentar, espera a la próxima)
+const enRondaAN = id => sigueEnRondaAN(an.ronda, id) && an.espera.has(id);
+function avisarEsperaAN() {
+  aTodos({ tipo: 'anEspera', jugadores: [...an.espera].filter(id => conectados.has(id)).map(id => ({ id, nombre: conectados.get(id).nombre })), enRonda: !!an.ronda });
+}
+// Lo que cada compu necesita saber: quién tiene la mancha y cuánto le falta (en ms, "falta tanto": así cada compu cuenta igual)
+const estadoAN = r => ({ portador: r.portador, vivos: r.vivos, finMs: Math.max(0, r.fin - Date.now()) });
+// salio: si terminó porque alguien se fue, quién fue (para que el cartel del ganador se entienda)
+function terminarAN(ganador, salio = null) {
+  aTodos({ tipo: 'anFin', ganador, ...(salio ? { salio: salio.id, nombre: salio.nombre } : {}) });
+  console.log(`🏁 Fin de Atrapadas Nocivas: gana ${ganador && conectados.has(ganador) ? conectados.get(ganador).nombre : 'nadie'}`);
+  an.ronda = null; avisarEsperaAN();
+}
+// Cada ratito: ¿se le acabó el tiempo al portador? ¡Explota!
+function revisarAN() {
+  const r = an.ronda;
+  if (!r || Date.now() < r.fin) return;
+  const { ronda, exploto, ganador } = explotarAN(r, Date.now());
+  aTodos({ tipo: 'anExplota', id: exploto, ...(ronda ? estadoAN(ronda) : { portador: null, vivos: r.vivos.filter(v => v !== exploto), finMs: 0 }) });
+  if (!ronda) return terminarAN(ganador);
+  an.ronda = ronda;
+}
+// Alguien se fue (se levantó o cerró el juego). nombre: lo mandamos porque si cerró, los demás ya no lo tienen en su lista
+function sacarDeAtrapadas(id, nombre) {
+  const estaba = an.espera.delete(id), r = an.ronda;
+  const { ronda, que, ganador } = r ? salirAN(r, id, Date.now()) : { que: null };
+  if (que === 'explota') {   // se fue con la mancha: ¡explota igual! (no se salva yéndose)
+    aTodos({ tipo: 'anExplota', id, salio: true, nombre, ...(ronda ? estadoAN(ronda) : { portador: null, vivos: r.vivos.filter(v => v !== id), finMs: 0 }) });
+  } else if (que === 'sale' && ronda) aTodos({ tipo: 'anSale', id, nombre, ...estadoAN(ronda) });
+  // (si ya era fantasma, no avisamos nada: ya no estaba jugando)
+  if (que) { if (!ronda) return terminarAN(ganador, { id, nombre }); an.ronda = ronda; }
+  if (estaba || que) avisarEsperaAN();   // solo si algo cambió (nada de avisos repetidos)
+}
+// 🛡️ La zona que vigila el servidor para este jugador (o null si no está jugando una ronda)
+function zonaDe(id) {
+  // llegarHasta: si a los 3 s no llegó a su lugar (se quedó afuera), el servidor lo pone ahí igual
+  if (enRondaAN(id)) return { ...zonaAN(an.ronda.jugadores.indexOf(id), an.ronda.jugadores.length), llegarHasta: an.ronda.inicio + VIGILA.llegarMs };
+  const r = esc.ronda;
+  if (r && r.jugadores.includes(id) && esc.espera.has(id)) return { ...zonaEsc(r.terreno), llegarHasta: r.inicio + VIGILA.llegarMs };
+  return null;
+}
+// Al empezar una ronda, se olvida de dónde estaba (tiene que aparecer en su lugar de salida)
+const olvidarPos = ids => ids.forEach(id => { const j = conectados.get(id); if (j) { j.vigilado = null; j.extra = 0; } });
 
 // ---------- El mundo compartido ----------
 // La hora: guardamos en qué fase estaba y cuándo; desde ahí avanza sola
@@ -141,7 +192,7 @@ const servidor = Bun.serve({
         ws.send(JSON.stringify({ tipo: 'bienvenida', id: j.id, jugadores: [...conectados.values()].map(sinWs),
           guardado: antes ? { x: antes.x, y: antes.y, z: antes.z, veces: antes.veces + 1 } : null,
           anfitrion, fase: faseDeAhora(), dia: diaPueblo, monedas, preguntas: preguntasClase,
-          escondidas: { espera: [...esc.espera], enRonda: !!esc.ronda } }));
+          escondidas: { espera: [...esc.espera], enRonda: !!esc.ronda }, atrapadas: { espera: [...an.espera], enRonda: !!an.ronda } }));
         conectados.set(j.id, j);
         guardar(j);
         ws.subscribe('juego');
@@ -155,9 +206,23 @@ const servidor = Bun.serve({
       if (m.tipo === 'pos') {
         // El mg lo pone el servidor si estás jugando una ronda (y nadie de afuera puede decir que está adentro)
         const r = esc.ronda, enRonda = r && r.jugadores.includes(yo.id) && esc.espera.has(yo.id);
-        yo.x = m.x; yo.y = m.y; yo.z = m.z; yo.rot = m.rot; yo.mg = mgDelServidor(m.mg, enRonda ? r.terreno : null);
+        yo.mg = mgDelServidor(m.mg, enRonda ? r.terreno : null, enRondaAN(yo.id));
+        // 🛡️ En una ronda, el servidor revisa que no vaya más rápido de lo posible ni se salga de la zona
+        const zona = zonaDe(yo.id), ahora = Date.now();
+        if (zona) {
+          const conEmpuje = ahora < (yo.extraHasta || 0);
+          const v = vigilarPos(yo.vigilado, m, ahora, zona, conEmpuje ? yo.extra || 0 : 0, conEmpuje ? yo.empujeDir : null);
+          yo.vigilado = v.pos; yo.extra = v.extra;
+          yo.x = v.pos.x; yo.y = v.pos.y; yo.z = v.pos.z;
+          // Si su compu quedó muy lejos de donde dice el servidor (¿trampa?), le avisamos dónde está de verdad (como mucho 1 vez por segundo)
+          if (v.corregido && Math.hypot(m.x - yo.x, m.y - yo.y, m.z - yo.z) > 4 && ahora - (yo.corregidoEn || 0) > 1000) {
+            yo.corregidoEn = ahora;
+            ws.send(JSON.stringify({ tipo: 'corrige', x: corto(yo.x), y: corto(yo.y), z: corto(yo.z) }));
+          }
+        } else { yo.vigilado = null; yo.x = m.x; yo.y = m.y; yo.z = m.z; }
+        yo.rot = m.rot;
         if (m.color !== null) yo.color = m.color;
-        ws.publish('juego', JSON.stringify({ tipo: 'pos', id: yo.id, x: m.x, y: m.y, z: m.z, rot: m.rot, color: yo.color, mg: yo.mg, t: m.t }));   // t: su hora, para dibujarlo suave
+        ws.publish('juego', JSON.stringify({ tipo: 'pos', id: yo.id, x: yo.x, y: yo.y, z: yo.z, rot: m.rot, color: yo.color, mg: yo.mg, t: m.t }));   // t: su hora, para dibujarlo suave
       } else if (m.tipo === 'visible') {
         // Una pestaña escondida no corre el juego: si era el anfitrión, otro toma el control ya mismo (sin esperar 3 segundos)
         yo.visible = m.v;
@@ -183,6 +248,32 @@ const servidor = Bun.serve({
         if (host && host.id !== yo.id) host.ws.send(JSON.stringify({ tipo: 'evento', que: m.que, nombre: yo.nombre }));
       } else if (m.tipo === 'disparo') {
         ws.publish('juego', JSON.stringify({ ...m, id: yo.id }));
+      } else if (m.tipo === 'an') {
+        const r = an.ronda;
+        if (m.que === 'entrar') { if (!an.espera.has(yo.id)) { an.espera.add(yo.id); avisarEsperaAN(); } }
+        else if (m.que === 'salir') sacarDeAtrapadas(yo.id, yo.nombre);
+        else if (m.que === 'empezar') {
+          if (r) return avisoAN(ws, 'Ya hay una ronda jugándose: espera a que termine');
+          if (!an.espera.has(yo.id)) return avisoAN(ws, 'Siéntate primero en la silla de Atrapadas Nocivas');
+          const ids = [...an.espera].filter(id => conectados.has(id));
+          if (ids.length < 2) return avisoAN(ws, 'Hacen falta al menos 2 jugadores');
+          an.ronda = nuevaRondaAN(ids, Date.now());
+          olvidarPos(ids);
+          aTodos({ tipo: 'anRonda', jugadores: ids, ...estadoAN(an.ronda) });
+          console.log(`👽 Empieza Atrapadas Nocivas: la mancha la tiene ${conectados.get(an.ronda.portador).nombre} (${ids.length} jugadores)`);
+          avisarEsperaAN();
+        } else if (m.que === 'pasar') {
+          // Solo el portador, a alguien vivo, que esté cerca de verdad (con las últimas posiciones) y no de vuelta al toque
+          const otro = conectados.get(m.a);
+          if (!r || !otro || !seTocan(yo, otro, AN.tocarServidor)) return;
+          const nueva = pasarAN(r, yo.id, m.a, Date.now());
+          if (!nueva) return;
+          an.ronda = nueva;
+          // ¡Empujón! El que la recibe sale volando lejos del que se la pasó (así no se la devuelve al toque)
+          const empuje = empujeAN(yo, otro);
+          otro.extra = AN.empuje.extraM; otro.extraHasta = Date.now() + AN.empuje.extraMs; otro.empujeDir = empuje;   // el servidor lo deja moverse más un ratito (solo hacia allá)
+          aTodos({ tipo: 'anPase', de: yo.id, a: m.a, empuje, ...estadoAN(nueva) });
+        }
       } else if (m.tipo === 'esc') {
         const r = esc.ronda;
         if (m.que === 'entrar') { esc.espera.add(yo.id); avisarEspera(); }
@@ -232,6 +323,7 @@ const servidor = Bun.serve({
       // Si se fue el anfitrión, el siguiente que llegó toma el control del gigante y los bots
       if (anfitrion === yo.id) cambiarAnfitrion();
       sacarDeEscondidas(yo.id);
+      sacarDeAtrapadas(yo.id, yo.nombre);
       console.log(`💥 ${yo.nombre} se desconectó (${conectados.size} jugando)`);
     },
   },
@@ -257,6 +349,7 @@ setInterval(() => {
 
 // ¿Se acabó el tiempo de la ronda de Escondidas?
 setInterval(revisarFinRonda, 250);
+setInterval(revisarAN, 100);   // ¿explotó alguien?
 
 // Cada 10 segundos guarda a todos (por si la compu se apaga de golpe) y corrige la hora de todos
 setInterval(() => {

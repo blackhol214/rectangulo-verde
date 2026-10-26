@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  ARENA_AN, plataformasAN, desplazamientoAN, portalesAN, portalCerca,
   GUIA_COMO, GUIA_QUE_HAGO, textoQueHago, lugarDelGuia, GUIA_COLORES, siguienteColorGuia, MINIGAMES as MINIGAMES_G,
   lugaresArboles, lugaresPasto, libreDePasto, ZONAS_SIN_PASTO, ARBOLES, sombreroDeBot, SOMBREROS_BOTS, VILLAGE as VILLAGE_P, BIG_HOUSE as BIG_HOUSE_P,
   ESCALA, TERRENOS, CARROS, CARRO, carroPos, CIRCUITO, largoCircuito, partesCarro, destinoTrampolin, MEDIODIA, faseDeLuz, cajasPieza, escaleraCanasta, cajasTerreno, escondites, OJO, tapanVista, lineaDeVista, BOT_ESC, botVe, ordenEscondites,
@@ -1007,7 +1008,8 @@ describe('modo Escuela', () => {
   it('el salón tiene 12 sillas: adelante a la izquierda "No mires abajo" y atrás a la derecha "Escondidas"', () => {
     const sillas = salonSillas();
     expect(sillas).toHaveLength(12);
-    expect(sillas.filter(s => s.modo)).toEqual([sillas[0], sillas[11]]);
+    expect(sillas.filter(s => s.modo)).toEqual([sillas[0], sillas[3], sillas[11]]);
+    expect(sillas[3].modo).toBe('atrapadas');   // la tercera: adelante a la derecha
     expect(sillas[0].modo).toBe('nomires');
     expect(sillas[11].modo).toBe('escondidas');
     // la de Escondidas: la última fila (z más chico) y la más a la derecha (x más chico, mirando al pizarrón)
@@ -1538,5 +1540,137 @@ describe('🤖 bot guía', () => {
     for (let n = 0; n < GUIA_COLORES.length - 1; n++) { i = siguienteColorGuia(i); vistos.add(i); }
     expect(vistos.size).toBe(GUIA_COLORES.length);
     expect(siguienteColorGuia(GUIA_COLORES.length - 1)).toBe(0);
+  });
+});
+
+describe('Atrapadas Nocivas: la arena', () => {
+  const P = plataformasAN(), portales = portalesAN();
+  const dentro = (p, x, z, m = 0) => Math.abs(x - p.x) <= p.lado / 2 + m && Math.abs(z - p.z) <= p.lado / 2 + m;
+  // El hueco entre dos plataformas (lo que se mueven de lado cuenta en x: en el peor momento están así de cerca)
+  const ampX = p => (p.mueve?.eje === 'x' ? p.mueve.amp : 0), ampY = p => (p.mueve?.eje === 'y' ? p.mueve.amp : 0);
+  const hueco = (a, b, peor = false) => Math.max(Math.abs(a.x - b.x) - (a.lado + b.lado) / 2 - (peor ? ampX(a) + ampX(b) : 0), Math.abs(a.z - b.z) - (a.lado + b.lado) / 2);
+  it('hay muchas plataformas, algunas que se mueven de lado y otras de arriba abajo', () => {
+    expect(P.length).toBeGreaterThan(50);
+    expect(P.some(p => p.mueve && p.mueve.eje === 'x')).toBe(true);
+    expect(P.some(p => p.mueve && p.mueve.eje === 'y')).toBe(true);
+    expect(plataformasAN()).toEqual(P);   // siempre igual (semilla)
+    for (const p of P) expect(Math.abs(p.x) + p.lado / 2 + 2).toBeLessThan(ARENA_AN.mitad);
+  });
+  it('las plataformas que se mueven van de ida y vuelta según el reloj', () => {
+    const p = P.find(q => q.mueve);
+    expect(desplazamientoAN(p, 0)).toBeCloseTo(0);
+    expect(Math.abs(desplazamientoAN(p, p.mueve.periodo / 4))).toBeCloseTo(p.mueve.amp);
+    expect(desplazamientoAN(P.find(q => !q.mueve), 3)).toBe(0);
+  });
+  it('cada escalera se sube saltando (y llega a la cima por el puente)', () => {
+    const salto = 12.5 ** 2 / 60;
+    for (let c = 0; c < ARENA_AN.cadenas; c++) {
+      const cad = P.filter(p => p.cadena === c);
+      expect(cad[0].y).toBeLessThan(salto - 0.4);   // la primera, desde el piso
+      for (let i = 1; i < cad.length; i++) {
+        const a = cad[i - 1], b = cad[i], extra = (a.mueve?.eje === 'y' ? a.mueve.amp : 0) + (b.mueve?.eje === 'y' ? b.mueve.amp : 0);
+        expect(b.y - a.y + extra).toBeLessThan(salto - 0.3);
+        expect(hueco(a, b) + ampX(a) + ampX(b)).toBeLessThan(3.6);   // en el peor momento, igual se llega (el salto de lado llega a más de 3 m)
+        expect(hueco(a, b, true)).toBeGreaterThan(0.2);              // no se enciman
+      }
+      const cima = P.find(p => p.tipo === 'cima'), ultimo = cad[cad.length - 1];
+      expect(hueco(ultimo, cima)).toBeLessThan(3);
+      expect(ultimo.y).toBe(cima.y);
+    }
+  });
+  it('ninguna plataforma tapa a otra de cerca', () => {
+    for (let i = 0; i < P.length; i++) for (let j = i + 1; j < P.length; j++) {
+      const a = P[i], b = P[j];
+      if (Math.abs(a.y - b.y) < 4 + ampY(a) + ampY(b)) expect(hueco(a, b, true), `${i} y ${j}`).toBeGreaterThan(0.2);
+    }
+  });
+  it('los portales van de a pares, cada uno sale en el otro, y la salida queda arriba de algo (o en el piso)', () => {
+    expect(portales.length).toBeGreaterThanOrEqual(10);
+    portales.forEach((p, i) => {
+      expect(portales[p.par].par).toBe(i);
+      expect(Math.hypot(p.x - portales[p.par].x, p.z - portales[p.par].z) + Math.abs(p.y - portales[p.par].y)).toBeGreaterThan(15);
+      if (p.y > 0) {
+        const base = P.find(q => Math.abs(q.y - p.y) < 0.01 && dentro(q, p.x, p.z));
+        expect(base, `portal ${i}`).toBeTruthy();
+        expect(base.mueve).toBeNull();                       // los portales no están en plataformas que se mueven
+        expect(dentro(base, p.salida.x, p.salida.z, -0.6)).toBe(true);
+      } else {
+        // en el piso: nada bajito encima (no te golpeas la cabeza al entrar)
+        for (const q of P) if (q.y < 4) expect(dentro(q, p.x, p.z, 1)).toBe(false);
+      }
+    });
+  });
+  it('sabe si estás adentro de un portal', () => {
+    const p = portales[0];
+    expect(portalCerca({ x: p.x + 0.5, y: p.y, z: p.z }, portales)).toBe(0);
+    expect(portalCerca({ x: p.x + 5, y: p.y, z: p.z }, portales)).toBe(-1);
+    expect(portalCerca({ x: p.x, y: p.y + 10, z: p.z }, portales)).toBe(-1);   // pasando por arriba no cuenta
+  });
+});
+
+import { ARENA_AN_X, TERRENO_X, centroArenaAN, salidaAN, zonaAN, zonaEsc, portalesAN as portalesAN2, minigameOrigin as mo, ESCUELA_K as EK, TERRENOS as TT } from '../src/logic.js';
+import { vigilarPos as vigilar } from '../src/red.js';
+describe('🛡️ Las zonas que vigila el servidor', () => {
+  it('la arena está donde la dibuja el juego', () => {
+    const o = mo(EK);
+    expect(centroArenaAN()).toEqual({ x: o.x + ARENA_AN_X, z: o.z });
+  });
+  it('las salidas: en un círculo de 12 m, todas dentro de la zona y separadas', () => {
+    const c = centroArenaAN(), n = 6, s = Array.from({ length: n }, (_, k) => salidaAN(k, n));
+    s.forEach(p => expect(Math.hypot(p.x - c.x, p.z - c.z)).toBeCloseTo(12));
+    expect(Math.hypot(s[0].x - s[1].x, s[0].z - s[1].z)).toBeGreaterThan(8);
+    const z = zonaAN(0, n); s.forEach(p => { expect(p.x).toBeGreaterThan(z.x0); expect(p.x).toBeLessThan(z.x1); });
+  });
+  it('cada portal tiene su salto (de su entrada a la salida de su par) y vale para el servidor', () => {
+    const z = zonaAN(0, 2), c = centroArenaAN(), P = portalesAN2();
+    expect(z.saltos).toHaveLength(P.length);
+    P.forEach(p => {
+      const d = P[p.par], antes = { x: c.x + p.x + 1, y: p.y, z: c.z + p.z, t: 0, llego: true };   // (1 m: lo que avanzas antes de entrar)
+      const v = vigilar(antes, { x: c.x + d.salida.x + 1, y: d.y, z: c.z + d.salida.z }, 100, z);
+      expect(v.corregido).toBe(false);
+    });
+  });
+  it('Escondidas: la zona es el terreno y deja ir arriba de un carro corriendo', () => {
+    TT.forEach((T, i) => {
+      const z = zonaEsc(i), o = mo(EK);
+      expect(z.x1 - z.x0).toBe(T.ancho - 2); expect(z.llegada.x).toBe(o.x + TERRENO_X[i] + T.spawn.x);
+      expect(z.velMax).toBeGreaterThanOrEqual(27);
+    });
+  });
+});
+import { ARENA_VEL_MAX } from '../src/logic.js';
+import { AN as AN2 } from '../src/red.js';
+describe('🏃 Atrapadas: todos más rápidos', () => {
+  it('todos corren a 15 y el servidor deja eso + lo que llevan las plataformas', () => {
+    expect(AN2.vel).toBe(15);
+    expect(ARENA_VEL_MAX).toBeGreaterThanOrEqual(AN2.vel + 3);
+    expect(zonaAN(0, 2).velMax).toBe(ARENA_VEL_MAX);
+  });
+});
+
+import { alturaMaxAN, soporteAN } from '../src/logic.js';
+describe('🛡️ Atrapadas: la altura', () => {
+  it('el techo de la arena es la plataforma más alta + un salto (y nada de volar a 300 m)', () => {
+    const top = Math.max(...plataformasAN().map(p => p.y));
+    expect(alturaMaxAN()).toBeGreaterThan(top + 2.5);
+    expect(alturaMaxAN()).toBeLessThan(top + 6);
+    expect(zonaAN(0, 2).yMax).toBe(alturaMaxAN());
+  });
+  it('todas las salidas de portal están por debajo del techo', () => {
+    zonaAN(0, 2).saltos.forEach(s => expect(s.hasta.y).toBeLessThan(alturaMaxAN()));
+  });
+});
+describe('🛡️ Atrapadas: lo que hay debajo', () => {
+  it('saltar de un escalón al siguiente nunca es "volar": en el camino siempre hay soporte a un salto', () => {
+    const P = plataformasAN().filter(p => p.tipo === 'escalera');
+    for (let i = 0; i + 1 < P.length; i++) {
+      const a = P[i], b = P[i + 1]; if (a.cadena !== b.cadena) continue;
+      for (let f = 0; f <= 1; f += 0.1) expect(soporteAN(a.x + (b.x - a.x) * f, a.z + (b.z - a.z) * f)).toBeGreaterThanOrEqual(Math.max(a.y, b.y) + 2.6 - 3.2);
+    }
+  });
+  it('en el piso es 0; arriba de cada plataforma, su altura (o más)', () => {
+    expect(soporteAN(0, 66)).toBe(0);   // lejos de todo (cerca del borde)
+    plataformasAN().forEach(p => expect(soporteAN(p.x, p.z)).toBeGreaterThanOrEqual(p.y));
+    const c = centroArenaAN(); expect(zonaAN(0, 2).soporte(c.x, c.z)).toBeGreaterThanOrEqual(32);   // la isla del centro, arriba de la cima
   });
 });
