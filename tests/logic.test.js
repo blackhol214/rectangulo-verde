@@ -2087,8 +2087,10 @@ describe('🏁 Carrera: los obstáculos nuevos', () => {
     expect(golpeP({ x: 0.7, y: 30, z: 1 }, f, t).z).toBeLessThan(0);   // de costado del brazo, igual, hacia donde pega
     expect(golpeP({ x: 2, y: 30, z: 1 }, f, t)).toBeNull();          // lejos
   });
-  it('🚪 puertas: unas de verdad y otras falsas, igual para todos con la misma semilla (y distinto en otra ronda)', () => {
-    for (let sem = 1; sem < 40; sem++) { const r = puertasReales(sem, 0, 5); expect(r.filter(Boolean).length).toBeGreaterThanOrEqual(2); expect(r.filter(Boolean).length).toBeLessThan(5); }
+  it('🚪 puertas: casi siempre una sola de verdad (nunca más de 3), igual para todos con la misma semilla (y distinto en otra ronda)', () => {
+    const cuantas = [];
+    for (let sem = 1; sem < 200; sem++) for (const [fila, n] of [[0, 5], [1, 7]]) { const k = puertasReales(sem, fila, n).filter(Boolean).length; cuantas.push(k); expect(k).toBeGreaterThanOrEqual(1); expect(k).toBeLessThanOrEqual(3); }
+    expect(cuantas.filter(k => k === 1).length).toBeGreaterThan(cuantas.length / 2);   // casi siempre UNA sola de verdad
     expect(puertasReales(7, 0, 5)).toEqual(puertasReales(7, 0, 5));
     const distintas = new Set(Array.from({ length: 20 }, (_, s) => puertasReales(s, 0, 5).join())); expect(distintas.size).toBeGreaterThan(3);
     expect(PISTA.puertas.length).toBe(2);
@@ -2113,5 +2115,110 @@ describe('🏁 Carrera: los obstáculos nuevos', () => {
     expect(golpeV(o, { x: c.x + q.x + 40, y: 30, z: c.z + q.z }, 3)).toBeNull();
     const u = PISTA.tubos[0];
     expect(zonaC(0, 1, 0, { x: c.x + u.x0 + 5, y: 30, z: c.z }).velMax).toBeGreaterThan(zonaC(0, 1, 0, { x: c.x + 50, y: 30, z: c.z }).velMax);
+  });
+});
+
+import { CORREDOR_CARRERA, corredorEn, siguienteCheckpoint, PARED } from '../src/logic.js';
+import { vigilarPos as vigilarR } from '../src/red.js';
+describe('🧱 Carrera: sin atajos por afuera', () => {
+  const P = PISTA;
+  it('las paredes están SOLO alrededor de las puertas (16 m antes y después), y lo que se pisa ahí queda adentro', () => {
+    for (const f of P.puertas) {
+      for (let x = f.x - PARED.antes; x < f.x + PARED.despues; x++) expect(corredorEn(x + 0.5)).not.toBeNull();   // sin agujeros
+      for (const p of P.plats) { if (Math.abs(p.x - f.x) > PARED.antes - 3) continue; const t = corredorEn(p.x); expect(t.zmin).toBeLessThanOrEqual(p.z - p.largo / 2); expect(t.zmax).toBeGreaterThanOrEqual(p.z + p.largo / 2); }
+    }
+    expect(PARED.antes + PARED.despues).toBeGreaterThan(2 * 12 * 2 * 12.5 / 30);   // más largo que lo que vuela un doble salto (~20 m)
+    for (const x of [0, 44, 108, 200, 340, 400, 500]) expect(corredorEn(x)).toBeNull();   // en el resto, no hay paredes: te puedes caer
+    expect(PARED.arriba).toBeGreaterThan(4 + 2 * 12.5 ** 2 / 60);   // ni con doble salto desde el escalón alto
+  });
+  it('los checkpoints cuentan solo en orden (de a uno)', () => {
+    expect(siguienteCheckpoint(0, 31)).toBe(1); expect(siguienteCheckpoint(1, 95)).toBe(1);   // saltarse el 2: no cuenta el 3
+    expect(siguienteCheckpoint(2, 95)).toBe(3); expect(siguienteCheckpoint(5, 40)).toBe(5);   // volver atrás no baja
+  });
+  it('🛡️ el servidor: en una zona de puertas no te deja rodearlas por afuera; en el resto, caerte por el costado está bien', () => {
+    const c = origenC(), z = zonaC(0, 1, 0), f = P.puertas[0], t = corredorEn(f.x - 5);
+    const enZona = { x: c.x + f.x - 5, y: 30, z: c.z, t: 0, llego: true, saldo: 3, saldoY: 3.5 };
+    const v = vigilarR(enZona, { x: c.x + f.x - 4.5, y: 30, z: c.z + t.zmax + 2.5 }, 100, z);
+    expect(v.corregido).toBe(true); expect(v.pos.z - c.z).toBeLessThanOrEqual(t.zmax + 0.61);
+    const afuera = { x: c.x + 44, y: 30, z: c.z + 3, t: 0, llego: true, saldo: 3, saldoY: 3.5 };
+    const v2 = vigilarR(afuera, { x: c.x + 44, y: 29, z: c.z + 5.5 }, 100, z);
+    expect(v2.pos.z - c.z).toBe(5.5);   // se cae por el costado del pasillo de los puños (z > 4)
+    expect(v2.corregido).toBe(false);
+  });
+
+});
+
+import { temporada, temporadaDe, TEMPORADAS, particulaEstacion } from '../src/logic.js';
+describe('🍂❄️☀️🌸 Las estaciones (el calendario de Mathias)', () => {
+  const dia = (m, d, a = 2026) => new Date(a, m - 1, d, 12);
+  it('los bordes de cada estación (todos los años)', () => {
+    const casos = [[10, 30, null], [10, 31, 'otono'], [11, 25, 'otono'], [11, 26, null], [12, 1, 'invierno'], [1, 31, 'invierno'], [2, 1, null],
+      [3, 1, 'verano'], [3, 31, 'verano'], [4, 1, null], [4, 30, null], [5, 1, 'primavera'], [5, 31, 'primavera'], [6, 15, null], [7, 1, 'primavera'], [7, 31, 'primavera'], [8, 1, null], [9, 20, null]];
+    for (const [m, d, e] of casos) expect(temporada(dia(m, d)), `${d}/${m}`).toBe(e);
+    expect(temporada(dia(11, 3, 2031))).toBe('otono'); expect(temporada(dia(12, 31, 2029))).toBe('invierno');
+  });
+  it('para probar: ?temporada=… manda (y "ninguna" la apaga); algo raro no cuenta', () => {
+    expect(temporadaDe(dia(8, 1), 'invierno')).toBe('invierno'); expect(temporadaDe(dia(12, 5), 'ninguna')).toBeNull();
+    expect(temporadaDe(dia(12, 5), 'lluvia')).toBe('invierno'); expect(temporadaDe(dia(8, 1), null)).toBeNull();
+  });
+  it('cada estación tiene sus colores y sus cosas', () => {
+    for (const k of ['otono', 'invierno', 'verano', 'primavera']) { const T = TEMPORADAS[k]; expect(T.hojas).toHaveLength(3); expect(T.matas.length).toBeGreaterThan(0); expect(T.suelo.hojitas.length).toBeGreaterThan(0); }
+    expect(TEMPORADAS.otono.adorno).toBe('calabaza'); expect(TEMPORADAS.invierno.adorno).toBe('muneco'); expect(TEMPORADAS.invierno.caen.tipo).toBe('nieve');
+    expect(TEMPORADAS.primavera.caen.tipo).toBe('petalo'); expect(TEMPORADAS.verano.flores.n).toBeGreaterThan(300);
+  });
+  it('lo que cae del cielo: siempre adentro de la caja alrededor tuyo, y va bajando', () => {
+    for (let i = 0; i < 50; i++) for (const t of [0, 3.3, 47]) { const p = particulaEstacion(i, t, 'nieve'); expect(p.y).toBeGreaterThanOrEqual(0); expect(p.y).toBeLessThanOrEqual(22); expect(Math.abs(p.x)).toBeLessThanOrEqual(31); }
+    const a = particulaEstacion(3, 1, 'hoja'), b = particulaEstacion(3, 1.1, 'hoja'); expect(b.y < a.y || b.y > 20).toBe(true);
+  });
+});
+
+import { golpeGuardian, GUARDIAN } from '../src/logic.js';
+describe('🥊 El puño guardián de las puertas', () => {
+  const f = PISTA.puertas[0], Y = CR2.y0;
+  it('si pasas por ARRIBA de las puertas te pega hacia atrás (en todo el ancho); por una puerta, nunca', () => {
+    for (let z = f.z0; z <= f.z1; z += 0.5) expect(golpeGuardian({ x: f.x, y: Y + 4.5, z }, f).x).toBeLessThan(0);
+    expect(golpeGuardian({ x: f.x - 2, y: Y + 6, z: 0 }, f)).not.toBeNull();
+    expect(golpeGuardian({ x: f.x, y: Y + 2.6, z: 0 }, f)).toBeNull();     // saltando dentro de una puerta (un salto: 2,6 m)
+    expect(golpeGuardian({ x: f.x, y: Y, z: 0 }, f)).toBeNull();           // caminando por una puerta
+    expect(golpeGuardian({ x: f.x - 6, y: Y + 6, z: 0 }, f)).toBeNull();   // lejos
+    expect(CR2.puerta.alto - 1.2).toBeGreaterThanOrEqual(GUARDIAN.desde + 0.5);   // (las puertas son más altas que donde empieza a pegar… menos tu cuerpo)
+  });
+  it('🛡️ el servidor: el golpe del guardián vale solo cerca y arriba de las puertas', () => {
+    const c = origenC(), o = PISTA.punos.length + PISTA.barras.length + PISTA.lanzas.length;
+    expect(golpeV(o, { x: c.x + f.x, y: Y + 5, z: c.z }, 1)).toEqual({ x: -GUARDIAN.vel, y: GUARDIAN.salto, z: 0 });
+    expect(golpeV(o, { x: c.x + f.x, y: Y, z: c.z }, 1)).toBeNull();
+    expect(golpeV(o, { x: c.x + f.x + 40, y: Y + 5, z: c.z }, 1)).toBeNull();
+  });
+});
+
+import { compasMusica as compasM, MUSICAS as MUS, leerEstilo, SWING, COMPASES_POR_SECCION as CPS } from '../src/logic.js';
+describe('🎵 Música Normal (rápida) y 🎧 Lofi', () => {
+  it('tempos de la Normal: rápidos y distintos por lugar; la Lofi usa los lentos de antes', () => {
+    const esperado = { mundoDia: [120, 128], salon: [112, 118], escondidas: [106, 114], atrapadas: [126, 134], carrera: [146, 154], spleef: [136, 144], torre: [121, 129] };
+    for (const [id, [a, b]] of Object.entries(esperado)) { const bpm = compasM(id, 1, 0, sr(1)).bpm; expect(bpm, id).toBeGreaterThanOrEqual(a); expect(bpm, id).toBeLessThanOrEqual(b); }
+    expect(compasM('carrera', 1, 0, sr(1), { estilo: 'lofi' }).bpm).toBe(MUS.carrera.bpm);
+    expect(compasM('mundoDia', 1, 0, sr(1), { estilo: 'lofi' }).bpm).toBeLessThan(compasM('mundoDia', 1, 0, sr(1)).bpm - 20);
+  });
+  it('bajo que camina, redoble cada 4 compases, platillo al empezar cada sección', () => {
+    const c = compasM('mundoDia', 1, 0.3, sr(2));
+    expect(new Set(c.notas.filter(n => n.voz === 'bajo').map(n => n.midi)).size).toBeGreaterThanOrEqual(3);
+    const cajas = n => compasM('carrera', n, 0.3, sr(2)).notas.filter(x => x.voz === 'caja').length;
+    expect(cajas(3)).toBeGreaterThan(cajas(1)); expect(cajas(7)).toBeGreaterThan(cajas(5));
+    expect(compasM('carrera', CPS, 0.3, sr(2)).notas.some(n => n.voz === 'platillo')).toBe(true);
+    expect(compasM('carrera', CPS + 1, 0.3, sr(2)).notas.some(n => n.voz === 'platillo')).toBe(false);
+  });
+  it('pregunta y respuesta: el compás 1 contesta distinto que el 0, y la respuesta termina en la nota del acorde', () => {
+    const mel = n => compasM('salon', n, 0.5, () => 0.9).notas.filter(x => x.voz === 'melodia').map(x => x.midi).join();
+    expect(mel(0)).not.toBe(mel(1)); expect(mel(0)).toBe(mel(4));   // (el compás 4 tiene el mismo acorde que el 0)
+  });
+  it('subida antes del drop: al final de algunas secciones más platillos/redoble y en el último compás no hay bombo', () => {
+    const fin = compasM('spleef', CPS + 15, 0.3, sr(3)).notas, antes = compasM('spleef', CPS + 5, 0.3, sr(3)).notas;
+    expect(fin.some(n => n.voz === 'bombo')).toBe(false);
+    expect(fin.filter(n => n.voz === 'caja').length).toBeGreaterThan(antes.filter(n => n.voz === 'caja').length);
+  });
+  it('lofi: con swing (las corcheas de a contratiempo llegan un poquito tarde); el estilo guardado raro vuelve a Normal', () => {
+    const t = compasM('mundoDia', 2, 0.6, sr(1), { estilo: 'lofi' }).notas.map(n => n.t % 1);
+    expect(t.some(x => Math.abs(x - (0.5 + SWING)) < 1e-6)).toBe(true); expect(t.some(x => Math.abs(x - 0.5) < 1e-9)).toBe(false);
+    expect(leerEstilo('lofi')).toBe('lofi'); expect(leerEstilo(null)).toBe('normal'); expect(leerEstilo('rock')).toBe('normal');
   });
 });

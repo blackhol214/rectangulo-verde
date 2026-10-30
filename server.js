@@ -11,7 +11,7 @@
 import { Database } from 'bun:sqlite';
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { PUERTO, MAX_JUGADORES, NUM_MONEDAS, leerMensaje, lugarMoneda, faseAhora, corto, salaDeHost, linkOficial, leerPreguntas, claveCorrecta, ESC, elegirBuscador, elegirTerreno, faseRonda, puedeEncontrar, ganadorRonda, mgDelServidor, AN, nuevaRondaAN, pasarAN, explotarAN, salirAN, seTocan, sigueEnRondaAN, empujeAN, vigilarPos, VIGILA, MG_CARRERA, MG_SPLEEF } from './src/red.js';
-import { zonaAN, zonaEsc, zonaCarrera, CARRERA, checkpointDe, enMetaCarrera, origenCarrera, golpeValidoCarrera, SPLEEF, zonaSpleef, origenSpleef, pisoSpleef, fueraSpleef, pisadaValida } from './src/logic.js';
+import { zonaAN, zonaEsc, zonaCarrera, CARRERA, checkpointDe, enMetaCarrera, origenCarrera, golpeValidoCarrera, siguienteCheckpoint, SPLEEF, zonaSpleef, origenSpleef, pisoSpleef, fueraSpleef, pisadaValida } from './src/logic.js';
 
 // ---------- Base de datos ----------
 mkdirSync(new URL('./datos', import.meta.url), { recursive: true });
@@ -279,7 +279,7 @@ const servidor = Bun.serve({
           yo.vigilado = v.pos; yo.extra = v.extra;
           yo.x = v.pos.x; yo.y = v.pos.y; yo.z = v.pos.z;
           // 🏁 En la carrera: el checkpoint más lejano al que llegó (por dónde va, arriba de la pista)
-          if (enRondaCR(yo.id) && v.pos.llego && yo.y >= CARRERA.y0 - 0.5) yo.cpCarrera = Math.max(yo.cpCarrera || 0, checkpointDe(yo.x - origenCarrera().x));
+          if (enRondaCR(yo.id) && v.pos.llego && yo.y >= CARRERA.y0 - 0.5) yo.cpCarrera = siguienteCheckpoint(yo.cpCarrera || 0, yo.x - origenCarrera().x);   // (en orden: de a uno)
           // 🔶 En el Spleef: el servidor también marca los hexágonos que pisas (así nadie se salva sin avisar),
           // te saca si te caíste de la última capa, y no te deja flotar en el aire (más de 1,6 s en el aire sin bajar)
           if (vivoSP(yo.id) && v.pos.llego) {
@@ -369,6 +369,7 @@ const servidor = Bun.serve({
         } else if (m.que === 'llegue') {
           // Solo vale si el servidor también te ve en la meta (con tu última posición revisada)
           if (!enRondaCR(yo.id) || r.llegadas.includes(yo.id)) return;
+          if ((yo.cpCarrera || 0) < CARRERA.checkpoints) return avisoCR(ws, '¡Te faltan checkpoints! Hay que pasar por todos, en orden');   // (nada de atajos)
           const c = origenCarrera();
           if (!enMetaCarrera({ x: yo.x - c.x, y: yo.y + 0.5, z: yo.z - c.z })) return;
           r.llegadas.push(yo.id); if (!r.primera) r.primera = Date.now();

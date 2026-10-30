@@ -52,6 +52,10 @@
   .clock { position:fixed; right:16px; top:calc(66px + env(safe-area-inset-top,0px)); display:flex; align-items:center; gap:8px; background:var(--panel); padding:6px 12px; border-radius:10px; font:700 14px system-ui, sans-serif; color:#16301f; font-variant-numeric:tabular-nums; backdrop-filter:blur(6px); }
   .clock #clockIcon { font:400 16px Impact, "Arial Narrow Bold", sans-serif; letter-spacing:.04em; color:#c98a00; }
   .clock.night #clockIcon { color:#3b4fa8; }
+  #musicaBtn { position:fixed; right:16px; top:calc(146px + env(safe-area-inset-top,0px)); z-index:5; border:0; border-radius:10px; padding:6px 10px; background:var(--panel); font:700 13px system-ui, sans-serif; color:#3b2a6b; cursor:pointer; backdrop-filter:blur(6px); }
+  #estiloBtn { position:fixed; right:16px; top:calc(180px + env(safe-area-inset-top,0px)); z-index:5; border:0; border-radius:10px; padding:5px 9px; background:var(--panel); font:700 12px system-ui, sans-serif; color:#3b2a6b; cursor:pointer; backdrop-filter:blur(6px); }
+  #sonidoDormido { position:fixed; right:16px; top:calc(214px + env(safe-area-inset-top,0px)); z-index:5; border:0; border-radius:10px; padding:6px 10px; background:#ffe14d; font:700 12px system-ui, sans-serif; color:#3b2a00; cursor:pointer; }
+  #musicaBtn:focus-visible { outline:3px solid #1e6bff; outline-offset:2px; }
   .spooky { position:fixed; right:16px; top:calc(102px + env(safe-area-inset-top,0px)); display:flex; align-items:center; gap:6px; background:var(--panel); padding:6px 12px; border-radius:10px; font:400 22px/1 Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif; color:#b4560c; font-variant-numeric:tabular-nums; backdrop-filter:blur(6px); }
   .hw-card { background:#1f1033 !important; color:#ffe9d6 !important; }
   .hw-card h2 { color:#ff9a3d !important; } .hw-card .esc-ayuda { color:#f3d6ff; }
@@ -260,6 +264,9 @@
 <canvas id="game"></canvas>
 <div class="coins" aria-label="Monedas"><i></i><span id="coins">0</span></div>
 <div class="spooky" aria-label="SpookyCoins"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><ellipse cx="12" cy="14" rx="10" ry="8" fill="#ff8a1f"/><ellipse cx="12" cy="14" rx="4" ry="8" fill="#ff9e3d"/><rect x="11" y="3" width="2.4" height="5" rx="1" fill="#4d7a2a"/><path d="M7 12l2-2.5 2 2.5zM13 12l2-2.5 2 2.5z" fill="#3a1a00"/><path d="M7.5 16q4.5 3 9 0" stroke="#3a1a00" stroke-width="1.6" fill="none"/></svg><span id="spooky">0</span></div>
+<button type="button" id="musicaBtn" title="Volumen de la música (tecla M: silencio)">🎵 60%</button>
+<button type="button" id="estiloBtn" title="Estilo de la música (tecla L)">🎧 Lofi</button>
+<button type="button" id="sonidoDormido" hidden>🔇 toca para activar el sonido</button>
 <div class="boxes" aria-label="Cajas doradas" hidden><i></i><span id="boxes">0</span></div>
 <div class="clock" aria-label="Hora del juego"><span id="clockIcon">DÍA</span><span id="clockTime">08:00</span></div>
 <p id="warn" aria-live="assertive"></p>
@@ -435,10 +442,10 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module">
-import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, ESCUELA, ESCUELA_K, SANDBOX_K, enElHoyo, zonaRara, ZONA_RARA, HOYO, escuelaSiguiente, escuelaMezclar, SALON, salonSillas, sillaCercana, faseDeLuz, ARENA_AN, ARENA_AN_X, TERRENO_X, salidaAN, centroArenaAN, plataformasAN, desplazamientoAN, portalesAN, portalCerca, TERRENOS, CARROS, CARRO, carroPos, partesCarro, TORTUGAS, TORTUGA, tortugaPos, partesTortuga, arrastreDe, girarAlrededor, CARRERA, PISTA_CARRERA, posPlatCarrera, punoEn, golpePuno, golpeBarra, salidaCarrera, enMetaCarrera, seCayoCarrera, puestosCarrera, origenCarrera, SILLA_CARRERA, CARRERA_X, puertasReales, lugaresPuertas, vientoTubo, SPLEEF, SPLEEF_X, SILLA_SPLEEF, capaY, HEXES, hexEn, hundido, hexSolido, hexSeVe, pisoSpleef, salidaSpleef, fueraSpleef, capaDe, origenSpleef, cajasPieza, escaleraCanasta, cajasTerreno, escondites, BOT_ESC, botVe, ordenEscondites, cercaDeLaProfe, preguntasDeLaClase, escaparHTML, NO_MIRES, torreNoMires, seededRandom, debeReaparecer, GUIA_COMO, textoQueHago, lugarDelGuia, GUIA_COLORES, siguienteColorGuia, lugaresArboles, lugaresPasto, libreDePasto, ARBOLES, sombreroDeBot, ETAPAS, etapaDe, cajasDe, decoracionTorre, ovniDesplazamiento, HIELO, deslizar, puedeDobleSalto, gastarBateria, cargarBateria, hayBateria, BATERIA, ganaSpooky, ojosMilOjos, OJO_MIL, SPOOKY, sumarTiempoSpooky, DISFRACES, disfrazById, comprarDisfraz, ponerDisfraz, TIENDA_HALLOWEEN, cercaDelVendedor, letrerosEtapas, elegirObjetivoAN, meAburro, MOTIVACION_AN, reboteCaminar, estaCaminando, volumenPasos, puedeAvisar, AVISO_LASER, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, VILLAGE_HOUSE, wallPieces, insideVillageHouse, villageBed, villageEntrance, villageExit, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, squashStretch, ACHIEVEMENTS, achievementById, coinAchievementsFor, TROPHY_TABLE, trophySpot, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
-         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-11-02-pista'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
-import { NOMBRE_SALA, cerebrosNuevos, proximoCerebro, pensar, crearEpisodio, pasoEpisodio, semillaIntento, torreSandbox, BUSCADOR_SB, leerCerebros, nombreGuy, claveGuy, NOMBRE_GUY } from './src/ia.js?v=2026-11-02-pista';
-import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, valoresEn, DIA_SEGUNDOS, lugarMoneda, corto, acercar, acercarAngulo, piezasExplosion, leerPreguntas, revisarPreguntas, PROFE, seVen, MG_TORRE, MG_ESCONDIDAS, MG_ATRAPADAS, MG_CARRERA, MG_SPLEEF, MG_SOLO, ESC, AN, nuevaRondaAN, pasarAN, explotarAN, empujeAN, mareadoAN, seTocan } from './src/red.js?v=2026-11-02-pista';
+import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, ESCUELA, ESCUELA_K, SANDBOX_K, enElHoyo, zonaRara, ZONA_RARA, HOYO, escuelaSiguiente, escuelaMezclar, SALON, salonSillas, sillaCercana, faseDeLuz, ARENA_AN, ARENA_AN_X, TERRENO_X, salidaAN, centroArenaAN, plataformasAN, desplazamientoAN, portalesAN, portalCerca, TERRENOS, CARROS, CARRO, carroPos, partesCarro, TORTUGAS, TORTUGA, tortugaPos, partesTortuga, arrastreDe, girarAlrededor, CARRERA, PISTA_CARRERA, posPlatCarrera, punoEn, golpePuno, golpeBarra, salidaCarrera, enMetaCarrera, seCayoCarrera, puestosCarrera, origenCarrera, SILLA_CARRERA, CARRERA_X, puertasReales, lugaresPuertas, vientoTubo, leerEstilo, golpeGuardian, GUARDIAN, temporadaDe, TEMPORADAS, particulaEstacion, MUSICAS, midiAFrecuencia, lugarMusica, intensidadMusica, compasMusica, siguienteVolumen, leerVolumen, CORREDOR_CARRERA, PARED, siguienteCheckpoint, SPLEEF, SPLEEF_X, SILLA_SPLEEF, capaY, HEXES, hexEn, hundido, hexSolido, hexSeVe, pisoSpleef, salidaSpleef, fueraSpleef, capaDe, origenSpleef, cajasPieza, escaleraCanasta, cajasTerreno, escondites, BOT_ESC, botVe, ordenEscondites, cercaDeLaProfe, preguntasDeLaClase, escaparHTML, NO_MIRES, torreNoMires, seededRandom, debeReaparecer, GUIA_COMO, textoQueHago, lugarDelGuia, GUIA_COLORES, siguienteColorGuia, lugaresArboles, lugaresPasto, libreDePasto, ARBOLES, sombreroDeBot, ETAPAS, etapaDe, cajasDe, decoracionTorre, ovniDesplazamiento, HIELO, deslizar, puedeDobleSalto, gastarBateria, cargarBateria, hayBateria, BATERIA, ganaSpooky, ojosMilOjos, OJO_MIL, SPOOKY, sumarTiempoSpooky, DISFRACES, disfrazById, comprarDisfraz, ponerDisfraz, TIENDA_HALLOWEEN, cercaDelVendedor, letrerosEtapas, elegirObjetivoAN, meAburro, MOTIVACION_AN, reboteCaminar, estaCaminando, volumenPasos, puedeAvisar, AVISO_LASER, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, VILLAGE_HOUSE, wallPieces, insideVillageHouse, villageBed, villageEntrance, villageExit, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, squashStretch, ACHIEVEMENTS, achievementById, coinAchievementsFor, TROPHY_TABLE, trophySpot, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
+         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-11-02-ritmo'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
+import { NOMBRE_SALA, cerebrosNuevos, proximoCerebro, pensar, crearEpisodio, pasoEpisodio, semillaIntento, torreSandbox, BUSCADOR_SB, leerCerebros, nombreGuy, claveGuy, NOMBRE_GUY } from './src/ia.js?v=2026-11-02-ritmo';
+import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, valoresEn, DIA_SEGUNDOS, lugarMoneda, corto, acercar, acercarAngulo, piezasExplosion, leerPreguntas, revisarPreguntas, PROFE, seVen, MG_TORRE, MG_ESCONDIDAS, MG_ATRAPADAS, MG_CARRERA, MG_SPLEEF, MG_SOLO, ESC, AN, nuevaRondaAN, pasarAN, explotarAN, empujeAN, mareadoAN, seTocan } from './src/red.js?v=2026-11-02-ritmo';
 (() => {
   // iPhone ignora user-scalable=no: aquí se bloquea el zoom con dos dedos y el doble toque
   for (const ev of ['gesturestart', 'gesturechange']) document.addEventListener(ev, e => e.preventDefault(), { passive: false });
@@ -455,6 +462,9 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
+  // 🍂❄️☀️🌸 La estación del año (con la fecha de la compu; para probar: ?temporada=otono / invierno / verano / primavera / ninguna)
+  const TEMPORADA = temporadaDe(new Date(), (() => { try { return new URLSearchParams(location.search).get('temporada'); } catch (e) { return null; } })());
+  const TEMP = TEMPORADA ? TEMPORADAS[TEMPORADA] : null;
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0xbfe3f2);
   scene.fog = new THREE.Fog(0xbfe3f2, 60, 320);
@@ -493,15 +503,15 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
   const tex = (() => {
     const N = 256, c = document.createElement('canvas'); c.width = c.height = N;
     const g = c.getContext('2d'), rnd = seededRandom(21);
-    g.fillStyle = '#5aa636'; g.fillRect(0, 0, N, N);
+    g.fillStyle = TEMP ? TEMP.suelo.base : '#5aa636'; g.fillRect(0, 0, N, N);   // (en otoño más amarillo; en invierno, nieve)
     // Manchas suaves (se dibujan 3 veces corridas para que la textura se pueda repetir sin que se note el corte)
     const enTodos = f => { for (const dx of [-N, 0, N]) for (const dy of [-N, 0, N]) f(dx, dy); };
     for (let i = 0; i < 26; i++) {
-      const x = rnd() * N, y = rnd() * N, r = 18 + rnd() * 40, col = rnd() < 0.5 ? 'rgba(70,140,40,.35)' : 'rgba(120,190,70,.25)';
+      const x = rnd() * N, y = rnd() * N, r = 18 + rnd() * 40, col = TEMP ? TEMP.suelo.manchas[rnd() < 0.5 ? 0 : 1] : rnd() < 0.5 ? 'rgba(70,140,40,.35)' : 'rgba(120,190,70,.25)';
       enTodos((dx, dy) => { const gr = g.createRadialGradient(x + dx, y + dy, 0, x + dx, y + dy, r); gr.addColorStop(0, col); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(x + dx - r, y + dy - r, r * 2, r * 2); });
     }
     // Hojitas de pasto: rayitas cortas inclinadas, claras y oscuras
-    const verdes = ['#4b9a2e', '#6dbb45', '#3f8a28', '#7cc753', '#58a838'];
+    const verdes = TEMP ? TEMP.suelo.hojitas : ['#4b9a2e', '#6dbb45', '#3f8a28', '#7cc753', '#58a838'];
     g.lineWidth = 1.4; g.lineCap = 'round';
     for (let i = 0; i < 2600; i++) {
       const x = rnd() * N, y = rnd() * N, l = 3 + rnd() * 5, a = -Math.PI / 2 + (rnd() - 0.5) * 0.9;
@@ -1072,7 +1082,10 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
 
   const warn = document.getElementById('warn');
   let warnTimer = 0;
-  function flashWarn(text, secs) { warn.textContent = text; warn.classList.add('show'); warnTimer = secs; }
+  function flashWarn(text, secs) {
+    warn.textContent = text; warn.classList.add('show'); warnTimer = secs;
+    if (/GANASTE|LOGRASTE/.test(text)) sfxGanar(); else if (/CASI/.test(text)) sfxPerder();   // 🎺 el jingle
+  }
 
   function die() {
     dropTaskItem();
@@ -1249,7 +1262,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
     for (const [c, n] of Object.entries(cost)) save[c] -= n;
     save.levels[id]++; it.apply(save.levels[id]);
     unlock('compra');   // tu primera compra
-    renderCoins(); renderShop();
+    renderCoins(); renderShop(); sfxCompra();
     showToast(it.max === 1 ? `¡Compraste: ${it.name}!` : `¡${it.name}: nivel ${save.levels[id]}!`);
   }
 
@@ -2968,7 +2981,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
     moverCarros(T, tRonda);
     // El trampolín súper fuerte
     const pie = ps.standing;
-    if (ps.onGround && pie && pie.salto) { ps.vel.y = launchSpeedForHeight(pie.salto, GRAV); ps.onGround = false; }
+    if (ps.onGround && pie && pie.salto) { ps.vel.y = launchSpeedForHeight(pie.salto, GRAV); ps.onGround = false; sfxTrampolin(); }
     if (e.solo && !e.resultado) { moverBotEsc(dt, e); const bb = MG.built.botEsc; if (bb.modo !== 'escondido') animarCaminar(bb.obj, bb.cuerpo, H / 2, dt); }
     restoEscondidas(dt, o);
   }
@@ -3140,6 +3153,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
   }
   // ¡BOOM! Pedacitos verdes que salen volando (como cuando un amigo se desconecta)
   function explotarEn(pos) {
+    if (pos.distanceTo(ps.pos) < 60) sfxExplosion();
     const mat = new THREE.MeshLambertMaterial({ color: 0x7dff3a, transparent: true }), boom = { mat, vida: 1.6, piezas: [] };
     for (const q of piezasExplosion(40)) { const m = new THREE.Mesh(pieceGeo, mat); m.position.set(pos.x, pos.y + q.y, pos.z); scene.add(m); boom.piezas.push({ m, ...q }); }
     red.pedazos.push(boom);
@@ -3283,6 +3297,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
   // ¡Empujón! El que recibe la mancha sale volando unos 20 m (con un salto) y queda MAREADO 2 s: no camina ni la puede pasar.
   // Así el que se la pasó tiene tiempo de escaparse (y no se quedan pegados pasándosela para siempre)
   function empujar(quien, emp) {
+    if (quien === ps) sfxEmpujon();
     quien.vel.x = emp.x; quien.vel.z = emp.z; quien.vel.y = AN.empuje.salto; quien.onGround = false;
     if (quien === ps) red.aturdido = Math.max(red.aturdido, AN.mareoMs / 1000); else quien.mareo = AN.mareoMs / 1000;   // (tiembla igual que con el láser)
   }
@@ -3332,7 +3347,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
       mv.m.position.x = x; mv.m.position.y = y;
     }
     A.veloMat.opacity = 0.35 + 0.15 * Math.sin(tR * 4);   // los portales "respiran"
-    if (usarPortal(ps.pos, a, ahora)) avisoModo('✨ ¡Portal!', false, 900);
+    if (usarPortal(ps.pos, a, ahora)) { avisoModo('✨ ¡Portal!', false, 900); sfxPortal(); }   // (¡solo cuando entras a un portal!)
     if (a.solo && !a.resultado) {
       moverBotsAN(dt, a, ahora);
       // ¿Se tocaron? El que tiene la mancha se la pasa al que toca
@@ -3342,7 +3357,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
         const e = entidadAN(id);
         if (e && seTocan(tiene.pos, e.pos)) {
           const nueva = pasarAN(a.ronda, a.portador, id, ahora);
-          if (nueva) { a.ronda = nueva; sincronizarDesdeRonda(); empujar(id === 0 ? ps : a.bots[id - 1], empujeAN(tiene.pos, e.pos)); if (id === 0) avisoModo('👽 ¡Te pasaron la mancha! Estás mareado 2 s… ¡y después tienes 13 s!', true, 2500); else if (tiene.nombre === 'tú') avisoModo('¡La pasaste! 👽'); break; }
+          if (nueva) { a.ronda = nueva; sincronizarDesdeRonda(); sfxMancha(); empujar(id === 0 ? ps : a.bots[id - 1], empujeAN(tiene.pos, e.pos)); if (id === 0) avisoModo('👽 ¡Te pasaron la mancha! Estás mareado 2 s… ¡y después tienes 13 s!', true, 2500); else if (tiene.nombre === 'tú') avisoModo('¡La pasaste! 👽'); break; }
         }
       }
       // ¿Se le acabó el tiempo al que la tiene? ¡Explota!
@@ -3461,7 +3476,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
       return { u, anillos };
     });
     // 🚪 Las filas de puertas: pilares fijos; las puertas se ven todas iguales (¿cuál será la de verdad?)
-    const pilarMat = mat(0xb48cff), puertaMat = mat(0xffe27a), pilaresPl = [], puertas = [];
+    const pilarMat = mat(0xb48cff), puertaMat = mat(0xffe27a), pilaresPl = [], puertas = [], guardianes = [];
     PISTA_CARRERA.puertas.forEach((fila, f) => {
       const L = lugaresPuertas(fila), x = c.x + fila.x, alto = CARRERA.puerta.alto;
       let z = fila.z0;
@@ -3473,11 +3488,19 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
         puertas.push({ f, i, m, signo, z: p.z, ancho: p.ancho, pl: { x, z: c.z + p.z, hw: 0.3, hd: p.ancho / 2, top: Y + alto - 1.2, bottom: Y }, rota: null });
       });
       pilar(z, fila.z1);
+      // 🥊 el puño guardián: una viga arriba con guantes cada 2 m (si pasas por arriba de las puertas, ¡PUM! para atrás)
+      const viga = new THREE.Mesh(caja, mat(0x6b4bd6)); viga.scale.set(1.2, 0.8, fila.z1 - fila.z0 + 2); viga.position.set(x + 1.2, Y + alto + 2.6, c.z + (fila.z0 + fila.z1) / 2); grupo.add(viga);
+      const guantes = [];
+      for (let gz = fila.z0 + 1; gz <= fila.z1 - 0.9; gz += 2) { const gl = new THREE.Mesh(new THREE.SphereGeometry(0.7, 14, 10), mat(0xff3b3b)); gl.position.set(x + 1.2, Y + alto + 1.6, c.z + gz); grupo.add(gl); guantes.push(gl); }
+      guardianes.push({ f, guantes, x0: x + 1.2, t: -9 });
       const dintel = new THREE.Mesh(caja, pilarMat); dintel.scale.set(1, 1.2, fila.z1 - fila.z0); dintel.position.set(x, Y + alto - 0.6, c.z + (fila.z0 + fila.z1) / 2); grupo.add(dintel);
     });
     pls.push(...pilaresPl);
-    const ruta = pls.filter(p => p.ruta).sort((a, b) => (a.x - a.hw) - (b.x - b.hw));
-    MG.built.carrera = { grupo, pls, piezas, punos, barras, tubos, puertas, ruta, c, enUso: false };
+    // 🧱 Las paredes invisibles (no se ven, pero chocas): solo a los costados de las zonas de puertas (así nadie las rodea por afuera)
+    for (const t of CORREDOR_CARRERA) for (const z of [t.zmin - PARED.grosor / 2, t.zmax + PARED.grosor / 2])
+      pls.push({ x: c.x + (t.x0 + t.x1) / 2, z: c.z + z, hw: (t.x1 - t.x0) / 2 + 0.05, hd: PARED.grosor / 2, top: Y + PARED.arriba, bottom: Y - PARED.abajo, pared: true });
+    const ruta = pls.filter(p => p.ruta && !p.pared).sort((a, b) => (a.x - a.hw) - (b.x - b.hw));
+    MG.built.carrera = { grupo, pls, piezas, punos, barras, tubos, puertas, guardianes, ruta, c, enUso: false };
   }
   function ponerCarrera(semilla = 1) {
     if (!MG.built.carrera) construirCarrera();
@@ -3516,6 +3539,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
       const largo = u.u.x1 - u.u.x0, f = ((k / u.anillos.length + t * 0.25) % 1);
       a.position.set(c.x + u.u.x0 + (u.u.vx >= 0 ? f : 1 - f) * largo, u.u.y + CARRERA.tubo.radio - 0.3, c.z + u.u.z + (u.u.vz ? Math.sin(t * 6 + k) * 0.4 : 0));
     });
+    for (const gd of B.guardianes) { const d = t - gd.t; for (const gl of gd.guantes) gl.position.x = gd.x0 - (d >= 0 && d < 0.35 ? Math.sin(d / 0.35 * Math.PI) * 2.2 : 0); }   // ¡el golpe!
     for (const p of B.puertas) if (p.rota !== null) {   // la puerta rota se cae hacia adelante y desaparece
       const d = t - p.rota; p.m.rotation.z = -Math.min(Math.PI / 2, d * 4); p.m.position.y = CARRERA.y0 + 2.4 - Math.max(0, d - 0.4) * 6; if (d > 1.5) p.m.visible = false; p.signo.visible = false;
     }
@@ -3558,6 +3582,8 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
     const c = MG.built.carrera.c, rel = { x: st.pos.x - c.x, y: st.pos.y, z: st.pos.z - c.z }, P = PISTA_CARRERA;
     if (MG.t < (st.golpeHasta || 0)) return -1;   // (recién golpeado: un ratito sin que le vuelvan a pegar)
     let g = null, o = -1;
+    // 🥊 el guardián de las puertas (si pasas por arriba)
+    P.puertas.forEach((f, i) => { if (!g && (g = golpeGuardian(rel, f))) { o = P.punos.length + P.barras.length + P.lanzas.length + i; MG.built.carrera.guardianes[i].t = t; } });
     for (let i = 0; i < P.punos.length && !g; i++) if (Math.abs(rel.x - P.punos[i].x) < 3 && (g = golpePuno(rel, P.punos[i], t, H))) o = i;
     for (let i = 0; i < P.barras.length && !g; i++) { const b = P.barras[i]; if (Math.hypot(rel.x - b.x, rel.z - b.z) < b.r + 1 && (g = golpeBarra(rel, b, t))) o = P.punos.length + i; }
     if (!g) return -1;
@@ -3646,6 +3672,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
         meta = { x: c.x + filaD.x + 3, z: c.z + L[b.puerta].z };
         if (Math.abs(b.pos.z - meta.z) > 0.6 && b.pos.x - c.x > filaD.x - 2.5) meta.x = c.x + filaD.x - 2;   // primero se pone enfrente (un pasito atrás, para no rozar los pilares), después avanza
         if (b.hitWall && b.pos.x - c.x > filaD.x - 1.4 && Math.abs(b.pos.z - meta.z) < 0.8) probadas.add(b.puerta);   // ¡era falsa!
+        salta = false; quieto = false;   // (en las puertas no salta: hay que pasar por una)
       }
       // 🥊 ¿Un puño justo adelante que está por pegar? Espera a que vuelva (como haría una persona)
       for (const f of PISTA_CARRERA.punos) { const dxp = f.x - (b.pos.x - c.x); if (dxp > 0.6 && dxp < 2.4 && Math.abs(b.pos.y - f.y) < 1.5 && (punoEn(f, t).pega || punoEn(f, t + 0.45).pega)) quieto = true; }
@@ -3662,12 +3689,12 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
       if (b.onGround) b.saltosAire = 0;
       girarConDisco(b);
       obstaculosCarrera(b, dt, t);
-      if (b.onGround && b.standing && b.standing.cp > b.cp) b.cp = b.standing.cp;
+      if (b.pos.y >= CARRERA.y0 - 0.5) b.cp = siguienteCheckpoint(b.cp, b.pos.x - c.x);   // en orden, de a uno
       if (golpeCarrera(b, t) >= 0) b.sobre = null;
       // ¿Trabado? (3 s sin avanzar): salta
       if (!b.chequeo || ahora - b.chequeo.t > 3000) { if (b.chequeo && b.pos.x - b.chequeo.x < 1 && b.onGround) { b.vel.y = JUMP; b.onGround = false; } b.chequeo = { x: b.pos.x, t: ahora }; }
       if (seCayoCarrera(b.pos.y)) reaparecerCR(b, b.cp, b.carril);
-      if (!b.llego && enMetaCarrera({ x: b.pos.x - c.x, y: b.pos.y, z: b.pos.z - c.z })) { b.llego = true; llegoCR(id); }
+      if (!b.llego && b.cp >= CARRERA.checkpoints && enMetaCarrera({ x: b.pos.x - c.x, y: b.pos.y, z: b.pos.z - c.z })) { b.llego = true; llegoCR(id); }
       animarCaminar(b.obj, b.cuerpo, H / 2, dt);
     });
   }
@@ -3701,11 +3728,11 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
     const tr = cr.resultado ? -1 : obstaculosCarrera(ps, dt, t);
     if (tr >= 0) { sfxResorte(); avisoModo(PISTA_CARRERA.plats[PISTA_CARRERA.lanzas[tr]].lanza.x > 0 ? '↗️ ¡BOING hacia adelante!' : '↩️ ¡Ups! Trampolín hacia atrás', PISTA_CARRERA.plats[PISTA_CARRERA.lanzas[tr]].lanza.x < 0, 1000); if (!cr.solo) enviar({ tipo: 'cr', que: 'golpe', o: PISTA_CARRERA.punos.length + PISTA_CARRERA.barras.length + tr }); }
     const o2 = cr.resultado ? -1 : golpeCarrera(ps, t);
-    if (o2 >= 0) { sfxPuno(); avisoModo(o2 < PISTA_CARRERA.punos.length ? '🥊 ¡PUM!' : '💫 ¡Te barrió la rueda!', true, 900); if (!cr.solo) enviar({ tipo: 'cr', que: 'golpe', o: o2 }); }
-    if (ps.onGround && ps.standing && ps.standing.cp > cr.cp) { cr.cp = ps.standing.cp; avisoModo(`🚩 Checkpoint ${cr.cp}/${CARRERA.checkpoints}`, false, 1200); }
+    if (o2 >= 0) { sfxPuno(); avisoModo(o2 < PISTA_CARRERA.punos.length ? '🥊 ¡PUM!' : o2 >= PISTA_CARRERA.punos.length + PISTA_CARRERA.barras.length ? '🥊 ¡No se vale saltar las puertas! Hay que pasar por una' : '💫 ¡Te barrió la rueda!', true, 1400); if (!cr.solo) enviar({ tipo: 'cr', que: 'golpe', o: o2 }); }
+    if (ps.pos.y >= CARRERA.y0 - 0.5) { const n = siguienteCheckpoint(cr.cp, ps.pos.x - B.c.x); if (n > cr.cp) { cr.cp = n; avisoModo(`🚩 Checkpoint ${cr.cp}/${CARRERA.checkpoints}`, false, 1200); sfxCheckpoint(); } }   // en orden, de a uno
     if (seCayoCarrera(ps.pos.y)) { reaparecerCR(ps, cr.cp, cr.carril); avisoModo(cr.cp ? `¡Te caíste! Vuelves al checkpoint ${cr.cp}` : '¡Te caíste! Vuelves a la salida', true, 1500); }
     const rel = { x: ps.pos.x - c.x, y: ps.pos.y, z: ps.pos.z - c.z };
-    if (!cr.llegue && !cr.resultado && enMetaCarrera(rel)) {
+    if (!cr.llegue && !cr.resultado && cr.cp >= CARRERA.checkpoints && enMetaCarrera(rel)) {
       if (cr.solo) llegoCR(0);
       else if (ahora - (cr.avisoMeta || 0) > 500) { cr.avisoMeta = ahora; enviar({ tipo: 'cr', que: 'llegue' }); }   // (el servidor revisa y avisa a todos)
     }
@@ -3834,9 +3861,10 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
     S.vivos.delete(id);
     const puesto = S.vivos.size + 1;
     if (id === yoSP()) {
-      S.fuera = true; cerrarCarga();
+      S.fuera = true; S.miPuesto = puesto; cerrarCarga();
       placePlayer(B.c.x + P.x, P.y, B.c.z + P.z); body.material.transparent = true; body.material.opacity = 0.4;
-      avisoModo(`💥 ¡Te caíste! Quedaste en el puesto ${puesto}. Miras desde el palco`, true, 3000);
+      S.mirando = [...S.vivos][0] ?? null;   // 👀 la cámara sigue a uno de los que quedan (← → para cambiar)
+      avisoModo('😢 Qué mal, te caíste. Mientras tanto, mira a los otros jugadores', true, 3500);
     } else {
       if (S.solo) { const b = S.bots[id - 1]; b.fuera = true; b.pos.set(B.c.x + P.x + (id - 3) * 2.5, P.y, B.c.z + P.z); b.vel.set(0, 0, 0); b.cuerpo.material.transparent = true; b.cuerpo.material.opacity = 0.4; }
       avisoModo(`💥 ¡${nombre || (S.solo ? NOMBRES_BOTS_SP[id - 1] : (red.otros.get(id) || {}).nombre) || 'Alguien'} se cayó! Quedan ${S.vivos.size}`, false, 1800);
@@ -3846,6 +3874,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
     const S = MG.state.sp; if (!S || S.resultado) return;
     const gane = ganador === yoSP();
     const quien = nombre || (S.solo ? NOMBRES_BOTS_SP[ganador - 1] : (red.otros.get(ganador) || {}).nombre);
+    if (!texto && !gane && S.miPuesto) texto = `Ganó ${quien || 'alguien'} · tú quedaste en el puesto ${S.miPuesto} de ${S.jugadores.length}`;
     S.resultado = { gane, texto: texto || (gane ? '¡Ganaste el Spleef! Fuiste el último en caer 🔶🏆' : ganador === null || ganador === undefined ? 'Se terminó: nadie ganó' : `Ganó ${quien || 'alguien'}`) };
     mostrarResultadoRonda();
   }
@@ -3905,16 +3934,35 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
     }
     if (S.solo && !S.resultado) {
       moverBotsSP(dt, S, ahora);
-      if (S.fuera) terminarSP(null, null, `Te caíste: quedaste en el puesto ${S.vivos.size + 1} de ${S.jugadores.length}`);   // (jugando solo, cuando te caes se termina)
-      else if (S.vivos.size <= 1 || ahora > S.inicio + SPLEEF.maxMs) terminarSP(S.vivos.size === 1 ? [...S.vivos][0] : null);
+      if (S.vivos.size <= 1 || ahora > S.inicio + SPLEEF.maxMs) terminarSP(S.vivos.size === 1 ? [...S.vivos][0] : null);
     }
     moverHexes();
     const Q = IS_TOUCH ? '<b>RESPONDER</b>' : '<b>Q</b>';
     const bat = S.fuera ? '👻 miras desde el palco' : hayBateria(st.bateria) ? `🔋 <b>${bateriaTexto(st.bateria)}</b>` : `🔋 <b style="color:#ff5a5a">Sin batería</b>: ${Q}`;
     mgHud.innerHTML = S.resultado ? escaparHTML(S.resultado.texto) : ahora < S.salida ? `🔶 El Spleef empieza en <b>${Math.max(1, falta)}</b>… · ${bat}`
-      : `🔶 ${S.fuera ? 'Afuera' : `Capa <b>${capaDe(ps.pos.y) + 1}</b>/${SPLEEF.capas}`} · quedan <b>${S.vivos.size}</b> · ${bat}`;
+      : S.fuera ? (() => { if (!S.vivos.has(S.mirando)) cambiarMirandoSP(1); const e = entidadSP(S.mirando);
+          return `😢 Qué mal, te caíste. Mientras tanto, mira a los otros jugadores · quedan <b>${S.vivos.size}</b>${e ? ` · 👀 miras a <b>${escaparHTML(e.nombre || '?')}</b> (${IS_TOUCH ? 'toca aquí' : '← →'} para cambiar)` : ''}`; })()
+      : `🔶 Capa <b>${capaDe(ps.pos.y) + 1}</b>/${SPLEEF.capas} · quedan <b>${S.vivos.size}</b> · ${bat}`;
     mgHud.hidden = !escuelaEl.hidden || !mdEl.hidden;
   }
+  // 👀 Mirando desde afuera: la cámara sigue a uno de los que siguen jugando
+  function entidadSP(id) {
+    const S = MG.state.sp; if (!S || id === null || id === undefined) return null;
+    if (S.solo) { const b = S.bots[id - 1]; return b && { pos: b.pos, nombre: NOMBRES_BOTS_SP[id - 1] }; }
+    const f = red.otros.get(id); return f && { pos: f.obj.position, nombre: f.nombre };
+  }
+  function cambiarMirandoSP(paso) {
+    const S = MG.state.sp, vivos = [...S.vivos].filter(id => id !== yoSP() && entidadSP(id));
+    if (!vivos.length) { S.mirando = null; return; }
+    const i = vivos.indexOf(S.mirando);
+    S.mirando = vivos[((i < 0 ? 0 : i + paso) % vivos.length + vivos.length) % vivos.length];
+  }
+  addEventListener('keydown', e => {
+    const S = MG.state && MG.state.sp; if (!S || !S.fuera || S.resultado || e.repeat) return;
+    if (e.code === 'ArrowRight') cambiarMirandoSP(1); else if (e.code === 'ArrowLeft') cambiarMirandoSP(-1);
+    else { const n = ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6'].indexOf(e.code); if (n >= 0) { const vivos = [...S.vivos].filter(id => id !== yoSP()); if (vivos[n] !== undefined) S.mirando = vivos[n]; } }
+  });
+  mgHudEl.addEventListener('click', () => { const S = MG.state && MG.state.sp; if (S && S.fuera && !S.resultado) cambiarMirandoSP(1); });   // (en el celular: toca el letrero)
   function salirSpleef(o) {
     const st = MG.state;
     cerrarCarga(); quitarSpleef();
@@ -3980,12 +4028,12 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
     // Trampolín: si caes en uno, te lanza hacia arriba (a 2 veces tu altura, o a 3 veces los pálidos)
     const pie = ps.standing;
     if (ps.onGround) { st.enHielo = !!(pie && pie.hielo); ps.saltosAire = 0; }   // al tocar una plataforma: ¿es hielo? y se recarga el doble salto
-    if (ps.onGround && pie && pie.salto) { ps.vel.y = launchSpeedForHeight(pie.salto, GRAV); ps.onGround = false; }
+    if (ps.onGround && pie && pie.salto) { ps.vel.y = launchSpeedForHeight(pie.salto, GRAV); ps.onGround = false; sfxTrampolin(); }
     // ¿Llegaste a la meta? ¿Pisaste un checkpoint más alto?
     const torre = MG.built.torre, meta = torre[torre.length - 1];
     if (parado(meta)) { salirTorre(o, true); return; }
     for (const p of MG.built.torreCps) {
-      if (p.y > st.checkpoint.y && parado(p)) { st.checkpoint = p; avisoModo(`Checkpoint ${fmt(p.y)} m`); }
+      if (p.y > st.checkpoint.y && parado(p)) { st.checkpoint = p; avisoModo(`Checkpoint ${fmt(p.y)} m`); sfxCheckpoint(); }
     }
     // ¿Caíste al vacío? Vuelves a tu último checkpoint (o al inicio). Si caes en otra plataforma, sigues desde ahí.
     if (debeReaparecer(ps.pos.y, ps.onGround)) {
@@ -4500,7 +4548,9 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
       get sky() { if (MG.state.fase === 'spleef') return 0xffd9ec; /* rosadito, de día */ if (MG.state.fase === 'carrera') return 0xa8dcff; /* celeste pastel, como Fall Guys */ if (MG.state.fase === 'escondidas') return 0xefe6d6; if (MG.state.fase === 'atrapadas') return 0x0b2e33; /* el espacio verde azulado oscuro */ if (MG.state.fase !== 'nomires') return undefined; const id = etapaDe(ps.pos.y).id; return id === 'espacio' ? 0x070a1f : id === 'neon' ? 0x0d0618 : undefined; },
       // Parado en hielo: resbalas (agarre chico). 0 = piso normal
       get agarre() { return MG.state.fase === 'nomires' && MG.state.enHielo && ps.onGround ? HIELO.agarre : 0; },   // solo resbalas con los pies en el hielo: al saltar, controlas tu salto normal
-      get dobleSalto() { const f = MG.state.fase; return f === 'nomires' || f === 'carrera' || f === 'spleef'; },   // el doble salto: en la torre, la Carrera y el Spleef
+      get dobleSalto() { const f = MG.state.fase; return f === 'nomires' || f === 'carrera' || f === 'spleef'; },
+      // 👀 Spleef: si te caíste, la cámara sigue a uno de los que siguen jugando
+      get camaraEn() { const S = MG.state.sp; if (MG.state.fase !== 'spleef' || !S || !S.fuera || S.resultado) return null; const e = entidadSP(S.mirando); return e ? e.pos : null; },   // el doble salto: en la torre, la Carrera y el Spleef
       look(o) { return { x: o.x, z: o.z + 30 }; },
       build(o) { construirSalon(o); },   // la torre se arma recién cuando entras a ella
       start(o) {
@@ -4833,7 +4883,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
       v.A.veloMat.opacity = 0.35 + 0.15 * Math.sin(tR * 4);
       // Tú también puedes usar los portales (como en el juego: un ratito sin volver a entrar)
       const ahora = performance.now(), i = ahora >= (sb.portalListo || 0) ? portalCerca(ps.pos, v.A.portales) : -1;
-      if (i >= 0) { const d = v.A.portales[v.A.portales[i].par]; ps.pos.set(d.salida.x, d.y + 0.05, d.salida.z); ps.vel.set(0, 0, 0); sb.portalListo = ahora + 1200; avisoModo('✨ ¡Portal!', false, 900); }
+      if (i >= 0) { const d = v.A.portales[v.A.portales[i].par]; ps.pos.set(d.salida.x, d.y + 0.05, d.salida.z); ps.vel.set(0, 0, 0); sb.portalListo = ahora + 1200; avisoModo('✨ ¡Portal!', false, 900); sfxPortal(); }
     }
     if (sb.sala === 'escondidas' && v.T.carros.length) moverCarros(v.T, tR);
     // Dibujar a cada uno donde está. El que recibió un castigo… ¡tiembla como licuadora!
@@ -4874,7 +4924,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
       B.manchaSB.visible = !!p; if (p) B.manchaSB.position.set(v.cx + p.x, p.y + H + 0.45, v.cz + p.z); B.manchaSB.scale.setScalar(1 + Math.sin(tR * 9) * 0.08);
     }
     // Los trampolines del terreno también te lanzan a TI (como en el juego)
-    const pie = ps.standing; if (ps.onGround && pie && pie.salto) { ps.vel.y = launchSpeedForHeight(pie.salto, GRAV); ps.onGround = false; }
+    const pie = ps.standing; if (ps.onGround && pie && pie.salto) { ps.vel.y = launchSpeedForHeight(pie.salto, GRAV); ps.onGround = false; sfxTrampolin(); }
     datosSB();
     if (pasos) pintarGraficoSB();
   }
@@ -4954,7 +5004,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
           const r = comprarDisfraz(save.spooky, save.disfraces, d.id);
           if (!r.ok) { avisoModo(`No se pudo: ${r.motivo}`, true); return; }
           save.spooky = r.spooky; save.disfraces = r.disfraces; save.disfraz = d.id;
-          avisoModo(`🎃 ¡Compraste "${d.nombre}"! Ya lo tienes puesto`, false, 2200);
+          avisoModo(`🎃 ¡Compraste "${d.nombre}"! Ya lo tienes puesto`, false, 2200); sfxCompra();
         } else save.disfraz = ponerDisfraz(save.disfraz, save.disfraces, d.id);
         vestirme(); saveGame(); pintarHalloween();
       });
@@ -5371,6 +5421,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
     const e = MG.state.esc; if (!e || !e.resultado) return;
     cerrarCarga(); escNegro.hidden = true;
     if (e.resultado.gane && !e.premio) { e.premio = true; save.coins += 25; renderCoins(); ganarSpooky(SPOOKY.porGanar); flashWarn('¡GANASTE!', 2); }
+    if (!e.resultado.gane) sfxPerder();
     document.getElementById('escondResultado').textContent = e.resultado.texto + (e.resultado.gane ? ' +25 monedas' : '');
     document.getElementById('escondElegir').hidden = true; document.getElementById('escondFin').hidden = false;
     escondEl.hidden = false;
@@ -5424,6 +5475,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
     const a = MG.state.an; if (!a || !a.resultado) return;
     cerrarCarga(); mancha.visible = false;
     if (a.resultado.gane && !a.premio) { a.premio = true; save.coins += 25; renderCoins(); ganarSpooky(SPOOKY.porGanar); flashWarn('¡GANASTE!', 2); }
+    if (!a.resultado.gane) sfxPerder();
     document.getElementById('anResultado').textContent = a.resultado.texto + (a.resultado.gane ? ' +25 monedas' : '');
     document.getElementById('anElegir').hidden = true; document.getElementById('anFin').hidden = false;
     anEl.hidden = false;
@@ -5451,7 +5503,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
     } else if (!a || a.solo) {
       if (m.tipo === 'anAviso') { const t = String(m.texto || ''); if (!anEl.hidden) anMsj.textContent = t; else avisoModo(t, true); }
     } else if (m.tipo === 'anPase') {
-      aplicarEstadoAN(m);
+      aplicarEstadoAN(m); sfxMancha();
       a.ultimoPase = { de: m.de, a: m.a, t: ahoraMs() };
       if (m.a === red.id && m.empuje && Number.isFinite(m.empuje.x) && Number.isFinite(m.empuje.z)) empujar(ps, { x: Math.max(-20, Math.min(20, m.empuje.x)), z: Math.max(-20, Math.min(20, m.empuje.z)) });
       if (m.a === red.id) avisoModo('👽 ¡Te pasaron la mancha! Estás mareado 2 s… ¡y después tienes 13 s!', true, 2500);   // (sin nombres: nadie anuncia quién la tiene)
@@ -5518,6 +5570,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
     mdModo = modo; cerrarCarga();
     if (e.resultado.gane && !e.premio) { e.premio = true; save.coins += 25; renderCoins(); ganarSpooky(SPOOKY.porGanar); flashWarn('¡GANASTE!', 2); }
     document.getElementById('mdTitulo').textContent = MODOS_RONDA[modo].titulo;
+    if (!e.resultado.gane) sfxPerder();
     document.getElementById('mdResultado').textContent = e.resultado.texto + (e.resultado.gane ? ' +25 monedas' : '');
     document.getElementById('mdElegir').hidden = true; document.getElementById('mdFin').hidden = false;
     mdEl.hidden = false;
@@ -5525,6 +5578,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
   function volverDelResultadoRonda(otra) {
     const modo = mdModo;
     mdEl.hidden = true;
+    if (!MODOS_RONDA[modo]) return;
     if (MODOS_RONDA[modo].estado()) MODOS_RONDA[modo].salir(minigameOrigin(MG.k));
     if (otra) abrirModoRonda(modo); else levantarseModo(modo);
   }
@@ -5638,6 +5692,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
     const bien = i === st.correcta;
     const cuanto = st.fase === 'carrera' ? CARRERA.bateriaRespuesta : st.fase === 'spleef' ? SPLEEF.bateriaRespuesta : BATERIA.porRespuesta;   // (en la Carrera 4.000, en el Spleef 3.000)
     st.bateria = cargarBateria(st.bateria, bien, cuanto);
+    if (bien) sfxBien(); else sfxMal();
     [...escOpciones.children].forEach((b, k) => { b.disabled = true; if (k === st.correcta) b.classList.add('bien'); else if (k === i) b.classList.add('mal'); });
     escResultado.className = `esc-resultado ${bien ? 'bien' : 'mal'}`;
     escResultado.textContent = bien ? `¡Correcto! +${fmt(cuanto)} 🔋` : 'Incorrecto… esta vez no hay batería';
@@ -5766,20 +5821,32 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
 
   // ---------- Sonido (todo hecho con el sintetizador del navegador, sin archivos) ----------
   let audio = null;
-  const AMBIENT_LEVEL = 0.32;
+  const AMBIENT_LEVEL = 0.12;   // el viento, las hojas y los pájaros: de fondo, más bajito que la música
   function startAudio() {
     if (audio) { audio.ctx.resume(); return; }
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
     const ctx = new AC();
-    const master = ctx.createGain(); master.gain.value = 0.7; master.connect(ctx.destination);
+    // Un "limitador" al final: si suenan muchas cosas juntas (música + explosión), baja un poquito para que nunca se rompa el sonido
+    const limitador = ctx.createDynamicsCompressor(); limitador.threshold.value = -6; limitador.knee.value = 6; limitador.ratio.value = 12; limitador.attack.value = 0.003; limitador.release.value = 0.2;
+    limitador.connect(ctx.destination);
+    const master = ctx.createGain(); master.gain.value = 0.7; master.connect(limitador);
     const ambient = ctx.createGain(); ambient.gain.value = AMBIENT_LEVEL; ambient.connect(master);
     const sfx = ctx.createGain(); sfx.gain.value = 0.8; sfx.connect(master);
     // Ruido de 2 s que se repite (base del viento, las hojas y los pasos)
     const noise = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
     const nd = noise.getChannelData(0); let last = 0;
     for (let i = 0; i < nd.length; i++) { const w = Math.random() * 2 - 1; last = (last + 0.02 * w) / 1.02; nd[i] = last * 3.5 + w * 0.15; } // ruido suave ("café")
-    audio = { ctx, master, ambient, sfx, noise };
+    const musicaBus = ctx.createGain(); musicaBus.gain.value = musica.vol * MUSICA_NIVEL; musicaBus.connect(master);
+    const musicaFiltro = ctx.createBiquadFilter(); musicaFiltro.type = 'lowpass'; musicaFiltro.frequency.value = musica.estilo === 'lofi' ? 1700 : 18000; musicaFiltro.connect(musicaBus);   // 🎧 lofi: más apagadito
+    const musicaLugar = ctx.createGain(); musicaLugar.gain.value = 0.0001; musicaLugar.connect(musicaFiltro);   // (el de cada canción: para el cambio suave)
+    // El "crujido de disco viejo" del lofi: clics sueltos en un ruido que se repite (solo suena en estilo Lofi y con música)
+    const crujido = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate), cd = crujido.getChannelData(0);
+    for (let i = 0; i < cd.length; i++) cd[i] = (Math.random() < 0.0006 ? (Math.random() * 2 - 1) * 0.9 : 0) + (Math.random() * 2 - 1) * 0.012;
+    const crujidoSrc = ctx.createBufferSource(); crujidoSrc.buffer = crujido; crujidoSrc.loop = true;
+    const crujidoGain = ctx.createGain(); crujidoGain.gain.value = musica.estilo === 'lofi' ? 0.05 : 0; crujidoSrc.connect(crujidoGain).connect(musicaFiltro); crujidoSrc.start();
+    audio = { ctx, master, ambient, sfx, noise, musica: musicaBus, musicaLugar, musicaFiltro, crujidoGain };
+    musica.reloj = setInterval(tickMusica, 25);
     // Viento entre los árboles: ruido grave que sube y baja despacio
     const wind = ctx.createBufferSource(); wind.buffer = noise; wind.loop = true;
     const windLp = ctx.createBiquadFilter(); windLp.type = 'lowpass'; windLp.frequency.value = 700;
@@ -5816,15 +5883,181 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
     audio.crush.copyToChannel(bitcrush(raw, 4, 14), 0);
   }
   // Si el navegador pausó el sonido, se reanuda al primer clic o tecla
-  for (const ev of ['pointerdown', 'keydown']) addEventListener(ev, () => { if (audio && audio.ctx.state === 'suspended') audio.ctx.resume(); });
+  // (en cada toque, clic o tecla, hasta que el sonido esté andando; algunos navegadores lo pausan hasta que tocas algo)
+  const despertarSonido = () => { if (audio && audio.ctx.state !== 'running') audio.ctx.resume().catch(() => {}); };
+  for (const ev of ['pointerdown', 'keydown', 'touchstart', 'click']) addEventListener(ev, despertarSonido, { capture: true, passive: true });
   // De noche el bosque suena un 15% más bajo
   let lastAmbient = -1;
   function setAmbientDay(day) {
+    musica.dia = day;
     if (!audio) return;
     const v = AMBIENT_LEVEL * ambientVolume(day);
     if (Math.abs(v - lastAmbient) < 0.002) return;
     lastAmbient = v; audio.ambient.gain.setTargetAtTime(v, audio.ctx.currentTime, 0.5);
   }
+  // (la música también sabe si es de día o de noche: de noche, la canción tranquila)
+  const temporadaActual = TEMPORADA;   // (la estación del año: en invierno, cascabeles)
+  // ---------- 🎵 La música (se inventa sola: ver compasMusica en logic.js) ----------
+  // Cada 25 ms revisa: ¿qué canción va aquí? ¿qué tan intensa? Y deja programadas las notas que vienen (un compás por adelantado).
+  // Si cambias de lugar, la música baja, cambia de canción y vuelve a subir (suave). Botón 🎵 o tecla M: volumen.
+  const musica = { id: null, siguiente: null, n: 0, proximo: 0, intensidad: 0.3, cola: [], vol: 0.6, antesDeSilencio: 0.6, cambiaEn: 0, reloj: null, dia: 1 };
+  try { musica.vol = leerVolumen(localStorage.getItem('rv-musica-vol')); } catch (e) {}
+  musica.estilo = 'normal'; try { musica.estilo = leerEstilo(localStorage.getItem('rv-musica-estilo')); } catch (e) {}
+  musica.antesDeSilencio = musica.vol || 0.6;
+  const MUSICA_NIVEL = 3.0;   // qué tan fuerte es la música al 100 % (al 60 % ya suena claramente más fuerte que el viento)
+  function datosMusica() {
+    const st = MG.state || {}, modo = MG.active ? minigameDef(MG.k).id : null, ahora = ahoraMs();
+    const id = lugarMusica({ modo, fase: st.fase, noche: musica.dia < 0.35 });
+    let d = {}, extra = { invierno: temporadaActual === 'invierno', estilo: musica.estilo };
+    if (id === 'atrapadas' && st.an) d = { tengo: !st.an.resultado && st.an.portador === yoAN(), faltaMs: st.an.fin - ahora };
+    else if (id === 'escondidas' && st.esc) {
+      const f = faseEsc(); extra.tic = f === 'esconder';
+      d = { cuenta: f === 'esconder', persiguen: f === 'buscar' && !soyBuscador() && st.esc.solo && MG.built.botEsc && MG.built.botEsc.modo === 'perseguir' };
+    } else if (id === 'carrera' && st.cr) {
+      const c = st.cr.B.c, x = ps.pos.x - c.x, corr = [{ id: yoCR(), x }];
+      if (st.cr.solo) st.cr.bots.forEach((b, i) => corr.push({ id: i + 1, x: b.pos.x - c.x }));
+      d = { x: x * 300 / CARRERA.largo, puesto: x > 30 ? puestosCarrera(corr, st.cr.llegadas).indexOf(yoCR()) + 1 : 0 };   // (cerca de la meta = el último 20 %; en la salida todavía no hay puestos)
+    } else if (id === 'spleef' && st.sp) d = { capa: capaDe(ps.pos.y), quedan: st.sp.vivos.size, total: st.sp.jugadores.length };
+    else if (id === 'torre') d = { etapa: etapaDe(ps.pos.y).n };
+    return { id, intensidad: intensidadMusica(id, d), extra };
+  }
+  function ponerVolumenMusica(v, guardar = true) {
+    musica.vol = v; if (v > 0) musica.antesDeSilencio = v;
+    if (guardar) try { localStorage.setItem('rv-musica-vol', String(v)); } catch (e) {}
+    if (audio && audio.musica) audio.musica.gain.setTargetAtTime(v * MUSICA_NIVEL, audio.ctx.currentTime, 0.15);
+    const b = document.getElementById('musicaBtn');
+    if (b) { b.textContent = v ? `🎵 ${Math.round(v * 100)}%` : '🔇 Música'; b.setAttribute('aria-label', v ? `Volumen de la música: ${Math.round(v * 100)} %` : 'Música apagada'); }
+  }
+  const sonidoDormidoEl = document.getElementById('sonidoDormido');
+  sonidoDormidoEl.addEventListener('click', () => { despertarSonido(); sonidoDormidoEl.blur(); });
+  function tickMusica() {
+    const dormido = !!audio && audio.ctx.state !== 'running';
+    if (sonidoDormidoEl.hidden !== !dormido) sonidoDormidoEl.hidden = !dormido;   // el aviso chiquito, si el navegador todavía no deja sonar
+    if (!audio || dormido) return;
+    const ctx = audio.ctx, ahora = ctx.currentTime, D = datosMusica();
+    musica.objetivo = D.intensidad; musica.extra = D.extra;
+    // ¿Cambió el lugar? Baja la música (0,7 s), cambia de canción y vuelve a subir
+    if (D.id !== musica.id && D.id !== musica.siguiente) {
+      musica.siguiente = D.id; musica.cambiaEn = ahora + (musica.id ? 0.7 : 0);
+      if (musica.id) audio.musicaLugar.gain.setTargetAtTime(0.0001, ahora, 0.2);
+    }
+    if (musica.siguiente && ahora >= musica.cambiaEn) {
+      musica.id = musica.siguiente; musica.siguiente = null; musica.n = 0; musica.cola.length = 0; musica.proximo = ahora + 0.1;
+      musica.intensidad = D.intensidad;
+      audio.musicaLugar.gain.cancelScheduledValues(ahora); audio.musicaLugar.gain.setTargetAtTime(MUSICAS[musica.id].vol, ahora, 0.4);
+    }
+    if (!musica.id || musica.siguiente) return;
+    // Un compás nuevo cuando el anterior está por terminar (la intensidad se acerca de a poco a la que toca)
+    while (musica.proximo < ahora + 0.2) {
+      musica.intensidad += (musica.objetivo - musica.intensidad) * 0.5;
+      const c = compasMusica(musica.id, musica.n++, musica.intensidad, Math.random, musica.extra || {}), seg = 60 / c.bpm;
+      for (const nota of c.notas) musica.cola.push({ cuando: musica.proximo + nota.t * seg, dura: nota.dur * seg, nota });
+      musica.proximo += c.tiempos * seg;
+    }
+    // Las notas que suenan en los próximos 0,15 s se programan ya (las demás esperan: así no se juntan cientos de nodos)
+    musica.cola.sort((a, b) => a.cuando - b.cuando);
+    while (musica.cola.length && musica.cola[0].cuando < ahora + 0.15) { const q = musica.cola.shift(); if (q.cuando > ahora - 0.05) tocarNota(q.nota, Math.max(q.cuando, ahora), q.dura); }
+  }
+  // Los instrumentos (cada nota: un oscilador o un ruidito que se apaga solo; al terminar, el navegador lo borra)
+  function tocarNota(n, t0, dura) {
+    const { ctx, noise } = audio, M = MUSICAS[musica.id], salida = audio.musicaLugar, g = ctx.createGain();
+    g.connect(salida);
+    const env = (pico, ataque, fin) => { g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(pico, t0 + ataque); g.gain.exponentialRampToValueAtTime(0.0001, t0 + fin); };
+    if (n.voz === 'bombo' || n.voz === 'tic') {
+      const o = ctx.createOscillator();
+      if (n.voz === 'bombo') { o.type = 'sine'; o.frequency.setValueAtTime(140, t0); o.frequency.exponentialRampToValueAtTime(45, t0 + 0.14); env(0.55 * n.vel, 0.005, 0.2); }
+      else { o.type = 'square'; o.frequency.value = 1900; env(0.06 * n.vel, 0.002, 0.04); }
+      o.connect(g); o.start(t0); o.stop(t0 + 0.25); return;
+    }
+    if (n.voz === 'platillo') {   // 💥 el platillo del "drop"
+      const src = ctx.createBufferSource(), f = ctx.createBiquadFilter(); src.buffer = noise; src.playbackRate.value = 2; f.type = 'highpass'; f.frequency.value = 5000; env(0.18 * n.vel, 0.003, 1.2);
+      src.connect(f).connect(g); src.start(t0, Math.random() * 0.5, 1.3); return;
+    }
+    if (n.voz === 'caja' || n.voz === 'hihat') {
+      const src = ctx.createBufferSource(), f = ctx.createBiquadFilter(); src.buffer = noise; src.playbackRate.value = 1.5;
+      if (n.voz === 'caja') { f.type = 'bandpass'; f.frequency.value = 1800; f.Q.value = 0.8; env(0.22 * n.vel, 0.003, 0.14); }
+      else { f.type = 'highpass'; f.frequency.value = 7000; env(0.07 * n.vel, 0.002, 0.05); }
+      src.connect(f).connect(g); src.start(t0, Math.random() * 1.5, 0.2); return;
+    }
+    if (n.voz === 'campana') {   // ❄️ cascabeles de trineo (en invierno, en vez del hi-hat)
+      for (const fr of [2600, 3950]) { const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = fr * (1 + Math.random() * 0.02); o.connect(g); o.start(t0); o.stop(t0 + 0.2); }
+      env(0.035 * n.vel, 0.002, 0.18); return;
+    }
+    const fr = midiAFrecuencia(n.midi), fin = t0 + Math.max(0.15, dura) + 0.05;
+    let tipo, capa = null;   // capa: un segundo oscilador para que suene más "lleno" (y se oiga en los parlantes chiquitos de la compu)
+    if (n.voz === 'bajo') { tipo = M.timbres.bajo; capa = { tipo: 'triangle', mult: 2, vol: 0.6 }; env(0.16 * n.vel, 0.01, Math.max(0.12, dura)); }   // (una octava arriba: los parlantes chiquitos no tocan graves)
+    else if (n.voz === 'acorde') { tipo = M.timbres.acorde; env(0.06 * n.vel, 0.12, Math.max(0.3, dura)); }
+    else if (n.voz === 'arpegio') { tipo = 'triangle'; env(0.06 * n.vel, 0.005, Math.max(0.1, dura)); }
+    else { tipo = M.timbres.melodia; capa = { tipo: 'triangle', mult: 1.004, vol: 0.7 }; env((tipo === 'square' ? 0.05 : 0.09) * n.vel, 0.01, Math.max(0.1, dura)); }   // (un poquito desafinado: suena más gordo)
+    // las ondas cuadradas y de sierra, un poquito más suaves (si no, chillan)
+    let destino = g;
+    if (tipo === 'square' || tipo === 'sawtooth') { const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2600; lp.connect(g); destino = lp; }
+    const o = ctx.createOscillator(); o.type = tipo; o.frequency.value = fr; o.connect(destino); o.start(t0); o.stop(fin);
+    if (capa) { const o2 = ctx.createOscillator(), g2 = ctx.createGain(); o2.type = capa.tipo; o2.frequency.value = fr * capa.mult; g2.gain.value = capa.vol; o2.connect(g2).connect(destino); o2.start(t0); o2.stop(fin); }
+  }
+  // El botón 🎵 (pasa 100 → 60 → 30 → 0 %) y la tecla M (silencio / vuelve)
+  document.getElementById('musicaBtn').addEventListener('click', e => { ponerVolumenMusica(siguienteVolumen(musica.vol)); e.currentTarget.blur(); });
+  addEventListener('keydown', e => {
+    if (e.code !== 'KeyM' || e.repeat || (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA'))) return;
+    ponerVolumenMusica(musica.vol ? 0 : musica.antesDeSilencio || 0.6);
+    showToast(musica.vol ? `🎵 Música: ${Math.round(musica.vol * 100)} %` : '🔇 Música apagada (M para volver)', false, 1200);
+  });
+  ponerVolumenMusica(musica.vol, false);
+  // 🎧 El estilo: Normal (rápido y bailable) o Lofi (lento y tranquilo, con swing y crujido de disco). Botón o tecla L
+  function ponerEstiloMusica(estilo, guardar = true) {
+    musica.estilo = estilo;
+    if (guardar) try { localStorage.setItem('rv-musica-estilo', estilo); } catch (e) {}
+    const b = document.getElementById('estiloBtn'); b.textContent = estilo === 'lofi' ? '🎵 Normal' : '🎧 Lofi'; b.setAttribute('aria-label', estilo === 'lofi' ? 'Música en estilo Lofi: cambiar a Normal' : 'Música en estilo Normal: cambiar a Lofi');
+    if (audio && audio.musicaFiltro) { const t = audio.ctx.currentTime; audio.musicaFiltro.frequency.setTargetAtTime(estilo === 'lofi' ? 1700 : 18000, t, 0.2); audio.crujidoGain.gain.setTargetAtTime(estilo === 'lofi' ? 0.05 : 0, t, 0.2); }
+    musica.cola.length = 0; if (audio) musica.proximo = Math.max(musica.proximo - 2.5, audio.ctx.currentTime + 0.05);   // (el cambio se oye enseguida)
+  }
+  document.getElementById('estiloBtn').addEventListener('click', e => { ponerEstiloMusica(musica.estilo === 'lofi' ? 'normal' : 'lofi'); e.currentTarget.blur(); });
+  addEventListener('keydown', e => {
+    if (e.code !== 'KeyL' || e.repeat || (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA'))) return;
+    ponerEstiloMusica(musica.estilo === 'lofi' ? 'normal' : 'lofi'); showToast(musica.estilo === 'lofi' ? '🎧 Música: Lofi' : '🎵 Música: Normal', false, 1200);
+  });
+  ponerEstiloMusica(musica.estilo, false);
+
+  // ---------- 🔊 Efectos de sonido nuevos ----------
+  // Unas notitas seguidas (para jingles y avisos): [nota, cuándo (s), cuánto dura (s)]
+  // (por las dudas: nunca más de ~24 notitas de efectos cada 0,1 s; si algo se llamara en cada cuadro por error, no tapa todo)
+  const ventanaSfx = { t: 0, n: 0 };
+  function sfxNotas(lista, tipo = 'square', vol = 0.1) {
+    if (!audio) return;
+    const { ctx, sfx } = audio, t0 = ctx.currentTime + 0.01;
+    if (t0 - ventanaSfx.t > 0.1) { ventanaSfx.t = t0; ventanaSfx.n = 0; }
+    if ((ventanaSfx.n += lista.length) > 24) return;
+    for (const [nota, at, largo] of lista) {
+      const o = ctx.createOscillator(), g = ctx.createGain(), t = t0 + at;
+      o.type = tipo; o.frequency.value = noteFrequency(nota);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t + largo);
+      o.connect(g).connect(sfx); o.start(t); o.stop(t + largo + 0.02);
+    }
+  }
+  // Un golpe de ruido (para choques, puertas, explosiones): filtro, volumen, duración
+  function sfxRuido(tipo, frec, vol, dura, rate = 1) {
+    if (!audio) return;
+    const { ctx, sfx, noise } = audio, t0 = ctx.currentTime, src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    src.buffer = noise; src.playbackRate.value = rate; f.type = tipo; f.frequency.value = frec;
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(vol, t0 + 0.006); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dura);
+    src.connect(f).connect(g).connect(sfx); src.start(t0, Math.random() * 1.5, dura + 0.05);
+  }
+  const sfxAterrizar = fuerza => sfxRuido('lowpass', 500, Math.min(0.35, 0.08 + fuerza * 0.012), 0.12, 0.8);   // "tump" (más fuerte si caíste de alto)
+  const sfxCheckpoint = () => sfxNotas([['C5', 0, 0.1], ['E5', 0.08, 0.1], ['G5', 0.16, 0.25]], 'triangle', 0.14);
+  const sfxBien = () => sfxNotas([['E5', 0, 0.09], ['A5', 0.08, 0.22]], 'square', 0.08);
+  const sfxMal = () => sfxNotas([['D4', 0, 0.14], ['A3', 0.12, 0.3]], 'sawtooth', 0.06);
+  const sfxMancha = () => { sfxRuido('bandpass', 600, 0.25, 0.25, 0.5); sfxNotas([['G3', 0, 0.12], ['C#4', 0.06, 0.2]], 'sawtooth', 0.06); };   // ¡splosh!
+  const sfxExplosion = () => { sfxRuido('lowpass', 900, 0.6, 0.6, 0.6); sfxNotas([['C3', 0, 0.3]], 'square', 0.08); };
+  const sfxEmpujon = () => sfxRuido('bandpass', 300, 0.35, 0.18, 0.7);
+  const sfxPortal = () => sfxNotas([['C5', 0, 0.08], ['G5', 0.05, 0.08], ['C6', 0.1, 0.08], ['G6', 0.15, 0.2]], 'sine', 0.1);
+  const sfxTrampolin = () => sfxNotas([['C4', 0, 0.08], ['C5', 0.06, 0.08], ['C6', 0.12, 0.25]], 'triangle', 0.14);
+  const sfxGanar = () => sfxNotas([['C5', 0, 0.12], ['E5', 0.12, 0.12], ['G5', 0.24, 0.12], ['C6', 0.36, 0.45], ['G5', 0.5, 0.12], ['C6', 0.62, 0.6]], 'square', 0.09);
+  const sfxPerder = () => sfxNotas([['G4', 0, 0.2], ['F#4', 0.2, 0.2], ['F4', 0.4, 0.2], ['E4', 0.6, 0.6]], 'triangle', 0.12);
+  const sfxCompra = () => { sfxCoin(); sfxNotas([['G5', 0.15, 0.08], ['C6', 0.22, 0.2]], 'square', 0.07); };
+  const sfxClic = () => sfxNotas([['A5', 0, 0.035]], 'square', 0.03);
+  // Los clics en los botones de los paneles (suena bajito)
+  addEventListener('click', e => { if (e.target && e.target.closest && e.target.closest('button')) sfxClic(); }, true);
+
   // Láser: "PIUM" (un tono que cae rápido)
   function sfxPium() {
     if (!audio) return;
@@ -6215,7 +6448,8 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
   const SKY_DAY = new THREE.Color(0xbfe3f2), SKY_NIGHT = new THREE.Color(0x0b1330), SKY_SUNSET = new THREE.Color(0xf29b63);
   const WIN_DAY = new THREE.Color(0x3a4a5c), WIN_NIGHT = new THREE.Color(0xffd27a);
   const clockEl = document.querySelector('.clock'), clockIcon = document.getElementById('clockIcon'), clockTime = document.getElementById('clockTime');
-  const sunDir = new THREE.Vector3(), tmpColor = new THREE.Color();
+  const sunDir = new THREE.Vector3(), tmpColor = new THREE.Color(), cieloEstacion = new THREE.Color(TEMP ? TEMP.cielo : 0xffffff);
+  if (TEMP) sun.color.setHex(TEMP.solColor);
   let lastMinute = -1;
   function updateDayNight(dt) {
     dayPhase = (dayPhase + dt / DAY_LEN) % 1;   // el reloj de verdad sigue (el pueblo y la hora de la sala no cambian)
@@ -6226,11 +6460,12 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
     setAmbientDay(day);
     const dusk = Math.max(0, 1 - Math.abs(elev) / 0.3); // color naranja cerca del horizonte
     tmpColor.copy(SKY_NIGHT).lerp(SKY_DAY, day).lerp(SKY_SUNSET, dusk * 0.55);
+    if (!MG.active && TEMP) tmpColor.lerp(cieloEstacion, TEMP.mezcla * (0.4 + 0.6 * day));   // el tinte de la estación (frío en invierno, tibio en verano…)
     if (MG.active && MG.active.sky !== undefined) tmpColor.setHex(MG.active.sky);   // un minijuego puede tener su propio cielo
     scene.background.copy(tmpColor); scene.fog.color.copy(tmpColor);
     hemi.intensity = 0.18 + 0.57 * day;
     // Bajo tierra (sótano o fábrica) casi no llega el sol: así no se cuela luz por las partes lejanas del techo
-    sun.intensity = 0.85 * day * (ps.pos.y < BASEMENT.ceilingY ? 0.25 : 1);
+    sun.intensity = 0.85 * day * (ps.pos.y < BASEMENT.ceilingY ? 0.25 : 1) * (TEMP && !MG.active ? TEMP.sol : 1);
     moon.intensity = 0.3 * (1 - day);
     stars.material.opacity = 1 - day;
     stars.position.copy(camera.position);
@@ -6556,13 +6791,86 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
   }
   buildVillage();
 
+  // ---------- 🍂❄️☀️🌸 Lo de cada estación: hojas en el suelo, calabazas, muñecos de nieve, flores, sombrilla, mariposas y lo que cae ----------
+  // Nada de esto choca (no tapa ningún camino) y va solo donde hay pasto libre (libreDePasto)
+  const estacion = { cae: null, mariposas: null, t: 0 };
+  function decorarEstacion(libre) {
+    const T = TEMP, m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), esc = new THREE.Vector3(), lugar = new THREE.Vector3(), col = new THREE.Color(), eje = new THREE.Vector3(0, 1, 0);
+    const instancias = (geo, n, cada, color = 0xffffff) => { const im = new THREE.InstancedMesh(geo, new THREE.MeshLambertMaterial({ color }), n); for (let i = 0; i < n; i++) cada(i, im); im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true; scene.add(im); return im; };
+    // Hojas secas o manchitas de nieve en el suelo
+    if (T.suelto) {
+      const L = lugaresPasto(T.suelto.n, libre, seededRandom(77)), geo = new THREE.CircleGeometry(T.suelto.tipo === 'nieve' ? 0.55 : 0.16, 5); geo.rotateX(-Math.PI / 2);
+      instancias(geo, L.length, (i, im) => { const p = L[i]; q.setFromAxisAngle(eje, p.giro); esc.set(p.tam * 1.4, 1, p.tam); lugar.set(p.x, 0.02 + (i % 7) * 0.002, p.z); im.setMatrixAt(i, m4.compose(lugar, q, esc)); im.setColorAt(i, col.setHex(T.suelto.colores[i % T.suelto.colores.length])); });
+    }
+    // Más flores (verano y primavera)
+    if (T.flores) {
+      const L = lugaresPasto(T.flores.n, libre, seededRandom(88)), geo = new THREE.IcosahedronGeometry(0.11, 0);
+      instancias(geo, L.length, (i, im) => { const p = L[i]; q.identity(); esc.set(1, 0.6, 1); lugar.set(p.x, 0.14, p.z); im.setMatrixAt(i, m4.compose(lugar, q, esc)); im.setColorAt(i, col.setHex(T.flores.colores[i % T.flores.colores.length])); });
+    }
+    const pocos = (n, semilla, margen) => lugaresPasto(n, (x, z) => libre(x, z) && libre(x + margen, z) && libre(x - margen, z) && libre(x, z + margen) && libre(x, z - margen), seededRandom(semilla));
+    if (T.adorno === 'calabaza') {   // 🎃 calabazas tiradas por el pasto
+      const L = pocos(28, 99, 1.2), cal = new THREE.SphereGeometry(0.5, 12, 8), tallo = new THREE.CylinderGeometry(0.06, 0.08, 0.25, 6);
+      instancias(cal, L.length, (i, im) => { const p = L[i], s = 0.8 + p.tam * 0.5; q.setFromAxisAngle(eje, p.giro); esc.set(s * 1.15, s * 0.8, s * 1.15); lugar.set(p.x, 0.38 * s, p.z); im.setMatrixAt(i, m4.compose(lugar, q, esc)); }, 0xff8a1f);
+      instancias(tallo, L.length, (i, im) => { const p = L[i], s = 0.8 + p.tam * 0.5; q.identity(); esc.set(1, 1, 1); lugar.set(p.x, 0.78 * s, p.z); im.setMatrixAt(i, m4.compose(lugar, q, esc)); }, 0x4d7a2a);
+    } else if (T.adorno === 'muneco') {   // ⛄ muñecos de nieve (en vez de calabazas)
+      const L = pocos(20, 98, 1.2), bola = new THREE.SphereGeometry(1, 14, 10), nariz = new THREE.ConeGeometry(0.06, 0.3, 6); nariz.rotateX(Math.PI / 2);
+      for (const [r, y] of [[0.55, 0.5], [0.4, 1.25], [0.28, 1.82]]) instancias(bola, L.length, (i, im) => { const p = L[i]; q.identity(); esc.setScalar(r); lugar.set(p.x, y, p.z); im.setMatrixAt(i, m4.compose(lugar, q, esc)); }, 0xffffff);
+      instancias(nariz, L.length, (i, im) => { const p = L[i]; q.setFromAxisAngle(eje, p.giro); esc.setScalar(1); lugar.set(p.x + Math.sin(p.giro) * 0.3, 1.82, p.z + Math.cos(p.giro) * 0.3); im.setMatrixAt(i, m4.compose(lugar, q, esc)); }, 0xff8a1f);
+    } else if (T.adorno === 'sombrilla') {   // ⛱️ un rincón de playa: arena, sombrilla y toalla
+      const p = pocos(1, 97, 5)[0];
+      if (p) {
+        const arena = new THREE.Mesh(new THREE.CircleGeometry(4.5, 24), new THREE.MeshLambertMaterial({ color: 0xf2d79a })); arena.rotation.x = -Math.PI / 2; arena.position.set(p.x, 0.03, p.z); scene.add(arena);
+        const palo = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 2.6, 6), new THREE.MeshLambertMaterial({ color: 0xffffff })); palo.position.set(p.x, 1.3, p.z); scene.add(palo);
+        const techo = new THREE.Mesh(new THREE.ConeGeometry(1.8, 0.7, 10), new THREE.MeshLambertMaterial({ color: 0xff5a5a })); techo.position.set(p.x, 2.6, p.z); scene.add(techo);
+        const toalla = new THREE.Mesh(new THREE.PlaneGeometry(1, 2), new THREE.MeshLambertMaterial({ color: 0x4dabf7 })); toalla.rotation.x = -Math.PI / 2; toalla.position.set(p.x + 1.6, 0.05, p.z + 0.5); scene.add(toalla);
+      }
+    } else if (T.adorno === 'mariposa') {   // 🦋 mariposas que vuelan cerca tuyo (dos alitas)
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0, -0.18, 0.02, 0.12, -0.16, 0.02, -0.1, 0, 0, 0, 0.18, 0.02, 0.12, 0.16, 0.02, -0.1], 3)); g.computeVertexNormals();
+      const im = new THREE.InstancedMesh(g, new THREE.MeshLambertMaterial({ color: 0xffffff, side: THREE.DoubleSide }), 40); im.frustumCulled = false;
+      for (let i = 0; i < 40; i++) im.setColorAt(i, col.setHex([0xffd43b, 0xff6fb5, 0x4dabf7, 0xffffff][i % 4]));
+      scene.add(im); estacion.mariposas = im;
+    }
+    // Lo que cae del cielo (hojas, nieve o pétalos), siempre alrededor tuyo
+    if (T.caen) {
+      const geo = T.caen.tipo === 'nieve' ? new THREE.IcosahedronGeometry(0.06, 0) : new THREE.PlaneGeometry(0.22, 0.14);
+      const im = new THREE.InstancedMesh(geo, new THREE.MeshLambertMaterial({ color: 0xffffff, side: THREE.DoubleSide }), T.caen.n); im.frustumCulled = false;
+      for (let i = 0; i < T.caen.n; i++) im.setColorAt(i, col.setHex(T.caen.colores[i % T.caen.colores.length]));
+      scene.add(im); estacion.cae = im;
+    }
+  }
+  const m4Est = new THREE.Matrix4(), qEst = new THREE.Quaternion(), vEst = new THREE.Vector3(), sEst = new THREE.Vector3(1, 1, 1), eEst = new THREE.Euler();
+  function updateEstacion(dt) {
+    if (!TEMP) return;
+    const enMundo = !MG.active; estacion.t += dt;
+    for (const im of [estacion.cae, estacion.mariposas]) if (im) im.visible = enMundo;
+    if (!enMundo) return;
+    const c = camera.position, t = estacion.t;
+    if (estacion.cae) {
+      const tipo = TEMP.caen.tipo;
+      for (let i = 0; i < TEMP.caen.n; i++) {
+        const p = particulaEstacion(i, t, tipo); vEst.set(c.x + p.x, p.y, c.z + p.z);
+        qEst.setFromEuler(eEst.set(p.giro, p.giro * 0.7, 0)); estacion.cae.setMatrixAt(i, m4Est.compose(vEst, qEst, sEst));
+      }
+      estacion.cae.instanceMatrix.needsUpdate = true;
+    }
+    if (estacion.mariposas) {
+      for (let i = 0; i < 40; i++) {
+        const a = t * (0.3 + (i % 5) * 0.05) + i * 1.7, r = 8 + (i % 7) * 3, ala = Math.sin(t * 14 + i) * 0.9;
+        vEst.set(ps.pos.x + Math.cos(a) * r, 0.8 + Math.sin(t * 1.3 + i) * 0.5 + (i % 3) * 0.4, ps.pos.z + Math.sin(a) * r);
+        qEst.setFromEuler(eEst.set(0, -a, ala * 0.5)); sEst.set(1, 1 + ala * 0.2, 1); estacion.mariposas.setMatrixAt(i, m4Est.compose(vEst, qEst, sEst));
+      }
+      sEst.set(1, 1, 1); estacion.mariposas.instanceMatrix.needsUpdate = true;
+    }
+  }
   // ---------- 🌳 Pasto y árboles: matas de pasto, florecitas y árboles con sombra ----------
   // No van donde hay algo construido (casas, parque, pueblo…): eso lo revisan libreDePasto y las paredes que ya existen
   (() => {
     const tapado = (x, z, m) => platforms.some(pl => pl.bottom < 1 && Math.abs(x - pl.x) < pl.hw + m && Math.abs(z - pl.z) < pl.hd + m);
     // Árboles: tronco sólido (no se atraviesa) y copa redonda o de pino
     const tronco = new THREE.MeshLambertMaterial({ color: 0x7a4b2a });
-    const hojas = [0x2f8f3a, 0x3aa346, 0x2a7d35].map(color => new THREE.MeshLambertMaterial({ color, flatShading: true }));
+    const hojas = (TEMP ? TEMP.hojas : [0x2f8f3a, 0x3aa346, 0x2a7d35]).map(color => new THREE.MeshLambertMaterial({ color, flatShading: true }));
+    const hojasPino = (TEMP ? TEMP.pinos : [0x2f8f3a, 0x3aa346, 0x2a7d35]).map(color => new THREE.MeshLambertMaterial({ color, flatShading: true }));
+    const nieve = new THREE.MeshLambertMaterial({ color: 0xffffff, flatShading: true });
     const troncoGeo = new THREE.CylinderGeometry(0.28, 0.38, 1, 7); troncoGeo.translate(0, 0.5, 0);
     const bola = new THREE.IcosahedronGeometry(1, 1), cono = new THREE.ConeGeometry(1, 1, 8); cono.translate(0, 0.5, 0);
     const parte = (geo, mat, x, y, z, sx, sy = sx, sz = sx) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.scale.set(sx, sy, sz); m.castShadow = m.receiveShadow = true; scene.add(m); return m; };
@@ -6570,8 +6878,9 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
       const h = a.alto, tr = a.tipo === 'pino' ? h * 0.3 : h * 0.45;
       parte(troncoGeo, tronco, a.x, 0, a.z, 1, tr, 1);
       if (a.tipo === 'pino') {
-        parte(cono, hojas[2], a.x, tr * 0.7, a.z, h * 0.32, h * 0.45);
-        parte(cono, hojas[0], a.x, tr * 0.7 + h * 0.28, a.z, h * 0.24, h * 0.4);
+        parte(cono, hojasPino[2], a.x, tr * 0.7, a.z, h * 0.32, h * 0.45);
+        parte(cono, hojasPino[0], a.x, tr * 0.7 + h * 0.28, a.z, h * 0.24, h * 0.4);
+        if (TEMP && TEMP.nieveEnPinos) parte(cono, nieve, a.x, tr * 0.7 + h * 0.5, a.z, h * 0.15, h * 0.2);   // ❄️ la puntita nevada
       } else {
         const r = h * 0.3;
         parte(bola, hojas[0], a.x, tr + r * 0.8, a.z, r);
@@ -6594,7 +6903,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
     const matas = lugaresPasto(TOUCH_GPU ? 1250 : 2500, libreMata, seededRandom(31));
     const mataMesh = new THREE.InstancedMesh(mataGeo, new THREE.MeshLambertMaterial({ color: 0xffffff }), matas.length);
     const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), esc = new THREE.Vector3(), lugar = new THREE.Vector3(), eje = new THREE.Vector3(0, 1, 0), col = new THREE.Color();
-    const tonos = [0x5fb03a, 0x6dbb45, 0x4fa232, 0x7cc753];
+    const tonos = TEMP ? TEMP.matas : [0x5fb03a, 0x6dbb45, 0x4fa232, 0x7cc753];
     matas.forEach((p, i) => {
       q.setFromAxisAngle(eje, p.giro); esc.set(p.tam, p.tam, p.tam); lugar.set(p.x, 0, p.z);
       mataMesh.setMatrixAt(i, m4.compose(lugar, q, esc)); mataMesh.setColorAt(i, col.setHex(tonos[i % tonos.length]));
@@ -6608,6 +6917,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
       florMesh.setMatrixAt(i, m4.compose(lugar, q, esc)); florMesh.setColorAt(i, col.setHex(i % 2 ? 0xffe36b : 0xffffff));
     });
     scene.add(florMesh);
+    if (TEMP) decorarEstacion(libreMata);
   })();
 
   // ---------- 🤖 Bot guía: un cubito que flota a tu lado y te explica el juego ----------
@@ -6990,7 +7300,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
 
     if (warnTimer > 0 && (warnTimer -= dt) <= 0) warn.classList.remove('show');
 
-    if (onTrampoline(ps) && ps.vel.y <= 0) { trampolineLaunch(ps); showToast('¡BOING! 100 metros'); unlock('boing'); }
+    if (onTrampoline(ps) && ps.vel.y <= 0) { trampolineLaunch(ps); sfxTrampolin(); showToast('¡BOING! 100 metros'); unlock('boing'); }
     updatePortal();
     const wantJump = keys.Space && !busy && !(MG.active && MG.active.noJump);
     const apretoRecien = keys.Space && !espacioAntes; espacioAntes = keys.Space;   // recién apretado (no mantenido)
@@ -7003,7 +7313,9 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
     }
     if (wantJump && ps.onGround) sfxSalto();   // ¡bup!
     MG.input = { moving, jumped: (wantJump && ps.onGround) || doble };   // la batería de "No mires abajo" lo usa para saber cuánto gastar
+    const vyAntes = ps.vel.y, enAire = !ps.onGround;
     physics(ps, dt, wantJump, (MG.active && MG.active.jump) || stats.jump);
+    if (enAire && ps.onGround && vyAntes < -7) sfxAterrizar(-vyAntes);   // ¡tump! (al caer de alto)
     bendState(ps, dt);
 
     // Enemigo: funciona como un killbrick que te persigue
@@ -7062,6 +7374,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
     }
 
     updateDayNight(dt);
+    updateEstacion(dt);
 
     renderer.render(scene, camera);
     requestAnimationFrame(tick);

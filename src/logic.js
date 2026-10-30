@@ -1743,9 +1743,9 @@ export function pistaCarrera() {
   caja(462.5, 466.5, -2, 2, Y, K.amarillo, { tipo: 'mueve', mueve: { amp: 3, vel: 1.4, fase: 1 } });
   caja(468.5, 472.5, -2, 2, Y, K.lila, { tipo: 'mueve', mueve: { eje: 'y', amp: 1.4, vel: 1.6, fase: 2 } });
   caja(474.5, 477.5, -2, 2, Y, 0x3ddc84, { tipo: 'lanza', lanza: { x: C.lanza.vel * 0.55, y: C.lanza.salto * 0.8 } });
-  // 16 · dos ruedas más, con barras rápidas
+  // 16 · dos ruedas más, con sus barras
   const r3 = disco(493.5, 6.5, 0.35, K.rosa), r4 = disco(506.5, 6.5, -0.35, K.lila);
-  barras.push({ x: 493.5, z: 0, y: Y, r: 6.5, w: 1.4, fase: 0.5, disco: r3 }, { x: 506.5, z: 0, y: Y, r: 6.5, w: -1.5, fase: 2, disco: r4 });
+  barras.push({ x: 493.5, z: 0, y: Y, r: 6.5, w: 1.0, fase: 0.5, disco: r3 }, { x: 506.5, z: 0, y: Y, r: 6.5, w: -1.1, fase: 2, disco: r4 });
   // 17 · el último puente y la META (amarilla, con su arco)
   puente(516, 529, 2.6, 4, 2, 0.9);
   caja(C.meta.x0 - 1, C.meta.x1, -C.meta.z, C.meta.z, Y, K.amarillo, { tipo: 'meta' });
@@ -1783,19 +1783,24 @@ export function golpePuno(pos, f, t, alto = 2) {
 }
 // 🚪 Las puertas de una fila: cuáles son de verdad (se rompen) y cuáles falsas. Depende de la semilla de la ronda
 // (la misma para todos: la manda el servidor). Siempre hay al menos 2 de verdad y al menos 1 falsa
+// Casi siempre hay UNA sola de verdad (a veces 2, muy pocas veces 3; nunca más): las demás son pared
 export function puertasReales(semilla, fila, n) {
-  const rnd = seededRandom((semilla >>> 0) * 31 + fila * 7919 + 1);
-  for (let intento = 0; intento < 50; intento++) {
-    const r = Array.from({ length: n }, () => rnd() < 0.45);
-    const k = r.filter(Boolean).length;
-    if (k >= 2 && k < n) return r;
-  }
-  return Array.from({ length: n }, (_, i) => i % 2 === 0);
+  const rnd = seededRandom((semilla >>> 0) * 31 + fila * 7919 + 1), u = rnd();
+  const cuantas = Math.min(n - 1, u < 0.65 ? 1 : u < 0.92 ? 2 : 3), r = Array(n).fill(false);
+  for (let k = 0; k < cuantas;) { const i = Math.floor(rnd() * n); if (!r[i]) { r[i] = true; k++; } }
+  return r;
 }
 // Dónde está cada puerta de una fila: { z (su centro), ancho } (con pilares entre ellas)
 export function lugaresPuertas(fila) {
   const largo = fila.z1 - fila.z0, paso = largo / fila.n;
   return Array.from({ length: fila.n }, (_, i) => ({ z: fila.z0 + paso * (i + 0.5), ancho: Math.min(CARRERA.puerta.ancho, paso - 0.4), paso }));
+}
+// 🥊 El PUÑO GUARDIÁN de cada fila de puertas: una viga con guantes arriba de las puertas. Si alguien pasa por ARRIBA
+// (más alto que cualquier puerta), le pega hacia atrás: no se puede saltar por encima de las puertas. Cubre todo el ancho.
+export const GUARDIAN = { medio: 2.5, desde: 4, vel: 20, salto: 6 };   // desde: 4 m sobre la pista (por una puerta nunca pasas tan alto)
+export function golpeGuardian(pos, fila) {
+  if (Math.abs(pos.x - fila.x) > GUARDIAN.medio || pos.y < CARRERA.y0 + GUARDIAN.desde || pos.z < fila.z0 - 1 || pos.z > fila.z1 + 1) return null;
+  return { x: -GUARDIAN.vel, y: GUARDIAN.salto, z: 0 };
 }
 // ¿Estás dentro de un tubo de viento? Devuelve cuánto te lleva { x, z } (m/s) o null
 export function vientoTubo(pos, tubos) {
@@ -1853,6 +1858,8 @@ export function zonaCarrera(i, n, cpMax = 0, pos = null) {
   return { x0: c.x - 12, x1: c.x + CARRERA.meta.x1 + 4, z0: c.z - 26, z1: c.z + 26, yMin: 0, yMax: Y + 4 + 6, velMax: CARRERA_VEL_MAX + (cercaTubo ? CARRERA.tubo.vel : 0),
     llegada: { x: c.x + s.x, z: c.z + s.z, radio: 4 }, pisoLlegada: Y, saltos: [],
     soporte: (x, z) => soporteCarrera(x - c.x, z - c.z),
+    // 🧱 en las zonas de puertas: entre las paredes (con un poquito de margen por lo que tarda internet). En el resto, te puedes caer
+    limiteZ: x => { const t = corredorEn(x - c.x); return t && { z0: c.z + t.zmin - 0.6, z1: c.z + t.zmax + 0.6 }; },
     // Reaparecer: venías cayéndote (por debajo de la pista) y apareces arriba de un checkpoint que ya alcanzaste
     reaparecer: (antes, p) => {
       if (antes.y > Y - 2 || Math.abs(p.y - Y) > 1.5 || Math.abs(p.z - c.z) > 10) return false;
@@ -1864,7 +1871,12 @@ export function zonaCarrera(i, n, cpMax = 0, pos = null) {
 // o: el número del obstáculo (primero los puños, después las barras, después los trampolines). Devuelve el empujón (para dejarlo moverse más) o null
 export function golpeValidoCarrera(o, pos, t) {
   const P = PISTA_CARRERA, c = origenCarrera(), rel = { x: pos.x - c.x, y: pos.y, z: pos.z - c.z };
-  if (!Number.isInteger(o) || o < 0 || o >= P.punos.length + P.barras.length + P.lanzas.length) return null;
+  if (!Number.isInteger(o) || o < 0 || o >= P.punos.length + P.barras.length + P.lanzas.length + P.puertas.length) return null;
+  if (o >= P.punos.length + P.barras.length + P.lanzas.length) {   // el puño guardián de una fila de puertas: tienes que estar cerca, arriba de las puertas
+    const f = P.puertas[o - P.punos.length - P.barras.length - P.lanzas.length];
+    if (Math.abs(rel.x - f.x) > GUARDIAN.medio + 3 || rel.y < CARRERA.y0 + GUARDIAN.desde - 2 || rel.z < f.z0 - 3 || rel.z > f.z1 + 3) return null;
+    return { x: -GUARDIAN.vel, y: GUARDIAN.salto, z: 0 };
+  }
   if (o >= P.punos.length + P.barras.length) {   // un trampolín: tienes que estar encima (o casi)
     const q = P.plats[P.lanzas[o - P.punos.length - P.barras.length]];
     if (Math.abs(rel.x - q.x) > q.ancho / 2 + 2 || Math.abs(rel.z - q.z) > q.largo / 2 + 2 || Math.abs(rel.y - q.y) > 2) return null;
@@ -1883,6 +1895,46 @@ export function golpeValidoCarrera(o, pos, t) {
   return { x: dx * CARRERA.barra.vel, y: CARRERA.barra.salto, z: dz * CARRERA.barra.vel };
 }
 export const PISTA_CARRERA = pistaCarrera();
+// 🧱 Las paredes invisibles: SOLO alrededor de las filas de puertas falsas (ahí nadie puede rodear las puertas por afuera).
+// En el resto de la pista no hay paredes: ¡te puedes caer por los costados! (los puños, las barras y el viento te pueden tirar)
+// Cubren desde 16 m antes hasta 16 m después de cada fila de puertas (más de lo que vuela un doble salto: ~20 m en total).
+// Para cada metro: lo más a la izquierda y a la derecha que llega algo. Después se juntan los metros iguales en tramos.
+// → [{ x0, x1, zmin, zmax }] (desde el origen de la pista)
+export const PARED = { margen: 0.4, grosor: 0.6, abajo: 8, arriba: 12, antes: 16, despues: 16 };   // más alta que un doble salto desde el escalón alto
+export function corredorCarrera() {
+  const P = PISTA_CARRERA, x0 = -8, x1 = Math.ceil(CARRERA.meta.x1), lados = [];
+  for (let x = x0; x < x1; x++) {
+    let zmin = Infinity, zmax = -Infinity;
+    for (const p of P.plats) {
+      const hw = p.redonda ? p.r : p.ancho / 2, hd = p.redonda ? p.r : p.largo / 2 + (p.mueve && p.mueve.eje !== 'y' ? p.mueve.amp : 0);
+      if (p.x + hw > x && p.x - hw < x + 1) { zmin = Math.min(zmin, p.z - hd); zmax = Math.max(zmax, p.z + hd); }
+    }
+    lados.push(zmin === Infinity ? null : { zmin, zmax });
+  }
+  // los huecos: la pared sigue como la del lado más ancho de los dos (la de antes y la de después)
+  const lleno = lados.map((l, i) => {
+    if (l) return l;
+    let a = i, b = i; while (a >= 0 && !lados[a]) a--; while (b < lados.length && !lados[b]) b++;
+    const A = lados[a] || lados[b], B = lados[b] || lados[a];
+    return { zmin: Math.min(A.zmin, B.zmin), zmax: Math.max(A.zmax, B.zmax) };
+  });
+  const tramos = [], enPuertas = x => P.puertas.some(f => x >= f.x - PARED.antes && x < f.x + PARED.despues);
+  lleno.forEach((l, i) => {
+    if (!enPuertas(x0 + i)) return;   // solo en las zonas de puertas
+    const zmin = l.zmin - PARED.margen, zmax = l.zmax + PARED.margen, u = tramos[tramos.length - 1];
+    if (u && u.x1 === x0 + i && Math.abs(u.zmin - zmin) < 1e-6 && Math.abs(u.zmax - zmax) < 1e-6) u.x1 = x0 + i + 1;
+    else tramos.push({ x0: x0 + i, x1: x0 + i + 1, zmin, zmax });
+  });
+  return tramos;
+}
+export const CORREDOR_CARRERA = corredorCarrera();
+// ¿Entre qué z puedes estar en el metro x? (null si ahí no hay paredes: afuera de las zonas de puertas)
+export function corredorEn(x) {
+  for (const t of CORREDOR_CARRERA) if (x >= t.x0 && x < t.x1) return t;
+  return null;
+}
+// El checkpoint siguiente, EN ORDEN: solo sube de a uno (si apareces más adelante de golpe, no cuenta)
+export const siguienteCheckpoint = (cp, x) => (checkpointDe(x) === cp + 1 ? cp + 1 : cp);
 
 // ---------- 🔶 Spleef (como Hex-A-Gone): otra silla del Modo Escuela ----------
 // Una arena redonda GIGANTE (100 m de ancho) con el piso hecho de HEXÁGONOS. Cuando pisas uno, al ratito se empieza a hundir
@@ -1975,16 +2027,16 @@ export const ESCALAS = {
 export const midiAFrecuencia = m => 440 * 2 ** ((m - 69) / 12);
 // bateria: 'nada' | 'suave' | 'normal' | 'fiesta' · corto: notas cortitas (como pellizcar cuerdas) · vol: qué tan fuerte
 export const MUSICAS = {
-  mundoDia:   { nombre: 'Tu mundo (día)', raiz: 60, escala: 'mayor', bpm: 92, progresiones: [[0, 4, 5, 3], [0, 5, 3, 4], [3, 4, 2, 5]], timbres: { bajo: 'triangle', acorde: 'sine', melodia: 'triangle' }, bateria: 'suave', vol: 0.8 },
-  mundoNoche: { nombre: 'Tu mundo (noche)', raiz: 57, escala: 'dorica', bpm: 68, progresiones: [[0, 3, 0, 4], [5, 3, 0, 4]], timbres: { bajo: 'sine', acorde: 'sine', melodia: 'sine' }, bateria: 'nada', vol: 0.6 },
-  salon:      { nombre: 'El salón', raiz: 65, escala: 'mayor', bpm: 104, progresiones: [[0, 5, 1, 4], [0, 3, 4, 0]], timbres: { bajo: 'triangle', acorde: 'triangle', melodia: 'square' }, bateria: 'suave', corto: true, vol: 0.7 },
-  torre:      { nombre: 'No mires abajo', raiz: 62, escala: 'dorica', bpm: 110, progresiones: [[0, 6, 5, 6], [0, 3, 6, 4], [5, 6, 0, 0]], timbres: { bajo: 'sawtooth', acorde: 'triangle', melodia: 'square' }, bateria: 'normal', vol: 0.75 },
-  escondidas: { nombre: 'Escondidas', raiz: 64, escala: 'menor', bpm: 92, progresiones: [[0, 5, 6, 4], [0, 3, 0, 4]], timbres: { bajo: 'triangle', acorde: 'sine', melodia: 'triangle' }, bateria: 'suave', corto: true, vol: 0.75 },
-  atrapadas:  { nombre: 'Atrapadas Nocivas', raiz: 55, escala: 'frigia', bpm: 124, progresiones: [[0, 1, 0, 6], [0, 6, 5, 1]], timbres: { bajo: 'sawtooth', acorde: 'sawtooth', melodia: 'square' }, bateria: 'normal', vol: 0.65 },
-  carrera:    { nombre: 'Carrera', raiz: 58, escala: 'mayor', bpm: 138, progresiones: [[0, 4, 5, 3], [3, 4, 0, 0], [5, 3, 0, 4]], timbres: { bajo: 'square', acorde: 'triangle', melodia: 'square' }, bateria: 'fiesta', corto: true, vol: 0.7 },
-  spleef:     { nombre: 'Spleef', raiz: 61, escala: 'lidia', bpm: 128, progresiones: [[0, 1, 0, 4], [5, 1, 0, 4]], timbres: { bajo: 'square', acorde: 'triangle', melodia: 'triangle' }, bateria: 'fiesta', corto: true, vol: 0.7 },
-  sandbox:    { nombre: 'Sandbox', raiz: 60, escala: 'lidia', bpm: 84, progresiones: [[0, 1, 4, 0], [5, 1, 0, 0]], timbres: { bajo: 'sine', acorde: 'sine', melodia: 'sine' }, bateria: 'nada', vol: 0.6 },
-  minijuego:  { nombre: 'Minijuego', raiz: 67, escala: 'mayor', bpm: 120, progresiones: [[0, 3, 4, 3], [0, 5, 3, 4]], timbres: { bajo: 'square', acorde: 'triangle', melodia: 'square' }, bateria: 'normal', corto: true, vol: 0.65 },
+  mundoDia:   { nombre: 'Tu mundo (día)', raiz: 60, escala: 'mayor', bpm: 92, bpmNormal: 124, progresiones: [[0, 4, 5, 3], [0, 5, 3, 4], [3, 4, 2, 5]], timbres: { bajo: 'triangle', acorde: 'sine', melodia: 'triangle' }, bateria: 'suave', vol: 1 },
+  mundoNoche: { nombre: 'Tu mundo (noche)', raiz: 57, escala: 'dorica', bpm: 68, bpmNormal: 96, progresiones: [[0, 3, 0, 4], [5, 3, 0, 4]], timbres: { bajo: 'triangle', acorde: 'sine', melodia: 'triangle' }, bateria: 'nada', vol: 1 },
+  salon:      { nombre: 'El salón', raiz: 65, escala: 'mayor', bpm: 104, bpmNormal: 115, progresiones: [[0, 5, 1, 4], [0, 3, 4, 0]], timbres: { bajo: 'triangle', acorde: 'triangle', melodia: 'square' }, bateria: 'suave', corto: true, vol: 0.7 },
+  torre:      { nombre: 'No mires abajo', raiz: 62, escala: 'dorica', bpm: 110, bpmNormal: 125, progresiones: [[0, 6, 5, 6], [0, 3, 6, 4], [5, 6, 0, 0]], timbres: { bajo: 'sawtooth', acorde: 'triangle', melodia: 'square' }, bateria: 'normal', vol: 0.75 },
+  escondidas: { nombre: 'Escondidas', raiz: 64, escala: 'menor', bpm: 92, bpmNormal: 110, progresiones: [[0, 5, 6, 4], [0, 3, 0, 4]], timbres: { bajo: 'triangle', acorde: 'sine', melodia: 'triangle' }, bateria: 'suave', corto: true, vol: 0.75 },
+  atrapadas:  { nombre: 'Atrapadas Nocivas', raiz: 55, escala: 'frigia', bpm: 124, bpmNormal: 130, progresiones: [[0, 1, 0, 6], [0, 6, 5, 1]], timbres: { bajo: 'sawtooth', acorde: 'sawtooth', melodia: 'square' }, bateria: 'normal', vol: 0.65 },
+  carrera:    { nombre: 'Carrera', raiz: 58, escala: 'mayor', bpm: 138, bpmNormal: 150, progresiones: [[0, 4, 5, 3], [3, 4, 0, 0], [5, 3, 0, 4]], timbres: { bajo: 'square', acorde: 'triangle', melodia: 'square' }, bateria: 'fiesta', corto: true, vol: 0.7 },
+  spleef:     { nombre: 'Spleef', raiz: 61, escala: 'lidia', bpm: 128, bpmNormal: 140, progresiones: [[0, 1, 0, 4], [5, 1, 0, 4]], timbres: { bajo: 'square', acorde: 'triangle', melodia: 'triangle' }, bateria: 'fiesta', corto: true, vol: 0.7 },
+  sandbox:    { nombre: 'Sandbox', raiz: 60, escala: 'lidia', bpm: 84, bpmNormal: 104, progresiones: [[0, 1, 4, 0], [5, 1, 0, 0]], timbres: { bajo: 'triangle', acorde: 'sine', melodia: 'sine' }, bateria: 'nada', vol: 0.95 },
+  minijuego:  { nombre: 'Minijuego', raiz: 67, escala: 'mayor', bpm: 120, bpmNormal: 128, progresiones: [[0, 3, 4, 3], [0, 5, 3, 4]], timbres: { bajo: 'square', acorde: 'triangle', melodia: 'square' }, bateria: 'normal', corto: true, vol: 0.65 },
 };
 // ¿Qué canción va aquí? modo: el minijuego (null = tu mundo) · fase: dónde estás en la escuela · noche: en tu mundo de noche
 export function lugarMusica({ modo = null, fase = null, noche = false } = {}) {
@@ -2019,9 +2071,63 @@ export function notaDeGrado(M, g) {
   return M.raiz + oct * 12 + E[i];
 }
 // El compás número n de la canción id: { bpm, tiempos: 4, notas: [{ t (en tiempos), dur (en tiempos), midi, voz, vel }] }
-// voz: 'bajo' | 'acorde' | 'arpegio' | 'melodia' | 'bombo' | 'caja' | 'hihat' | 'tic' | 'campana'
-// azar: para las variaciones chiquitas (cada vez distinto) · extra: { tic (cuenta regresiva), invierno (cascabeles) }
+// voz: 'bajo' | 'acorde' | 'arpegio' | 'melodia' | 'bombo' | 'caja' | 'hihat' | 'tic' | 'campana' | 'platillo'
+// azar: para las variaciones chiquitas (cada vez distinto) · extra: { tic (cuenta regresiva), invierno (cascabeles), estilo: 'normal' | 'lofi' }
+// Dos estilos: NORMAL (rápido y bailable: el de siempre) y LOFI (lento y tranquilo, con swing: el primero que hicimos)
+export const ESTILOS_MUSICA = ['normal', 'lofi'];
+export const leerEstilo = texto => (texto === 'lofi' ? 'lofi' : 'normal');
 export function compasMusica(id, n, intensidad = 0.3, azar = Math.random, extra = {}) {
+  return extra.estilo === 'lofi' ? compasLofi(id, n, intensidad, azar, extra) : compasNormal(id, n, intensidad, azar, extra);
+}
+// 🎧 Lofi: lento, con "swing" (las corcheas de a contratiempo llegan un poquito tarde, como tocado por una persona relajada)
+export const SWING = 0.08;
+function compasLofi(id, n, intensidad, azar, extra) {
+  const c = compasLento(id, n, intensidad, azar, extra);
+  for (const x of c.notas) if (Math.abs((x.t % 1) - 0.5) < 1e-9) x.t += SWING;
+  return c;
+}
+// 🎵 Normal: rápido, con bajo que camina, un "gancho" pegadizo que pregunta y responde, batería con síncopas,
+// redobles cada 4 compases, una subida (build) al final de algunas secciones y ¡un platillo! cuando arranca la siguiente (drop)
+const BAJOS = [[0, 0, 4, 0, 7, 0, 4, 2], [0, 7, 0, 4, 0, 7, 5, 4], [0, 0, 2, 4, 5, 4, 2, 1]];   // (en grados de la escala, sobre el acorde)
+const BOMBOS = [[0, 1.5, 2], [0, 0.75, 2, 2.5], [0, 1.5, 2.5], [0, 2, 2.75]];
+function compasNormal(id, n, intensidad, azar, extra) {
+  const M = MUSICAS[id], I = entre01(intensidad), seccion = Math.floor(n / COMPASES_POR_SECCION), en = n % COMPASES_POR_SECCION;
+  const prog = M.progresiones[seccion % M.progresiones.length], grado = prog[en % prog.length], siguiente = prog[(en + 1) % prog.length];
+  const fijo = azarFijo(semillaDe(id + '!', seccion));
+  const descanso = seccion % 4 === 3 && I < 0.7, sube = seccion % 2 === 1 && en >= 12, platillo = en === 0 && seccion > 0;
+  const notas = [], add = (t, dur, midi, voz, vel) => notas.push({ t, dur, midi, voz, vel: Math.min(1, vel) });
+  // Bajo que camina (corcheas); la última va de camino al acorde que viene
+  const patron = BAJOS[Math.floor(fijo() * BAJOS.length)];
+  patron.forEach((g, k) => add(k / 2, 0.42, notaDeGrado(M, (k === 7 ? siguiente - 1 : grado + g)) - 12, 'bajo', k % 2 ? 0.75 : 0.95));
+  // Acordes: golpecitos a contratiempo (suena saltarín); con acción, además un arpegio en semicorcheas
+  const acorde = [0, 2, 4].map(k => notaDeGrado(M, grado + k));
+  for (const t of [0.5, 1.5, 2.5, 3.5]) for (const m of acorde) add(t, 0.28, m, 'acorde', 0.55);
+  if (I >= 0.5) for (let k = 0; k < 16; k++) add(k / 4, 0.2, acorde[k % 3] + 12 * (k % 8 >= 4 ? 1 : 0), 'arpegio', 0.45 + 0.4 * I);
+  // El gancho: 8 corcheas fijas por sección. Compases pares = la PREGUNTA; impares = la RESPUESTA (el mismo ritmo, otras notas, termina en la nota del acorde)
+  const motivo = Array.from({ length: 8 }, () => ({ suena: fijo() < 0.55 + 0.3 * I, paso: [0, 2, 4, 7, 4, 2, 1, 3][Math.floor(fijo() * 8)] }));
+  const respuesta = en % 2 === 1;
+  if (!(descanso && en % 4 >= 2)) motivo.forEach((p, k) => {
+    if (!p.suena && !(respuesta && k === 6)) return;
+    let g = grado + (respuesta ? (k === 6 ? 7 : 4 - p.paso % 5) : p.paso);
+    if (azar() < 0.12) g += azar() < 0.5 ? 1 : -1;
+    add(k / 2, M.corto ? 0.3 : 0.45, notaDeGrado(M, g) + 12, 'melodia', 0.7 + 0.3 * I);
+  });
+  // Batería
+  if (!descanso) {
+    const bombo = I > 0.75 ? [0, 1, 2, 3, 3.5] : BOMBOS[Math.floor(fijo() * BOMBOS.length)];
+    if (!(sube && en === 15)) for (const t of bombo) add(t, 0.2, 36, 'bombo', 0.95);   // (en el último compás de la subida: sin bombo… ¡y después el drop!)
+    const redoble = en % 4 === 3 || (sube && en >= 14);
+    if (redoble) { const paso = sube && en === 15 ? 0.125 : 0.25, desde = sube && en >= 14 ? 0 : 3; for (let t = desde; t < 4; t += paso) add(t, 0.1, 38, 'caja', 0.5 + 0.5 * (t / 4)); }
+    else for (const t of [1, 3]) add(t, 0.2, 38, 'caja', 0.9);
+    const paso = I > 0.6 || sube ? 0.25 : 0.5;
+    for (let t = 0; t < 4; t += paso) add(t, 0.08, 42, extra.invierno ? 'campana' : 'hihat', t % 1 === 0.5 ? 0.75 : 0.45);
+  }   // (en la parte tranquila: sin batería)
+  if (platillo) add(0, 2, 49, 'platillo', 0.8);
+  if (extra.tic) for (let t = 0; t < 4; t++) add(t, 0.05, 84, 'tic', t === 0 ? 1 : 0.6);
+  return { bpm: Math.round(M.bpmNormal * (1 + 0.08 * I)), tiempos: 4, notas };
+}
+// (el de antes: lento y tranquilo — ahora es la base del estilo Lofi)
+function compasLento(id, n, intensidad = 0.3, azar = Math.random, extra = {}) {
   const M = MUSICAS[id], I = entre01(intensidad), seccion = Math.floor(n / COMPASES_POR_SECCION), enSeccion = n % COMPASES_POR_SECCION;
   const prog = M.progresiones[seccion % M.progresiones.length], grado = prog[enSeccion % prog.length];
   const tranquila = seccion % 4 === 3 && I < 0.7;   // cada 4 secciones, una parte tranquila (sin batería) — salvo que esté todo muy intenso
@@ -2059,3 +2165,48 @@ export function compasMusica(id, n, intensidad = 0.3, azar = Math.random, extra 
 export const VOLUMENES_MUSICA = [1, 0.6, 0.3, 0];
 export const siguienteVolumen = v => VOLUMENES_MUSICA[(Math.max(0, VOLUMENES_MUSICA.indexOf(v)) + 1) % VOLUMENES_MUSICA.length];
 export const leerVolumen = texto => { if (texto === null || texto === undefined || texto === '') return 0.6; const v = Number(texto); return VOLUMENES_MUSICA.includes(v) ? v : 0.6; };
+
+// ---------- 🍂❄️☀️🌸 Las estaciones (el calendario de Mathias, todos los años, con la fecha de la compu) ----------
+//  otoño: del 31 de octubre al 25 de noviembre · invierno: diciembre y enero · verano: marzo · primavera: mayo y julio
+//  Los demás días: el mundo de siempre (null)
+export function temporada(fecha) {
+  const m = fecha.getMonth() + 1, d = fecha.getDate();
+  if ((m === 10 && d === 31) || (m === 11 && d <= 25)) return 'otono';
+  if (m === 12 || m === 1) return 'invierno';
+  if (m === 3) return 'verano';
+  if (m === 5 || m === 7) return 'primavera';
+  return null;
+}
+// Para probar: ?temporada=otono (o invierno, verano, primavera, ninguna). Si no viene nada (o algo raro): la de la fecha
+export function temporadaDe(fecha, param) {
+  if (param === 'ninguna') return null;
+  return ['otono', 'invierno', 'verano', 'primavera'].includes(param) ? param : temporada(fecha);
+}
+// Cómo se ve cada estación. suelo: los colores de la textura del pasto · matas: el pasto · hojas: las copas redondas (pinos: los pinos)
+// cielo + mezcla: un tinte del cielo · sol: más o menos fuerte, y su color · caen: lo que cae del cielo · adorno: lo que hay en el pasto
+export const TEMPORADAS = {
+  otono: { nombre: 'Otoño', suelo: { base: '#7a8f3a', manchas: ['rgba(150,110,40,.35)', 'rgba(120,140,50,.3)'], hojitas: ['#8a8a30', '#a08a3a', '#6f8a2e', '#b0903a'] },
+    matas: [0x9a9a3a, 0xb09040, 0x8a8a35, 0xa8a045], hojas: [0xd9622b, 0xe8a23a, 0xb8442a], pinos: [0x3f7a3a, 0x4a7f35, 0x355f2a],
+    cielo: 0xffd9a8, mezcla: 0.12, sol: 1.05, solColor: 0xffe2b8, caen: { tipo: 'hoja', n: 160, colores: [0xd9622b, 0xe8a23a, 0xb8442a, 0x8a5a2b] },
+    suelto: { tipo: 'hoja', n: 1600, colores: [0xd9622b, 0xe8a23a, 0xb8442a, 0x8a5a2b, 0xf0c040] }, adorno: 'calabaza', flores: null },
+  invierno: { nombre: 'Invierno', suelo: { base: '#e9f0f5', manchas: ['rgba(200,215,235,.5)', 'rgba(255,255,255,.6)'], hojitas: ['#d5e0ea', '#c8d6e3', '#f4f8fb', '#b9c9d8'] },
+    matas: [0xdde8f0, 0xcfdde8, 0xeef4f8, 0xc5d5e2], hojas: [0xeef4f8, 0xdfe9f0, 0xf6fafc], pinos: [0x2c5e45, 0x2f6a4a, 0x264f3a],
+    cielo: 0xdfeeff, mezcla: 0.35, sol: 0.95, solColor: 0xe6f0ff, caen: { tipo: 'nieve', n: 500, colores: [0xffffff] },
+    suelto: { tipo: 'nieve', n: 900, colores: [0xffffff, 0xf2f7fb] }, adorno: 'muneco', flores: null, nieveEnPinos: true },
+  verano: { nombre: 'Verano', suelo: { base: '#66b23a', manchas: ['rgba(90,170,50,.35)', 'rgba(170,210,80,.3)'], hojitas: ['#5aa836', '#7cc753', '#4b9a2e', '#93d35a'] },
+    matas: [0x6dbb45, 0x7cc753, 0x5fb03a, 0x8fd060], hojas: [0x2f9a3a, 0x3fb04a, 0x2a8a35], pinos: [0x2a7d35, 0x2f8f3a, 0x2a7d35],
+    cielo: 0xfff0c8, mezcla: 0.15, sol: 1.18, solColor: 0xfff1d6, caen: null, suelto: null, adorno: 'sombrilla',
+    flores: { n: 700, colores: [0xff5a5a, 0xffd43b, 0xff8a3d, 0xffffff, 0xd25bff] } },
+  primavera: { nombre: 'Primavera', suelo: { base: '#5fb03a', manchas: ['rgba(80,160,50,.35)', 'rgba(130,200,80,.25)'], hojitas: ['#4b9a2e', '#6dbb45', '#3f8a28', '#7cc753'] },
+    matas: [0x5fb03a, 0x6dbb45, 0x4fa232, 0x7cc753], hojas: [0xffb7d5, 0xffffff, 0xff9fc7], pinos: [0x2f8f3a, 0x3aa346, 0x2a7d35],
+    cielo: 0xffe6f2, mezcla: 0.1, sol: 1.05, solColor: 0xfff6f0, caen: { tipo: 'petalo', n: 120, colores: [0xffb7d5, 0xffffff, 0xff9fc7] },
+    suelto: null, adorno: 'mariposa', flores: { n: 900, colores: [0xff6fb5, 0xffffff, 0xffd43b, 0xb48cff, 0x4dabf7] } },
+};
+// Lo que cae del cielo, alrededor tuyo: dónde está la partícula i en el segundo t (cae, se mece y vuelve a empezar arriba)
+// caja: el cubo alrededor tuyo (ancho y alto) · vel: qué tan rápido cae · Devuelve { x, y, z, giro } (relativo a ti)
+export function particulaEstacion(i, t, tipo, caja = { ancho: 60, alto: 22 }) {
+  const r = seededRandom(i * 9301 + 49297), x0 = (r() - 0.5) * caja.ancho, z0 = (r() - 0.5) * caja.ancho, fase = r() * 100;
+  const vel = tipo === 'nieve' ? 1.6 + r() * 0.8 : tipo === 'petalo' ? 1 + r() * 0.6 : 1.3 + r() * 0.7, meneo = tipo === 'nieve' ? 0.6 : 1.4;
+  const y = caja.alto - (((t * vel + fase) % caja.alto) + caja.alto) % caja.alto;
+  return { x: x0 + Math.sin(t * 0.9 + fase) * meneo, y, z: z0 + Math.cos(t * 0.7 + fase) * meneo, giro: t * 2 + fase };
+}

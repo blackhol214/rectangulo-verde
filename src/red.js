@@ -197,6 +197,9 @@ export function vigilarPos(antes, nuevo, ahora, zona, extra = 0, dirExtra = null
     return ok(enSuLugar, extra, VIGILA.maxSaldo, VIGILA.maxSaldoY, true);   // apareció en otro lado (o no llegó a tiempo): lo ponemos en su lugar
   }
   const p = { x: Math.min(zona.x1, Math.max(zona.x0, nuevo.x)), y: Math.min(techo, Math.max(piso, nuevo.y)), z: Math.min(zona.z1, Math.max(zona.z0, nuevo.z)) };
+  // Un corredor (la Carrera): en cada x, solo puedes estar entre sus paredes
+  const L = zona.limiteZ && zona.limiteZ(p.x);
+  if (L) p.z = Math.min(L.z1, Math.max(L.z0, p.z));
   let corregido = p.x !== nuevo.x || p.y !== nuevo.y || p.z !== nuevo.z;
   const dt = Math.max(0, (ahora - antes.t) / 1000);
   // ¿Reapareció en un checkpoint después de caerse? (la carrera dice si vale: solo en uno que ya alcanzó)
