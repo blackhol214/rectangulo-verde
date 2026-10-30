@@ -1798,6 +1798,50 @@ describe('🎃 Halloween: SpookyCoins y disfraces', () => {
     expect(cercaDelVendedor(T.x + 1, T.z)).toBe(true); expect(cercaDelVendedor(0, 0)).toBe(false);
   });
 });
+import { ganaSpooky, ojosMilOjos, OJO_MIL } from '../src/logic.js';
+describe('🎃 SpookyCoins: solo jugando de verdad', () => {
+  it('ganas jugando: la torre, una ronda de Escondidas o de Atrapadas, y los minijuegos del mundo', () => {
+    expect(ganaSpooky({ modo: 'escuela', fase: 'nomires' })).toBe(true);
+    expect(ganaSpooky({ modo: 'escuela', fase: 'escondidas', enRonda: true })).toBe(true);
+    expect(ganaSpooky({ modo: 'escuela', fase: 'atrapadas', enRonda: true })).toBe(true);
+    expect(ganaSpooky({ modo: 'maze' })).toBe(true);
+  });
+  it('no ganas en el salón, mirando a GILBERT, en la zona rara, en un resultado, ni en tu mundo', () => {
+    expect(ganaSpooky({ modo: 'escuela', fase: 'salon' })).toBe(false);
+    expect(ganaSpooky({ modo: 'sandbox', fase: 'sala' })).toBe(false);
+    expect(ganaSpooky({ modo: 'sandbox', fase: 'zona' })).toBe(false);
+    expect(ganaSpooky({ modo: 'escuela', fase: 'atrapadas', enRonda: true, resultado: true })).toBe(false);
+    expect(ganaSpooky({ modo: 'escuela', fase: 'escondidas', enRonda: false })).toBe(false);
+    expect(ganaSpooky({})).toBe(false);
+  });
+});
+describe('👁️ Mil ojos', () => {
+  it('unos 20 ojos grandes, que no se enciman', () => {
+    const o = ojosMilOjos();
+    expect(o.length).toBeGreaterThanOrEqual(18); expect(o.length).toBeLessThanOrEqual(24);
+    for (let i = 0; i < o.length; i++) for (let j = i + 1; j < o.length; j++) expect(Math.hypot(o[i].x - o[j].x, o[i].y - o[j].y, o[i].z - o[j].z)).toBeGreaterThanOrEqual(2 * OJO_MIL);
+    o.forEach(p => { expect(p.y).toBeGreaterThan(OJO_MIL); expect(p.y).toBeLessThan(2 - OJO_MIL); });
+  });
+});
+import { arrastreDe, girarAlrededor, carroPos as carroPosA, CARRO as CARRO_A } from '../src/logic.js';
+describe('🚗 Los carros y las tortugas te llevan encima', () => {
+  it('un cuadro normal (15 m/s a 60 cuadros por segundo): te lleva lo mismo que avanzó el carro', () => {
+    const a = carroPosA(0, 3), b = carroPosA(0, 3 + 1 / 60), m = arrastreDe(a, b);
+    expect(Math.hypot(m.dx, m.dz)).toBeCloseTo(CARRO_A.vel / 60, 2);
+  });
+  it('si la compu se traba (un cuadro de medio segundo = 7,5 m), te lleva igual (no te caes)', () => {
+    const m = arrastreDe({ x: 0, z: 0 }, { x: 7.5, z: 0 });
+    expect(m).toEqual({ dx: 7.5, dz: 0 });
+  });
+  it('cuando empieza otra ronda el carro aparece en su lugar y ese cuadro NO te arrastra', () => {
+    expect(arrastreDe(null, { x: 80, z: -40 })).toEqual({ dx: 0, dz: 0 });
+  });
+  it('si dobla, giras con él alrededor de su centro (y sigues arriba, a la misma distancia)', () => {
+    const p = girarAlrededor({ x: 2, z: 0 }, { x: 0, z: 0 }, Math.PI / 2);
+    expect(p.x).toBeCloseTo(0); expect(p.z).toBeCloseTo(-2);
+    expect(Math.hypot(p.x, p.z)).toBeCloseTo(2);
+  });
+});
 describe('🏃 Atrapadas: todos más rápidos', () => {
   it('todos corren a 15 y el servidor deja eso + lo que llevan las plataformas', () => {
     expect(AN2.vel).toBe(15);

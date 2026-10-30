@@ -167,10 +167,28 @@ export function sumarTiempoSpooky(segundos, dt) {
   const total = Math.max(0, segundos) + Math.max(0, dt), minutos = Math.floor(total / 60 + 1e-9);   // (+1e-9: que las sumas de 1/60 no se queden cortas)
   return { segundos: total - minutos * 60, ganados: minutos * SPOOKY.porMinuto };
 }
+// ¿Este momento cuenta como JUGAR (para ganar 🎃 por minuto)? Solo jugando de verdad: en la torre, en una ronda de
+// Escondidas o de Atrapadas, o en un minijuego del mundo. NO en el salón, ni mirando a GILBERT en el sandbox, ni en la zona rara,
+// ni en una pantalla de resultado, ni en tu mundo.  modo: el id del minijuego (o null) · fase: la de la Escuela · enRonda · resultado
+export function ganaSpooky({ modo = null, fase = null, enRonda = false, resultado = false } = {}) {
+  if (!modo || modo === 'sandbox' || resultado) return false;
+  if (modo !== 'escuela') return true;   // los minijuegos del mundo
+  if (fase === 'nomires') return true;
+  return (fase === 'escondidas' || fase === 'atrapadas') && enRonda;
+}
+// Los ojos del disfraz "Mil ojos": ~20 ojos grandes, bien repartidos por el cuerpo (sin encimarse)
+// cuerpo: ancho W, alto H, grosor D (el rectángulo del personaje). Cada ojo: { x, y, z, nx, nz } (hacia dónde mira)
+export const OJO_MIL = 0.13;   // el radio de cada ojo
+export function ojosMilOjos(W = 1, H = 2, D = 0.6) {
+  const out = [], filas = [0.32, 0.76, 1.2, 1.64].map(f => f * H / 2);
+  for (const y of filas) for (const x of [-W / 4, W / 4]) { out.push({ x, y, z: D / 2 + 0.03, nx: 0, nz: 1 }); out.push({ x, y, z: -D / 2 - 0.03, nx: 0, nz: -1 }); }
+  for (const y of [0.5, 1.05, 1.6].map(f => f * H / 2)) for (const s of [-1, 1]) out.push({ x: s * (W / 2 + 0.03), y, z: 0, nx: s, nz: 0 });
+  return out;
+}
 export const DISFRACES = [
   { id: 'aracnido', nombre: 'Arácnido puro', precio: 15, desc: 'Tu personaje de siempre… lleno de arañitas' },
   { id: 'dulce', nombre: 'Qué dulce', precio: 30, desc: 'Eres una calabaza (la mitad de alto) con dulces y chupetines; tus ojos son 2 chupetines' },
-  { id: 'milojos', nombre: 'Mil ojos', precio: 45, desc: 'Tu cuerpo lleno de ojos que parpadean' },
+  { id: 'milojos', nombre: 'Mil ojos', precio: 45, desc: 'Te vuelves blanco y lleno de ojos grandes de colores' },
   { id: 'fantasmita', nombre: 'Fantasmita', precio: 55, desc: 'Una sábana blanca que flota, con dos agujeros para mirar' },
   { id: 'momia', nombre: 'Momia', precio: 70, desc: 'Vendas por todos lados y un ojo rojo que brilla' },
 ];
@@ -1278,6 +1296,15 @@ export function partesTortuga(giro) {
     caparazon: parteGirada(giro, -L, L, T.ancho, T.caparazon),                        // el caparazón (donde te llevan)
     cabeza: parteGirada(giro, L, L + T.cabezaLargo, T.ancho * 0.45, T.cabeza),       // adelante: la cabeza
   };
+}
+// 🚗 Lo que te lleva un carro (o una tortuga) en este cuadro: cuánto se movió desde el cuadro anterior.
+// antes = null: recién empezó la ronda (o el intento) y el carro aparece en su lugar: ese cuadro NO te arrastra.
+// (No se mira la distancia: si la compu se traba medio segundo, el carro avanza mucho y te lleva igual, sin tirarte)
+export const arrastreDe = (antes, ahora) => (antes ? { dx: ahora.x - antes.x, dz: ahora.z - antes.z } : { dx: 0, dz: 0 });
+// Si el carro dobla, giras con él alrededor de su centro (para no quedar colgando)
+export function girarAlrededor(pos, centro, g) {
+  const rx = pos.x - centro.x, rz = pos.z - centro.z;
+  return { x: centro.x + rx * Math.cos(g) + rz * Math.sin(g), z: centro.z - rx * Math.sin(g) + rz * Math.cos(g) };
 }
 // Las cajas de todas las tortugas en el segundo t (en coordenadas del terreno), para chocar y subirse
 export function cajasTortugas(t) {

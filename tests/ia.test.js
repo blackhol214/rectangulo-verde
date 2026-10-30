@@ -54,6 +54,12 @@ describe('🧠 El cerebro', () => {
     const cambiados = m.filter(x => x !== 0).length;
     expect(cambiados).toBeGreaterThanOrEqual(1); expect(cambiados).toBeLessThanOrEqual(3);
   });
+  it('aprender: si algo da "no es un número" (NaN), no se rompe ni se queda con un cerebro roto', () => {
+    const c = cerebroNuevo(1), roto = { pesos: Array(N).fill(NaN) };
+    const n = aprender(c, roto, NaN, { nueva: 50, mejor: 0 });
+    expect(n.mejor.pesos.every(Number.isFinite)).toBe(true); expect(n.historial).toEqual([0]);
+    expect(Number.isFinite(aprender(c, { pesos: c.pesos }, 3, { nueva: NaN, mejor: NaN }).mejor.puntaje)).toBe(true);
+  });
   it('aprender: si la idea nueva saca más que el mejor, se la queda; si saca menos, no', () => {
     const c = cerebroNuevo(1), idea = { pesos: Array(N).fill(1) };
     expect(aprender(c, idea, 10, { nueva: 20, mejor: 5 }).mejor.pesos).toEqual(idea.pesos);
@@ -143,6 +149,30 @@ describe('🏃 Los intentos', () => {
     if (pase) { expect(pase.puntos).toBe(-5); expect(ep.agentes[pase.k].temblor).toBeGreaterThan(0); expect(ep.ronda.portador).toBe(pase.k); }
     expect(ep.agentes).toHaveLength(5);
     expect(sentidos(ep, 0).entradas).toHaveLength(ENTRADAS);
+  });
+});
+
+describe('🦘 The Guy tiene doble salto en la torre (como tú)', () => {
+  // Un cerebro que no camina y SIEMPRE quiere saltar: ¿hasta dónde sube? ¿cuántas veces salta en el aire?
+  const soloSaltar = () => { const w = Array(N).fill(0); w[17] = 1; return w; };
+  const saltar = (sala, pasos = 45) => {
+    const ep = crearEpisodio(sala, [soloSaltar()], null, 1, true), a = ep.agentes[0], y0 = a.y; let alto = 0, maxAire = 0;
+    for (let i = 0; i < pasos; i++) { pasoEpisodio(ep); alto = Math.max(alto, a.y - y0); maxAire = Math.max(maxAire, a.saltosAire); }
+    return { alto, maxAire, dobles: a.dobles, a };
+  };
+  it('en la torre sube casi el doble que con un salto (12,5²/60 ≈ 2,6 m) y salta UNA sola vez en el aire', () => {
+    const r = saltar('torre');
+    expect(r.alto).toBeGreaterThan(4.5);            // con un salto solo llegaría a ≈ 2,6 m
+    expect(r.maxAire).toBe(1);                       // nunca un tercer salto
+    expect(r.dobles).toBeGreaterThanOrEqual(1);
+  });
+  it('al aterrizar se recarga: en 3 segundos hace varios dobles saltos', () => {
+    const r = saltar('torre', 90);
+    expect(r.dobles).toBeGreaterThanOrEqual(2);
+  });
+  it('en Escondidas NO hay doble salto (como en el juego)', () => {
+    const r = saltar('escondidas');
+    expect(r.dobles).toBe(0); expect(r.alto).toBeLessThan(2.8);
   });
 });
 

@@ -419,10 +419,10 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module">
-import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, ESCUELA, ESCUELA_K, SANDBOX_K, enElHoyo, zonaRara, ZONA_RARA, HOYO, escuelaSiguiente, escuelaMezclar, SALON, salonSillas, sillaCercana, faseDeLuz, ARENA_AN, ARENA_AN_X, TERRENO_X, salidaAN, centroArenaAN, plataformasAN, desplazamientoAN, portalesAN, portalCerca, TERRENOS, CARROS, CARRO, carroPos, partesCarro, TORTUGAS, TORTUGA, tortugaPos, partesTortuga, cajasPieza, escaleraCanasta, cajasTerreno, escondites, BOT_ESC, botVe, ordenEscondites, cercaDeLaProfe, preguntasDeLaClase, escaparHTML, NO_MIRES, torreNoMires, seededRandom, debeReaparecer, GUIA_COMO, textoQueHago, lugarDelGuia, GUIA_COLORES, siguienteColorGuia, lugaresArboles, lugaresPasto, libreDePasto, ARBOLES, sombreroDeBot, ETAPAS, etapaDe, cajasDe, decoracionTorre, ovniDesplazamiento, HIELO, deslizar, puedeDobleSalto, gastarBateria, cargarBateria, hayBateria, BATERIA, SPOOKY, sumarTiempoSpooky, DISFRACES, disfrazById, comprarDisfraz, ponerDisfraz, TIENDA_HALLOWEEN, cercaDelVendedor, letrerosEtapas, elegirObjetivoAN, meAburro, MOTIVACION_AN, reboteCaminar, estaCaminando, volumenPasos, puedeAvisar, AVISO_LASER, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, VILLAGE_HOUSE, wallPieces, insideVillageHouse, villageBed, villageEntrance, villageExit, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, squashStretch, ACHIEVEMENTS, achievementById, coinAchievementsFor, TROPHY_TABLE, trophySpot, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
-         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-31-dulces'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
-import { NOMBRE_SALA, cerebrosNuevos, proximoCerebro, pensar, crearEpisodio, pasoEpisodio, semillaIntento, torreSandbox, BUSCADOR_SB, leerCerebros, nombreGuy, claveGuy, NOMBRE_GUY } from './src/ia.js?v=2026-10-31-dulces';
-import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, valoresEn, DIA_SEGUNDOS, lugarMoneda, corto, acercar, acercarAngulo, piezasExplosion, leerPreguntas, revisarPreguntas, PROFE, seVen, MG_TORRE, MG_ESCONDIDAS, MG_ATRAPADAS, MG_SOLO, ESC, AN, nuevaRondaAN, pasarAN, explotarAN, empujeAN, mareadoAN, seTocan } from './src/red.js?v=2026-10-31-dulces';
+import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, ESCUELA, ESCUELA_K, SANDBOX_K, enElHoyo, zonaRara, ZONA_RARA, HOYO, escuelaSiguiente, escuelaMezclar, SALON, salonSillas, sillaCercana, faseDeLuz, ARENA_AN, ARENA_AN_X, TERRENO_X, salidaAN, centroArenaAN, plataformasAN, desplazamientoAN, portalesAN, portalCerca, TERRENOS, CARROS, CARRO, carroPos, partesCarro, TORTUGAS, TORTUGA, tortugaPos, partesTortuga, arrastreDe, girarAlrededor, cajasPieza, escaleraCanasta, cajasTerreno, escondites, BOT_ESC, botVe, ordenEscondites, cercaDeLaProfe, preguntasDeLaClase, escaparHTML, NO_MIRES, torreNoMires, seededRandom, debeReaparecer, GUIA_COMO, textoQueHago, lugarDelGuia, GUIA_COLORES, siguienteColorGuia, lugaresArboles, lugaresPasto, libreDePasto, ARBOLES, sombreroDeBot, ETAPAS, etapaDe, cajasDe, decoracionTorre, ovniDesplazamiento, HIELO, deslizar, puedeDobleSalto, gastarBateria, cargarBateria, hayBateria, BATERIA, ganaSpooky, ojosMilOjos, OJO_MIL, SPOOKY, sumarTiempoSpooky, DISFRACES, disfrazById, comprarDisfraz, ponerDisfraz, TIENDA_HALLOWEEN, cercaDelVendedor, letrerosEtapas, elegirObjetivoAN, meAburro, MOTIVACION_AN, reboteCaminar, estaCaminando, volumenPasos, puedeAvisar, AVISO_LASER, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, VILLAGE_HOUSE, wallPieces, insideVillageHouse, villageBed, villageEntrance, villageExit, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, squashStretch, ACHIEVEMENTS, achievementById, coinAchievementsFor, TROPHY_TABLE, trophySpot, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
+         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-11-01-doble'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
+import { NOMBRE_SALA, cerebrosNuevos, proximoCerebro, pensar, crearEpisodio, pasoEpisodio, semillaIntento, torreSandbox, BUSCADOR_SB, leerCerebros, nombreGuy, claveGuy, NOMBRE_GUY } from './src/ia.js?v=2026-11-01-doble';
+import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, valoresEn, DIA_SEGUNDOS, lugarMoneda, corto, acercar, acercarAngulo, piezasExplosion, leerPreguntas, revisarPreguntas, PROFE, seVen, MG_TORRE, MG_ESCONDIDAS, MG_ATRAPADAS, MG_SOLO, ESC, AN, nuevaRondaAN, pasarAN, explotarAN, empujeAN, mareadoAN, seTocan } from './src/red.js?v=2026-11-01-doble';
 (() => {
   // iPhone ignora user-scalable=no: aquí se bloquea el zoom con dos dedos y el doble toque
   for (const ev of ['gesturestart', 'gesturechange']) document.addEventListener(ev, e => e.preventDefault(), { passive: false });
@@ -2787,6 +2787,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
     const T = MG.built.terrenos[i];
     if (!T.enUso) { platforms.push(...T.pls); T.grupo.visible = true; T.enUso = true; }
     for (const c of T.carros || []) c.giro = null;   // los carros empiezan de cero en cada ronda
+    for (const tg of T.tortugas || []) { tg.x = tg.z = null; tg.giro = undefined; }   // y las tortugas también
     return T;
   }
   function quitarTerrenos() {
@@ -2931,23 +2932,28 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
     // Las tortugas: despacito, por su ruta (te llevan encima igual que los carros)
     (T.tortugas || []).forEach((tg, i) => {
       const p = tortugaPos(i, tRonda), x = T.cx + p.x, z = T.cz + p.z, partes = partesTortuga(p.giro);
-      if (tg.x === null) { tg.x = x; tg.z = z; }
-      for (const { nombre, pl } of tg.partes) { const q = partes[nombre]; pl.dx = x - tg.x; pl.dz = z - tg.z; pl.dy = 0; pl.x = x + q.x; pl.z = z + q.z; pl.hw = q.hw; pl.hd = q.hd; }
-      tg.x = x; tg.z = z;
+      const m = arrastreDe(tg.x === null ? null : tg, { x, z });   // (recién empezó: no te arrastra ese cuadro)
+      // Si estás parado arriba y la tortuga dobla en una esquina, giras con ella
+      if (tg.giro !== undefined && tg.x !== null && p.giro !== tg.giro && tg.partes.some(q => ps.standing === q.pl)) {
+        const g = p.giro - tg.giro, np = girarAlrededor(ps.pos, tg, g); ps.pos.x = np.x; ps.pos.z = np.z; ps.facing += g; ps.obj.rotation.y = ps.facing;
+      }
+      for (const { nombre, pl } of tg.partes) { const q = partes[nombre]; pl.dx = m.dx; pl.dz = m.dz; pl.dy = 0; pl.x = x + q.x; pl.z = z + q.z; pl.hw = q.hw; pl.hd = q.hd; }
+      tg.x = x; tg.z = z; tg.giro = p.giro;
       tg.obj.position.set(p.x, 0, p.z); tg.obj.rotation.y = p.giro; tg.obj.userData.llave.rotation.y = tRonda * 3;   // la llave de cuerda gira
     });
     T.carros.forEach((c, i) => {
       const p = carroPos(i, tRonda), x = T.cx + p.x, z = T.cz + p.z, partes = partesCarro(p.giro, i);
-      if (c.giro === null) { c.giro = p.giro; c.x = x; c.z = z; }
+      const recien = c.giro === null;   // recién empezó la ronda (o el intento): el carro aparece en su lugar
+      if (recien) { c.giro = p.giro; c.x = x; c.z = z; }
       // Si estás parado en la cubierta y el carro dobla, giras con él alrededor del centro del carro
       if (p.giro !== c.giro && ps.standing === c.pl) {
-        const g = p.giro - c.giro, rx = ps.pos.x - c.x, rz = ps.pos.z - c.z;
-        ps.pos.x = c.x + rx * Math.cos(g) + rz * Math.sin(g); ps.pos.z = c.z - rx * Math.sin(g) + rz * Math.cos(g);
-        ps.facing += g; ps.obj.rotation.y = ps.facing;
+        const g = p.giro - c.giro, np = girarAlrededor(ps.pos, c, g);
+        ps.pos.x = np.x; ps.pos.z = np.z; ps.facing += g; ps.obj.rotation.y = ps.facing;
       }
       // Cuánto avanzó el carro este cuadro (eso es lo que te lleva encima); las cajas van con su forma según hacia dónde mira
+      const m = arrastreDe(recien ? null : c, { x, z });
       for (const [pl, parte] of [[c.pl, partes.cubierta], [c.cabina, partes.cabina]]) {
-        pl.dx = x - c.x; pl.dz = z - c.z; pl.dy = 0; pl.x = x + parte.x; pl.z = z + parte.z; pl.hw = parte.hw; pl.hd = parte.hd;
+        pl.dx = m.dx; pl.dz = m.dz; pl.dy = 0; pl.x = x + parte.x; pl.z = z + parte.z; pl.hw = parte.hw; pl.hd = parte.hd;
       }
       c.giro = p.giro; c.x = x; c.z = z;
       c.obj.position.set(p.x, 0, p.z); c.obj.rotation.y = p.giro;
@@ -3121,7 +3127,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
     if (solo) {
       a.jugadores = [0, 1, 2, 3, 4];
       a.ronda = nuevaRondaAN(a.jugadores, ahora);
-      a.bots = NOMBRES_BOTS_AN.map((n, i) => { const b = MG.built.botsAN && MG.built.botsAN[i] || hacerBotAN(BOT_COLORS[(i * 3) % BOT_COLORS.length]); b.obj.visible = true; b.vel.set(0, 0, 0); b.cuerpo.material.transparent = false; b.cuerpo.material.opacity = 1; b.meta = null; b.atascado = 0; b.esquivar = 0; b.portalListo = 0; return b; });
+      a.bots = NOMBRES_BOTS_AN.map((n, i) => { const b = MG.built.botsAN && MG.built.botsAN[i] || hacerBotAN(BOT_COLORS[(i * 3) % BOT_COLORS.length]); b.obj.visible = true; b.vel.set(0, 0, 0); b.cuerpo.material.transparent = false; b.cuerpo.material.opacity = 1; b.meta = null; b.atascado = 0; b.esquivar = 0; b.portalListo = 0; b.ignora = {}; b.seguimiento = null; return b; });
       MG.built.botsAN = a.bots;
     } else a.jugadores = datos.jugadores;
     Object.assign(MG.state, { fase: 'atrapadas', bateria: 0, an: a });
@@ -3904,7 +3910,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
       get noJump() { return this.noMove; },                                                   // …ni saltas (pero sí te caes)
       get onE() { return MG.state.fase === 'salon' ? sentarse : MG.state.fase === 'escondidas' && soyBuscador() && faseEsc() === 'buscar' ? intentarEncontrar : null; },   // E: sentarse · en Escondidas, encontrar
       get onQ() { const st = MG.state; return st.fase === 'nomires' || (st.fase === 'escondidas' && !st.esc.fantasma && !st.esc.resultado) || (st.fase === 'atrapadas' && !st.an.fantasma && !st.an.resultado) ? abrirCarga : null; },  // Q: responder para cargar batería
-      get eLabel() { return MG.state.fase === 'escondidas' ? '✋ Encontrar' : '✋ Sentarse'; },
+      get eLabel() { if (MG.state.fase === 'escondidas') return '✋ Encontrar'; const o = minigameOrigin(MG.k); return MG.state.fase === 'salon' && cercaDelVendedor(ps.pos.x - o.x, ps.pos.z - o.z) ? '🎃 Tienda' : '✋ Sentarse'; },
       // ¿Dónde estoy? (para la red: con quién te ves) · torre: 21 · Escondidas con amigos: 30 + terreno · solo: 99 (no ves a nadie)
       get mgCodigo() { const st = MG.state; if (st.fase === 'nomires') return MG_TORRE; if (st.fase === 'atrapadas') return st.an.solo ? MG_SOLO : MG_ATRAPADAS; if (st.fase === 'escondidas') return st.esc.solo ? MG_SOLO : MG_ESCONDIDAS + st.esc.terreno; return undefined; },
       // El cielo se pone oscuro en el espacio (con estrellas) y en el neón
@@ -3943,6 +3949,9 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
       // En el sandbox caminas libre por la sala mirando a tu bot (él nunca te empuja ni te lleva: no sabe que estás ahí)
       get camaraEn() { const sb = MG.state.sb, B = MG.built.sb; return MG.state.fase === 'sala' && sb && sb.seguir && B && B.guy ? B.guy.position : null; },   // "Seguir": solo la cámara
       get mgCodigo() { return MG_SOLO; },                    // nadie más te ve aquí (y tú no ves a nadie)
+      // 🦘 En la torre del sandbox tienes doble salto, igual que en la torre de verdad… ¡pero con energía infinita!
+      get dobleSalto() { const sb = MG.state.sb; return MG.state.fase === 'sala' && !!sb && sb.sala === 'torre'; },
+      energiaInfinita: true,
       get sky() { const sb = MG.state.sb; if (MG.state.fase !== 'sala') return 0x3b1d5e; return sb && sb.sala === 'atrapadas' ? 0x0b2e33 : sb && sb.sala === 'escondidas' ? 0xefe6d6 : 0x1e2a3a; },
       get area() {
         const m = ZONA_RARA.mitad - 1;
@@ -4164,6 +4173,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
   function pintarSeguirSB() { const sb = MG.state.sb; sbSeguir.textContent = `🎥 Seguir a ${sb.nombre}: ${sb.seguir ? 'SÍ' : 'NO'}`; sbSeguir.classList.toggle('elegido', !!sb.seguir); }
   function nuevoIntentoSB() {
     const sb = MG.state.sb;
+    if (sb.vista && sb.vista.T) { for (const c of sb.vista.T.carros || []) c.giro = null; for (const tg of sb.vista.T.tortugas || []) tg.x = tg.z = null; }   // (el reloj vuelve a 0)
     // Un intento prueba un cerebro nuevo (mutado) y el siguiente muestra lo mejor que sabe (así se ve cuánto aprendió)
     const muestra = sb.cerebros[0].intento % 2 === 1;
     sb.pruebas = sb.cerebros.map(c => (muestra ? { pesos: c.mejor.pesos } : proximoCerebro(c)));
@@ -4255,6 +4265,9 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
       // caminan igual que tú (si está caminando por el piso: no quieto, no en el aire, no mareado, no fantasma)
       const ac = a.accion, anda = a.vivo && a.suelo && !!ac && !ac.quieto && Math.hypot(ac.mx, ac.mz) > 0.15 && !(sb.sala === 'atrapadas' && mareadoAN(ep.ronda, k, ep.t * 1000));
       if (cuerpo) animarCaminar(b, cuerpo, H / 2, dt, anda);
+      // 🦘 ¡Hizo doble salto! El anillo y el sonido, como cuando lo haces tú (el sonido solo a velocidad normal: a x50 sería un concierto)
+      if ((a.dobles || 0) > (a.doblesVistos || 0)) { anilloSalto(b.position); if (sb.vel <= 1) sfxSalto(true); }
+      a.doblesVistos = a.dobles || 0;
       if (sb.sala === 'atrapadas') {
         if (a.vivoAntes && !a.vivo) explotarEn(b.position);
         a.vivoAntes = a.vivo;
@@ -4424,20 +4437,17 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
     // 👁️ Mil ojos: el cuerpo se pone BLANCO y se llena de ojos de verdad (blanco, iris de colores y pupila negra) que parpadean.
     // Los 2 ojitos negros de siempre se esconden
     milojos() {
-      const g = new THREE.Group(), pts = puntosEnCuerpo(40, 23), grupos = [pts.filter((_, i) => i % 2), pts.filter((_, i) => !(i % 2))];
+      const g = new THREE.Group(), pts = ojosMilOjos(W, H, D), R = OJO_MIL;   // ~20 ojos grandes, bien repartidos (no parpadean)
       const blanco = new THREE.MeshLambertMaterial({ color: 0xffffff }), negro = new THREE.MeshBasicMaterial({ color: 0x111111 }), iris = new THREE.MeshBasicMaterial({ color: 0xffffff });
       const COLORES_IRIS = [0x2f7de1, 0x2fae4e, 0xe0475f, 0x8e5bd9, 0xff8a1f, 0xffd23f, 0x4dd6c8, 0x8a5a33];
-      const mallas = grupos.map((lista, k) => {
-        const ojos = new THREE.Group(); g.add(ojos);
-        ojos.add(instancias(new THREE.SphereGeometry(0.085, 10, 8), blanco, lista, (M, p) => M.compose(v3.set(p.x, p.y, p.z), q.identity(), s3.set(1, 1, 0.5))));
-        const colores = instancias(new THREE.SphereGeometry(0.05, 10, 8), iris, lista, (M, p) => M.compose(v3.set(p.x + p.nx * 0.03, p.y, p.z + p.nz * 0.03), q.identity(), s3.set(1, 1, 0.45)));
-        lista.forEach((_, i) => colores.setColorAt(i, new THREE.Color(COLORES_IRIS[(i * 3 + k) % COLORES_IRIS.length])));
-        ojos.add(colores);
-        ojos.add(instancias(new THREE.SphereGeometry(0.024, 8, 6), negro, lista, (M, p) => M.compose(v3.set(p.x + p.nx * 0.055, p.y, p.z + p.nz * 0.055), q.identity(), s3.set(1, 1, 0.4))));
-        return ojos;
-      });
+      // Cada ojo mira hacia afuera: el iris y la pupila van un poquito adelante del globo
+      const mirando = (M, p, adelante, aplastado) => M.compose(v3.set(p.x + p.nx * adelante, p.y, p.z + p.nz * adelante), q.setFromEuler(e3.set(0, Math.atan2(p.nx, p.nz), 0)), s3.set(1, 1, aplastado));
+      g.add(instancias(new THREE.SphereGeometry(R, 14, 10), blanco, pts, (M, p) => mirando(M, p, 0, 0.55)));
+      const colores = instancias(new THREE.SphereGeometry(R * 0.6, 12, 8), iris, pts, (M, p) => mirando(M, p, R * 0.42, 0.45));
+      pts.forEach((_, i) => colores.setColorAt(i, new THREE.Color(COLORES_IRIS[i % COLORES_IRIS.length])));
+      g.add(colores);
+      g.add(instancias(new THREE.SphereGeometry(R * 0.28, 8, 6), negro, pts, (M, p) => mirando(M, p, R * 0.66, 0.4)));
       g.userData.colorCuerpo = 0xffffff; g.userData.ocultaOjos = true;
-      g.userData.anim = t => mallas.forEach((m, k) => { const parpadea = Math.sin(t * 2.3 + k * 2.1) > 0.92; m.children.forEach(c => { c.scale.y = parpadea ? 0.15 : 1; }); });
       return g;
     },
     // 👻 Fantasmita: una sábana blanca (medio transparente) con dos agujeros, que flota un poquito
@@ -4548,7 +4558,8 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
   function updateMinigame(dt) {
     if (!MG.active) return;
     MG.t += dt;
-    contarSpooky(dt);   // 🎃 20 por cada minuto jugado en un modo
+    { const st = MG.state, esc = st.esc, an = st.an;   // 🎃 20 por cada minuto JUGANDO (no en el salón, ni mirando a GILBERT, ni en un resultado)
+      if (ganaSpooky({ modo: minigameDef(MG.k).id, fase: st.fase, enRonda: !!(esc || an), resultado: !!((esc && esc.resultado) || (an && an.resultado)) })) contarSpooky(dt); }
     const o = minigameOrigin(MG.k), mode = MG.active;
     // No salirse de la zona del minijuego (ni caerse a los backrooms)
     if (mode.area) { const c = clampToArea(ps.pos.x - o.x, ps.pos.z - o.z, mode.area); ps.pos.x = o.x + c.x; ps.pos.z = o.z + c.z; }
@@ -6286,7 +6297,8 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
     const wantJump = keys.Space && !busy && !(MG.active && MG.active.noJump);
     const apretoRecien = keys.Space && !espacioAntes; espacioAntes = keys.Space;   // recién apretado (no mantenido)
     let doble = false;
-    if (MG.active && MG.active.dobleSalto && !busy && puedeDobleSalto({ enElPiso: ps.onGround, saltosEnAire: ps.saltosAire || 0, apretoRecien, bateria: MG.state.bateria })) {
+    if (ps.onGround) ps.saltosAire = 0;   // con los pies en el piso se recarga el doble salto
+    if (MG.active && MG.active.dobleSalto && !busy && puedeDobleSalto({ enElPiso: ps.onGround, saltosEnAire: ps.saltosAire || 0, apretoRecien, bateria: MG.active.energiaInfinita ? Infinity : MG.state.bateria })) {
       ps.vel.y = (MG.active.jump || stats.jump); ps.saltosAire = (ps.saltosAire || 0) + 1; doble = true;   // ¡doble salto!
       sfxSalto(true);
       anilloSalto(ps.pos);
@@ -6306,6 +6318,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
     updateVillage(dt);
     updateMinigame(dt);
     updateGuia(dt);
+    if (!halloweenEl.hidden && !(MG.active === MODES.escuela && MG.state.fase === 'salon')) halloweenEl.hidden = true;   // (si empezó una ronda o saliste, la tienda se cierra)
     animarDisfraces(t); animarVendedor(dt);   // 🎃 los ojos que parpadean, la sábana que flota y el fantasma de la tienda
     updateAnillo(dt);
     updateRed(dt);

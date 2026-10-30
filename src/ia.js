@@ -7,8 +7,8 @@
 //  3. Si con ese cerebro sacó MÁS puntos que con el mejor que tenía, se lo queda. Si no, lo tira.
 // Al principio sus pesos son al azar y además hace muchas cosas al azar ("explora"); con los intentos explora menos.
 // (las versiones ?v= tienen que ser las mismas que en index.html: así el navegador usa una sola copia de cada archivo)
-import { seededRandom, torreNoMires, botVe, tapanVista, saveKey, cajasDe, NO_MIRES, TERRENOS, cajasTerreno, OJO, BOT_ESC, plataformasAN, desplazamientoAN, portalesAN, portalCerca, ARENA_AN, CARROS, CARRO, carroPos, partesCarro, cajasTortugas, elegirObjetivoAN, launchSpeedForHeight, escondites, ordenEscondites } from './logic.js?v=2026-10-31-dulces';
-import { AN, ESC, nuevaRondaAN, pasarAN, explotarAN, seTocan, mareadoAN, empujeAN, limpiarNombre } from './red.js?v=2026-10-31-dulces';
+import { seededRandom, torreNoMires, botVe, tapanVista, saveKey, cajasDe, NO_MIRES, TERRENOS, cajasTerreno, OJO, BOT_ESC, plataformasAN, desplazamientoAN, portalesAN, portalCerca, ARENA_AN, CARROS, CARRO, carroPos, partesCarro, cajasTortugas, elegirObjetivoAN, launchSpeedForHeight, puedeDobleSalto, escondites, ordenEscondites } from './logic.js?v=2026-11-01-doble';
+import { AN, ESC, nuevaRondaAN, pasarAN, explotarAN, seTocan, mareadoAN, empujeAN, limpiarNombre } from './red.js?v=2026-11-01-doble';
 
 export const SALAS = ['torre', 'escondidas', 'atrapadas'];
 export const NOMBRE_SALA = { torre: 'No mires abajo', escondidas: 'Escondidas', atrapadas: 'Atrapadas Nocivas' };
@@ -91,10 +91,15 @@ export function juzgar(sala, pesosDeTodos, k, semilla, opciones = {}) {
 // Terminó un intento: visto = los puntos del intento que se vio · nota = { nueva, mejor } (lo que dijo el juez)
 // Si el cerebro nuevo sacó igual o más que el mejor, ¡se lo queda! (devuelve el cerebro nuevo, sin cambiar el viejo)
 export function aprender(c, prueba, visto, nota) {
+  visto = Number.isFinite(visto) ? visto : 0;   // (si algo raro dio "no es un número", cuenta como 0)
+  if (!Number.isFinite(nota.nueva)) nota = { ...nota, nueva: -Infinity };
+  if (!Number.isFinite(nota.mejor)) nota = { ...nota, mejor: -Infinity };
   const n = { ...c, intento: c.intento + 1, historial: [...c.historial, visto].slice(-200) };   // historial: los puntos de cada intento que se vio
-  if (nota.nueva > nota.mejor) { n.mejor = { pesos: prueba.pesos, puntaje: nota.nueva }; n.sigma = Math.max(0.08, c.sigma * 0.97); }   // ¡mejor! se lo queda
+  if (nota.nueva > nota.mejor && prueba.pesos.every(Number.isFinite)) { n.mejor = { pesos: prueba.pesos, puntaje: nota.nueva }; n.sigma = Math.max(0.08, c.sigma * 0.97); }   // ¡mejor! se lo queda
   else if (nota.nueva === nota.mejor) { n.mejor = { pesos: prueba.pesos, puntaje: nota.nueva }; n.sigma = Math.min(2, c.sigma * 1.05); }   // igual de bien: se lo queda, y la próxima prueba cosas más distintas
-  else { n.mejor = { ...c.mejor, puntaje: nota.mejor }; n.sigma = Math.min(2, c.sigma * 1.05); }   // no mejoró: prueba cambios un poquito más grandes
+  else { n.mejor = { ...c.mejor, puntaje: Number.isFinite(nota.mejor) ? nota.mejor : c.mejor.puntaje }; n.sigma = Math.min(2, c.sigma * 1.05); }   // no mejoró: prueba cambios un poquito más grandes
+  if (!n.mejor.pesos.every(Number.isFinite)) n.mejor = { ...c.mejor };   // (nunca se queda con un cerebro roto)
+  if (!Number.isFinite(n.mejor.puntaje)) n.mejor = { ...n.mejor, puntaje: Number.isFinite(c.mejor.puntaje) ? c.mejor.puntaje : 0 };
   n.notas = [...(c.notas || []), n.mejor.puntaje].slice(-200);   // notas: lo que saca su mejor cerebro (para el gráfico)
   return n;
 }
@@ -230,7 +235,7 @@ export function crearEpisodio(sala, cerebros, intentos, semilla, limpio = false,
     const ang = (k / n) * Math.PI * 2, r = n > 1 ? 12 : 0;   // en Atrapadas empiezan en un círculo de 12 m, como en el juego
     return { x: def.inicio.x + Math.cos(ang) * r, y: def.inicio.y, z: def.inicio.z + Math.sin(ang) * r, vy: 0, ex: 0, ez: 0, suelo: true, pisaba: true,
       pesos: cerebros[k], explora: limpio ? 0 : exploracion((intentos && intentos[k]) ?? 0), accion: null, cambia: 0, puntaje: 0, temblor: 0, vivo: true,
-      plat: 0, maxPlat: 0, quieto: 0, ultX: 0, ultZ: 0, visto: false, portalListo: 0 };
+      plat: 0, maxPlat: 0, saltosAire: 0, dobles: 0, quieto: 0, ultX: 0, ultZ: 0, visto: false, portalListo: 0 };
   });
   const ep = { sala, def, rnd, t: 0, fin: false, agentes, eventos: [] };
   if (sala === 'escondidas') {
@@ -322,9 +327,15 @@ export function pasoEpisodio(ep) {
     const m = Math.min(1, Math.hypot(ac.mx, ac.mz));
     const ux = m > 0.15 ? ac.mx / (Math.hypot(ac.mx, ac.mz) || 1) * m : 0, uz = m > 0.15 ? ac.mz / (Math.hypot(ac.mx, ac.mz) || 1) * m : 0;
     if (ac.saltar && a.suelo) { a.vy = FISICA.salto; a.suelo = false; }
+    // 🦘 En la torre también tiene DOBLE SALTO (como tú): en el aire, si "salta" otra vez, salta una vez más.
+    // Su "volver a apretar" es cuando ya dejó de subir (vy ≤ 0). En el sandbox la energía es infinita: no gasta batería.
+    else if (S === 'torre' && ac.saltar && puedeDobleSalto({ enElPiso: a.suelo, saltosEnAire: a.saltosAire, apretoRecien: a.vy <= 0, bateria: Infinity })) {
+      a.vy = FISICA.salto; a.saltosAire++; a.dobles++;   // (dobles: el juego lo cuenta para dibujar el anillo y el sonido)
+    }
     // 2. Se mueve chocando con las cajas del mapa (con el empujón que traiga, que se va frenando)
     const sobre = moverConCajas(a, (ux * vel + a.ex) * dt, (uz * vel + a.ez) * dt, cajasCerca(a.x, a.z), dt, def.piso);
     const freno = Math.exp(-(a.suelo ? 6 : 0.4) * dt); a.ex *= freno; a.ez *= freno;
+    if (a.suelo) a.saltosAire = 0;   // tocó el piso: se recarga el doble salto
     if (sobre && sobre.salto && a.suelo) { a.vy = launchSpeedForHeight(sobre.salto, FISICA.grav); a.suelo = false; }   // ¡un trampolín! (como en el juego)
     if (S !== 'torre') { a.x = Math.min(def.limX, Math.max(-def.limX, a.x)); a.z = Math.min(def.limZ, Math.max(-def.limZ, a.z)); }
     // 3. Lo que pasa en la torre: ¿llegó a una plataforma nueva? ¿volvió para atrás? ¿se cayó al piso?
@@ -336,7 +347,7 @@ export function pasoEpisodio(ep) {
         a.plat = en;
       } else {   // ¡se cayó al piso! Pierde puntos y vuelve a la última plataforma donde estuvo (como un checkpoint)
         sumar(ep, a, S, { tipo: 'caida' });
-        const p = def.plats[a.plat]; a.x = p.x; a.z = p.z; a.y = p.y; a.vy = 0;
+        const p = def.plats[a.plat]; a.x = p.x; a.z = p.z; a.y = p.y; a.vy = 0; a.saltosAire = 0;
       }
     }
     a.pisaba = a.suelo;
