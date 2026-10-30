@@ -14,7 +14,7 @@ describe('limpiarNombre', () => {
 describe('leerMensaje', () => {
   it('lee un saludo', () => {
     expect(leerMensaje(JSON.stringify({ tipo: 'hola', nombre: ' Leo ', color: 0x2fae4e, monedas: 5, look: { hat: 'capBlue', blaster: 1 } })))
-      .toEqual({ tipo: 'hola', nombre: 'Leo', color: 0x2fae4e, monedas: 5, look: { hat: 'capBlue', glasses: null, blaster: 1 } });
+      .toEqual({ tipo: 'hola', nombre: 'Leo', color: 0x2fae4e, monedas: 5, look: { hat: 'capBlue', glasses: null, blaster: 1, disfraz: null } });
   });
   it('lee una posición', () => {
     expect(leerMensaje(JSON.stringify({ tipo: 'pos', x: 1, y: 0, z: -3, rot: 0.5, mg: 1 })))
@@ -101,8 +101,8 @@ describe('leerMensaje: mensajes del mundo', () => {
 
 describe('cada uno con sus cosas', () => {
   it('leerLook arregla lo que venga mal', () => {
-    expect(leerLook({ hat: 'topHat', glasses: 'glassesPixel', blaster: 2 })).toEqual({ hat: 'topHat', glasses: 'glassesPixel', blaster: 2 });
-    expect(leerLook({ hat: 42, blaster: 7 })).toEqual({ hat: null, glasses: null, blaster: 0 });
+    expect(leerLook({ hat: 'topHat', glasses: 'glassesPixel', blaster: 2 })).toEqual({ hat: 'topHat', glasses: 'glassesPixel', blaster: 2, disfraz: null });
+    expect(leerLook({ hat: 42, blaster: 7 })).toEqual({ hat: null, glasses: null, blaster: 0, disfraz: null });
   });
   it('ya no hay compras del equipo ni billetera del equipo: esos mensajes se ignoran', () => {
     expect(leerMensaje(JSON.stringify({ tipo: 'nivel', id: 'blaster', nivel: 1 }))).toBeNull();
@@ -534,6 +534,14 @@ describe('🛡️ vigilarPos: el servidor no deja hacer trampa con la velocidad'
   });
 });
 
+describe('🎃 el disfraz se ve en el multijugador', () => {
+  it('leerLook acepta solo disfraces que existen', () => {
+    expect(leerLook({ hat: null, glasses: null, blaster: 0, disfraz: 'momia' }).disfraz).toBe('momia');
+    expect(leerLook({ disfraz: '<script>' }).disfraz).toBeNull();
+    expect(leerLook({ disfraz: 5 }).disfraz).toBeNull();
+    expect(leerLook(null).disfraz).toBeNull();
+  });
+});
 describe('suavizar a los amigos: los portales se ven de golpe', () => {
   it('si saltó lejos (un portal a una isla), aparece allá entero, sin deslizar la altura', () => {
     const a = [0, 0, 0, 0], b = [30, 10, 5, 1];   // 30 m de costado y 10 m arriba

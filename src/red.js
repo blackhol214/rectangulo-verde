@@ -41,9 +41,12 @@ const esEntero = (n, min, max) => Number.isInteger(n) && n >= min && n <= max;
 const esId = t => typeof t === 'string' && /^[A-Za-z0-9]{1,24}$/.test(t);
 
 // Cómo te ves: gorra, gafas y bláster (0 = sin bláster, 1 = bláster, 2 = Bláster 2.0)
+// disfraz: el de Halloween que tiene puesto (solo uno de la lista; si no, ninguno)
+export const DISFRACES_IDS = ['aracnido', 'dulce', 'milojos', 'fantasmita', 'momia'];
 export function leerLook(l) {
-  if (!l || typeof l !== 'object') return { hat: null, glasses: null, blaster: 0 };
-  return { hat: esId(l.hat) ? l.hat : null, glasses: esId(l.glasses) ? l.glasses : null, blaster: esEntero(l.blaster, 0, 2) ? l.blaster : 0 };
+  if (!l || typeof l !== 'object') return { hat: null, glasses: null, blaster: 0, disfraz: null };
+  return { hat: esId(l.hat) ? l.hat : null, glasses: esId(l.glasses) ? l.glasses : null, blaster: esEntero(l.blaster, 0, 2) ? l.blaster : 0,
+    disfraz: DISFRACES_IDS.includes(l.disfraz) ? l.disfraz : null };
 }
 
 // ---------- Modo profe: las preguntas de la clase ----------

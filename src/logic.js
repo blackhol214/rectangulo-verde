@@ -134,8 +134,8 @@ export const normalizeName = name => String(name).trim().replace(/\s+/g, ' ').to
 export const saveKey = name => `rectangulo-verde:partida:${normalizeName(name)}`;
 
 // Convierte la partida en texto para guardarla
-export function serializeSave({ coins, boxes, levels, dayPhase, pos, style, trophies = [] }) {
-  return JSON.stringify({ v: 1, coins, boxes, levels, dayPhase, pos: { x: pos.x, y: pos.y, z: pos.z }, style, trophies });
+export function serializeSave({ coins, boxes, levels, dayPhase, pos, style, trophies = [], spooky = 0, spookyT = 0, disfraces = [], disfraz = null }) {
+  return JSON.stringify({ v: 1, coins, boxes, levels, dayPhase, pos: { x: pos.x, y: pos.y, z: pos.z }, style, trophies, spooky, spookyT, disfraces, disfraz });
 }
 
 // Lee una partida guardada. Si el texto está roto o trae valores raros, los ignora.
@@ -151,8 +151,43 @@ export function parseSave(text, knownLevels) {
   const p = d.pos || {};
   const pos = [p.x, p.y, p.z].every(Number.isFinite) ? { x: p.x, y: p.y, z: p.z } : null;
   const trophies = Array.isArray(d.trophies) ? d.trophies.filter(t => typeof t === 'string') : [];   // las partidas viejas no tienen trofeos
-  return { coins: count(d.coins), boxes: count(d.boxes), levels, dayPhase: phase, pos, style: parseStyle(d.style), trophies };
+  // 🎃 SpookyCoins y disfraces (las partidas viejas no los tienen: empiezan en 0 y sin disfraces)
+  const disfraces = Array.isArray(d.disfraces) ? [...new Set(d.disfraces.filter(id => disfrazById(id)))] : [];
+  const disfraz = disfraces.includes(d.disfraz) ? d.disfraz : null;
+  const spookyT = Number.isFinite(d.spookyT) && d.spookyT >= 0 && d.spookyT < 60 ? d.spookyT : 0;
+  return { coins: count(d.coins), boxes: count(d.boxes), levels, dayPhase: phase, pos, style: parseStyle(d.style), trophies, spooky: count(d.spooky), spookyT, disfraces, disfraz };
 }
+
+// ---------- 🎃 Halloween: SpookyCoins y la tienda de disfraces (en una esquina del salón, atendida por un fantasma) ----------
+// Ganas 20 🎃 por cada minuto que juegas en cualquier modo (minijuegos, la Escuela, el sandbox; en tu mundo, no)
+// y 30 🎃 más cada vez que ganas un modo. Con ellas compras disfraces (uno puesto a la vez; tus amigos lo ven).
+export const SPOOKY = { porMinuto: 20, porGanar: 30 };
+// Sumar tiempo jugado: segundos que llevabas (menos de 1 minuto) + dt → { segundos (lo que sobra), ganados }
+export function sumarTiempoSpooky(segundos, dt) {
+  const total = Math.max(0, segundos) + Math.max(0, dt), minutos = Math.floor(total / 60 + 1e-9);   // (+1e-9: que las sumas de 1/60 no se queden cortas)
+  return { segundos: total - minutos * 60, ganados: minutos * SPOOKY.porMinuto };
+}
+export const DISFRACES = [
+  { id: 'aracnido', nombre: 'Arácnido puro', precio: 15, desc: 'Tu personaje de siempre… lleno de arañitas' },
+  { id: 'dulce', nombre: 'Qué dulce', precio: 30, desc: 'Eres una calabaza (la mitad de alto) con dulces y chupetines; tus ojos son 2 chupetines' },
+  { id: 'milojos', nombre: 'Mil ojos', precio: 45, desc: 'Tu cuerpo lleno de ojos que parpadean' },
+  { id: 'fantasmita', nombre: 'Fantasmita', precio: 55, desc: 'Una sábana blanca que flota, con dos agujeros para mirar' },
+  { id: 'momia', nombre: 'Momia', precio: 70, desc: 'Vendas por todos lados y un ojo rojo que brilla' },
+];
+export const disfrazById = id => DISFRACES.find(d => d.id === id) || null;
+// Comprar: si alcanza y no lo tienes, se descuenta y es tuyo. Devuelve { ok, spooky, disfraces, motivo }
+export function comprarDisfraz(spooky, disfraces, id) {
+  const d = disfrazById(id);
+  if (!d) return { ok: false, spooky, disfraces, motivo: 'no existe' };
+  if (disfraces.includes(id)) return { ok: false, spooky, disfraces, motivo: 'ya lo tienes' };
+  if (spooky < d.precio) return { ok: false, spooky, disfraces, motivo: `te faltan ${d.precio - spooky} 🎃` };
+  return { ok: true, spooky: spooky - d.precio, disfraces: [...disfraces, id], motivo: '' };
+}
+// Ponerse o sacarse un disfraz (uno a la vez; solo los que tienes)
+export const ponerDisfraz = (puesto, disfraces, id) => (id === puesto ? null : disfraces.includes(id) ? id : puesto);
+// La tienda: en la esquina de atrás a la izquierda del salón (mirando al pizarrón), lejos de la puerta y de las sillas
+export const TIENDA_HALLOWEEN = { x: 12.3, z: -9.8, vendedor: { x: 13.3, z: -10.8 } };   // el vendedor: un fantasmita
+export const cercaDelVendedor = (x, z, cerca = 2.6) => Math.hypot(x - TIENDA_HALLOWEEN.x, z - TIENDA_HALLOWEEN.z) < cerca;
 
 // ---------- Casa grande con sótano ----------
 // El sótano es casi del tamaño de la casa (2 m más largo) y está vacío. Su techo está 2 m bajo el suelo,
@@ -487,7 +522,8 @@ export const MINIGAMES = [
   { id: 'mix',      bot: 'coral',      name: 'Nubes y lava',          goal: 'Sube por las nubes con los bots celeste, turquesa y coral mientras sube la lava', reward: { coins: 120 } },
 ];
 // Cada minijuego vive lejos del mapa, en su propia zona
-export const minigameOrigin = k => ({ x: 2000 + k * 1000, z: 3000 });
+// (el sandbox queda más lejos, en otra fila: sus salas son grandes y así nunca se encima con el Modo Escuela)
+export const minigameOrigin = k => ({ x: 2000 + k * 1000, z: k === SANDBOX_K ? 9000 : 3000 });
 
 // ----- Amarillo: laberinto -----
 export const MAZE = { cols: 9, rows: 9, cell: 4, wallH: 3, seed: 2026, minPath: 24 };
@@ -633,7 +669,7 @@ export const INVERTED = {
   fleeDist: 16, panicDist: 7, braveAfter: 6, shopTime: 2.5, shop: { x: 0, z: 38 }, home: { x: 0, z: 30 }, caughtPause: 2,
 };
 export const INVERTED_K = MINIGAMES.length;   // su "número de minijuego" (para minigameOrigin)
-export const minigameDef = k => (k < MINIGAMES.length ? MINIGAMES[k] : k === ESCUELA_K ? ESCUELA : INVERTED);
+export const minigameDef = k => (k < MINIGAMES.length ? MINIGAMES[k] : k === ESCUELA_K ? ESCUELA : k === SANDBOX_K ? SANDBOX : INVERTED);
 // Colores invertidos: cada canal de color pasa a 255 − valor (blanco ↔ negro, amarillo ↔ azul…)
 export const invertColor = hex => 0xffffff ^ hex;
 // A qué moneda corre el jugador: la que está cerca de él y lejos del gigante
@@ -656,6 +692,34 @@ export const ESCUELA = {
   goal: '', reward: {},   // sin cartel al entrar (lo explica el bot guía) · el premio lo da cada modo al ganarlo
 };
 export const ESCUELA_K = MINIGAMES.length + 1;   // su "número de minijuego" (el Mundo al Revés es MINIGAMES.length)
+
+// ---------- 🕳️ El hoyo de la casa morada → la zona rara → el SANDBOX de The Guy ----------
+// En la casa del bot morado (la casa 3), el tapete no es un tapete: ¡es un HOYO! Si te caes, llegas a una zona rara
+// (colores y formas al azar). Ahí está el portal SANDBOX, donde tu bot "The Guy" aprende a jugar solito.
+export const SANDBOX = { id: 'sandbox', bot: 'The Guy', intro: 'Zona rara', name: 'Sandbox', goal: '', reward: {} };
+export const SANDBOX_K = MINIGAMES.length + 2;
+export const HOYO = { casa: 3 };
+// ¿Te caíste en el hoyo? (adentro del círculo del tapete de la casa morada, con los pies en el piso)
+export function enElHoyo(x, z, y) {
+  const h = VILLAGE.houses[HOYO.casa], r = VILLAGE_HOUSE.rug;
+  return y < 0.5 && Math.hypot(x - h.x, z - (h.z + r.dz)) < r.r - 0.3;
+}
+// La zona rara: un piso de baldosas de colores y formas raras flotando, todo al azar (pero siempre igual con la misma semilla).
+// Deja libre el medio (donde caes) y el camino a los dos portales: SANDBOX (adelante) y SALIDA (atrás)
+export const ZONA_RARA = { mitad: 30, baldosa: 6, portalSandbox: { x: 0, z: 22 }, portalSalida: { x: 0, z: -22 }, formas: 70, seed: 77 };
+export function zonaRara(seed = ZONA_RARA.seed) {
+  const Z = ZONA_RARA, rnd = seededRandom(seed), color = () => Math.floor(rnd() * 0xffffff);
+  const n = (2 * Z.mitad) / Z.baldosa, baldosas = [];
+  for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) baldosas.push({ x: -Z.mitad + Z.baldosa * (i + 0.5), z: -Z.mitad + Z.baldosa * (j + 0.5), color: color() });
+  const tipos = ['caja', 'esfera', 'cono', 'toro', 'cilindro', 'piramide'], formas = [];
+  const libre = (x, z) => Math.hypot(x, z) > 6 && Math.abs(x) > 4;   // el medio y el pasillo de los portales quedan libres
+  while (formas.length < Z.formas) {
+    const x = (rnd() * 2 - 1) * (Z.mitad - 2), z = (rnd() * 2 - 1) * (Z.mitad - 2);
+    if (!libre(x, z)) continue;
+    formas.push({ tipo: tipos[Math.floor(rnd() * tipos.length)], x, z, y: 0.5 + rnd() * 12, tam: 0.6 + rnd() * 2.6, color: color(), giro: rnd() * Math.PI * 2, gira: (rnd() * 2 - 1) * 1.5 });
+  }
+  return { baldosas, formas };
+}
 
 // El salón: 30 × 24 m, con el centro en el origen del minijuego. El pizarrón está al frente (z grande)
 // y la puerta de SALIDA atrás (z chico). Mirando al pizarrón, la izquierda es x grande.
@@ -697,6 +761,12 @@ export const NO_MIRES = {
 };
 // Las 10 etapas, de 100 m cada una. Cada una más difícil: plataformas más chicas (lado),
 // huecos más largos (hueco), que suben más (sube) y más saltos lejanos que necesitan doble salto (lejos: la probabilidad). piezas: [tipo de pieza, cuántas veces sale (peso)]
+// Los letreros de las etapas: van en la PRIMERA plataforma de cada etapa (en vez de un aviso en la pantalla)
+export function letrerosEtapas(plats) {
+  const out = [];
+  plats.forEach((p, i) => { if (!out.some(q => q.etapa === p.etapa)) { const e = ETAPAS.find(x => x.n === p.etapa); out.push({ i, etapa: p.etapa, texto: `Etapa ${p.etapa}: ${e ? e.nombre : ''}`, x: p.x, y: p.y, z: p.z }); } });
+  return out;
+}
 export const ETAPAS = [
   { n: 1, id: 'playa', nombre: 'Playa colorida', lejos: 0.02, lado: [3.2, 4], hueco: [0.4, 1], sube: [1.2, 1.7], piezas: [['arena', 3], ['balde', 1]] },
   { n: 2, id: 'bosque', nombre: 'Bosque puro', lejos: 0.04, lado: [2.8, 3.6], hueco: [0.6, 1.2], sube: [1.3, 1.8], piezas: [['pino', 5], ['descanso', 1]] },
@@ -923,6 +993,16 @@ export function decoracionTorre(seed = NO_MIRES.seed + 1) {
 }
 // ¿Te caíste al vacío? Solo si llegas al piso de abajo de la torre (la plataforma de inicio está a 1 m, no cuenta).
 // Si caes en una plataforma más abajo, no pasa nada: sigues desde ahí (y tu checkpoint no baja).
+// ---------- 🚶 Caminar, pasos, salto y el láser en la Escuela ----------
+// El rebote al caminar (el tuyo y el de los bots): sube y baja 8 cm al ritmo de los pasos; quieto (o en el aire), nada
+export const reboteCaminar = (fase, camina) => (camina ? Math.abs(Math.sin(fase)) * 0.08 : 0);
+// ¿Está caminando? Si se movió más de 1 m/s por el piso. (Más de 40 m/s no es caminar: es un portal o un empujón)
+export const estaCaminando = (vel, enPiso) => enPiso && vel > 1 && vel < 40;
+// Qué tan fuerte suenan tus pasos: en tu mundo, más fuerte (es pasto y estás tranquilo); en los modos, más bajito
+export const volumenPasos = enMundo => (enMundo ? 0.8 : 0.35);
+// El aviso de "no dispares en la Escuela": como mucho uno cada 3 segundos (para que no llene la pantalla)
+export const AVISO_LASER = { texto: '¿Qué estás intentando? Tienes que jugar, no aturdir a todos', cadaMs: 3000 };
+export const puedeAvisar = (ultimo, ahora, cadaMs = AVISO_LASER.cadaMs) => ultimo === null || ahora - ultimo >= cadaMs;
 export const debeReaparecer = (y, enElPiso) => (enElPiso && y < 0.5) || y < -1;
 
 // ----- La batería: moverte y saltar la gastan; responder bien la carga -----
@@ -1090,6 +1170,8 @@ const PIEZAS_SALON = [
   { t: 'trampolin', x: 16, z: 13, a: 8, l: 8, h: 2, salto: 24, color: 0xffc400 },     // → el asiento de una silla
   { t: 'trampolin', x: 35, z: 92, a: 8, l: 8, h: 2, salto: 41, color: 0x2fae4e },     // → el escritorio de la profe
   { t: 'trampolin', x: 90, z: 51, a: 8, l: 8, h: 2, salto: 40, color: 0x8e5bd9 },     // → la mesa de la derecha
+  // ⚡ Súper trampolín (brilla): te lanza altísimo… y caes arriba del escritorio de la profe
+  { t: 'trampolin', x: -38, z: 92, a: 8, l: 8, h: 2, salto: 70, super: true },
 ];
 const PIEZAS_HABITACION = [
   { t: 'cama', x: 77.5, z: 62.5, a: 45, l: 95, h: 27.5 },
@@ -1104,6 +1186,11 @@ const PIEZAS_HABITACION = [
   { t: 'esfera', x: -88, z: 20, a: 14, l: 14, h: 14, estilo: 'pelota', color: 0xff4b3e },
   { t: 'bloque', x: 85, z: -30, a: 12, l: 16, h: 3, estilo: 'libros' },
   { t: 'decor', x: -10, z: -20, a: 110, l: 95, h: 0.2, estilo: 'alfombra' },
+  // 🦖 Un dinosaurio de peluche (35 % del tamaño del oso), echado DEBAJO de la cama, tapado por la cobija. Es sólido:
+  // al lado queda espacio para meterte en la cueva de la cobija (entras agachado por debajo, que cuelga hasta 3 m del piso)
+  { t: 'bloque', x: 88, z: 40, a: 9, l: 15, h: 8, estilo: 'dino', color: 0x5cc85c, debajoCama: true },
+  // ⚡ Súper trampolín: ¡arriba de la cabecera de la cama!
+  { t: 'trampolin', x: 45, z: 105, a: 8, l: 8, h: 2, salto: 70, super: true },
 ];
 const PIEZAS_COCINA = [
   { t: 'mesa', x: 0, z: 10, a: 60, l: 40, h: 38, estilo: 'mesaCocina' },
@@ -1123,6 +1210,15 @@ const PIEZAS_COCINA = [
   { t: 'bloque', x: 43.5, z: -74, a: 3, l: 3, h: 2, estilo: 'azucar' },
   { t: 'decor', x: -40, z: -60, a: 10, l: 2.4, h: 2, estilo: 'platano' },
   { t: 'decor', x: 0, z: -40, a: 120, l: 70, h: 0.2, estilo: 'tapete' },
+  // Para subir a lo alto (tu salto llega a 2,6 m): el trampolín AMARILLO al refri y frutas que en verdad son trampolines
+  { t: 'trampolin', x: 75, z: 60, a: 10, l: 10, h: 2, salto: 93, color: 0xffd60a },   // → arriba del refri (90 m)
+  { t: 'trampolin', x: -38, z: 10, a: 8, l: 8, h: 2, salto: 41, estilo: 'naranja' },   // una naranja → la mesa (38 m)
+  ...[[-18, -38], [18, -38], [-18, 58], [18, 58]].map(([x, z]) => ({ t: 'trampolin', x, z, a: 6, l: 6, h: 2, salto: 25, estilo: 'limon' })),   // limones → los asientos de las sillas
+  { t: 'trampolin', x: -65, z: 62, a: 8, l: 8, h: 2, salto: 48, estilo: 'sandia' },    // una tajada de sandía → el mueble de la izquierda (y el abierto)
+  { t: 'trampolin', x: 45, z: 62, a: 8, l: 8, h: 2, salto: 48, estilo: 'naranja' },    // otra naranja → el mueble de la derecha
+  { t: 'trampolin', x: -100, z: -63, a: 6, l: 6, h: 2, salto: 18, estilo: 'limon' },   // un limón → el balde
+  // ⚡ Súper trampolín: el salto más alto de todos (cae arriba de los muebles)
+  { t: 'trampolin', x: -108, z: 85, a: 8, l: 8, h: 2, salto: 110, super: true },
 ];
 // Los 3 terrenos. spawn: dónde empiezan (el buscador en el centro, los demás alrededor).
 // escondites extra: lugares buenos que no son cuevas (alto: solo se llega trepando; el bot no busca ahí)
@@ -1133,7 +1229,7 @@ export const TERRENOS = [
     descripcion: 'Carros que se mueven, canastas con escaleras y un trampolín hasta la cama.',
     extra: [{ x: 77, z: 40 }, { x: 88, z: 95 }, { x: 70, z: 100, y: 27.5, alto: true }, { x: -70, z: 76, alto: true }] },
   { id: 'cocina', nombre: 'Cocina gigante', emoji: '🍳', ancho: 250, largo: 200, alto: 130, spawn: { x: 0, z: -45 }, piezas: PIEZAS_COCINA,
-    descripcion: 'Un refri enorme, una taza caída, cereal volcado y muebles abiertos.',
+    descripcion: 'Un refri enorme (con su trampolín amarillo), frutas que rebotan, una taza caída y muebles abiertos.',
     extra: [{ x: -100, z: -93 }, { x: 118, z: 55 }] },
 ];
 // Los carros de juguete de la habitación: andan RÁPIDO por toda la habitación, siempre por el mismo circuito
@@ -1141,23 +1237,59 @@ export const TERRENOS = [
 // depende solo del reloj de la ronda: así todos los jugadores los ven en el mismo lugar.
 export const CIRCUITO = [[-45, -103], [30, -103], [30, -55], [65, -55], [65, 0], [20, 0], [20, 70], [-40, 70], [-40, 30], [-45, -40]];
 export const CARRO = { largo: 15, ancho: 8, cubierta: 1, cabina: 6, vel: 15, cabinaLargo: 6 };   // la cubierta a 1 m: te subes de un saltito
-export const CARROS = [{ color: 0xe0475f }, { color: 0x2f7de1 }, { color: 0x2fae4e }];   // los 3 separados por un tercio de vuelta
-const tramos = () => CIRCUITO.map((p, i) => { const q = CIRCUITO[(i + 1) % CIRCUITO.length]; return { p, q, largo: Math.hypot(q[0] - p[0], q[1] - p[1]) }; });
-export const largoCircuito = () => tramos().reduce((s, t) => s + t.largo, 0);
-// Dónde está el carro i en el segundo t, y hacia dónde mira (giro: 0 = hacia +z)
-export function carroPos(i, t) {
-  const T = tramos(), L = T.reduce((s, q) => s + q.largo, 0);
-  let d = (((CARRO.vel * t + (i * L) / CARROS.length) % L) + L) % L;
+// Los 3 son distintos: un carro de carreras (bajito), una camioneta (con su caja atrás) y un bus (alto, con un escalón atrás)
+export const CARROS = [
+  { color: 0xe0475f, tipo: 'carrera', largo: 15, ancho: 7, cubierta: 1, cabina: 3.5, cabinaLargo: 5 },
+  { color: 0x2f7de1, tipo: 'camioneta', largo: 15, ancho: 8, cubierta: 1.8, cabina: 7, cabinaLargo: 6 },
+  { color: 0x2fae4e, tipo: 'bus', largo: 15, ancho: 8, cubierta: 1, cabina: 9, cabinaLargo: 11 },
+];
+// Un recorrido que da vueltas: dónde está algo que va a "vel" por esos puntos en el segundo t (desfase: 0 a 1 de la vuelta)
+const tramosDe = puntos => puntos.map((p, i) => { const q = puntos[(i + 1) % puntos.length]; return { p, q, largo: Math.hypot(q[0] - p[0], q[1] - p[1]) }; });
+export function posEnRuta(puntos, vel, t, desfase = 0) {
+  const T = tramosDe(puntos), L = T.reduce((s, q) => s + q.largo, 0);
+  let d = (((vel * t + desfase * L) % L) + L) % L;
   for (const { p, q, largo } of T) {
     if (d <= largo) { const k = d / largo; return { x: p[0] + (q[0] - p[0]) * k, z: p[1] + (q[1] - p[1]) * k, giro: Math.atan2(q[0] - p[0], q[1] - p[1]) }; }
     d -= largo;
   }
   const p = T[0].p; return { x: p[0], z: p[1], giro: 0 };
 }
+export const largoCircuito = () => tramosDe(CIRCUITO).reduce((s, t) => s + t.largo, 0);
+// Dónde está el carro i en el segundo t, y hacia dónde mira (giro: 0 = hacia +z)
+export const carroPos = (i, t) => posEnRuta(CIRCUITO, CARRO.vel, t, i / CARROS.length);
+// Las partes de una cosa que anda (relativas a su centro), según hacia dónde mira: una caja a lo largo, entre "desde" y "hasta"
+function parteGirada(giro, desde, hasta, ancho, top) {
+  const dx = Math.sin(giro), dz = Math.cos(giro), largo = hasta - desde, centro = (desde + hasta) / 2;
+  return { x: dx * centro, z: dz * centro, hw: Math.abs(dx) * largo / 2 + Math.abs(dz) * ancho / 2, hd: Math.abs(dz) * largo / 2 + Math.abs(dx) * ancho / 2, top };
+}
+// 🐢 Tortugas de cuerda: caminan despacito (siempre igual según el reloj). Te subes por la COLA (un escalón) y de ahí al caparazón,
+// y te llevan encima como los carros
+export const TORTUGA = { vel: 2.5, largo: 11, ancho: 8, caparazon: 4, cola: 1.8, colaLargo: 3, cabeza: 3, cabezaLargo: 3 };
+export const TORTUGAS = [
+  { color: 0x3e9b4f, ruta: [[-90, -55], [-62, -55], [-62, -15], [-90, -15]] },   // (lejos del camino de los carros y de los muebles)
+  { color: 0x2f8f8f, ruta: [[78, -60], [88, -60], [88, -50], [78, -50]] },
+  { color: 0x8a6d3b, ruta: [[-75, 36], [-55, 36], [-55, 45], [-75, 45]] },
+];
+export const tortugaPos = (i, t) => posEnRuta(TORTUGAS[i].ruta, TORTUGA.vel, t, 0);
+export function partesTortuga(giro) {
+  const T = TORTUGA, L = T.largo / 2;
+  return {
+    cola: parteGirada(giro, -L - T.colaLargo, -L, T.ancho * 0.4, T.cola),           // atrás: el escalón para subirte
+    caparazon: parteGirada(giro, -L, L, T.ancho, T.caparazon),                        // el caparazón (donde te llevan)
+    cabeza: parteGirada(giro, L, L + T.cabezaLargo, T.ancho * 0.45, T.cabeza),       // adelante: la cabeza
+  };
+}
+// Las cajas de todas las tortugas en el segundo t (en coordenadas del terreno), para chocar y subirse
+export function cajasTortugas(t) {
+  return TORTUGAS.flatMap((_, i) => {
+    const p = tortugaPos(i, t), partes = partesTortuga(p.giro);
+    return Object.values(partes).map(q => ({ x0: p.x + q.x - q.hw, x1: p.x + q.x + q.hw, z0: p.z + q.z - q.hd, z1: p.z + q.z + q.hd, y0: 0, y1: q.top }));
+  });
+}
 // Las partes del carro para chocar (relativas a su centro), según hacia dónde mira:
-// la cubierta (atrás, donde te subes) y la cabina (adelante, no se puede atravesar)
-export function partesCarro(giro) {
-  const dx = Math.sin(giro), dz = Math.cos(giro), C = CARRO, atras = C.largo - C.cabinaLargo;
+// la cubierta (atrás, donde te subes) y la cabina (adelante, no se puede atravesar). i: cuál carro (cada uno tiene su forma)
+export function partesCarro(giro, i = null) {
+  const dx = Math.sin(giro), dz = Math.cos(giro), C = i === null ? CARRO : { ...CARRO, ...CARROS[i] }, atras = C.largo - C.cabinaLargo;
   const caja = (centro, largo, alto) => ({ x: dx * centro, z: dz * centro, hw: Math.abs(dx) * largo / 2 + Math.abs(dz) * C.ancho / 2, hd: Math.abs(dz) * largo / 2 + Math.abs(dx) * C.ancho / 2, top: alto });
   return { cubierta: caja(-C.largo / 2 + atras / 2, atras, C.cubierta), cabina: caja(C.largo / 2 - C.cabinaLargo / 2, C.cabinaLargo, C.cabina) };
 }
@@ -1374,6 +1506,8 @@ export const GUIA_QUE_HAGO = {
   meteors: 'Meteoritos: sobrevive 30 segundos alejándote de las sombras rojas (ahí cae un meteorito).',
   mix: 'Nubes y lava: sube por las nubes con los bots celeste, turquesa y coral sin que la lava alcance a nadie.',
   inverted: 'Mundo al revés: ahora TÚ eres el gigante. Atrapa 10 veces al jugador en tu mitad (salta para alcanzarlo).',
+  sandbox: 'Zona rara: todo tiene colores y formas al azar. Camina al portal SANDBOX (adelante) para ver a tu bot The Guy aprender a jugar, o al portal SALIDA (atrás) para volver a tu mundo.',
+  sandboxSala: 'Sandbox: tu bot aprende solito probando y equivocándose. Arriba eliges la sala (No mires abajo, Escondidas o Atrapadas Nocivas), la velocidad (x1, x10 o x50) y le puedes cambiar el nombre. Cuando hace algo mal, ¡tiembla como licuadora! Lo que aprende se guarda en este navegador.',
   salon: 'Modo Escuela: cada silla es un juego. Acércate a una y pulsa E: la que brilla es «No mires abajo», la que se esconde es «Escondidas» y la que tiene la mancha verde es «Atrapadas Nocivas». La SALIDA está atrás.',
   atrapadas: 'Atrapadas Nocivas: el que tiene la mancha verde alien tiene 15 segundos para pasársela a otro tocándolo. ¡Si se le acaba el tiempo, explota! Gana el último que quede. Usa los portales verdes y las plataformas. Moverte gasta batería: pulsa Q y responde preguntas.',
   fantasmaAN: 'Atrapadas Nocivas: explotaste 💥 y ahora eres un fantasma. Todos te ven, pero ya no puedes tocar a nadie: mira cómo termina la ronda.',
@@ -1385,6 +1519,7 @@ export const GUIA_QUE_HAGO = {
 // ¿Dónde estás? id = el minijuego (null = el mundo normal) · fase = la del Modo Escuela · rol / fantasma = en Escondidas
 export function lugarDelGuia({ id = null, fase = null, rol = null, fantasma = false } = {}) {
   if (!id) return 'mundo';
+  if (id === 'sandbox') return fase === 'sala' ? 'sandboxSala' : 'sandbox';
   if (id !== 'escuela') return id in GUIA_QUE_HAGO ? id : 'mundo';
   if (fase === 'nomires') return 'nomires';
   if (fase === 'escondidas') return fantasma ? 'fantasma' : rol === 'buscar' ? 'buscar' : 'esconder';
@@ -1440,6 +1575,20 @@ export function portalesAN() {
   pares.forEach(([a, b]) => { const i = out.length; out.push({ ...a, par: i + 1 }, { ...b, par: i }); });
   return out;
 }
+// 🎯 La "motivación" del bot que tiene la mancha: persigue al más cercano que PUEDE alcanzar (que no está más alto que su salto).
+// Si alguien está muy arriba y el bot no avanza, se aburre de él por un rato (lo ignora) y busca a otro.
+// candidatos: [{ id, x, y, z }] · ignorados: { id: hasta (en ms) } · devuelve { id, alcanzable } o null
+export const MOTIVACION_AN = { salto: 2.6, sinAvanceMs: 2000, avanceMin: 1, olvidoMs: 6000 };
+export function elegirObjetivoAN(yo, candidatos, ignorados, ahora) {
+  const libres = candidatos.filter(c => !((ignorados[c.id] || 0) > ahora));
+  const puede = c => c.y - yo.y <= MOTIVACION_AN.salto;
+  const lista = libres.some(puede) ? libres.filter(puede) : libres;
+  let mejor = null, dm = Infinity;
+  for (const c of lista) { const d = Math.hypot(c.x - yo.x, c.z - yo.z); if (d < dm) { dm = d; mejor = c; } }
+  return mejor && { id: mejor.id, alcanzable: puede(mejor) };
+}
+// ¿Se aburre de ese objetivo? Si en los últimos 2 s no se acercó ni 1 m y está más alto de lo que salta
+export const meAburro = (distAntes, distAhora, alturaObjetivo, alturaYo) => alturaObjetivo - alturaYo > MOTIVACION_AN.salto && distAntes - distAhora < MOTIVACION_AN.avanceMin;
 // ¿Estás adentro de un portal? (devuelve su número, o -1)
 export function portalCerca(pos, portales) {
   return portales.findIndex(p => Math.abs(pos.x - p.x) < 1.2 && Math.abs(pos.z - p.z) < 1.2 && pos.y >= p.y - 0.5 && pos.y < p.y + 2);

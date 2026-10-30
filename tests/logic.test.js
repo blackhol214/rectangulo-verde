@@ -281,7 +281,7 @@ describe('guardado por usuario', () => {
   it('lo que se guarda se recupera igual', () => {
     const game = { coins: 130, boxes: 7, levels: { belt: 1, hopper: 1, assistant: 0, speed: 3 }, dayPhase: 0.375, pos: { x: 4, y: 0, z: 12.5 },
       style: { owned: ['capBlue', 'colorPink'], equipped: { hat: 'capBlue', color: 'colorPink', glasses: null } }, trophies: ['diamante'] };
-    expect(parseSave(serializeSave(game), LEVELS)).toEqual(game);
+    expect(parseSave(serializeSave(game), LEVELS)).toEqual({ ...game, spooky: 0, spookyT: 0, disfraces: [], disfraz: null });
   });
 
   it('un guardado roto o de otra versión no se carga', () => {
@@ -295,6 +295,7 @@ describe('guardado por usuario', () => {
     const raw = JSON.stringify({ v: 1, coins: -50, boxes: 2.9, levels: { belt: 1, magnet: 4, speed: 'mucho' }, dayPhase: 3, pos: { x: 1, y: 'a', z: 2 } });
     expect(parseSave(raw, LEVELS)).toEqual({
       coins: 0, boxes: 2, levels: { belt: 1, hopper: 0, assistant: 0, speed: 0 }, dayPhase: null, pos: null, style: emptyStyle(), trophies: [],
+      spooky: 0, spookyT: 0, disfraces: [], disfraz: null,
     });
   });
 });
@@ -1306,7 +1307,7 @@ describe('Escondidas: los terrenos gigantes', () => {
         expect(Math.abs(p.x) + p.a / 2).toBeLessThanOrEqual(T.ancho / 2);
         expect(Math.abs(p.z) + p.l / 2).toBeLessThanOrEqual(T.largo / 2);
       }
-      const solidas = T.piezas.filter(p => p.t !== 'decor' && !p.y);
+      const solidas = T.piezas.filter(p => p.t !== 'decor' && !p.y && !p.debajoCama);   // (lo que está debajo de la cama va encimado a propósito)
       for (let i = 0; i < solidas.length; i++) for (let j = i + 1; j < solidas.length; j++) {
         const a = solidas[i], b = solidas[j];
         const separadas = Math.abs(a.x - b.x) >= (a.a + b.a) / 2 || Math.abs(a.z - b.z) >= (a.l + b.l) / 2;
@@ -1387,7 +1388,7 @@ describe('Escondidas: los terrenos gigantes', () => {
   it('los carros nunca se meten en los muebles ni se salen del cuarto', () => {
     const T = TERRENOS[1], muebles = cajasTerreno(T).filter(c => c.y0 < CARRO.cabina && c.y1 > 0.5);
     for (let i = 0; i < CARROS.length; i++) for (let t = 0; t < largoCircuito() / CARRO.vel; t += 0.2) {
-      const c = carroPos(i, t), { cubierta, cabina } = partesCarro(c.giro);
+      const c = carroPos(i, t), { cubierta, cabina } = partesCarro(c.giro, i);
       for (const parte of [cubierta, cabina]) {
         const x0 = c.x + parte.x - parte.hw, x1 = c.x + parte.x + parte.hw, z0 = c.z + parte.z - parte.hd, z1 = c.z + parte.z + parte.hd;
         expect(Math.abs(c.x) + 8).toBeLessThan(T.ancho / 2);
@@ -1640,6 +1641,163 @@ describe('🛡️ Las zonas que vigila el servidor', () => {
 });
 import { ARENA_VEL_MAX } from '../src/logic.js';
 import { AN as AN2 } from '../src/red.js';
+import { reboteCaminar, estaCaminando, volumenPasos, puedeAvisar, AVISO_LASER } from '../src/logic.js';
+describe('🚶 Caminar, pasos, salto y el láser en la Escuela', () => {
+  it('el rebote al caminar: sube y baja hasta 8 cm; quieto, nada', () => {
+    expect(reboteCaminar(1.2, false)).toBe(0);
+    const r = [0, 0.5, 1, 1.5, 2, 2.5, 3].map(f => reboteCaminar(f, true));
+    r.forEach(v => { expect(v).toBeGreaterThanOrEqual(0); expect(v).toBeLessThanOrEqual(0.08); });
+    expect(Math.max(...r)).toBeGreaterThan(0.07);
+  });
+  it('caminar es moverse por el piso (ni quieto, ni en el aire, ni un portal)', () => {
+    expect(estaCaminando(12, true)).toBe(true);
+    expect(estaCaminando(0.2, true)).toBe(false);
+    expect(estaCaminando(12, false)).toBe(false);
+    expect(estaCaminando(300, true)).toBe(false);
+  });
+  it('los pasos suenan más fuerte en tu mundo que en los modos', () => {
+    expect(volumenPasos(true)).toBeGreaterThan(volumenPasos(false) * 2);
+    expect(volumenPasos(true)).toBeLessThanOrEqual(1);
+  });
+  it('el aviso del láser: como mucho uno cada 3 s', () => {
+    expect(puedeAvisar(null, 0)).toBe(true);
+    expect(puedeAvisar(1000, 2000)).toBe(false);
+    expect(puedeAvisar(1000, 1000 + AVISO_LASER.cadaMs)).toBe(true);
+    expect(AVISO_LASER.texto).toBe('¿Qué estás intentando? Tienes que jugar, no aturdir a todos');
+  });
+});
+import { cajasTortugas, TORTUGAS, TORTUGA, tortugaPos, partesTortuga, posEnRuta } from '../src/logic.js';
+describe('🙈 Escondidas: trampolines, frutas, súper trampolines, dinosaurio, carros y tortugas', () => {
+  const alcanzados = T => {   // las superficies altas a las que te lleva algún trampolín (o a las que llegas caminando desde ahí)
+    const cajas = cajasTerreno(T), tapada = c => cajas.some(o => o !== c && Math.abs(o.y0 - c.y1) < 0.5 && o.x0 <= c.x0 && o.x1 >= c.x1 && o.z0 <= c.z0 && o.z1 >= c.z1);   // (la pata de una mesa: arriba tiene la mesa)
+    const altos = cajas.slice(4).filter(c => c.y1 > 5 && Math.min(c.x1 - c.x0, c.z1 - c.z0) >= 3 && !c.salto && !tapada(c));
+    const llego = new Set(T.piezas.filter(p => p.t === 'trampolin').map(tr => destinoTrampolin(T, tr)).filter(Boolean));
+    let cambio = true;
+    while (cambio) { cambio = false; for (const c of altos) if (!llego.has(c) && [...llego].some(d => Math.abs(d.y1 - c.y1) < 0.5 && Math.max(c.x0 - d.x1, d.x0 - c.x1, c.z0 - d.z1, d.z0 - c.z1) <= 1)) { llego.add(c); cambio = true; } }
+    return { altos, llego };
+  };
+  it('cocina: a TODO lo alto (la mesa, las sillas, los muebles, el balde y el refri) se llega con algún trampolín', () => {
+    const { altos, llego } = alcanzados(TERRENOS[2]);
+    expect(altos.length).toBeGreaterThanOrEqual(8);
+    for (const c of altos) expect(llego.has(c), `superficie a ${c.y1} m en ${((c.x0 + c.x1) / 2).toFixed(0)}, ${((c.z0 + c.z1) / 2).toFixed(0)}`).toBe(true);
+    const refri = cajasTerreno(TERRENOS[2]).find(c => c.y1 === 90), amarillo = TERRENOS[2].piezas.find(p => p.color === 0xffd60a);
+    expect(destinoTrampolin(TERRENOS[2], amarillo)).toEqual(refri);   // el amarillo te deja arriba del refri
+    expect(TERRENOS[2].piezas.filter(p => ['naranja', 'limon', 'sandia'].includes(p.estilo)).length).toBeGreaterThanOrEqual(4);   // frutas que rebotan
+  });
+  it('súper trampolines: uno en cada terreno, mucho más altos que los normales, y te dejan arriba de algo', () => {
+    TERRENOS.forEach(T => {
+      const tr = T.piezas.filter(p => p.t === 'trampolin'), sup = tr.filter(p => p.super), normales = tr.filter(p => !p.super && p.color !== 0xffd60a);
+      expect(sup.length).toBeGreaterThanOrEqual(1);
+      for (const s of sup) { expect(s.salto).toBeGreaterThan(1.4 * Math.max(...normales.map(p => p.salto))); expect(destinoTrampolin(T, s)).not.toBeNull(); }
+    });
+  });
+  it('el dinosaurio: 35 % del oso, debajo de la cama (sólido) y con lugar al lado para esconderse bajo la cobija', () => {
+    const T = TERRENOS[1], dino = T.piezas.find(p => p.estilo === 'dino'), cama = T.piezas.find(p => p.t === 'cama');
+    expect(dino.h).toBeGreaterThan(25 * 0.3); expect(dino.h).toBeLessThan(25 * 0.4);   // el oso mide unos 25 m
+    expect(cajasPieza(dino)).toHaveLength(1);                                            // sólido
+    expect(Math.abs(dino.x - cama.x)).toBeLessThan(cama.a / 2); expect(dino.h).toBeLessThan(15);   // debajo de la cama (la base está a 15 m)
+    const lugar = T.extra.find(e => !e.alto && Math.abs(e.x - cama.x) < cama.a / 2 && Math.abs(e.z - cama.z) < cama.l / 2);
+    expect(lugar).toBeTruthy(); expect(Math.hypot(lugar.x - dino.x, lugar.z - dino.z)).toBeLessThan(15);
+  });
+  it('los 3 carros son distintos (cada uno con su forma)', () => {
+    expect(new Set(CARROS.map(c => c.tipo)).size).toBe(3);
+    expect(new Set(CARROS.map((_, i) => partesCarro(0, i).cabina.top)).size).toBe(3);
+    CARROS.forEach((_, i) => expect(partesCarro(0, i).cubierta.top).toBeLessThan(2.4));   // a todos te subes de un saltito
+  });
+  it('las tortugas de cuerda: despacito, siempre igual, te subes por la cola y no se meten en los muebles', () => {
+    expect(TORTUGAS.length).toBeGreaterThanOrEqual(2); expect(TORTUGA.vel).toBeLessThan(4);
+    expect(tortugaPos(1, 7.3)).toEqual(tortugaPos(1, 7.3));
+    const { cola, caparazon } = partesTortuga(0);
+    expect(cola.top).toBeLessThan(2.6); expect(caparazon.top - cola.top).toBeLessThan(2.6);   // de la cola al caparazón, de un salto
+    const T = TERRENOS[1], muebles = cajasTerreno(T).filter(c => c.y0 < TORTUGA.caparazon && c.y1 > 0.5);
+    for (let t = 0; t < 120; t += 0.5) for (const c of cajasTortugas(t)) {
+      const choca = muebles.find(m => c.x0 < m.x1 && m.x0 < c.x1 && c.z0 < m.z1 && m.z0 < c.z1);
+      expect(choca, `tortuga en ${c.x0.toFixed(0)}, ${c.z0.toFixed(0)}`).toBeUndefined();
+    }
+    const a = posEnRuta([[0, 0], [10, 0]], 1, 5), b = posEnRuta([[0, 0], [10, 0]], 1, 15);
+    expect(a.x).toBeCloseTo(5); expect(b.x).toBeCloseTo(5);   // ida y vuelta
+  });
+});
+import { elegirObjetivoAN, meAburro, MOTIVACION_AN } from '../src/logic.js';
+describe('🎯 Atrapadas: la motivación del bot que tiene la mancha', () => {
+  const yo = { x: 0, y: 0, z: 0 };
+  it('persigue al más cercano que puede alcanzar (no al que está trepado muy alto)', () => {
+    const c = [{ id: 1, x: 2, y: 10, z: 0 }, { id: 2, x: 9, y: 0, z: 0 }];
+    expect(elegirObjetivoAN(yo, c, {}, 0)).toEqual({ id: 2, alcanzable: true });
+  });
+  it('si todos están altos, va por el más cercano igual (para intentar subir)', () => {
+    expect(elegirObjetivoAN(yo, [{ id: 1, x: 2, y: 10, z: 0 }, { id: 3, x: 5, y: 12, z: 0 }], {}, 0)).toEqual({ id: 1, alcanzable: false });
+  });
+  it('al que ignora (por un rato) no lo persigue; después sí', () => {
+    const c = [{ id: 1, x: 2, y: 0, z: 0 }, { id: 2, x: 9, y: 0, z: 0 }], ign = { 1: 6000 };
+    expect(elegirObjetivoAN(yo, c, ign, 1000).id).toBe(2);
+    expect(elegirObjetivoAN(yo, c, ign, 7000).id).toBe(1);
+    expect(elegirObjetivoAN(yo, [{ id: 1, x: 2, y: 0, z: 0 }], ign, 1000)).toBeNull();
+  });
+  it('se aburre solo si está muy arriba y no avanza', () => {
+    expect(meAburro(10, 9.8, 8, 0)).toBe(true);    // arriba y sin avanzar
+    expect(meAburro(10, 6, 8, 0)).toBe(false);     // se está acercando
+    expect(meAburro(10, 9.8, 1, 0)).toBe(false);   // está a su altura: no se rinde
+    expect(MOTIVACION_AN.olvidoMs).toBeGreaterThan(MOTIVACION_AN.sinAvanceMs);
+  });
+});
+import { letrerosEtapas, ETAPAS as ETAPAS_L } from '../src/logic.js';
+describe('🗼 No mires abajo: letreros de las etapas', () => {
+  it('hay un letrero por etapa, en su primera plataforma, con su nombre', () => {
+    const plats = torreNoMires(), L = letrerosEtapas(plats);
+    expect(L).toHaveLength(ETAPAS_L.length);
+    L.forEach(l => {
+      expect(plats[l.i].etapa).toBe(l.etapa);
+      expect(plats.slice(0, l.i).every(p => p.etapa !== l.etapa)).toBe(true);   // la primera de esa etapa
+      expect(l.texto).toContain(ETAPAS_L.find(e => e.n === l.etapa).nombre);
+    });
+  });
+});
+import { SPOOKY, sumarTiempoSpooky, DISFRACES, disfrazById, comprarDisfraz, ponerDisfraz, TIENDA_HALLOWEEN, cercaDelVendedor, SALON as SALON_H, salonSillas as sillasH } from '../src/logic.js';
+import { DISFRACES_IDS } from '../src/red.js';
+describe('🎃 Halloween: SpookyCoins y disfraces', () => {
+  it('20 🎃 por cada minuto jugado (lo que sobra se guarda para el próximo minuto)', () => {
+    expect(sumarTiempoSpooky(0, 30)).toEqual({ segundos: 30, ganados: 0 });
+    expect(sumarTiempoSpooky(50, 15)).toEqual({ segundos: 5, ganados: 20 });
+    expect(sumarTiempoSpooky(0, 185)).toEqual({ segundos: 5, ganados: 60 });   // 3 minutos y 5 segundos
+    let s = 0, g = 0; for (let i = 0; i < 60 * 60 * 2; i++) { const r = sumarTiempoSpooky(s, 1 / 60); s = r.segundos; g += r.ganados; }
+    expect(g).toBe(40);   // 2 minutos a 60 cuadros por segundo
+    expect(SPOOKY.porGanar).toBe(30);
+  });
+  it('los disfraces: 5, con precios de 15 a 70, y "Arácnido puro" (15) y "Qué dulce" (30) como pidió Mathias', () => {
+    expect(DISFRACES).toHaveLength(5);
+    expect(disfrazById('aracnido')).toMatchObject({ nombre: 'Arácnido puro', precio: 15 });
+    expect(disfrazById('dulce')).toMatchObject({ nombre: 'Qué dulce', precio: 30 });
+    DISFRACES.forEach(d => { expect(d.precio).toBeGreaterThanOrEqual(15); expect(d.precio).toBeLessThanOrEqual(80); });
+    expect(DISFRACES.map(d => d.id)).toEqual(DISFRACES_IDS);   // la lista del servidor es la misma
+  });
+  it('comprar: si alcanza se descuenta; si no, no; no se compra dos veces', () => {
+    let r = comprarDisfraz(20, [], 'aracnido'); expect(r).toMatchObject({ ok: true, spooky: 5, disfraces: ['aracnido'] });
+    expect(comprarDisfraz(5, r.disfraces, 'aracnido').ok).toBe(false);
+    r = comprarDisfraz(10, [], 'dulce'); expect(r.ok).toBe(false); expect(r.motivo).toContain('20');
+    expect(comprarDisfraz(999, [], 'nada').ok).toBe(false);
+  });
+  it('ponerse y sacarse: uno a la vez, solo los que tienes', () => {
+    expect(ponerDisfraz(null, ['aracnido'], 'aracnido')).toBe('aracnido');
+    expect(ponerDisfraz('aracnido', ['aracnido'], 'aracnido')).toBe(null);          // otra vez: te lo sacas
+    expect(ponerDisfraz('aracnido', ['aracnido', 'dulce'], 'dulce')).toBe('dulce');  // cambias
+    expect(ponerDisfraz(null, [], 'momia')).toBe(null);                              // no lo tienes
+  });
+  it('se guarda con la partida (y las partidas viejas empiezan sin nada)', () => {
+    const base = { coins: 1, boxes: 0, levels: {}, dayPhase: 0.3, pos: { x: 0, y: 0, z: 0 }, style: emptyStyle(), trophies: [] };
+    const d = parseSave(serializeSave({ ...base, spooky: 77, spookyT: 12.5, disfraces: ['dulce', 'trucho'], disfraz: 'dulce' }), []);
+    expect(d).toMatchObject({ spooky: 77, spookyT: 12.5, disfraces: ['dulce'], disfraz: 'dulce' });
+    const viejo = parseSave(JSON.stringify({ v: 1, coins: 3, levels: {}, pos: { x: 0, y: 0, z: 0 } }), []);
+    expect(viejo).toMatchObject({ spooky: 0, spookyT: 0, disfraces: [], disfraz: null });
+  });
+  it('la tienda está en una esquina del salón, lejos de la puerta y de las sillas', () => {
+    const T = TIENDA_HALLOWEEN;
+    expect(Math.abs(T.x)).toBeLessThan(SALON_H.ancho / 2); expect(Math.abs(T.z)).toBeLessThan(SALON_H.largo / 2);
+    expect(Math.abs(T.x - SALON_H.puerta.x)).toBeGreaterThan(5);
+    sillasH().forEach(s => expect(Math.hypot(s.x - T.x, s.z - T.z)).toBeGreaterThan(2.5));
+    expect(cercaDelVendedor(T.x + 1, T.z)).toBe(true); expect(cercaDelVendedor(0, 0)).toBe(false);
+  });
+});
 describe('🏃 Atrapadas: todos más rápidos', () => {
   it('todos corren a 15 y el servidor deja eso + lo que llevan las plataformas', () => {
     expect(AN2.vel).toBe(15);
