@@ -2222,3 +2222,23 @@ describe('🎵 Música Normal (rápida) y 🎧 Lofi', () => {
     expect(leerEstilo('lofi')).toBe('lofi'); expect(leerEstilo(null)).toBe('normal'); expect(leerEstilo('rock')).toBe('normal');
   });
 });
+
+import { CALIDADES, leerCalidad, leerNivel, siguienteCalidad, calidadInicial, bajarCalidad } from '../src/logic.js';
+describe('⚙️ Calidad de los gráficos', () => {
+  it('Baja hace menos trabajo que Media, y Media menos que Alta', () => {
+    const [A, M, B] = ['alta', 'media', 'baja'].map(k => CALIDADES[k]);
+    for (const k of ['ratioMax', 'sombraMapa', 'niebla', 'pasto', 'flores', 'extra', 'particulas']) { expect(M[k], k).toBeLessThanOrEqual(A[k]); expect(B[k], k).toBeLessThan(A[k]); }
+    expect(B.sombras).toBe(false); expect(A.sombras).toBe(true);
+  });
+  it('en Auto empieza según la compu (núcleos, memoria, si es táctil)', () => {
+    expect(calidadInicial({ nucleos: 8, memoria: 8 })).toBe('alta');
+    expect(calidadInicial({ nucleos: 4, memoria: 8 })).toBe('media'); expect(calidadInicial({ nucleos: 8, memoria: 8, tactil: true })).toBe('media');
+    expect(calidadInicial({ nucleos: 2 })).toBe('baja'); expect(calidadInicial({ memoria: 2, nucleos: 8 })).toBe('baja');
+    expect(calidadInicial({})).toBe('alta');   // (Safari no dice cuántos núcleos ni cuánta memoria)
+  });
+  it('si va lento baja un nivel (nunca sube sola); el botón pasa Auto → Alta → Media → Baja → Auto; lo guardado raro vuelve a Auto', () => {
+    expect(bajarCalidad('alta', 20)).toBe('media'); expect(bajarCalidad('media', 20)).toBe('baja'); expect(bajarCalidad('baja', 10)).toBe('baja'); expect(bajarCalidad('alta', 50)).toBe('alta');
+    expect(['auto', 'alta', 'media', 'baja'].map(siguienteCalidad)).toEqual(['alta', 'media', 'baja', 'auto']);
+    expect(leerCalidad('ultra')).toBe('auto'); expect(leerCalidad(null)).toBe('auto'); expect(leerNivel('auto')).toBeNull(); expect(leerNivel('baja')).toBe('baja');
+  });
+});

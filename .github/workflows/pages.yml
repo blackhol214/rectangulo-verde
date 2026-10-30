@@ -1,5 +1,6 @@
 # Publica el juego en GitHub Pages cada vez que se sube algo a main.
-# El juego corre entero en el navegador, así que basta con servir index.html y src/.
+# El juego corre entero en el navegador: se sirven index.html y src/, más lo de instalarlo como app (sw.js, manifest, iconos)
+# y lo de compartir (og.png y las páginas de los logros: las genera node scripts/generar-imagenes.mjs y se suben al repo).
 # Primero corren los tests: si fallan, no se publica.
 name: Publicar en GitHub Pages
 
@@ -40,8 +41,8 @@ jobs:
       - name: Preparar la carpeta del sitio
         run: |
           mkdir _site
-          cp index.html _site/
-          cp -r src _site/
+          cp index.html sw.js manifest.webmanifest og.png _site/
+          cp -r src iconos logros _site/
       - uses: actions/upload-pages-artifact@v5
         with:
           path: _site

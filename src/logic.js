@@ -2210,3 +2210,24 @@ export function particulaEstacion(i, t, tipo, caja = { ancho: 60, alto: 22 }) {
   const y = caja.alto - (((t * vel + fase) % caja.alto) + caja.alto) % caja.alto;
   return { x: x0 + Math.sin(t * 0.9 + fase) * meneo, y, z: z0 + Math.cos(t * 0.7 + fase) * meneo, giro: t * 2 + fase };
 }
+
+// ---------- ⚙️ Calidad: para que el juego vaya fluido también en compus más lentas ----------
+// ratioMax: cuántos píxeles por punto de la pantalla · sombras · sombraMapa: el tamaño del mapa de sombras · niebla: hasta dónde se ve
+// pasto / flores: cuántas matas y florecitas · extra: cuántas decoraciones de la estación (× 1, 0,6…) · particulas: lo que cae del cielo
+export const CALIDADES = {
+  alta: { nombre: 'Alta', ratioMax: 2, sombras: true, sombraMapa: 2048, niebla: 320, pasto: 2500, flores: 300, extra: 1, particulas: 1 },
+  media: { nombre: 'Media', ratioMax: 1.5, sombras: true, sombraMapa: 1024, niebla: 250, pasto: 1250, flores: 200, extra: 0.6, particulas: 0.6 },
+  baja: { nombre: 'Baja', ratioMax: 1, sombras: false, sombraMapa: 512, niebla: 180, pasto: 450, flores: 90, extra: 0.3, particulas: 0.3 },
+};
+export const OPCIONES_CALIDAD = ['auto', 'alta', 'media', 'baja'];
+export const leerCalidad = t => (OPCIONES_CALIDAD.includes(t) ? t : 'auto');
+export const leerNivel = t => (t === 'alta' || t === 'media' || t === 'baja' ? t : null);
+export const siguienteCalidad = c => OPCIONES_CALIDAD[(Math.max(0, OPCIONES_CALIDAD.indexOf(c)) + 1) % OPCIONES_CALIDAD.length];
+// En "Auto", ¿con cuál empezamos? Con lo que dice la compu: núcleos del procesador, memoria (GB) y si es táctil (celular/tablet)
+export function calidadInicial({ nucleos = 0, memoria = 0, tactil = false } = {}) {
+  if ((memoria && memoria <= 2) || (nucleos && nucleos <= 2)) return 'baja';
+  if (tactil || (memoria && memoria <= 4) || (nucleos && nucleos <= 4)) return 'media';
+  return 'alta';
+}
+// Si va lento (menos de 30 cuadros por segundo) aun con la resolución más baja, baja un nivel. Nunca sube sola (para que no salte de un lado a otro)
+export const bajarCalidad = (nivel, fps) => (fps >= 30 ? nivel : nivel === 'alta' ? 'media' : 'baja');

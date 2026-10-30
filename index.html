@@ -4,6 +4,26 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Rectángulo Verde</title>
+<meta name="description" content="Un juego 3D gratis para jugar con tus amigos en el navegador: carreras, escondidas, Spleef, la torre «No mires abajo» y mucho más.">
+<meta name="theme-color" content="#2fae4e">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="iconos/icono-192.png">
+<link rel="apple-touch-icon" href="iconos/icono-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Rectángulo Verde">
+<meta property="og:locale" content="es_ES">
+<meta property="og:title" content="Rectángulo Verde">
+<meta property="og:description" content="¡Un juego 3D gratis para jugar con tus amigos! Carreras, escondidas, Spleef, la torre «No mires abajo», disfraces y mucho más.">
+<meta property="og:url" content="https://blackhol214.github.io/rectangulo-verde/">
+<meta property="og:image" content="https://blackhol214.github.io/rectangulo-verde/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="El rectángulo verde con ojos en un mundo de colores">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Rectángulo Verde">
+<meta name="twitter:description" content="¡Un juego 3D gratis para jugar con tus amigos!">
+<meta name="twitter:image" content="https://blackhol214.github.io/rectangulo-verde/og.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=ADLaM+Display&display=swap">
@@ -54,7 +74,11 @@
   .clock.night #clockIcon { color:#3b4fa8; }
   #musicaBtn { position:fixed; right:16px; top:calc(146px + env(safe-area-inset-top,0px)); z-index:5; border:0; border-radius:10px; padding:6px 10px; background:var(--panel); font:700 13px system-ui, sans-serif; color:#3b2a6b; cursor:pointer; backdrop-filter:blur(6px); }
   #estiloBtn { position:fixed; right:16px; top:calc(180px + env(safe-area-inset-top,0px)); z-index:5; border:0; border-radius:10px; padding:5px 9px; background:var(--panel); font:700 12px system-ui, sans-serif; color:#3b2a6b; cursor:pointer; backdrop-filter:blur(6px); }
-  #sonidoDormido { position:fixed; right:16px; top:calc(214px + env(safe-area-inset-top,0px)); z-index:5; border:0; border-radius:10px; padding:6px 10px; background:#ffe14d; font:700 12px system-ui, sans-serif; color:#3b2a00; cursor:pointer; }
+  #nuevaVersion { position:fixed; left:50%; top:calc(62px + env(safe-area-inset-top,0px)); transform:translateX(-50%); z-index:40; display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:6px 10px; width:max-content; max-width:calc(100% - 32px); box-sizing:border-box; padding:10px 14px; border-radius:14px; background:#16301f; color:#fff; font:700 15px system-ui, sans-serif; box-shadow:0 8px 24px rgba(0,0,0,.35); }
+  #nuevaVersion button { border:0; border-radius:10px; padding:8px 14px; background:#2fae4e; color:#fff; font:800 15px system-ui, sans-serif; cursor:pointer; }
+  #nuevaVersion small { flex-basis:100%; text-align:center; font:500 12px system-ui, sans-serif; color:#cfe8d6; }
+  #calidadBtn { position:fixed; right:16px; top:calc(212px + env(safe-area-inset-top,0px)); z-index:5; border:0; border-radius:10px; padding:5px 9px; background:var(--panel); font:700 12px system-ui, sans-serif; color:#3b2a6b; cursor:pointer; backdrop-filter:blur(6px); }
+  #sonidoDormido { position:fixed; right:16px; top:calc(246px + env(safe-area-inset-top,0px)); z-index:5; border:0; border-radius:10px; padding:6px 10px; background:#ffe14d; font:700 12px system-ui, sans-serif; color:#3b2a00; cursor:pointer; }
   #musicaBtn:focus-visible { outline:3px solid #1e6bff; outline-offset:2px; }
   .spooky { position:fixed; right:16px; top:calc(102px + env(safe-area-inset-top,0px)); display:flex; align-items:center; gap:6px; background:var(--panel); padding:6px 12px; border-radius:10px; font:400 22px/1 Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif; color:#b4560c; font-variant-numeric:tabular-nums; backdrop-filter:blur(6px); }
   .hw-card { background:#1f1033 !important; color:#ffe9d6 !important; }
@@ -266,6 +290,8 @@
 <div class="spooky" aria-label="SpookyCoins"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><ellipse cx="12" cy="14" rx="10" ry="8" fill="#ff8a1f"/><ellipse cx="12" cy="14" rx="4" ry="8" fill="#ff9e3d"/><rect x="11" y="3" width="2.4" height="5" rx="1" fill="#4d7a2a"/><path d="M7 12l2-2.5 2 2.5zM13 12l2-2.5 2 2.5z" fill="#3a1a00"/><path d="M7.5 16q4.5 3 9 0" stroke="#3a1a00" stroke-width="1.6" fill="none"/></svg><span id="spooky">0</span></div>
 <button type="button" id="musicaBtn" title="Volumen de la música (tecla M: silencio)">🎵 60%</button>
 <button type="button" id="estiloBtn" title="Estilo de la música (tecla L)">🎧 Lofi</button>
+<div id="nuevaVersion" hidden role="status"><span>🆕 Hay una versión nueva del juego</span><button type="button" id="nuevaVersionBtn">Actualizar</button><small>Tus cosas guardadas no se pierden (si no guardaste, pulsa GUARDAR primero)</small></div>
+<button type="button" id="calidadBtn" title="Calidad de los gráficos">⚙️ Auto</button>
 <button type="button" id="sonidoDormido" hidden>🔇 toca para activar el sonido</button>
 <div class="boxes" aria-label="Cajas doradas" hidden><i></i><span id="boxes">0</span></div>
 <div class="clock" aria-label="Hora del juego"><span id="clockIcon">DÍA</span><span id="clockTime">08:00</span></div>
@@ -442,10 +468,11 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module">
-import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, ESCUELA, ESCUELA_K, SANDBOX_K, enElHoyo, zonaRara, ZONA_RARA, HOYO, escuelaSiguiente, escuelaMezclar, SALON, salonSillas, sillaCercana, faseDeLuz, ARENA_AN, ARENA_AN_X, TERRENO_X, salidaAN, centroArenaAN, plataformasAN, desplazamientoAN, portalesAN, portalCerca, TERRENOS, CARROS, CARRO, carroPos, partesCarro, TORTUGAS, TORTUGA, tortugaPos, partesTortuga, arrastreDe, girarAlrededor, CARRERA, PISTA_CARRERA, posPlatCarrera, punoEn, golpePuno, golpeBarra, salidaCarrera, enMetaCarrera, seCayoCarrera, puestosCarrera, origenCarrera, SILLA_CARRERA, CARRERA_X, puertasReales, lugaresPuertas, vientoTubo, leerEstilo, golpeGuardian, GUARDIAN, temporadaDe, TEMPORADAS, particulaEstacion, MUSICAS, midiAFrecuencia, lugarMusica, intensidadMusica, compasMusica, siguienteVolumen, leerVolumen, CORREDOR_CARRERA, PARED, siguienteCheckpoint, SPLEEF, SPLEEF_X, SILLA_SPLEEF, capaY, HEXES, hexEn, hundido, hexSolido, hexSeVe, pisoSpleef, salidaSpleef, fueraSpleef, capaDe, origenSpleef, cajasPieza, escaleraCanasta, cajasTerreno, escondites, BOT_ESC, botVe, ordenEscondites, cercaDeLaProfe, preguntasDeLaClase, escaparHTML, NO_MIRES, torreNoMires, seededRandom, debeReaparecer, GUIA_COMO, textoQueHago, lugarDelGuia, GUIA_COLORES, siguienteColorGuia, lugaresArboles, lugaresPasto, libreDePasto, ARBOLES, sombreroDeBot, ETAPAS, etapaDe, cajasDe, decoracionTorre, ovniDesplazamiento, HIELO, deslizar, puedeDobleSalto, gastarBateria, cargarBateria, hayBateria, BATERIA, ganaSpooky, ojosMilOjos, OJO_MIL, SPOOKY, sumarTiempoSpooky, DISFRACES, disfrazById, comprarDisfraz, ponerDisfraz, TIENDA_HALLOWEEN, cercaDelVendedor, letrerosEtapas, elegirObjetivoAN, meAburro, MOTIVACION_AN, reboteCaminar, estaCaminando, volumenPasos, puedeAvisar, AVISO_LASER, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, VILLAGE_HOUSE, wallPieces, insideVillageHouse, villageBed, villageEntrance, villageExit, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, squashStretch, ACHIEVEMENTS, achievementById, coinAchievementsFor, TROPHY_TABLE, trophySpot, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
-         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-11-02-ritmo'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
-import { NOMBRE_SALA, cerebrosNuevos, proximoCerebro, pensar, crearEpisodio, pasoEpisodio, semillaIntento, torreSandbox, BUSCADOR_SB, leerCerebros, nombreGuy, claveGuy, NOMBRE_GUY } from './src/ia.js?v=2026-11-02-ritmo';
-import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, valoresEn, DIA_SEGUNDOS, lugarMoneda, corto, acercar, acercarAngulo, piezasExplosion, leerPreguntas, revisarPreguntas, PROFE, seVen, MG_TORRE, MG_ESCONDIDAS, MG_ATRAPADAS, MG_CARRERA, MG_SPLEEF, MG_SOLO, ESC, AN, nuevaRondaAN, pasarAN, explotarAN, empujeAN, mareadoAN, seTocan } from './src/red.js?v=2026-11-02-ritmo';
+import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, ESCUELA, ESCUELA_K, SANDBOX_K, enElHoyo, zonaRara, ZONA_RARA, HOYO, escuelaSiguiente, escuelaMezclar, SALON, salonSillas, sillaCercana, faseDeLuz, ARENA_AN, ARENA_AN_X, TERRENO_X, salidaAN, centroArenaAN, plataformasAN, desplazamientoAN, portalesAN, portalCerca, TERRENOS, CARROS, CARRO, carroPos, partesCarro, TORTUGAS, TORTUGA, tortugaPos, partesTortuga, arrastreDe, girarAlrededor, CARRERA, PISTA_CARRERA, posPlatCarrera, punoEn, golpePuno, golpeBarra, salidaCarrera, enMetaCarrera, seCayoCarrera, puestosCarrera, origenCarrera, SILLA_CARRERA, CARRERA_X, puertasReales, lugaresPuertas, vientoTubo, CALIDADES, leerCalidad, leerNivel, siguienteCalidad, calidadInicial, bajarCalidad, leerEstilo, golpeGuardian, GUARDIAN, temporadaDe, TEMPORADAS, particulaEstacion, MUSICAS, midiAFrecuencia, lugarMusica, intensidadMusica, compasMusica, siguienteVolumen, leerVolumen, CORREDOR_CARRERA, PARED, siguienteCheckpoint, SPLEEF, SPLEEF_X, SILLA_SPLEEF, capaY, HEXES, hexEn, hundido, hexSolido, hexSeVe, pisoSpleef, salidaSpleef, fueraSpleef, capaDe, origenSpleef, cajasPieza, escaleraCanasta, cajasTerreno, escondites, BOT_ESC, botVe, ordenEscondites, cercaDeLaProfe, preguntasDeLaClase, escaparHTML, NO_MIRES, torreNoMires, seededRandom, debeReaparecer, GUIA_COMO, textoQueHago, lugarDelGuia, GUIA_COLORES, siguienteColorGuia, lugaresArboles, lugaresPasto, libreDePasto, ARBOLES, sombreroDeBot, ETAPAS, etapaDe, cajasDe, decoracionTorre, ovniDesplazamiento, HIELO, deslizar, puedeDobleSalto, gastarBateria, cargarBateria, hayBateria, BATERIA, ganaSpooky, ojosMilOjos, OJO_MIL, SPOOKY, sumarTiempoSpooky, DISFRACES, disfrazById, comprarDisfraz, ponerDisfraz, TIENDA_HALLOWEEN, cercaDelVendedor, letrerosEtapas, elegirObjetivoAN, meAburro, MOTIVACION_AN, reboteCaminar, estaCaminando, volumenPasos, puedeAvisar, AVISO_LASER, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, VILLAGE_HOUSE, wallPieces, insideVillageHouse, villageBed, villageEntrance, villageExit, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, squashStretch, ACHIEVEMENTS, achievementById, coinAchievementsFor, TROPHY_TABLE, trophySpot, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
+         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-11-02-pwa'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
+import { NOMBRE_SALA, cerebrosNuevos, proximoCerebro, pensar, crearEpisodio, pasoEpisodio, semillaIntento, torreSandbox, BUSCADOR_SB, leerCerebros, nombreGuy, claveGuy, NOMBRE_GUY } from './src/ia.js?v=2026-11-02-pwa';
+import { VERSION } from './src/version.js?v=2026-11-02-pwa';
+import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, valoresEn, DIA_SEGUNDOS, lugarMoneda, corto, acercar, acercarAngulo, piezasExplosion, leerPreguntas, revisarPreguntas, PROFE, seVen, MG_TORRE, MG_ESCONDIDAS, MG_ATRAPADAS, MG_CARRERA, MG_SPLEEF, MG_SOLO, ESC, AN, nuevaRondaAN, pasarAN, explotarAN, empujeAN, mareadoAN, seTocan } from './src/red.js?v=2026-11-02-pwa';
 (() => {
   // iPhone ignora user-scalable=no: aquí se bloquea el zoom con dos dedos y el doble toque
   for (const ev of ['gesturestart', 'gesturechange']) document.addEventListener(ev, e => e.preventDefault(), { passive: false });
@@ -456,10 +483,15 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   // Performance: en el celular dibujamos menos píxeles extra (su pantalla igual se ve nítida)
   const TOUCH_GPU = matchMedia('(pointer:coarse)').matches;
-  const MAX_RATIO = Math.min(devicePixelRatio, TOUCH_GPU ? 1.5 : 2);
+  // ⚙️ La calidad elegida (Auto, Alta, Media o Baja). En Auto: lo que aprendió la última vez, o lo que dice la compu
+  const leerLS = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+  const calidad = { elegida: leerCalidad(leerLS('rv-calidad')) };
+  calidad.nivel = calidad.elegida !== 'auto' ? calidad.elegida : leerNivel(leerLS('rv-calidad-auto')) || calidadInicial({ nucleos: navigator.hardwareConcurrency || 0, memoria: navigator.deviceMemory || 0, tactil: TOUCH_GPU });
+  const CAL = CALIDADES[calidad.nivel];   // (lo que se arma una sola vez al cargar: el pasto, las flores, la estación)
+  let MAX_RATIO = Math.min(devicePixelRatio, TOUCH_GPU ? 1.5 : 2, CAL.ratioMax);
   let pixelRatio = MAX_RATIO;
   renderer.setPixelRatio(pixelRatio);
-  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.enabled = CAL.sombras;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
   // 🍂❄️☀️🌸 La estación del año (con la fecha de la compu; para probar: ?temporada=otono / invierno / verano / primavera / ninguna)
@@ -467,7 +499,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
   const TEMP = TEMPORADA ? TEMPORADAS[TEMPORADA] : null;
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0xbfe3f2);
-  scene.fog = new THREE.Fog(0xbfe3f2, 60, 320);
+  scene.fog = new THREE.Fog(0xbfe3f2, 60, CAL.niebla);
 
   const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 900);
   scene.add(camera); // para que el bláster de primera persona (hijo de la cámara) se dibuje
@@ -491,7 +523,8 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
   const sun = new THREE.DirectionalLight(0xffffff, 0.85);
   sun.position.set(20, 40, 15);
   sun.castShadow = true;
-  sun.shadow.mapSize.setScalar(TOUCH_GPU ? 1024 : 2048);   // sombras más livianas en el celular
+  sun.shadow.mapSize.setScalar(Math.min(TOUCH_GPU ? 1024 : 2048, CAL.sombraMapa));   // sombras más livianas en el celular (y en calidad baja)
+  sun.castShadow = CAL.sombras;
   Object.assign(sun.shadow.camera, { left:-30, right:30, top:30, bottom:-30, near:1, far:120 });
   scene.add(sun, sun.target);
 
@@ -1245,12 +1278,26 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
               `<button type="button" class="buy" id="buy-${it.id}" data-id="${it.id}" ${owned || locked || short ? 'disabled' : ''}>${label}</button></div>`;
       if (it === last) html += '</div></section>';
     }
+    // 🏆 Tus logros (con un botón para compartirlos)
+    const mios = ACHIEVEMENTS.filter(a => save.trophies.includes(a.id));
+    if (mios.length) html += `<section class="shop-sec" style="--n:${mios.length}"><p class="shop-group">🏆 Tus logros</p><div class="shop-grid">` +
+      mios.map(a => `<div class="shop-item owned"><h3>${escaparHTML(a.name)}</h3><p>${escaparHTML(a.desc)}</p><button type="button" class="buy compartir" id="compartir-${a.id}" data-logro="${a.id}">📤 Compartir</button></div>`).join('') + '</div></section>';
     const focused = document.activeElement && document.activeElement.id;
     shopItems.innerHTML = html;
     attachPreviews();
     if (focused) { const f = document.getElementById(focused); if (f && !f.disabled) f.focus(); }
   }
+  // 📤 Compartir un logro: el link a su página (con su propia imagen); en el celular, el menú de compartir; si no, se copia
+  async function compartirLogro(id) {
+    const a = ACHIEVEMENTS.find(x => x.id === id); if (!a) return;
+    const url = `${OFICIAL}logros/${id}.html`, texto = `¡Conseguí el logro "${a.name}" en Rectángulo Verde! 🏆`;
+    try {
+      if (navigator.share) { await navigator.share({ title: 'Rectángulo Verde', text: texto, url }); return; }
+      await navigator.clipboard.writeText(`${texto} ${url}`); showToast('📋 ¡Link copiado! Pégalo donde quieras', false, 2500);
+    } catch (err) { if (err && err.name === 'AbortError') return; showToast(`Copia este link: ${url}`, false, 6000); }
+  }
   shopItems.addEventListener('click', e => {
+    const c = e.target.closest('.compartir'); if (c) { compartirLogro(c.dataset.logro); return; }
     const b = e.target.closest('.buy');
     if (b && !b.disabled) buy(b.dataset.id);
   });
@@ -6799,12 +6846,12 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
     const instancias = (geo, n, cada, color = 0xffffff) => { const im = new THREE.InstancedMesh(geo, new THREE.MeshLambertMaterial({ color }), n); for (let i = 0; i < n; i++) cada(i, im); im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true; scene.add(im); return im; };
     // Hojas secas o manchitas de nieve en el suelo
     if (T.suelto) {
-      const L = lugaresPasto(T.suelto.n, libre, seededRandom(77)), geo = new THREE.CircleGeometry(T.suelto.tipo === 'nieve' ? 0.55 : 0.16, 5); geo.rotateX(-Math.PI / 2);
+      const L = lugaresPasto(Math.round(T.suelto.n * CAL.extra), libre, seededRandom(77)), geo = new THREE.CircleGeometry(T.suelto.tipo === 'nieve' ? 0.55 : 0.16, 5); geo.rotateX(-Math.PI / 2);
       instancias(geo, L.length, (i, im) => { const p = L[i]; q.setFromAxisAngle(eje, p.giro); esc.set(p.tam * 1.4, 1, p.tam); lugar.set(p.x, 0.02 + (i % 7) * 0.002, p.z); im.setMatrixAt(i, m4.compose(lugar, q, esc)); im.setColorAt(i, col.setHex(T.suelto.colores[i % T.suelto.colores.length])); });
     }
     // Más flores (verano y primavera)
     if (T.flores) {
-      const L = lugaresPasto(T.flores.n, libre, seededRandom(88)), geo = new THREE.IcosahedronGeometry(0.11, 0);
+      const L = lugaresPasto(Math.round(T.flores.n * CAL.extra), libre, seededRandom(88)), geo = new THREE.IcosahedronGeometry(0.11, 0);
       instancias(geo, L.length, (i, im) => { const p = L[i]; q.identity(); esc.set(1, 0.6, 1); lugar.set(p.x, 0.14, p.z); im.setMatrixAt(i, m4.compose(lugar, q, esc)); im.setColorAt(i, col.setHex(T.flores.colores[i % T.flores.colores.length])); });
     }
     const pocos = (n, semilla, margen) => lugaresPasto(n, (x, z) => libre(x, z) && libre(x + margen, z) && libre(x - margen, z) && libre(x, z + margen) && libre(x, z - margen), seededRandom(semilla));
@@ -6833,8 +6880,9 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
     // Lo que cae del cielo (hojas, nieve o pétalos), siempre alrededor tuyo
     if (T.caen) {
       const geo = T.caen.tipo === 'nieve' ? new THREE.IcosahedronGeometry(0.06, 0) : new THREE.PlaneGeometry(0.22, 0.14);
-      const im = new THREE.InstancedMesh(geo, new THREE.MeshLambertMaterial({ color: 0xffffff, side: THREE.DoubleSide }), T.caen.n); im.frustumCulled = false;
-      for (let i = 0; i < T.caen.n; i++) im.setColorAt(i, col.setHex(T.caen.colores[i % T.caen.colores.length]));
+      estacion.nCae = Math.max(20, Math.round(T.caen.n * CAL.particulas));
+      const im = new THREE.InstancedMesh(geo, new THREE.MeshLambertMaterial({ color: 0xffffff, side: THREE.DoubleSide }), estacion.nCae); im.frustumCulled = false;
+      for (let i = 0; i < estacion.nCae; i++) im.setColorAt(i, col.setHex(T.caen.colores[i % T.caen.colores.length]));
       scene.add(im); estacion.cae = im;
     }
   }
@@ -6847,7 +6895,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
     const c = camera.position, t = estacion.t;
     if (estacion.cae) {
       const tipo = TEMP.caen.tipo;
-      for (let i = 0; i < TEMP.caen.n; i++) {
+      for (let i = 0; i < estacion.nCae; i++) {
         const p = particulaEstacion(i, t, tipo); vEst.set(c.x + p.x, p.y, c.z + p.z);
         qEst.setFromEuler(eEst.set(p.giro, p.giro * 0.7, 0)); estacion.cae.setMatrixAt(i, m4Est.compose(vEst, qEst, sEst));
       }
@@ -6900,7 +6948,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
     const mataGeo = new THREE.BufferGeometry(); mataGeo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
     mataGeo.setAttribute('normal', new THREE.Float32BufferAttribute(pos.map((_, i) => (i % 3 === 1 ? 1 : 0)), 3));
     const libreMata = (x, z) => libreDePasto(x, z) && !tapado(x, z, 0.5);
-    const matas = lugaresPasto(TOUCH_GPU ? 1250 : 2500, libreMata, seededRandom(31));
+    const matas = lugaresPasto(Math.min(TOUCH_GPU ? 1250 : 2500, CAL.pasto), libreMata, seededRandom(31));
     const mataMesh = new THREE.InstancedMesh(mataGeo, new THREE.MeshLambertMaterial({ color: 0xffffff }), matas.length);
     const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), esc = new THREE.Vector3(), lugar = new THREE.Vector3(), eje = new THREE.Vector3(0, 1, 0), col = new THREE.Color();
     const tonos = TEMP ? TEMP.matas : [0x5fb03a, 0x6dbb45, 0x4fa232, 0x7cc753];
@@ -6910,7 +6958,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
     });
     scene.add(mataMesh);
     // Florecitas blancas y amarillas
-    const flores = lugaresPasto(300, libreMata, seededRandom(41));
+    const flores = lugaresPasto(CAL.flores, libreMata, seededRandom(41));
     const florMesh = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.09, 0), new THREE.MeshLambertMaterial({ color: 0xffffff }), flores.length);
     flores.forEach((p, i) => {
       lugar.set(p.x, 0.12, p.z); esc.set(1, 0.6, 1); q.identity();
@@ -7238,14 +7286,43 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
   }
   // Resolución automática: si el juego va lento (menos de 40 cuadros por segundo), baja un poco la resolución;
   // si va sobrado por un buen rato, la vuelve a subir
-  const perf = { time: 0, frames: 0, good: 0 };
+  const perf = { time: 0, frames: 0, good: 0, lento: 0, ultimoFps: 0 };
+  // Cambia lo que se puede cambiar en el momento (resolución, sombras, hasta dónde se ve). El pasto y las flores, al recargar
+  function ponerNivelCalidad(nivel) {
+    calidad.nivel = nivel; const C = CALIDADES[nivel];
+    MAX_RATIO = Math.min(devicePixelRatio, TOUCH_GPU ? 1.5 : 2, C.ratioMax);
+    if (pixelRatio > MAX_RATIO) { pixelRatio = MAX_RATIO; renderer.setPixelRatio(pixelRatio); resize(); }
+    if (renderer.shadowMap.enabled !== C.sombras) { renderer.shadowMap.enabled = C.sombras; sun.castShadow = C.sombras; scene.traverse(o => { if (o.material) o.material.needsUpdate = true; }); }
+    scene.fog.far = C.niebla;
+    pintarBotonCalidad();
+  }
+  function pintarBotonCalidad() {
+    const b = document.getElementById('calidadBtn'); if (!b) return;
+    b.textContent = `⚙️ ${calidad.elegida === 'auto' ? `Auto (${CALIDADES[calidad.nivel].nombre})` : CALIDADES[calidad.nivel].nombre}`;
+    b.setAttribute('aria-label', `Calidad de los gráficos: ${b.textContent.slice(3)}. Toca para cambiar`);
+  }
+  document.getElementById('calidadBtn').addEventListener('click', e => {
+    calidad.elegida = siguienteCalidad(calidad.elegida);
+    try { localStorage.setItem('rv-calidad', calidad.elegida); } catch (err) {}
+    const nivel = calidad.elegida === 'auto' ? leerNivel(leerLS('rv-calidad-auto')) || calidadInicial({ nucleos: navigator.hardwareConcurrency || 0, memoria: navigator.deviceMemory || 0, tactil: TOUCH_GPU }) : calidad.elegida;
+    ponerNivelCalidad(nivel);
+    showToast(`⚙️ Calidad: ${e.currentTarget.textContent.slice(3)} · el pasto y las flores cambian al recargar la página`, false, 2500);
+    e.currentTarget.blur();
+  });
+  pintarBotonCalidad();
   function autoResolution(raw) {
     if (raw > 0.2) return;   // la pestaña estuvo escondida: ese cuadro no cuenta
     perf.time += raw; perf.frames++;
     if (perf.time < 2) return;
     const fps = perf.frames / perf.time;
     perf.time = perf.frames = 0;
+    perf.ultimoFps = fps;
     if (fps < 40 && pixelRatio > 1) { pixelRatio = Math.max(1, pixelRatio - 0.25); perf.good = 0; renderer.setPixelRatio(pixelRatio); resize(); }
+    else if (fps < 30 && calidad.elegida === 'auto' && calidad.nivel !== 'baja' && ++perf.lento >= 2) {   // ⚙️ sigue lento: baja un nivel
+      perf.lento = 0; ponerNivelCalidad(bajarCalidad(calidad.nivel, fps));
+      try { localStorage.setItem('rv-calidad-auto', calidad.nivel); } catch (e) {}
+      showToast(`⚙️ Calidad automática: ${CALIDADES[calidad.nivel].nombre} (para que vaya más fluido)`, false, 2500);
+    }
     else if (fps > 55 && pixelRatio < MAX_RATIO && ++perf.good >= 5) { pixelRatio = Math.min(MAX_RATIO, pixelRatio + 0.25); perf.good = 0; renderer.setPixelRatio(pixelRatio); resize(); }
   }
 
@@ -7379,6 +7456,37 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
     renderer.render(scene, camera);
     requestAnimationFrame(tick);
   }
+  // ---------- 📦 Instalar como app y 🆕 versiones nuevas ----------
+  // El service worker (sw.js) guarda el juego en la compu. Cuando hay una versión nueva, aparece el aviso con "Actualizar".
+  // Por si algo anda mal: abrir el juego con ?sinsw lo apaga y lo borra (y recarga). Si el navegador no tiene, el juego anda igual.
+  (() => {
+    const avisoEl = document.getElementById('nuevaVersion');
+    let esperando = null, recargando = false;
+    const mostrarAviso = sw => { esperando = sw; avisoEl.hidden = false; };
+    document.getElementById('nuevaVersionBtn').addEventListener('click', () => {
+      if (esperando) esperando.postMessage('ACTUALIZAR');   // la versión nueva empieza…
+      else location.reload();
+      setTimeout(() => location.reload(), 3000);           // (por si no avisa: recarga igual)
+    });
+    if (!('serviceWorker' in navigator) || location.protocol === 'file:') return;
+    if (new URLSearchParams(location.search).has('sinsw')) {
+      navigator.serviceWorker.getRegistrations().then(rs => Promise.all(rs.map(r => r.unregister()))).then(() => caches.keys()).then(ks => Promise.all(ks.map(k => caches.delete(k)))).catch(() => {});
+      return;
+    }
+    navigator.serviceWorker.addEventListener('controllerchange', () => { if (recargando || !esperando) return; recargando = true; location.reload(); });   // …y recargamos con ella
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      const revisar = sw => { if (!sw) return; const listo = () => { if (sw.state === 'installed' && navigator.serviceWorker.controller) mostrarAviso(sw); }; listo(); sw.addEventListener('statechange', listo); };
+      revisar(reg.waiting); revisar(reg.installing);
+      reg.addEventListener('updatefound', () => revisar(reg.installing));
+      // Cada 15 minutos (y al volver a la pestaña) pregunta si hay versión nueva
+      setInterval(() => reg.update().catch(() => {}), 15 * 60 * 1000);
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) reg.update().catch(() => {}); });
+    }).catch(() => {});
+    console.log('Rectángulo Verde, versión', VERSION);
+  })();
+  // ¿Llegaste por el link de un logro que compartió un amigo?
+  { const l = new URLSearchParams(location.search).get('logro'), a = l && ACHIEVEMENTS.find(x => x.id === l); if (a) setTimeout(() => showToast(`🏆 ¡Tu amigo consiguió el logro "${a.name}"! ¿Lo consigues tú también?`, false, 5000), 1500); }
+
   tick();
 })();
 </script>

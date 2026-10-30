@@ -216,7 +216,8 @@ let diaPueblo = Math.floor(Math.random() * 1000);   // decide qué misiones pide
 const monedas = Array.from({ length: NUM_MONEDAS }, () => lugarMoneda());
 
 // ---------- Archivos que se pueden ver desde internet (solo estos, nada más de tu compu) ----------
-const PERMITIDOS = /^\/(index\.html|src\/[a-z]+\.js)$/;
+const PERMITIDOS = /^\/(index\.html|sw\.js|manifest\.webmanifest|og\.png|src\/[a-z]+\.js|iconos\/[a-z0-9-]+\.png|logros\/[a-z0-9-]+\.(html|png))$/;
+const TIPOS = { '.webmanifest': 'application/manifest+json', '.js': 'text/javascript; charset=utf-8', '.html': 'text/html; charset=utf-8', '.png': 'image/png' };
 
 const servidor = Bun.serve({
   port: PUERTO,
@@ -231,7 +232,8 @@ const servidor = Bun.serve({
     if (sala && (url.pathname === '/' || url.pathname === '/index.html')) return Response.redirect(linkOficial(sala), 302);
     const ruta = url.pathname === '/' ? '/index.html' : url.pathname;
     if (!PERMITIDOS.test(ruta)) return new Response('No encontrado', { status: 404 });
-    return new Response(Bun.file(new URL('.' + ruta, import.meta.url)), { headers: { 'Cache-Control': 'no-cache' } });
+    const tipo = TIPOS[ruta.slice(ruta.lastIndexOf('.'))];
+    return new Response(Bun.file(new URL('.' + ruta, import.meta.url)), { headers: { 'Cache-Control': 'no-cache', ...(tipo ? { 'Content-Type': tipo } : {}) } });
   },
   websocket: {
     maxPayloadLength: 128 * 1024,   // (las preguntas del profe pueden ser largas; leerMensaje revisa el tamaño de verdad)
