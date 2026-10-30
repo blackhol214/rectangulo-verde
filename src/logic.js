@@ -174,7 +174,7 @@ export function ganaSpooky({ modo = null, fase = null, enRonda = false, resultad
   if (!modo || modo === 'sandbox' || resultado) return false;
   if (modo !== 'escuela') return true;   // los minijuegos del mundo
   if (fase === 'nomires') return true;
-  return (fase === 'escondidas' || fase === 'atrapadas') && enRonda;
+  return (fase === 'escondidas' || fase === 'atrapadas' || fase === 'carrera' || fase === 'spleef') && enRonda;
 }
 // Los ojos del disfraz "Mil ojos": ~20 ojos grandes, bien repartidos por el cuerpo (sin encimarse)
 // cuerpo: ancho W, alto H, grosor D (el rectángulo del personaje). Cada ojo: { x, y, z, nx, nz } (hacia dónde mira)
@@ -750,10 +750,11 @@ export const SALON = {
   escritorio: { x0: -2, x1: 2, z0: 7.8, z1: 9.1 },   // el escritorio de la profe, adelante
   profe: { x: 0, z: 10.3 },           // su silla: entre el escritorio y el pizarrón, mirando hacia las mesas
 };
-// Las 12 sillas. La primera (adelante a la izquierda) es "No mires abajo"; la última (atrás a la derecha,
+// Las 12 sillas. La primera (adelante a la izquierda) es "No mires abajo", la segunda la "Carrera"; la última (atrás a la derecha,
 // mirando el salón desde arriba con el pizarrón arriba) es "Escondidas"; las demás, próximamente
+export const SILLA_CARRERA = 1, SILLA_SPLEEF = 2;
 export function salonSillas() {
-  const out = [], modos = { 0: 'nomires', 3: 'atrapadas', 11: 'escondidas' };
+  const out = [], modos = { 0: 'nomires', [SILLA_CARRERA]: 'carrera', [SILLA_SPLEEF]: 'spleef', 3: 'atrapadas', 11: 'escondidas' };
   for (const z of SALON.filasZ) for (const x of SALON.mesasX) out.push({ x, z: z - SALON.sillaAtras, modo: modos[out.length] || null });
   return out;
 }
@@ -1030,7 +1031,8 @@ export function gastarBateria(bateria, dt, caminando, salto) {
   const gasto = (caminando ? BATERIA.porSegundo * dt : 0) + (salto ? BATERIA.porSalto : 0);
   return Math.max(0, bateria - gasto);
 }
-export const cargarBateria = (bateria, correcta) => (correcta ? bateria + BATERIA.porRespuesta : bateria);
+// cuanto: lo que da una respuesta buena (2.000; en la Carrera 4.000 y en el Spleef 3.000)
+export const cargarBateria = (bateria, correcta, cuanto = BATERIA.porRespuesta) => (correcta ? bateria + cuanto : bateria);
 export const hayBateria = bateria => bateria > 0;
 
 // Banco de preguntas. La primera opción de `op` es SIEMPRE la correcta: al mostrarla se mezclan.
@@ -1661,3 +1663,399 @@ export function zonaEsc(i) {
   return { x0: x - T.ancho / 2 + 1, x1: x + T.ancho / 2 - 1, z0: o.z - T.largo / 2 + 1, z1: o.z + T.largo / 2 - 1,
     yMin: 0, yMax: T.alto, velMax: 12 + CARRO.vel + 4, llegada: { x: x + T.spawn.x, z: o.z + T.spawn.z, radio: 10 }, saltos: [] };
 }
+
+// ---------- 🏁 Carrera (como Fall Guys): otra silla del Modo Escuela ----------
+// Una pista larga de colores pastel FLOTANDO en el cielo (a 30 m), con puentes de dulce que se curvan, discos que giran,
+// una rueda gigante con barras que barren, puños de boxeo que salen de los costados y plataformas que se mueven.
+// Va de x = 0 a x = 304 (desde su origen, sobre el eje x). Cada 30 m, un checkpoint: si te caes, vuelves al último que pisaste.
+// Todo se mueve con el RELOJ DE LA RONDA (t en segundos): así todos ven lo mismo, y el servidor también.
+export const CARRERA_X = 3000;   // dentro del minijuego del Modo Escuela, lejos de todo lo demás
+export const CARRERA = {
+  y0: 30, cada: 30, checkpoints: 17, caida: 8, largo: 530,   // caes 8 m por debajo de la pista = vuelves al checkpoint
+  meta: { x0: 529, x1: 544, z: 9 }, vel: 12, bots: 5, bateriaRespuesta: 4000,
+  maxMs: 420000, despuesDelPrimeroMs: 45000,   // la carrera dura como mucho 7 min; cuando llega el primero, 45 s más para los demás
+  puerta: { ancho: 3, alto: 6 },               // las puertas (las de verdad se rompen; las falsas son pared): más altas que un doble salto
+  tubo: { radio: 2.2, vel: 10 },               // los tubos de viento te llevan a 10 m/s
+  lanza: { vel: 18, salto: 15 },               // los trampolines inclinados: hacia adelante (o hacia atrás: ¡trampa!)
+  puno: { vel: 24, salto: 9, mano: 0.9 }, barra: { vel: 16, salto: 7, grueso: 0.35, alto: 1.2 },
+  empuje: { extraM: 30, extraMs: 3000 },   // el servidor te deja moverte 30 m de más (hacia donde te empujaron) durante 3 s
+};
+export const COLORES_CARRERA = { rosa: 0xff8fc7, lila: 0xb48cff, celeste: 0x8fd3ff, amarillo: 0xffe27a, menta: 0x8ff0c4, naranja: 0xffb27a };
+// La pista: { plats, punos, barras, puertas, tubos, lanzas }. Cada plataforma: { x, z, y (arriba), ancho (en x), largo (en z), color, tipo,
+//  mueve?: { amp, vel, fase } (de lado a lado en z), gira?: { w (radianes por segundo), fase }, redonda?, r?, cp? (número de checkpoint),
+//  grosor? (qué tan gruesa es hacia abajo: 1 m, o más si es un bloque), lanza? ({ x, y }: un trampolín que te tira hacia adelante o atrás) }
+// mueve.eje: 'z' (de lado a lado, el normal) o 'y' (sube y baja)
+// puertas: filas de puertas (unas de verdad, otras falsas: depende de la semilla de la ronda) · tubos: { x0, x1, z, y, vx, vz } te llevan
+export function pistaCarrera() {
+  const C = CARRERA, Y = C.y0, K = COLORES_CARRERA, plats = [], punos = [], barras = [], puertas = [], tubos = [];
+  const caja = (x0, x1, z0, z1, y, color, extra = {}) => plats.push({ x: (x0 + x1) / 2, z: (z0 + z1) / 2, y, ancho: x1 - x0, largo: z1 - z0, color, tipo: 'piso', ...extra });
+  // Puente de dulce que se curva: pedacitos de `paso` m que se van corriendo de costado (sin huecos entre uno y otro)
+  const puente = (x0, x1, paso, anchoZ, curva, frec, y = Y) => {
+    let i = 0;
+    for (let x = x0; x < x1 - 0.01; x += paso, i++) { const dz = curva * Math.sin(i * frec); caja(x, Math.min(x1, x + paso + 0.3), dz - anchoZ / 2, dz + anchoZ / 2, y, i % 2 ? K.lila : K.rosa, { tipo: 'puente' }); }
+  };
+  const puno = (x, lado, y = Y, ancho = 8, fase = 0) => punos.push({ x, z: lado * (ancho / 2 + 1.2), lado, y, largo: ancho + 0.5, periodo: 2.2, fase });
+  const disco = (x, r, w, color, fase = 0) => { plats.push({ x, z: 0, y: Y, ancho: r * 2, largo: r * 2, color, tipo: 'disco', redonda: true, r, gira: { w, fase } }); return plats.length - 1; };
+  // La salida (más ancha) y los 9 checkpoints (verde menta), uno cada 30 m
+  caja(-8, 6, -10, 10, Y, K.menta, { tipo: 'salida', cp: 0 });
+  for (let k = 1; k <= C.checkpoints; k++) caja(k * C.cada, k * C.cada + 6, -7, 7, Y, K.menta, { tipo: 'checkpoint', cp: k });
+  // 0 · puente de dulce que se curva
+  puente(6, 30, 3, 4.5, 3, 0.8);
+  // 1 · pasillo con 4 puños de boxeo (de los dos lados)
+  caja(36, 60, -4, 4, Y, K.celeste);
+  [40, 46, 52, 58].forEach((x, i) => puno(x, i % 2 ? -1 : 1, Y, 8, i * 0.55));
+  // 2 · tres discos que giran (salta de uno a otro)
+  [[70.5, 1.1], [79, -1.1], [87.5, 1.1]].forEach(([x, w], i) => disco(x, 3.6, w, i % 2 ? K.amarillo : K.lila, i));
+  // 3 · ¡la rueda gigante! Gira despacito, y sus dos barras giran MÁS RÁPIDO encima (si no, irías con ellas y nunca te tocarían): hay que saltarlas
+  const rueda = disco(108, 11, 0.25, K.rosa);
+  for (const f of [0, Math.PI / 2]) barras.push({ x: 108, z: 0, y: Y, r: 11, w: 0.9, fase: f, disco: rueda });
+  // 4 · plataformas que se mueven de lado a lado
+  [128.5, 134.5, 140.5, 146.5].forEach((x, i) => caja(x - 2, x + 2, -2, 2, Y, K.amarillo, { tipo: 'mueve', mueve: { amp: 4, vel: 1.2, fase: i * 1.3 } }));
+  // 5 · puente largo y angosto que se curva mucho
+  puente(156, 180, 2.5, 3.2, 4, 0.6);
+  // 6 · un escalón ALTO (4 m: necesitas el doble salto) con 2 puños arriba
+  caja(186, 196, -3.5, 3.5, Y, K.celeste);
+  caja(196, 210, -3.5, 3.5, Y + 4, K.naranja, { tipo: 'escalon', grosor: 5 });   // (es un bloque macizo: no se puede pasar por debajo)
+  puno(201, 1, Y + 4, 7, 0.3); puno(206, -1, Y + 4, 7, 1.4);
+  // 7 · dos ruedas medianas, cada una con su barra
+  const r1 = disco(223.5, 6.5, 0.3, K.lila), r2 = disco(236.5, 6.5, -0.3, K.amarillo);
+  barras.push({ x: 223.5, z: 0, y: Y, r: 6.5, w: 1.2, fase: 0, disco: r1 }, { x: 236.5, z: 0, y: Y, r: 6.5, w: -1.3, fase: 1, disco: r2 });
+  // 8 · dos plataformas que se mueven y un pasillo con 3 puños
+  [248.5, 254.5].forEach((x, i) => caja(x - 2, x + 2, -2, 2, Y, K.amarillo, { tipo: 'mueve', mueve: { amp: 3, vel: 1.5, fase: i * 2 } }));
+  caja(257, 270, -4, 4, Y, K.celeste);
+  [260, 264, 268].forEach((x, i) => puno(x, i % 2 ? 1 : -1, Y, 8, i * 0.7));
+  // 9 · ¡PUERTAS FALSAS! Una pared con 5 puertas: unas se rompen al pasar y otras son de mentira (pared). ¿Cuál será?
+  caja(276, 300, -7.5, 7.5, Y, K.celeste); puertas.push({ x: 290, n: 5, z0: -7.5, z1: 7.5 });
+  // 10 · plataformas que SUBEN Y BAJAN
+  [308.5, 314.5, 320.5, 326.5].forEach((x, i) => caja(x - 2, x + 2, -2, 2, Y, K.lila, { tipo: 'mueve', mueve: { eje: 'y', amp: 1.6, vel: 1.4, fase: i * 1.6 } }));
+  // 11 · un TUBO de viento que te lleva hacia adelante (¡rapidísimo!)
+  caja(336, 360, -4, 4, Y, K.celeste); tubos.push({ x0: 338, x1: 358, z: 0, y: Y, vx: C.tubo.vel, vz: 0 });
+  // 12 · TRAMPOLINES inclinados sobre un hueco de 20 m: el verde te tira hacia ADELANTE… el rojo hacia ATRÁS (¡trampa!)
+  caja(366, 370, -5, 5, Y, K.celeste);
+  caja(370, 373, -4.5, -1, Y, 0x3ddc84, { tipo: 'lanza', lanza: { x: C.lanza.vel, y: C.lanza.salto } });
+  caja(370, 373, 1, 4.5, Y, 0xff4d4d, { tipo: 'lanza', lanza: { x: -C.lanza.vel * 0.8, y: C.lanza.salto } });
+  // 13 · un tubo que te empuja DE COSTADO (hacia el vacío): camina contra el viento
+  caja(396, 420, -4, 4, Y, K.celeste); tubos.push({ x0: 398, x1: 418, z: 0, y: Y, vx: 0, vz: 6 });
+  // 14 · más puertas falsas (7, más angostas, en un pasillo más ancho)
+  caja(426, 450, -10.5, 10.5, Y, K.celeste); puertas.push({ x: 440, n: 7, z0: -10.5, z1: 10.5 });
+  // 15 · de todo: plataformas que suben y bajan, de lado a lado, y un trampolín hacia adelante en el medio
+  caja(456.5, 460.5, -2, 2, Y, K.lila, { tipo: 'mueve', mueve: { eje: 'y', amp: 1.4, vel: 1.6, fase: 0 } });
+  caja(462.5, 466.5, -2, 2, Y, K.amarillo, { tipo: 'mueve', mueve: { amp: 3, vel: 1.4, fase: 1 } });
+  caja(468.5, 472.5, -2, 2, Y, K.lila, { tipo: 'mueve', mueve: { eje: 'y', amp: 1.4, vel: 1.6, fase: 2 } });
+  caja(474.5, 477.5, -2, 2, Y, 0x3ddc84, { tipo: 'lanza', lanza: { x: C.lanza.vel * 0.55, y: C.lanza.salto * 0.8 } });
+  // 16 · dos ruedas más, con barras rápidas
+  const r3 = disco(493.5, 6.5, 0.35, K.rosa), r4 = disco(506.5, 6.5, -0.35, K.lila);
+  barras.push({ x: 493.5, z: 0, y: Y, r: 6.5, w: 1.4, fase: 0.5, disco: r3 }, { x: 506.5, z: 0, y: Y, r: 6.5, w: -1.5, fase: 2, disco: r4 });
+  // 17 · el último puente y la META (amarilla, con su arco)
+  puente(516, 529, 2.6, 4, 2, 0.9);
+  caja(C.meta.x0 - 1, C.meta.x1, -C.meta.z, C.meta.z, Y, K.amarillo, { tipo: 'meta' });
+  const lanzas = plats.map((p, i) => (p.lanza ? i : -1)).filter(i => i >= 0);
+  return { plats, punos, barras, puertas, tubos, lanzas };
+}
+// Dónde está una plataforma en el segundo t: { x, z, giro } (las que se mueven van de lado a lado; los discos giran)
+export function posPlatCarrera(p, t) {
+  const off = p.mueve ? p.mueve.amp * Math.sin(p.mueve.vel * t + p.mueve.fase) : 0, eje = p.mueve && p.mueve.eje === 'y' ? 'y' : 'z';
+  return { x: p.x, z: eje === 'z' ? p.z + off : p.z, y: eje === 'y' ? p.y + off : p.y, giro: p.gira ? p.gira.w * t + p.gira.fase : 0 };
+}
+// Cuánto sale un puño (0 = guardado, 1 = afuera del todo) en el segundo t, y si está PEGANDO (saliendo o afuera)
+// Cada vuelta (periodo): sale rapidísimo (12 %), se queda afuera (18 %), vuelve despacio (30 %) y espera (40 %)
+export function punoEn(f, t) {
+  const u = ((((t + f.fase) % f.periodo) + f.periodo) % f.periodo) / f.periodo;
+  if (u < 0.12) return { e: u / 0.12, pega: true };
+  if (u < 0.3) return { e: 1, pega: true };
+  if (u < 0.6) return { e: 1 - (u - 0.3) / 0.3, pega: false };
+  return { e: 0, pega: false };
+}
+// Dónde está el guante (su centro) en el segundo t
+export const guanteEn = (f, t) => ({ x: f.x, z: f.z - f.lado * punoEn(f, t).e * f.largo, y: f.y + 0.9 });
+// ¿Te pegó un puño? pos = tus pies. Devuelve el empujón { x, y, z } (hacia donde pega, y para arriba) o null
+// Pega TODO el puño: el guante y también el brazo (desde el poste hasta el guante). Tu cuerpo: 1 m de ancho, 0,6 de grueso y 2 de alto
+export function golpePuno(pos, f, t, alto = 2) {
+  const p = punoEn(f, t);
+  if (!p.pega || p.e < 0.1) return null;
+  const g = guanteEn(f, t), mano = CARRERA.puno.mano, cy = f.y + 0.9;
+  if (pos.y > cy + mano || pos.y + alto < cy - mano) return null;   // por encima o por debajo
+  const enGuante = Math.abs(pos.x - g.x) <= mano + 0.5 && Math.abs(pos.z - g.z) <= mano + 0.3;
+  const z0 = Math.min(f.z, g.z), z1 = Math.max(f.z, g.z);
+  const enBrazo = Math.abs(pos.x - f.x) <= 0.3 + 0.5 && pos.z >= z0 - 0.3 && pos.z <= z1 + 0.3;
+  if (!enGuante && !enBrazo) return null;
+  return { x: 0, y: CARRERA.puno.salto, z: -f.lado * CARRERA.puno.vel };
+}
+// 🚪 Las puertas de una fila: cuáles son de verdad (se rompen) y cuáles falsas. Depende de la semilla de la ronda
+// (la misma para todos: la manda el servidor). Siempre hay al menos 2 de verdad y al menos 1 falsa
+export function puertasReales(semilla, fila, n) {
+  const rnd = seededRandom((semilla >>> 0) * 31 + fila * 7919 + 1);
+  for (let intento = 0; intento < 50; intento++) {
+    const r = Array.from({ length: n }, () => rnd() < 0.45);
+    const k = r.filter(Boolean).length;
+    if (k >= 2 && k < n) return r;
+  }
+  return Array.from({ length: n }, (_, i) => i % 2 === 0);
+}
+// Dónde está cada puerta de una fila: { z (su centro), ancho } (con pilares entre ellas)
+export function lugaresPuertas(fila) {
+  const largo = fila.z1 - fila.z0, paso = largo / fila.n;
+  return Array.from({ length: fila.n }, (_, i) => ({ z: fila.z0 + paso * (i + 0.5), ancho: Math.min(CARRERA.puerta.ancho, paso - 0.4), paso }));
+}
+// ¿Estás dentro de un tubo de viento? Devuelve cuánto te lleva { x, z } (m/s) o null
+export function vientoTubo(pos, tubos) {
+  for (const u of tubos) if (pos.x >= u.x0 && pos.x <= u.x1 && Math.abs(pos.z - u.z) <= CARRERA.tubo.radio && pos.y >= u.y - 0.5 && pos.y <= u.y + CARRERA.tubo.radio * 2) return { x: u.vx, z: u.vz };
+  return null;
+}
+// ¿Te barrió una barra de una rueda? La barra cruza la rueda entera (de un borde al otro) y gira con ella.
+// Si te toca (y no la saltaste), te empuja hacia donde va la barra. Devuelve { x, y, z } o null
+export function golpeBarra(pos, b, t) {
+  if (pos.y > b.y + CARRERA.barra.alto || pos.y < b.y - 0.5) return null;   // saltaste por encima (o estás abajo)
+  const a = b.w * t + b.fase, ux = Math.cos(a), uz = -Math.sin(a);   // (la misma cuenta que rotation.y de Three.js)
+  const rx = pos.x - b.x, rz = pos.z - b.z, s = rx * ux + rz * uz;   // s: dónde estás a lo largo de la barra
+  if (Math.abs(s) > b.r) return null;
+  if (Math.abs(rx * uz - rz * ux) > CARRERA.barra.grueso + 0.45) return null;   // estás lejos de la barra
+  // la barra se mueve "de costado": en el punto s va hacia (−sin a, −cos a) · w · s
+  let vx = -Math.sin(a) * b.w * s, vz = -Math.cos(a) * b.w * s;
+  const l = Math.hypot(vx, vz);
+  if (l < 0.01) { vx = -uz; vz = ux; } else { vx /= l; vz /= l; }   // justo en el centro: igual te empuja de costado
+  return { x: vx * CARRERA.barra.vel, y: CARRERA.barra.salto, z: vz * CARRERA.barra.vel };
+}
+// ¿En qué checkpoint vas? (por dónde vas en la pista: cada 30 m hay uno). 0 = la salida
+export const checkpointDe = x => Math.max(0, Math.min(CARRERA.checkpoints, Math.floor(x / CARRERA.cada)));
+// Dónde reapareces (o empiezas): en el checkpoint k, en tu carril (i de n), mirando hacia la meta
+export function salidaCarrera(k, i = 0, n = 1) {
+  const sep = Math.min(1.6, 12 / Math.max(1, n));
+  return { x: k === 0 ? -1 : k * CARRERA.cada + 3, z: (i - (n - 1) / 2) * sep, y: CARRERA.y0 };
+}
+// ¿Llegaste a la meta? (pos desde el origen de la pista)
+export const enMetaCarrera = pos => pos.x >= CARRERA.meta.x0 && pos.x <= CARRERA.meta.x1 + 0.5 && Math.abs(pos.z) <= CARRERA.meta.z + 0.5 && pos.y >= CARRERA.y0 - 0.5;
+// ¿Te caíste de la pista?
+export const seCayoCarrera = y => y < CARRERA.y0 - CARRERA.caida;
+// El puesto de cada uno: primero los que llegaron (en orden) y después los demás según qué tan lejos van. → lista de ids
+export function puestosCarrera(corredores, llegadas) {
+  const resto = corredores.filter(c => !llegadas.includes(c.id)).sort((a, b) => b.x - a.x).map(c => c.id);
+  return [...llegadas, ...resto];
+}
+// El origen de la pista (en el mundo)
+export const origenCarrera = () => { const o = minigameOrigin(ESCUELA_K); return { x: o.x + CARRERA_X, z: o.z }; };
+// 🛡️ Lo que vigila el servidor en la carrera. Lo más rápido: corres a 12, más lo que te llevan las plataformas
+// (4 × 1,2 = 4,8 m/s) o el borde de un disco (3,6 × 1,1 ≈ 4 m/s), más un margen
+export const CARRERA_VEL_MAX = 22;
+const CARRERA_PISOS = pistaCarrera().plats.map(p => ({ x: p.x, z: p.z, mx: p.ancho / 2 + 8, mz: p.largo / 2 + (p.mueve ? p.mueve.amp : 0) + 8, top: p.y + (p.mueve && p.mueve.eje === 'y' ? p.mueve.amp : 0) + (p.lanza ? 3 : 0) }));
+// Lo más alto que hay debajo (o cerquita: 8 m) de x, z (desde el origen de la pista). Si no hay nada: el piso del mundo (0)
+export function soporteCarrera(x, z) {
+  let alto = 0;
+  for (const p of CARRERA_PISOS) if (Math.abs(x - p.x) <= p.mx && Math.abs(z - p.z) <= p.mz && p.top > alto) alto = p.top;
+  return alto;
+}
+// La zona de la carrera para el jugador i de n. cpMax: el checkpoint más lejano que el servidor sabe que alcanzaste
+// (si te caes, solo puedes reaparecer en un checkpoint que ya alcanzaste: así nadie "reaparece" más adelante)
+// pos: dónde lo tiene el servidor (si está en un tubo de viento, o cerquita, lo deja ir más rápido)
+export function zonaCarrera(i, n, cpMax = 0, pos = null) {
+  const c = origenCarrera(), Y = CARRERA.y0, s = salidaCarrera(0, i, n);
+  const cercaTubo = pos && PISTA_CARRERA.tubos.some(u => pos.x - c.x >= u.x0 - 4 && pos.x - c.x <= u.x1 + 4 && Math.abs(pos.z - c.z - u.z) <= CARRERA.tubo.radio + 4);
+  return { x0: c.x - 12, x1: c.x + CARRERA.meta.x1 + 4, z0: c.z - 26, z1: c.z + 26, yMin: 0, yMax: Y + 4 + 6, velMax: CARRERA_VEL_MAX + (cercaTubo ? CARRERA.tubo.vel : 0),
+    llegada: { x: c.x + s.x, z: c.z + s.z, radio: 4 }, pisoLlegada: Y, saltos: [],
+    soporte: (x, z) => soporteCarrera(x - c.x, z - c.z),
+    // Reaparecer: venías cayéndote (por debajo de la pista) y apareces arriba de un checkpoint que ya alcanzaste
+    reaparecer: (antes, p) => {
+      if (antes.y > Y - 2 || Math.abs(p.y - Y) > 1.5 || Math.abs(p.z - c.z) > 10) return false;
+      for (let k = 0; k <= cpMax; k++) if (Math.abs(p.x - (c.x + salidaCarrera(k).x)) <= 7) return true;
+      return false;
+    } };
+}
+// ¿Vale el golpe que dice un jugador? (el servidor lo revisa con su última posición y el reloj de la ronda)
+// o: el número del obstáculo (primero los puños, después las barras, después los trampolines). Devuelve el empujón (para dejarlo moverse más) o null
+export function golpeValidoCarrera(o, pos, t) {
+  const P = PISTA_CARRERA, c = origenCarrera(), rel = { x: pos.x - c.x, y: pos.y, z: pos.z - c.z };
+  if (!Number.isInteger(o) || o < 0 || o >= P.punos.length + P.barras.length + P.lanzas.length) return null;
+  if (o >= P.punos.length + P.barras.length) {   // un trampolín: tienes que estar encima (o casi)
+    const q = P.plats[P.lanzas[o - P.punos.length - P.barras.length]];
+    if (Math.abs(rel.x - q.x) > q.ancho / 2 + 2 || Math.abs(rel.z - q.z) > q.largo / 2 + 2 || Math.abs(rel.y - q.y) > 2) return null;
+    return { x: q.lanza.x, y: q.lanza.y, z: 0 };
+  }
+  if (o < P.punos.length) {
+    const f = P.punos[o];
+    if (Math.abs(rel.x - f.x) > 4 || Math.abs(rel.z) > 12 || Math.abs(rel.y - f.y) > 4) return null;
+    for (const dt of [0, -0.15, -0.3, -0.45, -0.6, 0.15]) if (punoEn(f, t + dt).pega) return { x: 0, y: CARRERA.puno.salto, z: -f.lado * CARRERA.puno.vel };   // (un poquito antes o después: internet tarda)
+    return null;
+  }
+  const b = P.barras[o - P.punos.length];
+  if (Math.hypot(rel.x - b.x, rel.z - b.z) > b.r + 2 || Math.abs(rel.y - b.y) > 3) return null;
+  const a = b.w * t + b.fase, s = (rel.x - b.x) * Math.cos(a) - (rel.z - b.z) * Math.sin(a);
+  const dx = -Math.sin(a) * Math.sign(b.w * s || 1), dz = -Math.cos(a) * Math.sign(b.w * s || 1);
+  return { x: dx * CARRERA.barra.vel, y: CARRERA.barra.salto, z: dz * CARRERA.barra.vel };
+}
+export const PISTA_CARRERA = pistaCarrera();
+
+// ---------- 🔶 Spleef (como Hex-A-Gone): otra silla del Modo Escuela ----------
+// Una arena redonda GIGANTE (100 m de ancho) con el piso hecho de HEXÁGONOS. Cuando pisas uno, al ratito se empieza a hundir
+// y se cae. Hay 6 CAPAS una encima de otra (6 etapas): si se te cae el piso, caes a la de abajo. Si te caes de la última… ¡quedas afuera!
+// Gana el último que queda arriba. Cada hexágono sigue SÓLIDO hasta que se hundió 2 m (después ya no te sostiene y desaparece).
+export const SPLEEF_X = 3700;   // dentro del minijuego del Modo Escuela, lejos de todo lo demás (la Carrera está en 3000)
+export const SPLEEF = {
+  R: 2,             // el "radio" de un hexágono (del centro a una punta): mide 3,5 m de lado a lado
+  radio: 50,        // la arena mide 100 m de ancho
+  capas: 6, y0: 62, sep: 10,   // la capa de arriba está a 62 m; cada una 10 m más abajo (la última, a 12 m)
+  fuera: 6,         // más abajo que esto: ¡quedaste afuera!
+  espera: 0.35,     // cuánto tarda en empezar a hundirse después de que lo pisas (segundos)
+  cae: 8,           // qué tan rápido se acelera hacia abajo (m/s²)
+  solidoHasta: 2,   // te sostiene hasta que se hundió 2 m
+  bots: 5, bateriaRespuesta: 3000, maxMs: 360000,
+  palco: { x: 0, z: -60, y: 70, ancho: 20, largo: 8 },   // donde miran los que quedaron afuera (arriba, al costado)
+  colores: [0xff6fb5, 0xffa94d, 0xffe066, 0x69db7c, 0x4dabf7, 0x9775fa],   // una por capa (de arriba hacia abajo)
+};
+// La altura de la capa k (0 = la de arriba)
+export const capaY = k => SPLEEF.y0 - k * SPLEEF.sep;
+// Los hexágonos de una capa (todas las capas tienen los mismos): { q, r, x, z }. Puntas hacia z (como CylinderGeometry de 6 lados)
+// x = R·√3·(q + r/2) · z = R·1,5·r
+const RAIZ3 = Math.sqrt(3);
+export const HEXES = (() => {
+  const R = SPLEEF.R, n = Math.ceil(SPLEEF.radio / (R * 1.5)) + 1, out = [];
+  for (let r = -n; r <= n; r++) for (let q = -2 * n; q <= 2 * n; q++) {
+    const x = R * RAIZ3 * (q + r / 2), z = R * 1.5 * r;
+    if (Math.hypot(x, z) <= SPLEEF.radio - R) out.push({ q, r, x, z });
+  }
+  return out;
+})();
+const HEX_INDICE = new Map(HEXES.map((h, i) => [h.q + ',' + h.r, i]));
+// ¿Qué hexágono hay en (x, z)? (desde el centro de la arena) → su número, o -1 si ahí no hay ninguno
+export function hexEn(x, z) {
+  const R = SPLEEF.R, qf = (RAIZ3 / 3 * x - z / 3) / R, rf = (2 / 3 * z) / R, sf = -qf - rf;
+  let q = Math.round(qf), r = Math.round(rf); const s = Math.round(sf);
+  const dq = Math.abs(q - qf), dr = Math.abs(r - rf), ds = Math.abs(s - sf);
+  if (dq > dr && dq > ds) q = -r - s; else if (dr > ds) r = -q - s;   // (el redondeo de las coordenadas "cúbicas")
+  const i = HEX_INDICE.get(q + ',' + r);
+  return i === undefined ? -1 : i;
+}
+// Cuánto se hundió un hexágono que pisaron hace dt segundos (al principio nada; después cae cada vez más rápido)
+export const hundido = dt => (dt < SPLEEF.espera ? 0 : 0.5 * SPLEEF.cae * (dt - SPLEEF.espera) ** 2);
+// ¿Todavía te sostiene? (pisado: el segundo en que lo pisaron, o null si nadie lo pisó)
+export const hexSolido = (pisado, t) => pisado === null || pisado === undefined || hundido(t - pisado) < SPLEEF.solidoHasta;
+// ¿Todavía se ve? (cae hasta 20 m y desaparece)
+export const hexSeVe = (pisado, t) => pisado === null || pisado === undefined || hundido(t - pisado) < 20;
+// El piso que tienes debajo: la capa más alta con un hexágono sólido debajo de (x, z) que no esté más arriba que tus pies (+ un escaloncito)
+// pisadas: una lista por capa (Map: número de hexágono → segundo en que lo pisaron). Devuelve { capa, i, top } o null
+export function pisoSpleef(x, z, pies, pisadas, t, escalon = 0.3) {
+  const i = hexEn(x, z); if (i < 0) return null;
+  for (let k = 0; k < SPLEEF.capas; k++) {
+    const p = pisadas[k] && pisadas[k].get(i), top = capaY(k) - (p === undefined ? 0 : hundido(t - p));
+    if (top <= pies + escalon && hexSolido(p, t)) return { capa: k, i, top };
+  }
+  return null;
+}
+// Dónde empieza el jugador i de n: en un círculo de 18 m en la capa de arriba
+export function salidaSpleef(i, n) {
+  const a = (i / Math.max(1, n)) * Math.PI * 2;
+  return { x: Math.cos(a) * 18, z: Math.sin(a) * 18, y: capaY(0) };
+}
+// ¿Quedaste afuera? (más abajo que la última capa)
+export const fueraSpleef = y => y < SPLEEF.fuera;
+// En qué capa estás (por tu altura): 0 = arriba … 5 = la última
+export const capaDe = y => Math.max(0, Math.min(SPLEEF.capas - 1, Math.round((SPLEEF.y0 - y) / SPLEEF.sep)));
+export const origenSpleef = () => { const o = minigameOrigin(ESCUELA_K); return { x: o.x + SPLEEF_X, z: o.z }; };
+// 🛡️ Lo que vigila el servidor: corres a 12 (más un margen); de la arena no se sale; empiezas en tu lugar de la capa de arriba
+export function zonaSpleef(i, n) {
+  const c = origenSpleef(), s = salidaSpleef(i, n), m = SPLEEF.radio + 2;
+  return { x0: c.x - m, x1: c.x + m, z0: c.z - m, z1: c.z + m, yMin: 0, yMax: capaY(0) + 6, velMax: 15,
+    llegada: { x: c.x + s.x, z: c.z + s.z, radio: 4 }, pisoLlegada: capaY(0), saltos: [] };
+}
+// ¿Vale que el jugador diga que pisó el hexágono i de la capa k? Solo si está cerca (con su posición en el servidor) y a esa altura
+export function pisadaValida(k, i, pos) {
+  if (!Number.isInteger(k) || k < 0 || k >= SPLEEF.capas || !Number.isInteger(i) || i < 0 || i >= HEXES.length) return false;
+  const c = origenSpleef(), h = HEXES[i];
+  return Math.hypot(pos.x - c.x - h.x, pos.z - c.z - h.z) <= SPLEEF.R * 2 && Math.abs(pos.y - capaY(k)) <= 3;
+}
+
+// ---------- 🎵 La música: se inventa sola mientras juegas (cada lugar con su canción) ----------
+// Nada de archivos: cada compás (4 tiempos) se arma con números. Una "canción" es: una nota base (raiz, en MIDI: 60 = DO 4),
+// una escala, una velocidad (bpm), unas vueltas de acordes (progresiones, en grados de la escala: 0 = I, 3 = IV, 4 = V…)
+// y los instrumentos. Cada 16 compases (~30 a 60 s) cambia de SECCIÓN: otra vuelta de acordes, otra melodía, y a veces
+// una parte tranquila sin batería. Y la INTENSIDAD (0 a 1) cambia según lo que pasa: más batería, más notas, más rápido.
+export const ESCALAS = {
+  mayor: [0, 2, 4, 5, 7, 9, 11], menor: [0, 2, 3, 5, 7, 8, 10], dorica: [0, 2, 3, 5, 7, 9, 10], frigia: [0, 1, 3, 5, 7, 8, 10],
+  lidia: [0, 2, 4, 6, 7, 9, 11], mixolidia: [0, 2, 4, 5, 7, 9, 10],
+};
+export const midiAFrecuencia = m => 440 * 2 ** ((m - 69) / 12);
+// bateria: 'nada' | 'suave' | 'normal' | 'fiesta' · corto: notas cortitas (como pellizcar cuerdas) · vol: qué tan fuerte
+export const MUSICAS = {
+  mundoDia:   { nombre: 'Tu mundo (día)', raiz: 60, escala: 'mayor', bpm: 92, progresiones: [[0, 4, 5, 3], [0, 5, 3, 4], [3, 4, 2, 5]], timbres: { bajo: 'triangle', acorde: 'sine', melodia: 'triangle' }, bateria: 'suave', vol: 0.8 },
+  mundoNoche: { nombre: 'Tu mundo (noche)', raiz: 57, escala: 'dorica', bpm: 68, progresiones: [[0, 3, 0, 4], [5, 3, 0, 4]], timbres: { bajo: 'sine', acorde: 'sine', melodia: 'sine' }, bateria: 'nada', vol: 0.6 },
+  salon:      { nombre: 'El salón', raiz: 65, escala: 'mayor', bpm: 104, progresiones: [[0, 5, 1, 4], [0, 3, 4, 0]], timbres: { bajo: 'triangle', acorde: 'triangle', melodia: 'square' }, bateria: 'suave', corto: true, vol: 0.7 },
+  torre:      { nombre: 'No mires abajo', raiz: 62, escala: 'dorica', bpm: 110, progresiones: [[0, 6, 5, 6], [0, 3, 6, 4], [5, 6, 0, 0]], timbres: { bajo: 'sawtooth', acorde: 'triangle', melodia: 'square' }, bateria: 'normal', vol: 0.75 },
+  escondidas: { nombre: 'Escondidas', raiz: 64, escala: 'menor', bpm: 92, progresiones: [[0, 5, 6, 4], [0, 3, 0, 4]], timbres: { bajo: 'triangle', acorde: 'sine', melodia: 'triangle' }, bateria: 'suave', corto: true, vol: 0.75 },
+  atrapadas:  { nombre: 'Atrapadas Nocivas', raiz: 55, escala: 'frigia', bpm: 124, progresiones: [[0, 1, 0, 6], [0, 6, 5, 1]], timbres: { bajo: 'sawtooth', acorde: 'sawtooth', melodia: 'square' }, bateria: 'normal', vol: 0.65 },
+  carrera:    { nombre: 'Carrera', raiz: 58, escala: 'mayor', bpm: 138, progresiones: [[0, 4, 5, 3], [3, 4, 0, 0], [5, 3, 0, 4]], timbres: { bajo: 'square', acorde: 'triangle', melodia: 'square' }, bateria: 'fiesta', corto: true, vol: 0.7 },
+  spleef:     { nombre: 'Spleef', raiz: 61, escala: 'lidia', bpm: 128, progresiones: [[0, 1, 0, 4], [5, 1, 0, 4]], timbres: { bajo: 'square', acorde: 'triangle', melodia: 'triangle' }, bateria: 'fiesta', corto: true, vol: 0.7 },
+  sandbox:    { nombre: 'Sandbox', raiz: 60, escala: 'lidia', bpm: 84, progresiones: [[0, 1, 4, 0], [5, 1, 0, 0]], timbres: { bajo: 'sine', acorde: 'sine', melodia: 'sine' }, bateria: 'nada', vol: 0.6 },
+  minijuego:  { nombre: 'Minijuego', raiz: 67, escala: 'mayor', bpm: 120, progresiones: [[0, 3, 4, 3], [0, 5, 3, 4]], timbres: { bajo: 'square', acorde: 'triangle', melodia: 'square' }, bateria: 'normal', corto: true, vol: 0.65 },
+};
+// ¿Qué canción va aquí? modo: el minijuego (null = tu mundo) · fase: dónde estás en la escuela · noche: en tu mundo de noche
+export function lugarMusica({ modo = null, fase = null, noche = false } = {}) {
+  if (!modo) return noche ? 'mundoNoche' : 'mundoDia';
+  if (modo === 'sandbox') return 'sandbox';
+  if (modo === 'escuela') return { nomires: 'torre', escondidas: 'escondidas', atrapadas: 'atrapadas', carrera: 'carrera', spleef: 'spleef' }[fase] || 'salon';
+  return 'minijuego';
+}
+const entre01 = x => Math.max(0, Math.min(1, x));
+// Qué tan intensa tiene que estar la música (0 tranquila … 1 a todo) según lo que pasa
+//  atrapadas: tengo (¿tengo la mancha?), faltaMs · escondidas: persiguen (¿me están persiguiendo?), cuenta (¿cuenta regresiva para esconderse?)
+//  carrera: puesto, x (metros) · spleef: capa (0 arriba … 5), quedan, total · torre: etapa (1 a 10)
+export function intensidadMusica(lugar, d = {}) {
+  switch (lugar) {
+    case 'atrapadas': return d.tengo ? (d.faltaMs < 5000 ? 1 : 0.75) : 0.35;
+    case 'escondidas': return d.persiguen ? 1 : d.cuenta ? 0.45 : 0.3;
+    case 'carrera': return d.x > 240 || d.puesto === 1 ? 0.9 : 0.5;
+    case 'spleef': return entre01(0.3 + 0.7 * Math.max((d.capa || 0) / 5, d.total > 1 ? 1 - (d.quedan - 1) / (d.total - 1) : 0));
+    case 'torre': return entre01(0.2 + 0.09 * ((d.etapa || 1) - 1));
+    case 'mundoNoche': return 0.1;
+    case 'mundoDia': case 'sandbox': return 0.25;
+    default: return 0.4;
+  }
+}
+// Un número al azar que siempre sale igual con la misma semilla (para que la melodía de una sección se repita y se pueda tararear)
+function semillaDe(texto, n) { let h = 2166136261 ^ n; for (let i = 0; i < texto.length; i++) h = Math.imul(h ^ texto.charCodeAt(i), 16777619); return h >>> 0; }
+function azarFijo(s) { return () => { s = (s + 0x6D2B79F5) >>> 0; let t = Math.imul(s ^ (s >>> 15), 1 | s); t ^= t + Math.imul(t ^ (t >>> 7), 61 | t); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+export const COMPASES_POR_SECCION = 16;
+// La nota MIDI del grado g de la escala (puede ser negativo o pasar de 7: cambia de octava)
+export function notaDeGrado(M, g) {
+  const E = ESCALAS[M.escala], oct = Math.floor(g / E.length), i = ((g % E.length) + E.length) % E.length;
+  return M.raiz + oct * 12 + E[i];
+}
+// El compás número n de la canción id: { bpm, tiempos: 4, notas: [{ t (en tiempos), dur (en tiempos), midi, voz, vel }] }
+// voz: 'bajo' | 'acorde' | 'arpegio' | 'melodia' | 'bombo' | 'caja' | 'hihat' | 'tic' | 'campana'
+// azar: para las variaciones chiquitas (cada vez distinto) · extra: { tic (cuenta regresiva), invierno (cascabeles) }
+export function compasMusica(id, n, intensidad = 0.3, azar = Math.random, extra = {}) {
+  const M = MUSICAS[id], I = entre01(intensidad), seccion = Math.floor(n / COMPASES_POR_SECCION), enSeccion = n % COMPASES_POR_SECCION;
+  const prog = M.progresiones[seccion % M.progresiones.length], grado = prog[enSeccion % prog.length];
+  const tranquila = seccion % 4 === 3 && I < 0.7;   // cada 4 secciones, una parte tranquila (sin batería) — salvo que esté todo muy intenso
+  const notas = [], add = (t, dur, midi, voz, vel) => notas.push({ t, dur, midi, voz, vel });
+  // Bajo: la nota del acorde, abajo. Con más intensidad, corcheas
+  const bajo = notaDeGrado(M, grado) - 12;
+  if (I > 0.6) for (let k = 0; k < 8; k++) add(k / 2, 0.45, bajo + (k % 2 && azar() < 0.3 ? 12 : 0), 'bajo', 0.8);
+  else { add(0, 1.8, bajo, 'bajo', 0.9); add(2, 1.8, azar() < 0.25 ? bajo + 7 : bajo, 'bajo', 0.8); }
+  // Acorde: tres notas largas (o arpegio cuando hay acción: la "capa de persecución")
+  const acorde = [0, 2, 4].map(k => notaDeGrado(M, grado + k));
+  if (I >= 0.5) for (let k = 0; k < 8; k++) add(k / 2, 0.4, acorde[k % 3] + (k >= 4 ? 12 : 0), 'arpegio', 0.6 + 0.3 * I);
+  else for (const m of acorde) add(0, 3.9, m, 'acorde', 0.5);
+  // Melodía: un motivo de 8 corcheas por sección (se repite → se puede tararear), con variaciones chiquitas en cada compás
+  const fijo = azarFijo(semillaDe(id, seccion)), alto = seccion % 2 ? 7 : 0, densidad = 0.35 + 0.45 * I;
+  const motivo = Array.from({ length: 8 }, () => ({ suena: fijo() < densidad, paso: [0, 2, 4, 7, 4, 2][Math.floor(fijo() * 6)] }));
+  if (!(tranquila && enSeccion % 2)) motivo.forEach((p, k) => {
+    if (!p.suena) return;
+    let g = grado + p.paso + alto;
+    if (azar() < 0.2) g += azar() < 0.5 ? 1 : -1;   // la variación chiquita
+    add(k / 2, M.corto ? 0.35 : 0.9, notaDeGrado(M, g) + 12, 'melodia', 0.55 + 0.35 * I);
+  });
+  // Batería
+  const estilo = tranquila ? 'nada' : M.bateria;
+  if (estilo !== 'nada') {
+    const golpes = estilo === 'fiesta' || I > 0.7 ? [0, 1, 2, 3] : estilo === 'normal' ? [0, 2, 2.5] : [0, 2];
+    for (const t of golpes) add(t, 0.2, 36, 'bombo', 0.9);
+    if (estilo !== 'suave' || I > 0.5) for (const t of [1, 3]) add(t, 0.2, 38, 'caja', 0.7 + 0.3 * I);
+    const paso = I > 0.75 ? 0.25 : 0.5;
+    if (estilo === 'fiesta' || I > 0.3) for (let t = 0; t < 4; t += paso) add(t, 0.1, 42, extra.invierno ? 'campana' : 'hihat', t % 1 ? 0.4 : 0.6);
+  }
+  if (extra.tic) for (let t = 0; t < 4; t++) add(t, 0.05, 84, 'tic', t === 0 ? 1 : 0.6);   // tic-tac de la cuenta regresiva
+  return { bpm: Math.round(M.bpm * (1 + 0.12 * I)), tiempos: 4, notas };
+}
+// Volumen de la música: los pasos del botón 🎵 (de más a menos) y el que viene después
+export const VOLUMENES_MUSICA = [1, 0.6, 0.3, 0];
+export const siguienteVolumen = v => VOLUMENES_MUSICA[(Math.max(0, VOLUMENES_MUSICA.indexOf(v)) + 1) % VOLUMENES_MUSICA.length];
+export const leerVolumen = texto => { if (texto === null || texto === undefined || texto === '') return 0.6; const v = Number(texto); return VOLUMENES_MUSICA.includes(v) ? v : 0.6; };

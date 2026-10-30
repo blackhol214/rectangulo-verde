@@ -81,7 +81,8 @@ export const claveCorrecta = (dada, real) => typeof dada === 'string' && typeof 
 // ---------- ¿Dónde está cada jugador? (mg) ----------
 // 0 = en el mundo · 1 a 20 = en el minijuego número mg − 1 · 21 = en la torre "No mires abajo"
 // · 30, 31, 32 = en una ronda de Escondidas con amigos (en el terreno 0, 1 o 2) · 99 = jugando solo (no ve a nadie)
-export const MG_TORRE = 21, MG_ESCONDIDAS = 30, MG_ATRAPADAS = 40, MG_SOLO = 99;
+// · 50 = en una Carrera con amigos · 60 = en un Spleef con amigos
+export const MG_TORRE = 21, MG_ESCONDIDAS = 30, MG_ATRAPADAS = 40, MG_CARRERA = 50, MG_SPLEEF = 60, MG_SOLO = 99;
 // Dos jugadores se ven solo si están en el mismo lugar (y ninguno está jugando solo)
 export const seVen = (miMg, suMg) => miMg === suMg && miMg !== MG_SOLO;
 
@@ -107,10 +108,13 @@ export function ganadorRonda({ camaleones, encontrados, ms, buscadorSeFue = fals
 // El mg de un jugador lo decide el servidor durante la ronda: así nadie se vuelve invisible cambiándolo desde la consola.
 // terrenoRonda: el terreno de SU ronda (o null si no está jugando una). Fuera de la ronda nadie puede decir que está adentro.
 // enAtrapadas: si está jugando una ronda de Atrapadas Nocivas (lo sabe el servidor)
-export function mgDelServidor(mg, terrenoRonda, enAtrapadas = false) {
+// enModo: el mg de otra ronda que está jugando (Carrera o Spleef), o null
+const MG_DE_RONDA = [MG_ATRAPADAS, MG_CARRERA, MG_SPLEEF];
+export function mgDelServidor(mg, terrenoRonda, enAtrapadas = false, enModo = null) {
   if (enAtrapadas) return MG_ATRAPADAS;
+  if (enModo !== null) return enModo;
   if (terrenoRonda !== null) return MG_ESCONDIDAS + terrenoRonda;
-  return (mg >= MG_ESCONDIDAS && mg < MG_ESCONDIDAS + ESC.terrenos) || mg === MG_ATRAPADAS ? MG_SOLO : mg;
+  return (mg >= MG_ESCONDIDAS && mg < MG_ESCONDIDAS + ESC.terrenos) || MG_DE_RONDA.includes(mg) ? MG_SOLO : mg;
 }
 
 // ---------- 👽 Atrapadas Nocivas: la mancha verde alien (el servidor es el árbitro) ----------
@@ -184,10 +188,10 @@ export const VIGILA = { maxSaldo: 3, maxSaldoY: 3.5, subeVel: 13, salto: 3.2, po
 export function vigilarPos(antes, nuevo, ahora, zona, extra = 0, dirExtra = null) {
   const ok = (p, ex, saldo, saldoY, corregido = false) => ({ pos: { x: p.x, y: p.y, z: p.z, t: ahora, llego: true, saldo, saldoY }, extra: ex, corregido });
   const dentro = p => p.x >= zona.x0 && p.x <= zona.x1 && p.z >= zona.z0 && p.z <= zona.z1;
-  const piso = zona.yMin ?? 0, techo = zona.yMax ?? Infinity;
+  const piso = zona.yMin ?? 0, techo = zona.yMax ?? Infinity, yLl = zona.pisoLlegada ?? piso;   // (en la carrera empiezas arriba, en la pista)
   if (!antes || !antes.llego) {
-    const l = zona.llegada, enSuLugar = { x: l.x, y: piso, z: l.z };
-    if (Math.hypot(nuevo.x - l.x, nuevo.z - l.z) <= l.radio && nuevo.y <= piso + 1) return ok(nuevo, extra, VIGILA.maxSaldo, VIGILA.maxSaldoY);   // llegó a su lugar
+    const l = zona.llegada, enSuLugar = { x: l.x, y: yLl, z: l.z };
+    if (Math.hypot(nuevo.x - l.x, nuevo.z - l.z) <= l.radio && nuevo.y <= yLl + 1 && nuevo.y >= yLl - 1) return ok(nuevo, extra, VIGILA.maxSaldo, VIGILA.maxSaldoY);   // llegó a su lugar
     const tarde = zona.llegarHasta !== undefined && ahora > zona.llegarHasta;
     if (!dentro(nuevo) && !tarde) return { pos: { x: nuevo.x, y: nuevo.y, z: nuevo.z, t: ahora, llego: false }, extra, corregido: false };   // todavía en el salón
     return ok(enSuLugar, extra, VIGILA.maxSaldo, VIGILA.maxSaldoY, true);   // apareció en otro lado (o no llegó a tiempo): lo ponemos en su lugar
@@ -195,6 +199,8 @@ export function vigilarPos(antes, nuevo, ahora, zona, extra = 0, dirExtra = null
   const p = { x: Math.min(zona.x1, Math.max(zona.x0, nuevo.x)), y: Math.min(techo, Math.max(piso, nuevo.y)), z: Math.min(zona.z1, Math.max(zona.z0, nuevo.z)) };
   let corregido = p.x !== nuevo.x || p.y !== nuevo.y || p.z !== nuevo.z;
   const dt = Math.max(0, (ahora - antes.t) / 1000);
+  // ¿Reapareció en un checkpoint después de caerse? (la carrera dice si vale: solo en uno que ya alcanzó)
+  if (zona.reaparecer && zona.reaparecer(antes, p)) return ok(p, extra, VIGILA.maxSaldo, VIGILA.maxSaldoY, corregido);
   // ¿Un portal? Desde cerca de la entrada (a su altura) hasta su par, a la altura de la salida
   const cerca = (a, b, r) => Math.hypot(a.x - b.x, a.z - b.z) <= r;
   if (zona.saltos.some(s => cerca(antes, s.desde, VIGILA.portalEntrada) && antes.y >= s.desde.y - 0.5 && antes.y <= s.desde.y + 2.5
@@ -294,6 +300,19 @@ export function leerMensaje(texto) {
   if (m.tipo === 'an') {
     if (m.que === 'entrar' || m.que === 'salir' || m.que === 'empezar') return { tipo: 'an', que: m.que };
     if (m.que === 'pasar' && Number.isInteger(m.a)) return { tipo: 'an', que: 'pasar', a: m.a };
+    return null;
+  }
+  // 🏁 Carrera: entrar a la espera, salir, empezar, "llegué a la meta" o "me pegó el obstáculo número o"
+  if (m.tipo === 'cr') {
+    if (['entrar', 'salir', 'empezar', 'llegue'].includes(m.que)) return { tipo: 'cr', que: m.que };
+    if (m.que === 'golpe' && esEntero(m.o, 0, 99)) return { tipo: 'cr', que: 'golpe', o: m.o };
+    return null;
+  }
+  // 🔶 Spleef: entrar a la espera, salir, empezar, o "pisé estos hexágonos" (hasta 30: [capa, número])
+  if (m.tipo === 'sp') {
+    if (['entrar', 'salir', 'empezar'].includes(m.que)) return { tipo: 'sp', que: m.que };
+    if (m.que === 'pisa' && Array.isArray(m.h) && m.h.length >= 1 && m.h.length <= 30 && m.h.every(p => Array.isArray(p) && p.length === 2 && esEntero(p[0], 0, 9) && esEntero(p[1], 0, 9999)))
+      return { tipo: 'sp', que: 'pisa', h: m.h.map(p => [p[0], p[1]]) };
     return null;
   }
   // Tu pestaña se escondió (v: 0) o volvió a verse (v: 1): una pestaña escondida no puede ser el anfitrión

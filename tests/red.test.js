@@ -551,3 +551,30 @@ describe('suavizar a los amigos: los portales se ven de golpe', () => {
     expect(mezclar([0, 0, 0], [2, 1, 0], 0.5)).toEqual([1, 0.5, 0]);
   });
 });
+
+import { MG_CARRERA } from '../src/red.js';
+describe('🏁 Carrera por la red', () => {
+  it('lee los mensajes de la carrera (y rechaza los raros)', () => {
+    for (const que of ['entrar', 'salir', 'empezar', 'llegue']) expect(leerMensaje(JSON.stringify({ tipo: 'cr', que }))).toEqual({ tipo: 'cr', que });
+    expect(leerMensaje(JSON.stringify({ tipo: 'cr', que: 'golpe', o: 3 }))).toEqual({ tipo: 'cr', que: 'golpe', o: 3 });
+    expect(leerMensaje(JSON.stringify({ tipo: 'cr', que: 'golpe', o: -1 }))).toBeNull();
+    expect(leerMensaje(JSON.stringify({ tipo: 'cr', que: 'golpe', o: 'x' }))).toBeNull();
+    expect(leerMensaje(JSON.stringify({ tipo: 'cr', que: 'ganar' }))).toBeNull();
+  });
+  it('el mg de la carrera lo pone el servidor: nadie de afuera puede decir que está corriendo', () => {
+    expect(mgDelServidor(0, null, false, MG_CARRERA)).toBe(MG_CARRERA);
+    expect(mgDelServidor(MG_CARRERA, null, false, null)).toBe(MG_SOLO);
+    expect(mgDelServidor(12, null)).toBe(12);
+  });
+});
+
+describe('🔶 Spleef por la red', () => {
+  it('lee los mensajes del Spleef (y rechaza los raros)', () => {
+    for (const que of ['entrar', 'salir', 'empezar']) expect(leerMensaje(JSON.stringify({ tipo: 'sp', que }))).toEqual({ tipo: 'sp', que });
+    expect(leerMensaje(JSON.stringify({ tipo: 'sp', que: 'pisa', h: [[0, 12], [1, 300]] }))).toEqual({ tipo: 'sp', que: 'pisa', h: [[0, 12], [1, 300]] });
+    expect(leerMensaje(JSON.stringify({ tipo: 'sp', que: 'pisa', h: [] }))).toBeNull();
+    expect(leerMensaje(JSON.stringify({ tipo: 'sp', que: 'pisa', h: Array(31).fill([0, 1]) }))).toBeNull();
+    expect(leerMensaje(JSON.stringify({ tipo: 'sp', que: 'pisa', h: [[0, -1]] }))).toBeNull();
+    expect(leerMensaje(JSON.stringify({ tipo: 'sp', que: 'ganar' }))).toBeNull();
+  });
+});

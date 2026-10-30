@@ -1009,7 +1009,8 @@ describe('modo Escuela', () => {
   it('el salón tiene 12 sillas: adelante a la izquierda "No mires abajo" y atrás a la derecha "Escondidas"', () => {
     const sillas = salonSillas();
     expect(sillas).toHaveLength(12);
-    expect(sillas.filter(s => s.modo)).toEqual([sillas[0], sillas[3], sillas[11]]);
+    expect(sillas.filter(s => s.modo)).toEqual([sillas[0], sillas[1], sillas[2], sillas[3], sillas[11]]);
+    expect(sillas[1].modo).toBe('carrera'); expect(sillas[2].modo).toBe('spleef');
     expect(sillas[3].modo).toBe('atrapadas');   // la tercera: adelante a la derecha
     expect(sillas[0].modo).toBe('nomires');
     expect(sillas[11].modo).toBe('escondidas');
@@ -1874,5 +1875,243 @@ describe('🛡️ Atrapadas: lo que hay debajo', () => {
     expect(soporteAN(0, 66)).toBe(0);   // lejos de todo (cerca del borde)
     plataformasAN().forEach(p => expect(soporteAN(p.x, p.z)).toBeGreaterThanOrEqual(p.y));
     const c = centroArenaAN(); expect(zonaAN(0, 2).soporte(c.x, c.z)).toBeGreaterThanOrEqual(32);   // la isla del centro, arriba de la cima
+  });
+});
+
+import { CARRERA, pistaCarrera, posPlatCarrera, punoEn, guanteEn, golpePuno, golpeBarra, checkpointDe, salidaCarrera, enMetaCarrera, seCayoCarrera, puestosCarrera, soporteCarrera, zonaCarrera, origenCarrera, golpeValidoCarrera, cargarBateria as cargarB, ganaSpooky as ganaS } from '../src/logic.js';
+import { vigilarPos as vigilar } from '../src/red.js';
+describe('🏁 Carrera (como Fall Guys)', () => {
+  const P = pistaCarrera(), Y = CARRERA.y0;
+  const sobre = (x, z, t = 0) => P.plats.some(p => { const q = posPlatCarrera(p, t), hw = p.redonda ? p.r * 0.85 : p.ancho / 2, hd = p.redonda ? p.r * 0.85 : p.largo / 2; return Math.abs(x - q.x) <= hw && Math.abs(z - q.z) <= hd; });
+  it('la pista (~540 m) tiene salida, 17 checkpoints (uno cada 30 m) y la meta; puños, ruedas con barras, discos, plataformas que se mueven y un escalón alto', () => {
+    const cps = P.plats.filter(p => p.cp !== undefined).map(p => p.cp);
+    expect(cps).toEqual(Array.from({ length: 18 }, (_, k) => k));
+    expect(CARRERA.meta.x1).toBeGreaterThan(500); expect(CARRERA.meta.x1).toBeLessThan(600);
+    P.plats.filter(p => p.tipo === 'checkpoint').forEach(p => expect(p.x - p.ancho / 2).toBe(p.cp * 30));
+    expect(P.plats.some(p => p.tipo === 'meta')).toBe(true);
+    expect(P.punos.length).toBeGreaterThanOrEqual(8); expect(P.barras.length).toBeGreaterThanOrEqual(4);
+    expect(P.plats.filter(p => p.gira).length).toBeGreaterThanOrEqual(6); expect(P.plats.filter(p => p.mueve).length).toBeGreaterThanOrEqual(6);
+    const esc = P.plats.find(p => p.tipo === 'escalon'); expect(esc.y - Y).toBeGreaterThan(12.5 ** 2 / 60);   // más alto que un salto: hace falta el doble salto
+    expect(esc.y - Y).toBeLessThan(2 * 12.5 ** 2 / 60);                                                   // pero el doble salto sí llega
+  });
+  it('ningún hueco del camino es más largo de lo que alcanza un salto corriendo (12 m/s × 0,83 s ≈ 10 m): se puede terminar', () => {
+    // A lo largo de la pista (en x): el hueco más largo sin ninguna plataforma (los discos cuentan por su caja para chocar)
+    let hueco = 0, max = 0;
+    const lanza = P.plats.find(p => p.lanza && p.lanza.x > 10), finLanza = lanza.x + lanza.ancho / 2;
+    let huecoLanza = 0;
+    for (let x = -1; x <= CARRERA.meta.x0; x += 0.25) {
+      if (P.plats.some(p => Math.abs(x - p.x) <= (p.redonda ? p.r * 0.85 : p.ancho / 2))) hueco = 0;
+      else if (x > finLanza && x < finLanza + 25) huecoLanza += 0.25;   // el hueco grande de los trampolines (se cruza con el verde)
+      else max = Math.max(max, hueco += 0.25);
+    }
+    expect(max).toBeGreaterThan(0.5); expect(max).toBeLessThan(4);
+    // el trampolín verde te tira más lejos que el hueco (vuelas lanza.y·2/30 s a lanza.x m/s)
+    expect(huecoLanza).toBeGreaterThan(10); expect(lanza.lanza.x * (2 * lanza.lanza.y / 30)).toBeGreaterThan(huecoLanza);
+  });
+  it('los puños: salen rápido, se quedan afuera, vuelven y esperan; solo pegan saliendo o afuera', () => {
+    const f = { x: 0, z: 5, lado: 1, y: Y, largo: 8.5, periodo: 2.2, fase: 0 };
+    expect(punoEn(f, 0).e).toBe(0); expect(punoEn(f, 0.2).pega).toBe(true);
+    expect(punoEn(f, 0.5).e).toBe(1); expect(punoEn(f, 1).pega).toBe(false); expect(punoEn(f, 2).e).toBe(0);
+    expect(guanteEn(f, 0.5).z).toBeCloseTo(5 - 8.5);   // afuera del todo: cruzó el pasillo
+    // Parado donde llega el guante, te pega hacia el otro lado (y para arriba)
+    const g = golpePuno({ x: 0, y: Y, z: guanteEn(f, 0.5).z }, f, 0.5);
+    expect(g.z).toBeLessThan(-20); expect(g.y).toBeGreaterThan(0);
+    expect(golpePuno({ x: 0, y: Y, z: guanteEn(f, 0.5).z }, f, 1.5)).toBeNull();     // volviendo: no pega
+    expect(golpePuno({ x: 5, y: Y, z: -3.5 }, f, 0.5)).toBeNull();                   // estás lejos
+    expect(golpePuno({ x: 0, y: Y + 3, z: -3.5 }, f, 0.5)).toBeNull();               // saltaste por encima
+  });
+  it('las barras de las ruedas: te empujan de costado si te tocan, pero no si las saltas', () => {
+    const b = { x: 0, z: 0, y: Y, r: 10, w: 1, fase: 0 };
+    const g = golpeBarra({ x: 5, y: Y, z: 0 }, b, 0);   // la barra está sobre el eje x en t = 0
+    expect(g).not.toBeNull(); expect(Math.hypot(g.x, g.z)).toBeCloseTo(CARRERA.barra.vel);
+    expect(golpeBarra({ x: 5, y: Y + 2, z: 0 }, b, 0)).toBeNull();   // saltando
+    expect(golpeBarra({ x: 5, y: Y, z: 3 }, b, 0)).toBeNull();       // lejos de la barra
+    expect(golpeBarra({ x: 12, y: Y, z: 0 }, b, 0)).toBeNull();      // afuera de la rueda
+    // un cuarto de vuelta después, la barra está sobre el eje z
+    expect(golpeBarra({ x: 0, y: Y, z: -5 }, b, Math.PI / 2)).not.toBeNull();
+  });
+  it('los discos giran y las plataformas van de lado a lado (con el reloj de la ronda: todos lo ven igual)', () => {
+    const d = P.plats.find(p => p.gira), m = P.plats.find(p => p.mueve);
+    expect(posPlatCarrera(d, 2).giro).toBeCloseTo(d.gira.w * 2 + d.gira.fase);
+    const zs = Array.from({ length: 40 }, (_, i) => posPlatCarrera(m, i * 0.2).z);
+    expect(Math.max(...zs) - Math.min(...zs)).toBeGreaterThan(m.mueve.amp * 1.5);
+  });
+  it('checkpoints, salida, meta, caerse y puestos', () => {
+    expect(checkpointDe(-1)).toBe(0); expect(checkpointDe(29.9)).toBe(0); expect(checkpointDe(30)).toBe(1); expect(checkpointDe(999)).toBe(17);
+    const s = salidaCarrera(3, 0, 1); expect(s.x).toBe(93); expect(sobre(s.x, s.z)).toBe(true);
+    for (let k = 0; k <= 17; k++) for (let i = 0; i < 6; i++) { const q = salidaCarrera(k, i, 6); expect(sobre(q.x, q.z)).toBe(true); }   // todos caben en su checkpoint
+    expect(enMetaCarrera({ x: 535, y: Y, z: 0 })).toBe(true); expect(enMetaCarrera({ x: 520, y: Y, z: 0 })).toBe(false); expect(enMetaCarrera({ x: 535, y: Y - 5, z: 0 })).toBe(false);
+    expect(seCayoCarrera(Y - 9)).toBe(true); expect(seCayoCarrera(Y - 2)).toBe(false);
+    expect(puestosCarrera([{ id: 1, x: 50 }, { id: 2, x: 200 }, { id: 3, x: 300 }], [3])).toEqual([3, 2, 1]);
+  });
+  it('batería: una respuesta buena da 4.000 en la Carrera; y se ganan SpookyCoins jugándola', () => {
+    expect(cargarB(0, true, CARRERA.bateriaRespuesta)).toBe(4000); expect(cargarB(0, true)).toBe(2000); expect(cargarB(5, false, 4000)).toBe(5);
+    expect(ganaS({ modo: 'escuela', fase: 'carrera', enRonda: true })).toBe(true);
+    expect(ganaS({ modo: 'escuela', fase: 'carrera', enRonda: true, resultado: true })).toBe(false);
+  });
+  it('🛡️ el servidor: empiezas en tu carril (arriba, en la pista), puedes reaparecer solo en un checkpoint que ya alcanzaste, y no puedes volar', () => {
+    const c = origenCarrera(), z = zonaCarrera(0, 2, 3), s = salidaCarrera(0, 0, 2);
+    let v = vigilar(null, { x: c.x + s.x, y: Y, z: c.z + s.z }, 0, z);
+    expect(v.corregido).toBe(false); expect(v.pos.llego).toBe(true);
+    // cayéndose (por debajo de la pista) → aparece en el checkpoint 3: vale
+    const cayendo = { ...v.pos, x: c.x + 100, y: Y - 9, z: c.z + 3, t: 1000 };
+    v = vigilar(cayendo, { x: c.x + 93, y: Y, z: c.z }, 1100, z); expect(v.corregido).toBe(false); expect(v.pos.x).toBe(c.x + 93);
+    // …pero en el checkpoint 5 (no lo alcanzó): no vale
+    v = vigilar(cayendo, { x: c.x + 153, y: Y, z: c.z }, 1100, z); expect(v.corregido).toBe(true); expect(v.pos.x).toBeLessThan(c.x + 110);
+    // volar por encima del vacío: no
+    const arriba = { x: c.x + 3, y: Y, z: c.z, t: 0, llego: true, saldo: 3, saldoY: 3.5 };
+    let pos = arriba; for (let i = 1; i <= 30; i++) pos = vigilar(pos, { x: pos.x, y: pos.y + 1, z: c.z - 20 }, i * 100, z).pos;
+    expect(pos.y).toBeLessThanOrEqual(Y + 3.2 + 0.01);   // no subió más que un salto desde la pista
+  });
+  it('🛡️ el golpe de un puño solo vale si estabas cerca del puño y estaba pegando; y te deja moverte más hacia allá', () => {
+    const c = origenCarrera(), f = P.punos[0];
+    const t = 0.5 - f.fase;   // afuera del todo
+    expect(golpeValidoCarrera(0, { x: c.x + f.x, y: Y, z: c.z }, t)).not.toBeNull();
+    expect(golpeValidoCarrera(0, { x: c.x + f.x + 40, y: Y, z: c.z }, t)).toBeNull();   // lejos
+    expect(golpeValidoCarrera(0, { x: c.x + f.x, y: Y, z: c.z }, t + 1.1)).toBeNull();  // estaba guardado
+    expect(golpeValidoCarrera(999, { x: c.x, y: Y, z: c.z }, t)).toBeNull();
+    const b = P.barras[0]; expect(golpeValidoCarrera(P.punos.length, { x: c.x + b.x + 3, y: Y, z: c.z }, 1)).not.toBeNull();
+  });
+});
+
+import { SPLEEF, capaY, HEXES, hexEn, hundido, hexSolido, hexSeVe, pisoSpleef, salidaSpleef, fueraSpleef, capaDe, zonaSpleef, origenSpleef, pisadaValida } from '../src/logic.js';
+describe('🔶 Spleef (hexágonos que se caen)', () => {
+  it('la arena mide 100 m y tiene 6 capas una encima de otra (10 m entre una y otra)', () => {
+    const lejos = Math.max(...HEXES.map(h => Math.hypot(h.x, h.z))) + SPLEEF.R;
+    expect(lejos).toBeGreaterThan(48); expect(lejos).toBeLessThanOrEqual(SPLEEF.radio + 0.01);
+    expect(Array.from({ length: SPLEEF.capas }, (_, k) => capaY(k))).toEqual([62, 52, 42, 32, 22, 12]);
+    expect(HEXES.length).toBeGreaterThan(500);
+  });
+  it('cada punto del piso cae en un solo hexágono (sin huecos entre ellos)', () => {
+    HEXES.forEach((h, i) => expect(hexEn(h.x, h.z)).toBe(i));
+    let huecos = 0;
+    for (let x = -40; x <= 40; x += 0.7) for (let z = -40; z <= 40; z += 0.7) if (Math.hypot(x, z) < 45 && hexEn(x, z) < 0) huecos++;
+    expect(huecos).toBe(0);
+    expect(hexEn(70, 0)).toBe(-1);   // afuera de la arena
+  });
+  it('un hexágono pisado: espera un poquito, se hunde cada vez más rápido y te sostiene hasta que bajó 2 m', () => {
+    expect(hundido(0.2)).toBe(0);
+    expect(hundido(1)).toBeGreaterThan(hundido(0.6));
+    expect(hexSolido(null, 99)).toBe(true); expect(hexSolido(0, 0.5)).toBe(true);
+    const t2 = SPLEEF.espera + Math.sqrt(2 * SPLEEF.solidoHasta / SPLEEF.cae);   // cuándo llega a 2 m
+    expect(hexSolido(0, t2 - 0.02)).toBe(true); expect(hexSolido(0, t2 + 0.02)).toBe(false);
+    expect(t2).toBeGreaterThan(0.8); expect(t2).toBeLessThan(1.5);   // ~1 s para salir corriendo
+    expect(hexSeVe(0, t2 + 0.1)).toBe(true); expect(hexSeVe(0, 10)).toBe(false);
+  });
+  it('el piso debajo: la capa de arriba; si su hexágono se cayó, la de abajo; si se cayeron todos, nada', () => {
+    const p = [new Map(), new Map(), new Map(), new Map(), new Map(), new Map()], i = hexEn(0, 0);
+    expect(pisoSpleef(0, 0, 62, p, 5)).toEqual({ capa: 0, i, top: 62 });
+    p[0].set(i, 0);   // lo pisaron en el segundo 0
+    expect(pisoSpleef(0, 0, 62, p, 0.5).capa).toBe(0);                    // todavía no se hunde mucho
+    expect(pisoSpleef(0, 0, 62, p, 5)).toEqual({ capa: 1, i, top: 52 });  // ya se cayó: caes a la de abajo
+    for (const m of p) m.set(i, 0);
+    expect(pisoSpleef(0, 0, 62, p, 5)).toBeNull();
+    // estando en la capa de abajo, la de arriba no cuenta (no subes de golpe)
+    expect(pisoSpleef(0, 0, 52, [new Map(), new Map(), new Map(), new Map(), new Map(), new Map()], 0).capa).toBe(1);
+  });
+  it('salidas, quedar afuera, en qué capa estás', () => {
+    for (let k = 0; k < 6; k++) { const s = salidaSpleef(k, 6); expect(hexEn(s.x, s.z)).toBeGreaterThanOrEqual(0); expect(s.y).toBe(62); }
+    expect(fueraSpleef(5)).toBe(true); expect(fueraSpleef(11)).toBe(false);
+    expect(capaDe(62)).toBe(0); expect(capaDe(51)).toBe(1); expect(capaDe(12)).toBe(5); expect(capaDe(-3)).toBe(5);
+  });
+  it('🛡️ el servidor solo acepta "pisé este hexágono" si estás cerca y a esa altura; empiezas arriba en tu lugar', () => {
+    const c = origenSpleef(), h = HEXES[hexEn(0, 0)];
+    expect(pisadaValida(0, hexEn(0, 0), { x: c.x + h.x + 1, y: 62, z: c.z + h.z })).toBe(true);
+    expect(pisadaValida(0, hexEn(0, 0), { x: c.x + 30, y: 62, z: c.z })).toBe(false);   // lejos
+    expect(pisadaValida(3, hexEn(0, 0), { x: c.x, y: 62, z: c.z })).toBe(false);        // otra capa
+    expect(pisadaValida(0, 99999, { x: c.x, y: 62, z: c.z })).toBe(false);
+    const z = zonaSpleef(0, 2), s = salidaSpleef(0, 2);
+    expect(z.pisoLlegada).toBe(62); expect(Math.hypot(z.llegada.x - c.x - s.x, z.llegada.z - c.z - s.z)).toBeLessThan(0.01);
+  });
+});
+
+import { MUSICAS, ESCALAS, midiAFrecuencia, lugarMusica, intensidadMusica, compasMusica, notaDeGrado, COMPASES_POR_SECCION, siguienteVolumen, leerVolumen, VOLUMENES_MUSICA, seededRandom as sr } from '../src/logic.js';
+describe('🎵 La música que se inventa sola', () => {
+  it('cada lugar tiene su canción (de día y de noche en tu mundo)', () => {
+    expect(lugarMusica({})).toBe('mundoDia'); expect(lugarMusica({ noche: true })).toBe('mundoNoche');
+    expect(lugarMusica({ modo: 'escuela', fase: 'salon' })).toBe('salon');
+    for (const [f, id] of [['nomires', 'torre'], ['escondidas', 'escondidas'], ['atrapadas', 'atrapadas'], ['carrera', 'carrera'], ['spleef', 'spleef']]) expect(lugarMusica({ modo: 'escuela', fase: f })).toBe(id);
+    expect(lugarMusica({ modo: 'sandbox', fase: 'sala' })).toBe('sandbox'); expect(lugarMusica({ modo: 'maze' })).toBe('minijuego');
+    // todas distintas: otra nota base, otra escala u otra velocidad
+    const firmas = Object.values(MUSICAS).map(M => `${M.raiz}-${M.escala}-${M.bpm}`); expect(new Set(firmas).size).toBe(firmas.length);
+  });
+  it('la intensidad cambia con lo que pasa', () => {
+    expect(intensidadMusica('atrapadas', { tengo: true, faltaMs: 3000 })).toBe(1);
+    expect(intensidadMusica('atrapadas', { tengo: true, faltaMs: 9000 })).toBeGreaterThan(intensidadMusica('atrapadas', { tengo: false }));
+    expect(intensidadMusica('escondidas', { persiguen: true })).toBe(1);
+    expect(intensidadMusica('carrera', { puesto: 1, x: 50 })).toBeGreaterThan(intensidadMusica('carrera', { puesto: 3, x: 50 }));
+    expect(intensidadMusica('spleef', { capa: 5, quedan: 6, total: 6 })).toBe(1);
+    expect(intensidadMusica('spleef', { capa: 0, quedan: 2, total: 6 })).toBeGreaterThan(intensidadMusica('spleef', { capa: 0, quedan: 6, total: 6 }));
+    expect(intensidadMusica('torre', { etapa: 10 })).toBeGreaterThan(intensidadMusica('torre', { etapa: 1 }));
+    expect(intensidadMusica('mundoNoche')).toBeLessThan(intensidadMusica('mundoDia'));
+  });
+  it('las notas: LA 4 = 440 Hz, y los grados de la escala suben bien (también de octava)', () => {
+    expect(midiAFrecuencia(69)).toBe(440); expect(midiAFrecuencia(81)).toBeCloseTo(880);
+    const M = MUSICAS.mundoDia; expect(notaDeGrado(M, 0)).toBe(60); expect(notaDeGrado(M, 4)).toBe(67); expect(notaDeGrado(M, 7)).toBe(72); expect(notaDeGrado(M, -1)).toBe(59);
+  });
+  it('un compás: notas adentro del compás, en la escala; más intensidad = más notas y más rápido', () => {
+    for (const id of Object.keys(MUSICAS)) {
+      const c = compasMusica(id, 5, 0.5, sr(3)), M = MUSICAS[id];
+      expect(c.tiempos).toBe(4);
+      for (const n of c.notas) { expect(n.t).toBeGreaterThanOrEqual(0); expect(n.t).toBeLessThan(4); expect(n.vel).toBeGreaterThan(0); expect(n.vel).toBeLessThanOrEqual(1);
+        if (['bajo', 'acorde', 'arpegio', 'melodia'].includes(n.voz)) expect(ESCALAS[M.escala]).toContain(((n.midi - M.raiz) % 12 + 12) % 12); }
+    }
+    const calma = compasMusica('carrera', 3, 0, sr(1)), fuerte = compasMusica('carrera', 3, 1, sr(1));
+    expect(fuerte.notas.length).toBeGreaterThan(calma.notas.length); expect(fuerte.bpm).toBeGreaterThan(calma.bpm);
+    expect(fuerte.notas.some(n => n.voz === 'arpegio')).toBe(true); expect(calma.notas.some(n => n.voz === 'arpegio')).toBe(false);
+  });
+  it('no aburre: la melodía se repite dentro de una sección pero cambia en la siguiente; a veces hay una parte tranquila sin batería', () => {
+    const mel = (n, s = 1) => compasMusica('mundoDia', n, 0.3, () => 0.9).notas.filter(x => x.voz === 'melodia').map(x => x.t).join();
+    expect(mel(0)).toBe(mel(4));                                  // mismo ritmo de melodía en la misma sección
+    const distintas = new Set(Array.from({ length: 6 }, (_, s) => mel(s * COMPASES_POR_SECCION))); expect(distintas.size).toBeGreaterThan(2);
+    const tranq = compasMusica('carrera', 3 * COMPASES_POR_SECCION, 0.3, sr(2)); expect(tranq.notas.some(n => n.voz === 'bombo')).toBe(false);
+    expect(compasMusica('carrera', 3 * COMPASES_POR_SECCION, 0.9, sr(2)).notas.some(n => n.voz === 'bombo')).toBe(true);   // (si está muy intenso, no se calma)
+  });
+  it('tic-tac en la cuenta regresiva y cascabeles en invierno', () => {
+    expect(compasMusica('escondidas', 1, 0.45, sr(1), { tic: true }).notas.filter(n => n.voz === 'tic')).toHaveLength(4);
+    const inv = compasMusica('mundoDia', 1, 0.5, sr(1), { invierno: true }).notas;
+    expect(inv.some(n => n.voz === 'campana')).toBe(true); expect(inv.some(n => n.voz === 'hihat')).toBe(false);
+  });
+  it('el volumen: el botón pasa 100 → 60 → 30 → 0 → 100 %, y lo guardado raro vuelve a 60 %', () => {
+    expect(VOLUMENES_MUSICA.map(siguienteVolumen)).toEqual([0.6, 0.3, 0, 1]);
+    expect(leerVolumen('0.3')).toBe(0.3); expect(leerVolumen(null)).toBe(0.6); expect(leerVolumen('7')).toBe(0.6); expect(leerVolumen('0')).toBe(0);
+  });
+});
+
+import { puertasReales, lugaresPuertas, vientoTubo, golpePuno as golpeP, guanteEn as guanteE, PISTA_CARRERA as PISTA, golpeValidoCarrera as golpeV, origenCarrera as origenC, zonaCarrera as zonaC, CARRERA as CR2 } from '../src/logic.js';
+describe('🏁 Carrera: los obstáculos nuevos', () => {
+  it('🥊 pega TODO el puño: el guante y también el brazo', () => {
+    const f = { x: 0, z: 5, lado: 1, y: 30, largo: 8.5, periodo: 2.2, fase: 0 }, t = 0.5;   // afuera del todo: el guante en z = −3,5
+    expect(golpeP({ x: 0, y: 30, z: -3.5 }, f, t)).not.toBeNull();   // el guante
+    expect(golpeP({ x: 0, y: 30, z: 1 }, f, t)).not.toBeNull();      // el brazo (en el medio)
+    expect(golpeP({ x: 0.7, y: 30, z: 1 }, f, t).z).toBeLessThan(0);   // de costado del brazo, igual, hacia donde pega
+    expect(golpeP({ x: 2, y: 30, z: 1 }, f, t)).toBeNull();          // lejos
+  });
+  it('🚪 puertas: unas de verdad y otras falsas, igual para todos con la misma semilla (y distinto en otra ronda)', () => {
+    for (let sem = 1; sem < 40; sem++) { const r = puertasReales(sem, 0, 5); expect(r.filter(Boolean).length).toBeGreaterThanOrEqual(2); expect(r.filter(Boolean).length).toBeLessThan(5); }
+    expect(puertasReales(7, 0, 5)).toEqual(puertasReales(7, 0, 5));
+    const distintas = new Set(Array.from({ length: 20 }, (_, s) => puertasReales(s, 0, 5).join())); expect(distintas.size).toBeGreaterThan(3);
+    expect(PISTA.puertas.length).toBe(2);
+    for (const fila of PISTA.puertas) { const L = lugaresPuertas(fila); expect(L).toHaveLength(fila.n); L.forEach(p => { expect(p.ancho).toBeGreaterThan(1.5); expect(p.z).toBeGreaterThan(fila.z0); expect(p.z).toBeLessThan(fila.z1); }); }
+  });
+  it('💨 tubos de viento: te llevan solo si estás adentro', () => {
+    const u = PISTA.tubos[0];
+    expect(vientoTubo({ x: (u.x0 + u.x1) / 2, y: u.y, z: u.z }, PISTA.tubos)).toEqual({ x: u.vx, z: u.vz });
+    expect(vientoTubo({ x: u.x0 - 3, y: u.y, z: u.z }, PISTA.tubos)).toBeNull();
+    expect(vientoTubo({ x: (u.x0 + u.x1) / 2, y: u.y, z: u.z + 5 }, PISTA.tubos)).toBeNull();
+    expect(PISTA.tubos.some(u => u.vz !== 0)).toBe(true);   // uno empuja de costado
+  });
+  it('↗️ trampolines hacia adelante y hacia atrás; plataformas que suben y bajan', () => {
+    const L = PISTA.lanzas.map(i => PISTA.plats[i]);
+    expect(L.some(p => p.lanza.x > 0)).toBe(true); expect(L.some(p => p.lanza.x < 0)).toBe(true);
+    expect(L.find(p => p.lanza.x > 0).color).not.toBe(L.find(p => p.lanza.x < 0).color);   // se ven distintos
+    expect(PISTA.plats.some(p => p.mueve && p.mueve.eje === 'y')).toBe(true);
+  });
+  it('🛡️ el servidor: el trampolín vale si estás encima; el tubo te deja ir más rápido solo cerca de él', () => {
+    const c = origenC(), o = PISTA.punos.length + PISTA.barras.length, q = PISTA.plats[PISTA.lanzas[0]];
+    expect(golpeV(o, { x: c.x + q.x, y: 30, z: c.z + q.z }, 3)).toEqual({ x: q.lanza.x, y: q.lanza.y, z: 0 });
+    expect(golpeV(o, { x: c.x + q.x + 40, y: 30, z: c.z + q.z }, 3)).toBeNull();
+    const u = PISTA.tubos[0];
+    expect(zonaC(0, 1, 0, { x: c.x + u.x0 + 5, y: 30, z: c.z }).velMax).toBeGreaterThan(zonaC(0, 1, 0, { x: c.x + 50, y: 30, z: c.z }).velMax);
   });
 });

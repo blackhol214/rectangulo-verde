@@ -383,6 +383,22 @@
     </div>
   </div>
 </div>
+<div id="modoRonda" class="panel" hidden role="dialog" aria-modal="true" aria-labelledby="mdTitulo">
+  <div class="shop-card">
+    <div class="shop-head"><h2 id="mdTitulo">🏁 CARRERA</h2><button type="button" id="mdCerrar">Cerrar</button></div>
+    <div id="mdElegir">
+      <p class="esc-ayuda" id="mdAyuda"></p>
+      <p class="esc-ayuda" id="mdModo"></p>
+      <div id="mdSala"><p class="shop-group">Sentados en la silla</p><ul id="mdLista"></ul></div>
+      <p class="profe-msj" id="mdMsj" aria-live="polite"></p>
+      <button type="button" class="escond-empezar" id="mdEmpezar">¡Empezar!</button>
+    </div>
+    <div id="mdFin" hidden>
+      <p class="escond-resultado" id="mdResultado" aria-live="polite"></p>
+      <div class="profe-botones"><button type="button" id="mdOtra">Otra ronda</button><button type="button" id="mdSalon">Volver al salón</button></div>
+    </div>
+  </div>
+</div>
 <div id="escNegro" hidden><span id="escNegroNum">30</span><p>🙈 ¡No mires! Los demás se esconden…<br>Mientras, responde preguntas para tener batería</p></div>
 <!-- Modo profe: el profe escribe las preguntas de la clase (silla rosada del salón) -->
 <div id="halloween" class="panel" hidden role="dialog" aria-modal="true" aria-labelledby="halloweenTitulo">
@@ -419,10 +435,10 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module">
-import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, ESCUELA, ESCUELA_K, SANDBOX_K, enElHoyo, zonaRara, ZONA_RARA, HOYO, escuelaSiguiente, escuelaMezclar, SALON, salonSillas, sillaCercana, faseDeLuz, ARENA_AN, ARENA_AN_X, TERRENO_X, salidaAN, centroArenaAN, plataformasAN, desplazamientoAN, portalesAN, portalCerca, TERRENOS, CARROS, CARRO, carroPos, partesCarro, TORTUGAS, TORTUGA, tortugaPos, partesTortuga, arrastreDe, girarAlrededor, cajasPieza, escaleraCanasta, cajasTerreno, escondites, BOT_ESC, botVe, ordenEscondites, cercaDeLaProfe, preguntasDeLaClase, escaparHTML, NO_MIRES, torreNoMires, seededRandom, debeReaparecer, GUIA_COMO, textoQueHago, lugarDelGuia, GUIA_COLORES, siguienteColorGuia, lugaresArboles, lugaresPasto, libreDePasto, ARBOLES, sombreroDeBot, ETAPAS, etapaDe, cajasDe, decoracionTorre, ovniDesplazamiento, HIELO, deslizar, puedeDobleSalto, gastarBateria, cargarBateria, hayBateria, BATERIA, ganaSpooky, ojosMilOjos, OJO_MIL, SPOOKY, sumarTiempoSpooky, DISFRACES, disfrazById, comprarDisfraz, ponerDisfraz, TIENDA_HALLOWEEN, cercaDelVendedor, letrerosEtapas, elegirObjetivoAN, meAburro, MOTIVACION_AN, reboteCaminar, estaCaminando, volumenPasos, puedeAvisar, AVISO_LASER, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, VILLAGE_HOUSE, wallPieces, insideVillageHouse, villageBed, villageEntrance, villageExit, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, squashStretch, ACHIEVEMENTS, achievementById, coinAchievementsFor, TROPHY_TABLE, trophySpot, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
-         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-11-01-doble'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
-import { NOMBRE_SALA, cerebrosNuevos, proximoCerebro, pensar, crearEpisodio, pasoEpisodio, semillaIntento, torreSandbox, BUSCADOR_SB, leerCerebros, nombreGuy, claveGuy, NOMBRE_GUY } from './src/ia.js?v=2026-11-01-doble';
-import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, valoresEn, DIA_SEGUNDOS, lugarMoneda, corto, acercar, acercarAngulo, piezasExplosion, leerPreguntas, revisarPreguntas, PROFE, seVen, MG_TORRE, MG_ESCONDIDAS, MG_ATRAPADAS, MG_SOLO, ESC, AN, nuevaRondaAN, pasarAN, explotarAN, empujeAN, mareadoAN, seTocan } from './src/red.js?v=2026-11-01-doble';
+import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, ESCUELA, ESCUELA_K, SANDBOX_K, enElHoyo, zonaRara, ZONA_RARA, HOYO, escuelaSiguiente, escuelaMezclar, SALON, salonSillas, sillaCercana, faseDeLuz, ARENA_AN, ARENA_AN_X, TERRENO_X, salidaAN, centroArenaAN, plataformasAN, desplazamientoAN, portalesAN, portalCerca, TERRENOS, CARROS, CARRO, carroPos, partesCarro, TORTUGAS, TORTUGA, tortugaPos, partesTortuga, arrastreDe, girarAlrededor, CARRERA, PISTA_CARRERA, posPlatCarrera, punoEn, golpePuno, golpeBarra, salidaCarrera, enMetaCarrera, seCayoCarrera, puestosCarrera, origenCarrera, SILLA_CARRERA, CARRERA_X, puertasReales, lugaresPuertas, vientoTubo, SPLEEF, SPLEEF_X, SILLA_SPLEEF, capaY, HEXES, hexEn, hundido, hexSolido, hexSeVe, pisoSpleef, salidaSpleef, fueraSpleef, capaDe, origenSpleef, cajasPieza, escaleraCanasta, cajasTerreno, escondites, BOT_ESC, botVe, ordenEscondites, cercaDeLaProfe, preguntasDeLaClase, escaparHTML, NO_MIRES, torreNoMires, seededRandom, debeReaparecer, GUIA_COMO, textoQueHago, lugarDelGuia, GUIA_COLORES, siguienteColorGuia, lugaresArboles, lugaresPasto, libreDePasto, ARBOLES, sombreroDeBot, ETAPAS, etapaDe, cajasDe, decoracionTorre, ovniDesplazamiento, HIELO, deslizar, puedeDobleSalto, gastarBateria, cargarBateria, hayBateria, BATERIA, ganaSpooky, ojosMilOjos, OJO_MIL, SPOOKY, sumarTiempoSpooky, DISFRACES, disfrazById, comprarDisfraz, ponerDisfraz, TIENDA_HALLOWEEN, cercaDelVendedor, letrerosEtapas, elegirObjetivoAN, meAburro, MOTIVACION_AN, reboteCaminar, estaCaminando, volumenPasos, puedeAvisar, AVISO_LASER, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, VILLAGE_HOUSE, wallPieces, insideVillageHouse, villageBed, villageEntrance, villageExit, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, squashStretch, ACHIEVEMENTS, achievementById, coinAchievementsFor, TROPHY_TABLE, trophySpot, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
+         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-11-02-pista'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
+import { NOMBRE_SALA, cerebrosNuevos, proximoCerebro, pensar, crearEpisodio, pasoEpisodio, semillaIntento, torreSandbox, BUSCADOR_SB, leerCerebros, nombreGuy, claveGuy, NOMBRE_GUY } from './src/ia.js?v=2026-11-02-pista';
+import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, valoresEn, DIA_SEGUNDOS, lugarMoneda, corto, acercar, acercarAngulo, piezasExplosion, leerPreguntas, revisarPreguntas, PROFE, seVen, MG_TORRE, MG_ESCONDIDAS, MG_ATRAPADAS, MG_CARRERA, MG_SPLEEF, MG_SOLO, ESC, AN, nuevaRondaAN, pasarAN, explotarAN, empujeAN, mareadoAN, seTocan } from './src/red.js?v=2026-11-02-pista';
 (() => {
   // iPhone ignora user-scalable=no: aquí se bloquea el zoom con dos dedos y el doble toque
   for (const ev of ['gesturestart', 'gesturechange']) document.addEventListener(ev, e => e.preventDefault(), { passive: false });
@@ -878,7 +894,8 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
     }
     if (!profeEl.hidden) { if (e.code === 'Escape') cerrarProfe(); return; }
     if (!escondEl.hidden) { if (e.code === 'Escape') document.getElementById('escondCerrar').click(); return; }
-    if (!anEl.hidden) { if (e.code === 'Escape') document.getElementById('anCerrar').click(); return; }   // el panel de Atrapadas se usa con el mouse o el dedo   // el panel de Escondidas se usa con el mouse o el dedo   // en el editor del profe se escribe: ninguna tecla del juego hace nada
+    if (!anEl.hidden) { if (e.code === 'Escape') document.getElementById('anCerrar').click(); return; }
+    if (!mdEl.hidden) { if (e.code === 'Escape') document.getElementById('mdCerrar').click(); return; }   // el panel de la Carrera, igual   // el panel de Atrapadas se usa con el mouse o el dedo   // el panel de Escondidas se usa con el mouse o el dedo   // en el editor del profe se escribe: ninguna tecla del juego hace nada
     if (!escuelaEl.hidden) { escuelaTecla(e); return; }   // con el panel de la batería abierto, las teclas son para responder
     // Tienda: P la abre y la cierra (Esc también la cierra)
     if (e.code === 'KeyP' && !e.repeat) { e.preventDefault(); toggleShop(); return; }
@@ -1006,6 +1023,8 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
   const makeState = obj => ({ obj, pos: obj.position, vel: new THREE.Vector3(), walkX: 0, walkZ: 0, onGround: true, carrying: null, standing: null, hitWall: false, facing: 0 });
 
   // Empuje horizontal, choques laterales, gravedad, suelo y techo
+  // Un piso extra que no está en la lista de plataformas (los 4.000 hexágonos del Spleef: se buscan con cuentas, mucho más rápido)
+  let sueloExtra = null;
   function physics(st, dt, wantJump, jump = JUMP) {
     // Lo que camina este cuadro + el empuje que trae, en pasitos para no atravesar paredes
     const tx = st.walkX + st.vel.x * dt, tz = st.walkZ + st.vel.z * dt;
@@ -1020,6 +1039,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
     for (const pl of platforms) {
       if (pl.top > floor && pl.top <= prevY + 0.01 && overlaps(pl, st.pos.x, st.pos.z)) { floor = pl.top; standing = pl; }
     }
+    if (sueloExtra) { const h = sueloExtra(st, prevY); if (h !== null && h > floor) { floor = h; standing = null; } }
     st.vel.y -= GRAV * dt;
     st.pos.y += st.vel.y * dt;
     if (st.vel.y > 0) {
@@ -2308,6 +2328,8 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
     MG.built.sillaMat = new THREE.MeshLambertMaterial({ color: 0xffc83d, emissive: 0x553300 });
     MG.built.escondMat = new THREE.MeshLambertMaterial({ color: 0x9fd6ff, emissive: 0x113355 });
     MG.built.alienMat = new THREE.MeshLambertMaterial({ color: 0x2c3a33, emissive: 0x0c3a12 });
+    MG.built.carreraMat = new THREE.MeshLambertMaterial({ color: 0xff8fc7, emissive: 0x44102a });
+    MG.built.spleefMat = new THREE.MeshLambertMaterial({ color: 0xffb066, emissive: 0x3a1a00 });
     SILLAS.forEach(s => {
       const escondida = s.modo === 'escondidas', alien = s.modo === 'atrapadas';
       const x = o.x + s.x, z = o.z + s.z, tz = z + SALON.sillaAtras, mat = escondida ? MG.built.escondMat : alien ? MG.built.alienMat : s.modo ? MG.built.sillaMat : madera;
@@ -2332,6 +2354,29 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
         }
         const l4 = new THREE.PointLight(0x39ff6a, 1.4, 6, 1.5); l4.position.set(x, 2, z); scene.add(l4);
         letrero('👽 Atrapadas Nocivas', '#1f9b4c', '#ffffff', 3.8, x, 3, z);
+      } else if (s.modo === 'spleef') {
+        // ¡La silla del Spleef! Una torrecita de hexágonos de colores en el asiento… y uno que se está cayendo
+        for (const parte of [asiento, respaldo]) parte.mesh.material = MG.built.spleefMat;
+        const hx = new THREE.CylinderGeometry(0.42, 0.42, 0.14, 6);
+        [0xff6fb5, 0xffa94d, 0xffe066].forEach((cc, k) => { const h = new THREE.Mesh(hx, mgMat(cc)); h.position.set(x + (k % 2) * 0.08, 0.7 + k * 0.16, z + 0.05); scene.add(h); });
+        const cae = new THREE.Mesh(hx, mgMat(0x4dabf7)); cae.position.set(x + 0.75, 0.35, z + 0.4); cae.rotation.set(0.5, 0, 0.7); scene.add(cae);
+        MG.built.hexSilla = cae;
+        const l6 = new THREE.PointLight(0xffa94d, 1.4, 6, 1.5); l6.position.set(x, 2, z); scene.add(l6);
+        letrero('🔶 Spleef', '#ff8a3d', '#ffffff', 3.2, x, 3.3, z);
+      } else if (s.modo === 'carrera') {
+        // ¡La silla está lista para correr! Rosada, con una bandera de cuadritos, un disco que gira arriba y un guante de boxeo
+        for (const parte of [asiento, respaldo]) parte.mesh.material = MG.built.carreraMat;
+        const palo = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.6, 0.08), mgMat(0xffffff)); palo.position.set(x + 0.45, 2.2, z - 0.48); scene.add(palo);
+        const cv = document.createElement('canvas'); cv.width = cv.height = 64; const cg = cv.getContext('2d');
+        for (let a = 0; a < 4; a++) for (let b2 = 0; b2 < 4; b2++) { cg.fillStyle = (a + b2) % 2 ? '#111' : '#fff'; cg.fillRect(a * 16, b2 * 16, 16, 16); }
+        const flag = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.5), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(cv), side: THREE.DoubleSide })); flag.position.set(x + 0.82, 2.72, z - 0.48); scene.add(flag);
+        const disco = new THREE.Group(); disco.position.set(x - 0.05, 1.75, z - 0.48); scene.add(disco);
+        const d0 = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.08, 24), mgMat(0xffe27a)); disco.add(d0);
+        const raya = new THREE.Mesh(new THREE.BoxGeometry(0.84, 0.1, 0.1), mgMat(0xff4f9a)); raya.position.y = 0.07; disco.add(raya);
+        MG.built.discoSilla = disco;
+        const guante = new THREE.Mesh(new THREE.SphereGeometry(0.22, 14, 10), mgMat(0xff3b3b)); guante.position.set(x - 0.62, 0.85, z + 0.1); scene.add(guante);
+        const l5 = new THREE.PointLight(0xff8fc7, 1.4, 6, 1.5); l5.position.set(x, 2, z); scene.add(l5);
+        letrero('🏁 Carrera', '#ff5aa5', '#ffffff', 3.2, x, 3.3, z);
       } else if (s.modo) {
         const l2 = new THREE.PointLight(0xffc83d, 1.4, 6, 1.5); l2.position.set(x, 2, z); scene.add(l2);
         letrero('⬇️ No mires abajo', '#5b3df5', '#ffffff', 3.6, x, 3, z);
@@ -3349,6 +3394,536 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
     const s = SILLAS[3]; placePlayer(o.x + s.x + 2, 0, o.z + s.z);
     camYaw = Math.PI;
   }
+  // ===== 🏁 Carrera (como Fall Guys): la pista de colores en el cielo, los obstáculos, los bots y la ronda =====
+  const NOMBRES_BOTS_CR = ['Gomita', 'Fresa', 'Nube', 'Mochi', 'Pocky'];
+  const COLORES_BOTS_CR = [0xff6fb5, 0x6fc3ff, 0xffd84a, 0x9f7bff, 0x5fe0a8];
+  const CAM_META = -Math.PI / 2;   // la cámara mirando hacia la meta (+x)
+  function construirCarrera() {
+    const c = origenCarrera(), Y = CARRERA.y0, grupo = new THREE.Group(); grupo.visible = false; scene.add(grupo);
+    const mats = {}, mat = col => mats[col] || (mats[col] = new THREE.MeshLambertMaterial({ color: col }));
+    const blanco = mat(0xffffff), caja = new THREE.BoxGeometry(1, 1, 1), cil = new THREE.CylinderGeometry(1, 1, 1, 40), pls = [], piezas = [];
+    for (const p of PISTA_CARRERA.plats) {
+      const g = new THREE.Group(); g.position.set(c.x + p.x, p.y, c.z + p.z); grupo.add(g);
+      const cuerpo = new THREE.Mesh(p.redonda ? cil : caja, mat(p.color)); cuerpo.receiveShadow = true;
+      if (p.redonda) {
+        cuerpo.scale.set(p.r, 1, p.r); cuerpo.position.y = -0.5; g.add(cuerpo);
+        for (let k = 0; k < 4; k++) { const f = new THREE.Mesh(caja, blanco); f.scale.set(p.r * 1.96, 0.04, 0.45); f.rotation.y = k * Math.PI / 4; f.position.y = 0.01; g.add(f); }   // rayitas: así se ve que gira
+        const bajo = new THREE.Mesh(cil, blanco); bajo.scale.set(p.r * 1.02, 0.25, p.r * 1.02); bajo.position.y = -1.05; g.add(bajo);
+      } else {
+        const gr = p.grosor || 1; cuerpo.scale.set(p.ancho, gr, p.largo); cuerpo.position.y = -gr / 2; g.add(cuerpo);
+        const bajo = new THREE.Mesh(caja, blanco); bajo.scale.set(p.ancho + 0.1, 0.25, p.largo + 0.1); bajo.position.y = -gr - 0.05; g.add(bajo);   // el borde blanco de abajo (como en Fall Guys)
+      }
+      // Los checkpoints: una bandera verde (con su número); la salida: un arco de globos
+      if (p.cp > 0) {
+        const palo = new THREE.Mesh(caja, blanco); palo.scale.set(0.15, 3, 0.15); palo.position.set(-p.ancho / 2 + 0.4, 1.5, p.largo / 2 - 0.4); g.add(palo);
+        const tela = new THREE.Mesh(caja, mat(0x2ecc71)); tela.scale.set(1.2, 0.8, 0.05); tela.position.set(-p.ancho / 2 + 1, 2.6, p.largo / 2 - 0.4); g.add(tela);
+      }
+      if (p.lanza) {   // la flecha del trampolín: hacia donde te tira
+        const flecha = new THREE.Mesh(new THREE.ConeGeometry(0.9, 1.6, 3), mat(0xffffff)); flecha.rotation.set(-Math.PI / 2, 0, p.lanza.x > 0 ? -Math.PI / 2 : Math.PI / 2); flecha.position.y = 0.15; flecha.scale.y = 0.4; g.add(flecha);
+        const resorte = new THREE.Mesh(cil, mat(0x555555)); resorte.scale.set(0.6, 0.6, 0.6); resorte.position.y = -1.2; g.add(resorte);
+      }
+      const hw = p.redonda ? p.r * 0.85 : p.ancho / 2, hd = p.redonda ? p.r * 0.85 : p.largo / 2;
+      const pl = { x: c.x + p.x, z: c.z + p.z, hw, hd, top: p.y, bottom: p.y - (p.grosor || 1), move: !!(p.mueve || p.gira), dx: 0, dy: 0, dz: 0, cp: p.cp, disco: !!p.gira, giro: 0, dg: 0,
+        ruta: !(p.lanza && p.lanza.x < 0), lanza: p.lanza || null, lanzaI: p.lanza ? PISTA_CARRERA.lanzas.indexOf(PISTA_CARRERA.plats.indexOf(p)) : -1 };   // (los bots no van al trampolín rojo)
+      pls.push(pl); piezas.push({ p, pl, g, nuevo: true });
+    }
+    // Las barras de las ruedas: giran encima de su rueda, más rápido que ella (cada una con su propio giro)
+    const barras = PISTA_CARRERA.barras.map(b => {
+      const g = new THREE.Group(); g.position.set(c.x + b.x, b.y, c.z + b.z); grupo.add(g);
+      const barra = new THREE.Mesh(caja, mat(0xff4f9a)); barra.scale.set(b.r * 2, 0.6, CARRERA.barra.grueso * 2); barra.position.y = 0.6; barra.castShadow = true; g.add(barra);
+      const eje = new THREE.Mesh(cil, blanco); eje.scale.set(0.7, 1.4, 0.7); eje.position.y = 0.7; g.add(eje);
+      return { b, g };
+    });
+    // Los puños de boxeo: un poste al costado, un brazo que se estira y un guante rojo
+    const punos = PISTA_CARRERA.punos.map(f => {
+      const g = new THREE.Group(); g.position.set(c.x + f.x, f.y + 0.9, c.z + f.z); grupo.add(g);
+      const poste = new THREE.Mesh(caja, mat(0xb48cff)); poste.scale.set(1.4, 2.6, 1.2); poste.position.set(0, 0.2, f.lado * 0.7); g.add(poste);
+      const brazo = new THREE.Mesh(cil, mat(0xffe27a)); brazo.rotation.x = Math.PI / 2; g.add(brazo);
+      const guante = new THREE.Mesh(new THREE.SphereGeometry(CARRERA.puno.mano, 18, 14), mat(0xff3b3b)); guante.scale.set(1, 1, 0.8); guante.castShadow = true; g.add(guante);
+      return { f, g, brazo, guante };
+    });
+    // La meta: un arco con letrero
+    const mx = c.x + CARRERA.meta.x0;
+    for (const z of [-CARRERA.meta.z, CARRERA.meta.z]) { const poste = new THREE.Mesh(caja, mat(0xff8fc7)); poste.scale.set(0.8, 7, 0.8); poste.position.set(mx, Y + 3.5, c.z + z); grupo.add(poste); }
+    const techo = new THREE.Mesh(caja, mat(0xffe27a)); techo.scale.set(0.9, 1, CARRERA.meta.z * 2 + 0.8); techo.position.set(mx, Y + 7, c.z); grupo.add(techo);
+    const meta = letrero('🏁 META', '#ff5aa5', '#ffffff', 8, mx, Y + 8.6, c.z); grupo.add(meta);
+    const salida = letrero('🏁 CARRERA', '#8f6bff', '#ffffff', 8, c.x - 6, Y + 6, c.z); grupo.add(salida);
+    // El mar de slime rosado, muy abajo (si te caes ahí, vuelves a tu checkpoint)
+    const slime = new THREE.Mesh(new THREE.PlaneGeometry(420, 140), new THREE.MeshLambertMaterial({ color: 0xff9ad5 }));
+    slime.rotation.x = -Math.PI / 2; slime.position.set(c.x + 150, Y - 12, c.z); slime.scale.x = (CARRERA.meta.x1 + 120) / 420; slime.position.x = c.x + CARRERA.meta.x1 / 2; grupo.add(slime);
+    // 💨 Los tubos de viento: un tubo transparente con anillos que avanzan (hacia donde sopla)
+    const vidrio = new THREE.MeshLambertMaterial({ color: 0xbfefff, transparent: true, opacity: 0.25, side: THREE.DoubleSide, depthWrite: false });
+    const tubos = PISTA_CARRERA.tubos.map(u => {
+      const largo = u.x1 - u.x0, tubo = new THREE.Mesh(new THREE.CylinderGeometry(CARRERA.tubo.radio, CARRERA.tubo.radio, largo, 28, 1, true), vidrio);
+      tubo.rotation.z = Math.PI / 2; tubo.position.set(c.x + (u.x0 + u.x1) / 2, u.y + CARRERA.tubo.radio - 0.3, c.z + u.z); grupo.add(tubo);
+      const anillos = [];
+      for (let k = 0; k < 6; k++) { const a = new THREE.Mesh(new THREE.TorusGeometry(CARRERA.tubo.radio, 0.07, 6, 28), mat(u.vz ? 0xff9a3d : 0x3dd6ff)); a.rotation.y = Math.PI / 2; grupo.add(a); anillos.push(a); }
+      return { u, anillos };
+    });
+    // 🚪 Las filas de puertas: pilares fijos; las puertas se ven todas iguales (¿cuál será la de verdad?)
+    const pilarMat = mat(0xb48cff), puertaMat = mat(0xffe27a), pilaresPl = [], puertas = [];
+    PISTA_CARRERA.puertas.forEach((fila, f) => {
+      const L = lugaresPuertas(fila), x = c.x + fila.x, alto = CARRERA.puerta.alto;
+      let z = fila.z0;
+      const pilar = (z0, z1) => { if (z1 - z0 < 0.05) return; const m = new THREE.Mesh(caja, pilarMat); m.scale.set(1, alto, z1 - z0); m.position.set(x, Y + alto / 2, c.z + (z0 + z1) / 2); m.castShadow = true; grupo.add(m); pilaresPl.push({ x, z: c.z + (z0 + z1) / 2, hw: 0.5, hd: (z1 - z0) / 2, top: Y + alto, bottom: Y }); };
+      L.forEach((p, i) => {
+        pilar(z, p.z - p.ancho / 2); z = p.z + p.ancho / 2;
+        const m = new THREE.Mesh(caja, puertaMat); m.scale.set(0.4, alto - 1.2, p.ancho); m.position.set(x, Y + (alto - 1.2) / 2, c.z + p.z); grupo.add(m);
+        const signo = letrero('?', '#8f6bff', '#ffffff', 1.2, x - 0.3, Y + 3, c.z + p.z); grupo.add(signo);
+        puertas.push({ f, i, m, signo, z: p.z, ancho: p.ancho, pl: { x, z: c.z + p.z, hw: 0.3, hd: p.ancho / 2, top: Y + alto - 1.2, bottom: Y }, rota: null });
+      });
+      pilar(z, fila.z1);
+      const dintel = new THREE.Mesh(caja, pilarMat); dintel.scale.set(1, 1.2, fila.z1 - fila.z0); dintel.position.set(x, Y + alto - 0.6, c.z + (fila.z0 + fila.z1) / 2); grupo.add(dintel);
+    });
+    pls.push(...pilaresPl);
+    const ruta = pls.filter(p => p.ruta).sort((a, b) => (a.x - a.hw) - (b.x - b.hw));
+    MG.built.carrera = { grupo, pls, piezas, punos, barras, tubos, puertas, ruta, c, enUso: false };
+  }
+  function ponerCarrera(semilla = 1) {
+    if (!MG.built.carrera) construirCarrera();
+    const B = MG.built.carrera;
+    if (!B.enUso) { platforms.push(...B.pls); B.grupo.visible = true; B.enUso = true; }
+    // Las puertas de esta ronda (la misma semilla para todos): las falsas chocan; todas vuelven a estar paradas
+    for (const p of B.puertas) { const k = platforms.indexOf(p.pl); if (k >= 0) platforms.splice(k, 1); }
+    const reales = PISTA_CARRERA.puertas.map((fila, f) => puertasReales(semilla, f, fila.n));
+    for (const p of B.puertas) {
+      p.real = reales[p.f][p.i]; p.rota = null; p.m.visible = true; p.m.rotation.set(0, 0, 0); p.m.position.y = CARRERA.y0 + (CARRERA.puerta.alto - 1.2) / 2; p.signo.visible = true;
+      if (!p.real) platforms.push(p.pl);
+    }
+    B.rotas = new Set();
+    for (const q of B.piezas) q.nuevo = true;   // (la primera vez que se mueven, aparecen en su lugar sin arrastrar a nadie)
+    return B;
+  }
+  function quitarCarrera() {
+    const B = MG.built.carrera; if (!B || !B.enUso) return;
+    const fuera = new Set(B.pls);
+    for (let k = platforms.length - 1; k >= 0; k--) if (fuera.has(platforms[k])) platforms.splice(k, 1);
+    B.grupo.visible = false; B.enUso = false;
+  }
+  // Mueve todo según el reloj de la carrera (t en segundos): todos lo ven igual
+  function moverCarrera(t) {
+    const B = MG.built.carrera, c = B.c;
+    for (const q of B.piezas) {
+      const { p, pl, g } = q;
+      if (!p.mueve && !p.gira) continue;
+      const s = posPlatCarrera(p, t), x = c.x + s.x, z = c.z + s.z;
+      pl.dx = q.nuevo ? 0 : x - pl.x; pl.dz = q.nuevo ? 0 : z - pl.z; pl.dy = q.nuevo ? 0 : s.y - pl.top; pl.dg = q.nuevo ? 0 : s.giro - pl.giro;
+      pl.x = x; pl.z = z; pl.top = s.y; pl.bottom = s.y - (p.grosor || 1); pl.giro = s.giro; q.nuevo = false;
+      g.position.set(x, s.y, z); g.rotation.y = s.giro;
+    }
+    for (const u of B.barras) u.g.rotation.y = u.b.w * t + u.b.fase;   // (la misma cuenta que golpeBarra)
+    for (const u of B.tubos) u.anillos.forEach((a, k) => {   // los anillos avanzan hacia donde sopla el viento
+      const largo = u.u.x1 - u.u.x0, f = ((k / u.anillos.length + t * 0.25) % 1);
+      a.position.set(c.x + u.u.x0 + (u.u.vx >= 0 ? f : 1 - f) * largo, u.u.y + CARRERA.tubo.radio - 0.3, c.z + u.u.z + (u.u.vz ? Math.sin(t * 6 + k) * 0.4 : 0));
+    });
+    for (const p of B.puertas) if (p.rota !== null) {   // la puerta rota se cae hacia adelante y desaparece
+      const d = t - p.rota; p.m.rotation.z = -Math.min(Math.PI / 2, d * 4); p.m.position.y = CARRERA.y0 + 2.4 - Math.max(0, d - 0.4) * 6; if (d > 1.5) p.m.visible = false; p.signo.visible = false;
+    }
+    for (const u of B.punos) {
+      const e = punoEn(u.f, t).e, largo = Math.max(0.05, e * u.f.largo);
+      u.guante.position.z = -u.f.lado * e * u.f.largo;
+      u.brazo.scale.set(0.28, largo, 0.28); u.brazo.position.z = -u.f.lado * largo / 2;
+    }
+  }
+  // Si estás parado en un disco que gira, giras con él (alrededor de su centro)
+  function girarConDisco(st) {
+    const pl = st.standing; if (!pl || !pl.disco || !pl.dg) return;
+    const np = girarAlrededor(st.pos, pl, pl.dg); st.pos.x = np.x; st.pos.z = np.z;
+    st.facing += pl.dg; st.obj.rotation.y = st.facing;
+  }
+  // El viento de los tubos te lleva; los trampolines te tiran; las puertas de verdad se rompen cuando pasas. Devuelve el número del trampolín usado, o -1
+  function obstaculosCarrera(st, dt, t) {
+    const B = MG.built.carrera, c = B.c, rel = { x: st.pos.x - c.x, y: st.pos.y, z: st.pos.z - c.z };
+    const v = vientoTubo(rel, PISTA_CARRERA.tubos); if (v) { st.pos.x += v.x * dt; st.pos.z += v.z * dt; }
+    for (const p of B.puertas) if (p.real && p.rota === null && Math.abs(st.pos.x - p.pl.x) < 0.8 && Math.abs(st.pos.z - p.pl.z) < p.ancho / 2 && st.pos.y < p.pl.top) { p.rota = t; B.rotas.add(p.f * 100 + p.i); if (st === ps || Math.abs(ps.pos.x - p.pl.x) < 25) sfxPuerta(); }
+    const pl = st.standing;
+    if (st.onGround && pl && pl.lanza) { st.vel.set(pl.lanza.x, pl.lanza.y, 0); st.onGround = false; st.pos.y += 0.05; st.saltosAire = 0; return pl.lanzaI; }
+    return -1;
+  }
+  function sfxPuerta() {
+    if (!audio) return;
+    const { ctx, sfx, noise } = audio, t0 = ctx.currentTime, src = ctx.createBufferSource(), bp = ctx.createBiquadFilter(), g = ctx.createGain();
+    src.buffer = noise; bp.type = 'lowpass'; bp.frequency.value = 900; g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.5, t0 + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.35);
+    src.connect(bp).connect(g).connect(sfx); src.start(t0, Math.random(), 0.4);
+  }
+  function sfxResorte() {
+    if (!audio) return;
+    const { ctx, sfx } = audio, t0 = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = 'triangle'; o.frequency.setValueAtTime(160, t0); o.frequency.exponentialRampToValueAtTime(720, t0 + 0.25);
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.25, t0 + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.3);
+    o.connect(g).connect(sfx); o.start(t0); o.stop(t0 + 0.32);
+  }
+  // ¿Le pegó un puño o una barra? (a ti o a un bot). Devuelve el número del obstáculo, o -1
+  function golpeCarrera(st, t) {
+    const c = MG.built.carrera.c, rel = { x: st.pos.x - c.x, y: st.pos.y, z: st.pos.z - c.z }, P = PISTA_CARRERA;
+    if (MG.t < (st.golpeHasta || 0)) return -1;   // (recién golpeado: un ratito sin que le vuelvan a pegar)
+    let g = null, o = -1;
+    for (let i = 0; i < P.punos.length && !g; i++) if (Math.abs(rel.x - P.punos[i].x) < 3 && (g = golpePuno(rel, P.punos[i], t, H))) o = i;
+    for (let i = 0; i < P.barras.length && !g; i++) { const b = P.barras[i]; if (Math.hypot(rel.x - b.x, rel.z - b.z) < b.r + 1 && (g = golpeBarra(rel, b, t))) o = P.punos.length + i; }
+    if (!g) return -1;
+    st.vel.set(g.x, g.y, g.z); st.onGround = false; st.pos.y += 0.05; st.golpeHasta = MG.t + 0.5;
+    return o;
+  }
+  function sfxPuno() {
+    if (!audio) return;
+    const { ctx, sfx } = audio, t0 = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(180, t0); o.frequency.exponentialRampToValueAtTime(55, t0 + 0.18);
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.35, t0 + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.22);
+    o.connect(g).connect(sfx); o.start(t0); o.stop(t0 + 0.24);
+  }
+  function hacerBotCR(color) {
+    const g = new THREE.Group(), b = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), new THREE.MeshLambertMaterial({ color }));
+    b.position.y = H / 2; b.castShadow = true; g.add(b);
+    for (const ex of [-0.22, 0.22]) { const e = new THREE.Mesh(eyeGeo, eyeMat); e.scale.z = 0.5; e.position.set(ex, H * 0.78, D / 2 + 0.02); g.add(e); }
+    scene.add(g);
+    const st = makeState(g); st.cuerpo = b; return st;
+  }
+  const yoCR = () => (MG.state.cr.solo ? 0 : red.id);
+  // Empezar una carrera. solo: contra 5 bots · con amigos: lo que mandó el servidor (crRonda)
+  function empezarCarrera(datos) {
+    cerrarModoRonda(false);
+    const semilla = Number.isInteger(datos.semilla) ? datos.semilla : Math.floor(Math.random() * 1e9);   // (con amigos la manda el servidor: las mismas puertas para todos)
+    const B = ponerCarrera(semilla), ahora = ahoraMs(), solo = !!datos.solo, c = B.c;
+    const cr = { solo, inicio: ahora, salida: ahora + 3000, jugadores: solo ? [0, 1, 2, 3, 4, 5] : datos.jugadores, llegadas: [], primera: 0, cp: 0, llegue: false, resultado: null, bots: [], B, cuenta: 4 };
+    if (solo) {
+      cr.bots = NOMBRES_BOTS_CR.map((n, i) => {
+        const b = (MG.built.botsCR && MG.built.botsCR[i]) || hacerBotCR(COLORES_BOTS_CR[i]);
+        Object.assign(b, { cp: 0, llego: false, sobre: null, saltosAire: 0, probadas: {}, puerta: undefined, vel0: 9.6 + i * 0.45 + Math.random() * 0.5, despiste: 0, chequeo: null, golpeHasta: 0 });
+        b.vel.set(0, 0, 0); b.obj.visible = true; return b;
+      });
+      MG.built.botsCR = cr.bots;
+    }
+    Object.assign(MG.state, { fase: 'carrera', bateria: 0, cr });
+    const n = cr.jugadores.length;
+    cr.jugadores.forEach((id, i) => {
+      const s = salidaCarrera(0, i, n);
+      if (id === yoCR()) { cr.carril = i; placePlayer(c.x + s.x, s.y, c.z + s.z); ps.facing = Math.PI / 2; player.rotation.y = ps.facing; camYaw = CAM_META; }
+      else if (solo) { const b = cr.bots[id - 1]; b.carril = i; b.pos.set(c.x + s.x, s.y, c.z + s.z); b.facing = Math.PI / 2; b.obj.rotation.y = b.facing; }
+    });
+    moverCarrera(0);
+    abrirCarga();   // empiezas sin batería: ¡a responder! (la carrera NO se detiene mientras respondes)
+  }
+  // Volver a tu checkpoint (te caíste)
+  function reaparecerCR(st, cp, carril) {
+    const c = MG.built.carrera.c, n = MG.state.cr.jugadores.length, s = salidaCarrera(cp, carril, n);
+    if (st === ps) {
+      // Con amigos: primero le contamos al servidor dónde estabas (cayéndote), así sabe que reaparecer es de verdad
+      if (!MG.state.cr.solo && red.id !== null) enviar({ tipo: 'pos', x: corto(ps.pos.x), y: corto(ps.pos.y), z: corto(ps.pos.z), rot: corto(ps.facing), color: body.material.color.getHex(), mg: miMg(), t: Math.round(performance.now()) });
+      placePlayer(c.x + s.x, s.y, c.z + s.z); ps.facing = Math.PI / 2; player.rotation.y = ps.facing; camYaw = CAM_META;
+      if (red.id !== null) red.envio = 0;
+    } else { st.pos.set(c.x + s.x, s.y, c.z + s.z); st.vel.set(0, 0, 0); st.sobre = null; st.saltosAire = 0; st.chequeo = null; }
+  }
+  // Los bots: van por la pista de plataforma en plataforma, saltan los huecos, las barras y el escalón alto (con doble salto)
+  function moverBotsCR(dt, cr, t, ahora) {
+    const B = cr.B, c = B.c, ruta = B.ruta;
+    cr.bots.forEach((b, i) => {
+      const id = i + 1;
+      if (b.carrying) { b.pos.x += b.carrying.dx; b.pos.y += b.carrying.dy; b.pos.z += b.carrying.dz; }
+      if (b.llego || ahora < cr.salida) { physics(b, dt, false, JUMP); animarCaminar(b.obj, b.cuerpo, H / 2, dt); return; }
+      if (b.standing && b.standing.ruta) b.sobre = b.standing;
+      const cur = b.sobre || ruta[0], fin = cur.x + cur.hw;
+      // La siguiente plataforma: la primera que empieza adelante (o que sigue más allá de esta) y no está demasiado alta
+      let sig = null;
+      for (const p of ruta) { if (p === cur || p.x + p.hw <= fin + 0.5 || p.x - p.hw > fin + 12 || p.top > cur.top + 5) continue; if (!sig || p.x - p.hw < sig.x - sig.hw - 0.01 || (Math.abs(p.x - p.hw - (sig.x - sig.hw)) < 0.01 && Math.abs(p.z - b.pos.z) < Math.abs(sig.z - b.pos.z))) sig = p; }
+      let meta, salta = false, quieto = false;
+      if (!sig || b.pos.x < fin - 1.4) meta = { x: b.pos.x + 4, z: cur.z };   // por el medio de la que está pisando
+      else {
+        meta = { x: sig.x - sig.hw + Math.min(1.5, sig.hw), z: sig.z };
+        const hueco = sig.x - sig.hw > fin + 0.2 || sig.top > cur.top + 0.5;
+        // Si la siguiente se mueve: espera en el borde a que quede enfrente
+        if (hueco && sig.move && !sig.disco && Math.abs(sig.z - b.pos.z) > 1.4 && b.pos.x > fin - 1.6) quieto = true;
+        else if (hueco && b.onGround && b.pos.x > fin - 0.9) { if (b.despiste > 0) b.despiste -= dt; else if (Math.random() < 0.06) b.despiste = 0.25; else salta = true; }   // a veces se despista y salta tarde
+      }
+      // 🚪 ¿Una fila de puertas adelante? Elige una (mejor una que ya vio romperse); si choca contra una falsa, prueba otra
+      const fila = PISTA_CARRERA.puertas.findIndex(f => b.pos.x - c.x > f.x - 12 && b.pos.x - c.x < f.x + 0.5);
+      if (fila >= 0 && Math.abs(b.pos.y - CARRERA.y0) < 1.5) {
+        const filaD = PISTA_CARRERA.puertas[fila], L = lugaresPuertas(filaD), probadas = (b.probadas = b.probadas || {})[fila] || (b.probadas[fila] = new Set());
+        if (b.puerta === undefined || b.puertaFila !== fila || probadas.has(b.puerta)) {
+          const rotas = L.map((_, i) => i).filter(i => B.rotas.has(fila * 100 + i)), libres = L.map((_, i) => i).filter(i => !probadas.has(i));
+          const opciones = rotas.length && Math.random() < 0.8 ? rotas : libres.length ? libres : L.map((_, i) => i);
+          b.puerta = opciones[Math.floor(Math.random() * opciones.length)]; b.puertaFila = fila;
+        }
+        meta = { x: c.x + filaD.x + 3, z: c.z + L[b.puerta].z };
+        if (Math.abs(b.pos.z - meta.z) > 0.6 && b.pos.x - c.x > filaD.x - 2.5) meta.x = c.x + filaD.x - 2;   // primero se pone enfrente (un pasito atrás, para no rozar los pilares), después avanza
+        if (b.hitWall && b.pos.x - c.x > filaD.x - 1.4 && Math.abs(b.pos.z - meta.z) < 0.8) probadas.add(b.puerta);   // ¡era falsa!
+      }
+      // 🥊 ¿Un puño justo adelante que está por pegar? Espera a que vuelva (como haría una persona)
+      for (const f of PISTA_CARRERA.punos) { const dxp = f.x - (b.pos.x - c.x); if (dxp > 0.6 && dxp < 2.4 && Math.abs(b.pos.y - f.y) < 1.5 && (punoEn(f, t).pega || punoEn(f, t + 0.45).pega)) quieto = true; }
+      // ¿Viene una barra? ¡Salta!
+      const rel = { x: b.pos.x - c.x, y: b.pos.y, z: b.pos.z - c.z };
+      if (b.onGround) for (const br of PISTA_CARRERA.barras) if (Math.hypot(rel.x - br.x, rel.z - br.z) < br.r + 1 && golpeBarra(rel, br, t + 0.2)) salta = true;
+      // Doble salto: en el aire, bajando, si todavía no llega a la siguiente (o está más alta)
+      if (!b.onGround && b.saltosAire < 1 && b.vel.y < 1 && sig && b.pos.x < sig.x - sig.hw + 0.6 && b.pos.y < sig.top + 1.2) { b.vel.y = JUMP; b.saltosAire++; }
+      let dx = meta.x - b.pos.x, dz = meta.z - b.pos.z; const d = Math.hypot(dx, dz) || 1; dx /= d; dz /= d;
+      const v = quieto ? 0 : b.vel0;
+      b.walkX = dx * v * dt; b.walkZ = dz * v * dt;
+      if (!quieto) turnTo(b, dx, dz, dt);
+      physics(b, dt, salta, JUMP);
+      if (b.onGround) b.saltosAire = 0;
+      girarConDisco(b);
+      obstaculosCarrera(b, dt, t);
+      if (b.onGround && b.standing && b.standing.cp > b.cp) b.cp = b.standing.cp;
+      if (golpeCarrera(b, t) >= 0) b.sobre = null;
+      // ¿Trabado? (3 s sin avanzar): salta
+      if (!b.chequeo || ahora - b.chequeo.t > 3000) { if (b.chequeo && b.pos.x - b.chequeo.x < 1 && b.onGround) { b.vel.y = JUMP; b.onGround = false; } b.chequeo = { x: b.pos.x, t: ahora }; }
+      if (seCayoCarrera(b.pos.y)) reaparecerCR(b, b.cp, b.carril);
+      if (!b.llego && enMetaCarrera({ x: b.pos.x - c.x, y: b.pos.y, z: b.pos.z - c.z })) { b.llego = true; llegoCR(id); }
+      animarCaminar(b.obj, b.cuerpo, H / 2, dt);
+    });
+  }
+  // Alguien llegó a la meta (jugando solo lo decide esta compu; con amigos, el servidor)
+  function llegoCR(id, puesto = null, nombre = null) {
+    const cr = MG.state.cr;
+    if (!cr.llegadas.includes(id)) cr.llegadas.push(id);
+    if (nombre) (cr.nombres = cr.nombres || {})[id] = nombre;   // (por si después se va del juego: igual sabemos cómo se llamaba)
+    if (!cr.primera) cr.primera = ahoraMs();
+    const p = puesto || cr.llegadas.indexOf(id) + 1, yo = id === yoCR();
+    if (yo) { cr.llegue = true; avisoModo(p === 1 ? '🏁 ¡LLEGASTE PRIMERO!' : `🏁 ¡Llegaste! Puesto ${p}`, false, 3000); }
+    else avisoModo(`🏁 ${nombre || (cr.solo ? NOMBRES_BOTS_CR[id - 1] : 'Alguien')} llegó ${p === 1 ? 'primero' : 'en el puesto ' + p}`, false, 1800);
+  }
+  function terminarCR(llegadas) {
+    const cr = MG.state.cr; if (!cr || cr.resultado) return;
+    if (llegadas) cr.llegadas = llegadas;
+    const yo = yoCR(), gane = cr.llegadas[0] === yo, mi = cr.llegadas.indexOf(yo) + 1;
+    const nombre = id => (cr.solo ? NOMBRES_BOTS_CR[id - 1] : (cr.nombres && cr.nombres[id]) || (red.otros.get(id) || {}).nombre) || 'alguien';
+    const texto = gane ? '¡Ganaste la carrera! 🏁🏆' : cr.llegadas.length ? `Ganó ${nombre(cr.llegadas[0])}${mi ? ` · tú llegaste en el puesto ${mi}` : ' · no llegaste a la meta'}` : 'Nadie llegó a la meta';
+    cr.resultado = { gane, texto };
+    mostrarResultadoRonda();
+  }
+  function updateCarrera(dt, o) {
+    const st = MG.state, cr = st.cr, B = cr.B, c = B.c, ahora = ahoraMs(), inp = MG.input || {}, t = (ahora - cr.inicio) / 1000;
+    if (!cr.resultado && !cr.llegue && ahora >= cr.salida) st.bateria = gastarBateria(st.bateria, dt, inp.moving, inp.jumped);
+    moverCarrera(t);
+    // La cuenta regresiva: 3, 2, 1, ¡YA!
+    const falta = Math.ceil((cr.salida - ahora) / 1000);
+    if (falta < cr.cuenta && falta >= 0) { cr.cuenta = falta; avisoModo(falta > 0 ? `${falta}…` : '¡YA! 🏁', false, 900); }
+    girarConDisco(ps);
+    const tr = cr.resultado ? -1 : obstaculosCarrera(ps, dt, t);
+    if (tr >= 0) { sfxResorte(); avisoModo(PISTA_CARRERA.plats[PISTA_CARRERA.lanzas[tr]].lanza.x > 0 ? '↗️ ¡BOING hacia adelante!' : '↩️ ¡Ups! Trampolín hacia atrás', PISTA_CARRERA.plats[PISTA_CARRERA.lanzas[tr]].lanza.x < 0, 1000); if (!cr.solo) enviar({ tipo: 'cr', que: 'golpe', o: PISTA_CARRERA.punos.length + PISTA_CARRERA.barras.length + tr }); }
+    const o2 = cr.resultado ? -1 : golpeCarrera(ps, t);
+    if (o2 >= 0) { sfxPuno(); avisoModo(o2 < PISTA_CARRERA.punos.length ? '🥊 ¡PUM!' : '💫 ¡Te barrió la rueda!', true, 900); if (!cr.solo) enviar({ tipo: 'cr', que: 'golpe', o: o2 }); }
+    if (ps.onGround && ps.standing && ps.standing.cp > cr.cp) { cr.cp = ps.standing.cp; avisoModo(`🚩 Checkpoint ${cr.cp}/${CARRERA.checkpoints}`, false, 1200); }
+    if (seCayoCarrera(ps.pos.y)) { reaparecerCR(ps, cr.cp, cr.carril); avisoModo(cr.cp ? `¡Te caíste! Vuelves al checkpoint ${cr.cp}` : '¡Te caíste! Vuelves a la salida', true, 1500); }
+    const rel = { x: ps.pos.x - c.x, y: ps.pos.y, z: ps.pos.z - c.z };
+    if (!cr.llegue && !cr.resultado && enMetaCarrera(rel)) {
+      if (cr.solo) llegoCR(0);
+      else if (ahora - (cr.avisoMeta || 0) > 500) { cr.avisoMeta = ahora; enviar({ tipo: 'cr', que: 'llegue' }); }   // (el servidor revisa y avisa a todos)
+    }
+    if (cr.solo && !cr.resultado) {
+      moverBotsCR(dt, cr, t, ahora);
+      if (cr.llegadas.length === cr.jugadores.length || (cr.primera && ahora > cr.primera + CARRERA.despuesDelPrimeroMs) || ahora > cr.inicio + CARRERA.maxMs) terminarCR();
+    }
+    // El letrero de arriba: en qué puesto vas
+    const yo = yoCR(), corr = [{ id: yo, x: rel.x }];
+    if (cr.solo) cr.bots.forEach((b, i) => corr.push({ id: i + 1, x: b.pos.x - c.x }));
+    else for (const id of cr.jugadores) { const f = id !== yo && red.otros.get(id); if (f) corr.push({ id, x: f.obj.position.x - c.x }); }
+    const puesto = puestosCarrera(corr, cr.llegadas).indexOf(yo) + 1;
+    const Q = IS_TOUCH ? '<b>RESPONDER</b>' : '<b>Q</b>';
+    const bat = cr.llegue ? '🏁 ¡llegaste!' : hayBateria(st.bateria) ? `🔋 <b>${bateriaTexto(st.bateria)}</b>` : `🔋 <b style="color:#ff5a5a">Sin batería</b>: ${Q}`;
+    mgHud.innerHTML = cr.resultado ? escaparHTML(cr.resultado.texto) : ahora < cr.salida ? `🏁 La carrera empieza en <b>${Math.max(1, falta)}</b>… · ${bat}`
+      : `🏁 Vas <b>${puesto}º</b> de ${corr.length} · 🚩 ${cr.cp}/${CARRERA.checkpoints} · <b>${Math.max(0, Math.min(CARRERA.largo, Math.floor(rel.x)))}</b>/${CARRERA.largo} m · ${bat}`;
+    mgHud.hidden = !escuelaEl.hidden || !mdEl.hidden;
+  }
+  // Volver al salón
+  function salirCarrera(o) {
+    const st = MG.state;
+    cerrarCarga(); quitarCarrera();
+    for (const b of MG.built.botsCR || []) b.obj.visible = false;
+    st.fase = 'salon'; st.cr = null;
+    const s = SILLAS[SILLA_CARRERA]; placePlayer(o.x + s.x + 2, 0, o.z + s.z);
+    camYaw = Math.PI;
+  }
+  // ===== 🔶 Spleef (como Hex-A-Gone): 6 capas de hexágonos que se caen cuando los pisas =====
+  const NOMBRES_BOTS_SP = ['Hexi', 'Panal', 'Brinco', 'Tito', 'Lulú'];
+  const COLORES_BOTS_SP = [0xff6fb5, 0x4dabf7, 0xffd43b, 0x9775fa, 0x51cf66];
+  // Los 4.000 hexágonos son SOLO 6 mallas "instanciadas" (una por capa): así va fluido.
+  // Chocar con ellos no usa la lista de plataformas: el piso se busca con cuentas (hexEn), mucho más rápido.
+  function construirSpleef() {
+    const c = origenSpleef(), grupo = new THREE.Group(); grupo.visible = false; scene.add(grupo);
+    const geo = new THREE.CylinderGeometry(SPLEEF.R * 0.95, SPLEEF.R * 0.95, 0.6, 6), mat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+    const capas = [], m4 = new THREE.Matrix4(), col = new THREE.Color();
+    for (let k = 0; k < SPLEEF.capas; k++) {
+      const im = new THREE.InstancedMesh(geo, mat, HEXES.length); im.frustumCulled = false; im.receiveShadow = true;
+      HEXES.forEach((h, i) => {
+        m4.makeTranslation(c.x + h.x, capaY(k) - 0.3, c.z + h.z); im.setMatrixAt(i, m4);
+        col.setHex(SPLEEF.colores[k]); if ((h.q + 2 * h.r) % 3 === 0) col.offsetHSL(0, 0, 0.08); im.setColorAt(i, col);   // un dibujito de panal (unos más claritos)
+      });
+      im.instanceColor.needsUpdate = true; grupo.add(im); capas.push(im);
+    }
+    // El palco: ahí miran los que quedaron afuera (arriba, al costado de la arena)
+    const P = SPLEEF.palco, palco = new THREE.Mesh(new THREE.BoxGeometry(P.ancho, 1, P.largo), mgMat(0xffffff));
+    palco.position.set(c.x + P.x, P.y - 0.5, c.z + P.z); grupo.add(palco);
+    const plPalco = { x: c.x + P.x, z: c.z + P.z, hw: P.ancho / 2, hd: P.largo / 2, top: P.y, bottom: P.y - 1 };
+    grupo.add(letrero('🔶 SPLEEF', '#ff8a3d', '#ffffff', 10, c.x, capaY(0) + 9, c.z - SPLEEF.radio - 4));
+    // Muy abajo, un mar de lava de caramelo (si llegas ahí, ya quedaste afuera)
+    const lava = new THREE.Mesh(new THREE.CircleGeometry(SPLEEF.radio + 30, 48), new THREE.MeshBasicMaterial({ color: 0xff7a3d }));
+    lava.rotation.x = -Math.PI / 2; lava.position.set(c.x, 1, c.z); grupo.add(lava);
+    MG.built.spleef = { grupo, capas, plPalco, c, enUso: false, m4, col };
+  }
+  function ponerSpleef() {
+    if (!MG.built.spleef) construirSpleef();
+    const B = MG.built.spleef, m4 = B.m4, col = B.col;
+    // Todos los hexágonos de vuelta en su lugar (con su color)
+    B.capas.forEach((im, k) => { HEXES.forEach((h, i) => { m4.makeTranslation(B.c.x + h.x, capaY(k) - 0.3, B.c.z + h.z); im.setMatrixAt(i, m4); col.setHex(SPLEEF.colores[k]); if ((h.q + 2 * h.r) % 3 === 0) col.offsetHSL(0, 0, 0.08); im.setColorAt(i, col); }); im.instanceMatrix.needsUpdate = true; im.instanceColor.needsUpdate = true; });
+    if (!B.enUso) { platforms.push(B.plPalco); B.grupo.visible = true; B.enUso = true; sueloExtra = sueloSpleef; }
+    return B;
+  }
+  function quitarSpleef() {
+    const B = MG.built.spleef; if (!B || !B.enUso) return;
+    const i = platforms.indexOf(B.plPalco); if (i >= 0) platforms.splice(i, 1);
+    B.grupo.visible = false; B.enUso = false; sueloExtra = null;
+  }
+  // El piso de hexágonos para physics(): el hexágono sólido que tienes debajo (o null). Lo guarda en st.hexBajo
+  function sueloSpleef(st, pies) {
+    const S = MG.state.sp; if (!S) { st.hexBajo = null; return null; }
+    const c = MG.built.spleef.c, p = pisoSpleef(st.pos.x - c.x, st.pos.z - c.z, pies, S.pisadas, S.t);
+    st.hexBajo = p; return p ? p.top : null;
+  }
+  // Alguien pisó el hexágono i de la capa k en el segundo t (el primero que llega vale)
+  function pisarHex(k, i, t) {
+    const S = MG.state.sp, antes = S.pisadas[k].get(i);
+    if (antes !== undefined && antes <= t) return false;
+    S.pisadas[k].set(i, t);
+    if (antes === undefined) { S.activos.push([k, i]); const B = MG.built.spleef; B.col.setHex(0xffffff); B.capas[k].setColorAt(i, B.col); B.capas[k].instanceColor.needsUpdate = true; }   // se pone blanco: ¡se va a caer!
+    return antes === undefined;
+  }
+  // Los que se están cayendo: bajan (cada vez más rápido) y desaparecen
+  function moverHexes() {
+    const S = MG.state.sp, B = MG.built.spleef, m4 = B.m4, cambia = new Set();
+    for (let n = S.activos.length - 1; n >= 0; n--) {
+      const [k, i] = S.activos[n], p = S.pisadas[k].get(i), h = HEXES[i];
+      if (!hexSeVe(p, S.t)) { m4.makeScale(0, 0, 0); B.capas[k].setMatrixAt(i, m4); S.activos.splice(n, 1); }
+      else {
+        const d = hundido(S.t - p), temblor = d === 0 ? Math.sin(S.t * 60 + i) * 0.04 : 0;   // antes de caerse, tiembla
+        m4.makeTranslation(B.c.x + h.x + temblor, capaY(k) - 0.3 - d, B.c.z + h.z); B.capas[k].setMatrixAt(i, m4);
+      }
+      cambia.add(k);
+    }
+    for (const k of cambia) B.capas[k].instanceMatrix.needsUpdate = true;
+  }
+  function hacerBotSP(color) { return hacerBotCR(color); }   // (el mismo rectángulo con ojos)
+  const yoSP = () => (MG.state.sp.solo ? 0 : red.id);
+  function empezarSpleef(datos) {
+    cerrarModoRonda(false);
+    const ahora = ahoraMs(), solo = !!datos.solo;
+    const S = { solo, inicio: ahora, salida: ahora + 3000, t: 0, jugadores: solo ? [0, 1, 2, 3, 4, 5] : datos.jugadores, vivos: null, fuera: false, resultado: null, bots: [], cuenta: 4,
+      pisadas: Array.from({ length: SPLEEF.capas }, () => new Map()), activos: [], cola: [], ultimoEnvio: 0, nombres: {} };
+    S.vivos = new Set(S.jugadores);
+    Object.assign(MG.state, { fase: 'spleef', bateria: 0, sp: S });
+    const B = ponerSpleef(), c = B.c, n = S.jugadores.length;
+    if (solo) {
+      S.bots = NOMBRES_BOTS_SP.map((nombre, i) => {
+        const b = (MG.built.botsSP && MG.built.botsSP[i]) || hacerBotSP(COLORES_BOTS_SP[i]);
+        Object.assign(b, { meta: null, metaHasta: 0, saltosAire: 0, vel0: 9.5 + i * 0.4 + Math.random() * 0.6, fuera: false, despiste: 0, hexBajo: null });
+        b.vel.set(0, 0, 0); b.obj.visible = true; b.cuerpo.material.transparent = false; b.cuerpo.material.opacity = 1; return b;
+      });
+      MG.built.botsSP = S.bots;
+    }
+    S.jugadores.forEach((id, i) => {
+      const s = salidaSpleef(i, n), x = c.x + s.x, z = c.z + s.z;
+      if (id === yoSP()) { placePlayer(x, s.y, z); camYaw = Math.atan2(x - c.x, z - c.z); }   // mirando hacia el centro
+      else if (solo) S.bots[id - 1].pos.set(x, s.y, z);
+    });
+    body.material.transparent = false; body.material.opacity = 1;
+    abrirCarga();   // empiezas sin batería: ¡a responder! (el Spleef NO se detiene mientras respondes)
+  }
+  // Quedó afuera (se cayó de la última capa): va al palco a mirar
+  function afueraSP(id, nombre = null) {
+    const S = MG.state.sp, B = MG.built.spleef, P = SPLEEF.palco;
+    if (!S.vivos.has(id)) return;
+    S.vivos.delete(id);
+    const puesto = S.vivos.size + 1;
+    if (id === yoSP()) {
+      S.fuera = true; cerrarCarga();
+      placePlayer(B.c.x + P.x, P.y, B.c.z + P.z); body.material.transparent = true; body.material.opacity = 0.4;
+      avisoModo(`💥 ¡Te caíste! Quedaste en el puesto ${puesto}. Miras desde el palco`, true, 3000);
+    } else {
+      if (S.solo) { const b = S.bots[id - 1]; b.fuera = true; b.pos.set(B.c.x + P.x + (id - 3) * 2.5, P.y, B.c.z + P.z); b.vel.set(0, 0, 0); b.cuerpo.material.transparent = true; b.cuerpo.material.opacity = 0.4; }
+      avisoModo(`💥 ¡${nombre || (S.solo ? NOMBRES_BOTS_SP[id - 1] : (red.otros.get(id) || {}).nombre) || 'Alguien'} se cayó! Quedan ${S.vivos.size}`, false, 1800);
+    }
+  }
+  function terminarSP(ganador, nombre = null, texto = null) {
+    const S = MG.state.sp; if (!S || S.resultado) return;
+    const gane = ganador === yoSP();
+    const quien = nombre || (S.solo ? NOMBRES_BOTS_SP[ganador - 1] : (red.otros.get(ganador) || {}).nombre);
+    S.resultado = { gane, texto: texto || (gane ? '¡Ganaste el Spleef! Fuiste el último en caer 🔶🏆' : ganador === null || ganador === undefined ? 'Se terminó: nadie ganó' : `Ganó ${quien || 'alguien'}`) };
+    mostrarResultadoRonda();
+  }
+  // Los bots: siempre en movimiento (quedarse quieto = caerse), van hacia hexágonos que nadie pisó y saltan los huecos
+  function moverBotsSP(dt, S, ahora) {
+    const c = MG.built.spleef.c;
+    S.bots.forEach((b, i) => {
+      const id = i + 1;
+      if (b.fuera) { physics(b, dt, false, JUMP); return; }
+      if (ahora < S.salida) { physics(b, dt, false, JUMP); animarCaminar(b.obj, b.cuerpo, H / 2, dt); return; }
+      const rx = b.pos.x - c.x, rz = b.pos.z - c.z, k = capaDe(b.pos.y);
+      // ¿Hay que buscar otro lugar? (llegó, pasó un ratito, o alguien pisó el que buscaba)
+      if (!b.meta || ahora > b.metaHasta || Math.hypot(b.meta.x - rx, b.meta.z - rz) < 1.5 || S.pisadas[k].has(b.meta.i)) {
+        let mejor = null, nota = -Infinity;
+        for (let n = 0; n < 24; n++) {
+          const j = Math.floor(Math.random() * HEXES.length), h = HEXES[j], d = Math.hypot(h.x - rx, h.z - rz);
+          if (d < 3 || d > 16) continue;
+          let v = (S.pisadas[k].has(j) ? -50 : 0) - Math.hypot(h.x, h.z) * 0.08 + Math.random() * 2;
+          // ¿El camino hasta ahí está sano? (mira 3 puntos en el medio)
+          for (const f of [0.33, 0.66]) { const m = hexEn(rx + (h.x - rx) * f, rz + (h.z - rz) * f); if (m < 0 || S.pisadas[k].has(m)) v -= 4; }
+          if (v > nota) { nota = v; mejor = { x: h.x, z: h.z, i: j }; }
+        }
+        b.meta = mejor || { x: -rx * 0.5, z: -rz * 0.5, i: -1 }; b.metaHasta = ahora + 1200 + Math.random() * 800;
+      }
+      let dx = b.meta.x - rx, dz = b.meta.z - rz; const d = Math.hypot(dx, dz) || 1; dx /= d; dz /= d;
+      // ¿Adelante hay un hueco (o un hexágono que ya se está cayendo)? ¡Salta! (y en el aire, doble salto si sigue sobre el hueco)
+      const ax = rx + dx * 1.8, az = rz + dz * 1.8, adelante = hexEn(ax, az), malo = adelante < 0 || (S.pisadas[k].has(adelante) && !hexSolido(S.pisadas[k].get(adelante), S.t + 0.3));
+      let salta = false;
+      if (b.onGround && malo) { if (b.despiste > 0) b.despiste -= dt; else if (Math.random() < 0.03) b.despiste = 0.35; else salta = true; }
+      const abajo = hexEn(rx, rz), hueco = abajo < 0 || (S.pisadas[k].has(abajo) && !hexSolido(S.pisadas[k].get(abajo), S.t));
+      if (!b.onGround && b.saltosAire < 1 && b.vel.y < 0 && hueco && b.pos.y > capaY(k) - 1) { b.vel.y = JUMP; b.saltosAire++; }
+      b.walkX = dx * b.vel0 * dt; b.walkZ = dz * b.vel0 * dt;
+      turnTo(b, dx, dz, dt);
+      physics(b, dt, salta, JUMP);
+      if (b.onGround) b.saltosAire = 0;
+      if (b.onGround && b.hexBajo && ahora >= S.salida) pisarHex(b.hexBajo.capa, b.hexBajo.i, S.t);
+      if (fueraSpleef(b.pos.y)) afueraSP(id);
+      animarCaminar(b.obj, b.cuerpo, H / 2, dt);
+    });
+  }
+  function updateSpleef(dt, o) {
+    const st = MG.state, S = st.sp, ahora = ahoraMs(), inp = MG.input || {};
+    S.t = (ahora - S.inicio) / 1000;
+    if (!S.resultado && !S.fuera && ahora >= S.salida) st.bateria = gastarBateria(st.bateria, dt, inp.moving, inp.jumped);
+    const falta = Math.ceil((S.salida - ahora) / 1000);
+    if (falta < S.cuenta && falta >= 0) { S.cuenta = falta; avisoModo(falta > 0 ? `${falta}…` : '¡YA! ¡No te quedes quieto! 🔶', false, 900); }
+    // Lo que pisas se empieza a caer (después del 3, 2, 1)
+    if (!S.fuera && !S.resultado && ahora >= S.salida && ps.onGround && ps.hexBajo) {
+      const { capa, i } = ps.hexBajo;
+      if (pisarHex(capa, i, S.t) && !S.solo) S.cola.push([capa, i]);
+    }
+    if (!S.solo && S.cola.length && ahora - S.ultimoEnvio > 100) { enviar({ tipo: 'sp', que: 'pisa', h: S.cola.splice(0, 30) }); S.ultimoEnvio = ahora; }
+    // ¿Te caíste de la última capa?
+    if (!S.fuera && !S.resultado && fueraSpleef(ps.pos.y)) {
+      if (S.solo) afueraSP(0);
+      else { enviar({ tipo: 'pos', x: corto(ps.pos.x), y: corto(ps.pos.y), z: corto(ps.pos.z), rot: corto(ps.facing), color: body.material.color.getHex(), mg: miMg(), t: Math.round(performance.now()) }); afueraSP(red.id); }   // (el servidor lo ve y avisa a todos)
+    }
+    if (S.solo && !S.resultado) {
+      moverBotsSP(dt, S, ahora);
+      if (S.fuera) terminarSP(null, null, `Te caíste: quedaste en el puesto ${S.vivos.size + 1} de ${S.jugadores.length}`);   // (jugando solo, cuando te caes se termina)
+      else if (S.vivos.size <= 1 || ahora > S.inicio + SPLEEF.maxMs) terminarSP(S.vivos.size === 1 ? [...S.vivos][0] : null);
+    }
+    moverHexes();
+    const Q = IS_TOUCH ? '<b>RESPONDER</b>' : '<b>Q</b>';
+    const bat = S.fuera ? '👻 miras desde el palco' : hayBateria(st.bateria) ? `🔋 <b>${bateriaTexto(st.bateria)}</b>` : `🔋 <b style="color:#ff5a5a">Sin batería</b>: ${Q}`;
+    mgHud.innerHTML = S.resultado ? escaparHTML(S.resultado.texto) : ahora < S.salida ? `🔶 El Spleef empieza en <b>${Math.max(1, falta)}</b>… · ${bat}`
+      : `🔶 ${S.fuera ? 'Afuera' : `Capa <b>${capaDe(ps.pos.y) + 1}</b>/${SPLEEF.capas}`} · quedan <b>${S.vivos.size}</b> · ${bat}`;
+    mgHud.hidden = !escuelaEl.hidden || !mdEl.hidden;
+  }
+  function salirSpleef(o) {
+    const st = MG.state;
+    cerrarCarga(); quitarSpleef();
+    for (const b of MG.built.botsSP || []) b.obj.visible = false;
+    body.material.transparent = false; body.material.opacity = 1;
+    st.fase = 'salon'; st.sp = null;
+    const s = SILLAS[SILLA_SPLEEF]; placePlayer(o.x + s.x + 2, 0, o.z + s.z);
+    camYaw = Math.PI;
+  }
   // E junto a una silla: la del modo te lleva a la torre; las demás todavía no tienen modo
   function sentarse() {
     const o = minigameOrigin(MG.k);
@@ -3359,6 +3934,8 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
     if (SILLAS[i].modo === 'nomires') entrarTorre(o);
     else if (SILLAS[i].modo === 'escondidas') abrirEscondidas();
     else if (SILLAS[i].modo === 'atrapadas') abrirAtrapadas();
+    else if (SILLAS[i].modo === 'carrera') abrirModoRonda('carrera');
+    else if (SILLAS[i].modo === 'spleef') abrirModoRonda('spleef');
     else avisoModo('Próximamente: esta silla todavía no tiene modo');
   }
   function entrarTorre(o) {
@@ -3387,6 +3964,8 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
     mgHud.hidden = true;   // en el salón no hay letrero arriba (para saber qué hacer: el bot guía, con ENTER)
     MG.built.escondMat.emissive.setRGB(0.05, 0.12 + 0.08 * Math.sin(t2 + 2), 0.25 + 0.12 * Math.sin(t2 + 2));
     MG.built.profeMat.emissive.setRGB(0.3 + 0.15 * Math.sin(t2 + 1), 0.05, 0.15 + 0.08 * Math.sin(t2 + 1));             // y la de la profe también
+    if (MG.built.discoSilla) MG.built.discoSilla.rotation.y = MG.t * 2;   // el disco de la silla de la Carrera gira
+    if (MG.built.hexSilla) MG.built.hexSilla.position.y = 0.3 + Math.abs(Math.sin(MG.t * 1.5)) * 0.2;   // y el hexágono de la del Spleef da saltitos
     // Cruzar la puerta de atrás: vuelves a tu mundo
     const x = ps.pos.x - o.x, z = ps.pos.z - o.z;
     if (z < -SALON.largo / 2 + 0.2 && Math.abs(x - SALON.puerta.x) < SALON.puerta.ancho / 2) {
@@ -3898,26 +4477,30 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
         const st = MG.state;
         if (st.fase === 'escondidas') { const T = TERRENOS[st.esc.terreno], x = TERRENO_X[st.esc.terreno]; return { x0: x - T.ancho / 2 + 1, x1: x + T.ancho / 2 - 1, z0: -T.largo / 2 + 1, z1: T.largo / 2 - 1 }; }
         if (st.fase === 'atrapadas') { const m = ARENA_AN.mitad - 1; return { x0: ARENA_X - m, x1: ARENA_X + m, z0: -m, z1: m }; }
+        if (st.fase === 'carrera') return { x0: CARRERA_X - 12, x1: CARRERA_X + CARRERA.meta.x1 + 4, z0: -26, z1: 26 };   // (más ancho que la pista: así te puedes caer por los costados)
+        if (st.fase === 'spleef') { const m = SPLEEF.radio + 2; return { x0: SPLEEF_X - m, x1: SPLEEF_X + m, z0: -m - 14, z1: m }; }   // (con el palco)
         return st.fase === 'nomires' ? TORRE_AREA : SALON_AREA;
       },
       get noMove() {
         const st = MG.state, e = st.esc;
         if (st.fase === 'escondidas') return !!e.resultado || (faseEsc() === 'esconder' && soyBuscador()) || (!e.fantasma && !hayBateria(st.bateria));   // el buscador no se mueve mientras cuenta; el fantasma no necesita batería
         if (st.fase === 'atrapadas') return !!st.an.resultado || (!st.an.fantasma && !hayBateria(st.bateria));   // el fantasma no necesita batería
+        if (st.fase === 'carrera') return !!st.cr.resultado || ahoraMs() < st.cr.salida || (!st.cr.llegue && !hayBateria(st.bateria));   // 3, 2, 1… y sin batería no corres
+        if (st.fase === 'spleef') return !!st.sp.resultado || ahoraMs() < st.sp.salida || (!st.sp.fuera && !hayBateria(st.bateria));
         return st.fase === 'nomires' && !hayBateria(st.bateria);   // sin batería no caminas…
       },
       get velocidad() { return MG.state.fase === 'atrapadas' ? AN.vel : undefined; },   // Atrapadas: todos más rápidos (15 en vez de 12)
       get noJump() { return this.noMove; },                                                   // …ni saltas (pero sí te caes)
       get onE() { return MG.state.fase === 'salon' ? sentarse : MG.state.fase === 'escondidas' && soyBuscador() && faseEsc() === 'buscar' ? intentarEncontrar : null; },   // E: sentarse · en Escondidas, encontrar
-      get onQ() { const st = MG.state; return st.fase === 'nomires' || (st.fase === 'escondidas' && !st.esc.fantasma && !st.esc.resultado) || (st.fase === 'atrapadas' && !st.an.fantasma && !st.an.resultado) ? abrirCarga : null; },  // Q: responder para cargar batería
+      get onQ() { const st = MG.state; return st.fase === 'nomires' || (st.fase === 'escondidas' && !st.esc.fantasma && !st.esc.resultado) || (st.fase === 'atrapadas' && !st.an.fantasma && !st.an.resultado) || (st.fase === 'carrera' && !st.cr.resultado && !st.cr.llegue) || (st.fase === 'spleef' && !st.sp.resultado) ? abrirCarga : null; },  // Q: responder para cargar batería
       get eLabel() { if (MG.state.fase === 'escondidas') return '✋ Encontrar'; const o = minigameOrigin(MG.k); return MG.state.fase === 'salon' && cercaDelVendedor(ps.pos.x - o.x, ps.pos.z - o.z) ? '🎃 Tienda' : '✋ Sentarse'; },
       // ¿Dónde estoy? (para la red: con quién te ves) · torre: 21 · Escondidas con amigos: 30 + terreno · solo: 99 (no ves a nadie)
-      get mgCodigo() { const st = MG.state; if (st.fase === 'nomires') return MG_TORRE; if (st.fase === 'atrapadas') return st.an.solo ? MG_SOLO : MG_ATRAPADAS; if (st.fase === 'escondidas') return st.esc.solo ? MG_SOLO : MG_ESCONDIDAS + st.esc.terreno; return undefined; },
+      get mgCodigo() { const st = MG.state; if (st.fase === 'nomires') return MG_TORRE; if (st.fase === 'atrapadas') return st.an.solo ? MG_SOLO : MG_ATRAPADAS; if (st.fase === 'carrera') return st.cr.solo ? MG_SOLO : MG_CARRERA; if (st.fase === 'spleef') return st.sp.solo ? MG_SOLO : MG_SPLEEF; if (st.fase === 'escondidas') return st.esc.solo ? MG_SOLO : MG_ESCONDIDAS + st.esc.terreno; return undefined; },
       // El cielo se pone oscuro en el espacio (con estrellas) y en el neón
-      get sky() { if (MG.state.fase === 'escondidas') return 0xefe6d6; if (MG.state.fase === 'atrapadas') return 0x0b2e33; /* el espacio verde azulado oscuro */ if (MG.state.fase !== 'nomires') return undefined; const id = etapaDe(ps.pos.y).id; return id === 'espacio' ? 0x070a1f : id === 'neon' ? 0x0d0618 : undefined; },
+      get sky() { if (MG.state.fase === 'spleef') return 0xffd9ec; /* rosadito, de día */ if (MG.state.fase === 'carrera') return 0xa8dcff; /* celeste pastel, como Fall Guys */ if (MG.state.fase === 'escondidas') return 0xefe6d6; if (MG.state.fase === 'atrapadas') return 0x0b2e33; /* el espacio verde azulado oscuro */ if (MG.state.fase !== 'nomires') return undefined; const id = etapaDe(ps.pos.y).id; return id === 'espacio' ? 0x070a1f : id === 'neon' ? 0x0d0618 : undefined; },
       // Parado en hielo: resbalas (agarre chico). 0 = piso normal
       get agarre() { return MG.state.fase === 'nomires' && MG.state.enHielo && ps.onGround ? HIELO.agarre : 0; },   // solo resbalas con los pies en el hielo: al saltar, controlas tu salto normal
-      get dobleSalto() { return MG.state.fase === 'nomires'; },   // el doble salto solo existe en la torre
+      get dobleSalto() { const f = MG.state.fase; return f === 'nomires' || f === 'carrera' || f === 'spleef'; },   // el doble salto: en la torre, la Carrera y el Spleef
       look(o) { return { x: o.x, z: o.z + 30 }; },
       build(o) { construirSalon(o); },   // la torre se arma recién cuando entras a ella
       start(o) {
@@ -3931,9 +4514,9 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
         const i = sillaCercana(ps.pos.x - minigameOrigin(MG.k).x, ps.pos.z - minigameOrigin(MG.k).z, SILLAS);
         if (i < 0) return '';
         const modo = SILLAS[i].modo;
-        return modo === 'nomires' ? `Pulsa <kbd>E</kbd> para jugar <b>No mires abajo</b>` : modo === 'escondidas' ? 'Pulsa <kbd>E</kbd> para jugar <b>Escondidas</b>' : modo === 'atrapadas' ? 'Pulsa <kbd>E</kbd> para jugar <b>Atrapadas Nocivas</b>' : 'Pulsa <kbd>E</kbd> para ver esta silla';
+        return modo === 'nomires' ? `Pulsa <kbd>E</kbd> para jugar <b>No mires abajo</b>` : modo === 'escondidas' ? 'Pulsa <kbd>E</kbd> para jugar <b>Escondidas</b>' : modo === 'atrapadas' ? 'Pulsa <kbd>E</kbd> para jugar <b>Atrapadas Nocivas</b>' : modo === 'carrera' ? 'Pulsa <kbd>E</kbd> para jugar la <b>Carrera</b> 🏁' : modo === 'spleef' ? 'Pulsa <kbd>E</kbd> para jugar <b>Spleef</b> 🔶' : 'Pulsa <kbd>E</kbd> para ver esta silla';
       },
-      update(dt, o) { const f = MG.state.fase; return f === 'nomires' ? updateTorre(dt, o) : f === 'escondidas' ? updateEscondidas(dt, o) : f === 'atrapadas' ? updateAtrapadas(dt, o) : updateSalon(o); },
+      update(dt, o) { const f = MG.state.fase; return f === 'nomires' ? updateTorre(dt, o) : f === 'escondidas' ? updateEscondidas(dt, o) : f === 'atrapadas' ? updateAtrapadas(dt, o) : f === 'carrera' ? updateCarrera(dt, o) : f === 'spleef' ? updateSpleef(dt, o) : updateSalon(o); },
       end() {
         cerrarCarga(); quitarTorre();
         if (MG.state.esc || !escondEl.hidden) { levantarse(); escondEl.hidden = true; }
@@ -3942,6 +4525,10 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
         if (MG.state.an || !anEl.hidden) { levantarseAN(); anEl.hidden = true; }
         quitarArenaAN(); mancha.visible = false;
         for (const b of MG.built.botsAN || []) b.obj.visible = false;
+        if (MG.state.cr || !mdEl.hidden) { levantarseModo('carrera'); mdEl.hidden = true; }
+        quitarCarrera(); for (const b of MG.built.botsCR || []) b.obj.visible = false;
+        if (MG.state.sp) levantarseModo('spleef');
+        quitarSpleef(); for (const b of MG.built.botsSP || []) b.obj.visible = false;
       },
     },
     // 🕳️ La zona rara (llegas cayendo por el hoyo de la casa morada) y el 🧠 sandbox de The Guy
@@ -4558,8 +5145,8 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
   function updateMinigame(dt) {
     if (!MG.active) return;
     MG.t += dt;
-    { const st = MG.state, esc = st.esc, an = st.an;   // 🎃 20 por cada minuto JUGANDO (no en el salón, ni mirando a GILBERT, ni en un resultado)
-      if (ganaSpooky({ modo: minigameDef(MG.k).id, fase: st.fase, enRonda: !!(esc || an), resultado: !!((esc && esc.resultado) || (an && an.resultado)) })) contarSpooky(dt); }
+    { const st = MG.state, esc = st.esc, an = st.an, cr = st.cr || st.sp;   // 🎃 20 por cada minuto JUGANDO (no en el salón, ni mirando a GILBERT, ni en un resultado)
+      if (ganaSpooky({ modo: minigameDef(MG.k).id, fase: st.fase, enRonda: !!(esc || an || cr), resultado: !!((esc && esc.resultado) || (an && an.resultado) || (cr && cr.resultado)) })) contarSpooky(dt); }
     const o = minigameOrigin(MG.k), mode = MG.active;
     // No salirse de la zona del minijuego (ni caerse a los backrooms)
     if (mode.area) { const c = clampToArea(ps.pos.x - o.x, ps.pos.z - o.z, mode.area); ps.pos.x = o.x + c.x; ps.pos.z = o.z + c.z; }
@@ -4880,6 +5467,107 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
       terminarAN(gane, (gane ? '¡Ganaste! Eres el último que quedó 👽🏆' : e ? `Ganó ${e.nombre}` : 'Se terminó la ronda') + porque);
     } else if (m.tipo === 'anAviso') avisoModo(String(m.texto || ''), true);
   }
+  // ---------- 🏁 Panel de las rondas nuevas (Carrera y, después, Spleef): la espera con amigos (o solo contra bots) y el resultado ----------
+  const mdEl = document.getElementById('modoRonda'), mdMsj = document.getElementById('mdMsj');
+  const MODOS_RONDA = {
+    carrera: { titulo: '🏁 CARRERA', tipo: 'cr', estado: () => MG.state.cr, empezar: () => empezarCarrera({ solo: true }), salir: o => salirCarrera(o),
+      ayuda: '¡Una carrera como Fall Guys! Cruza la pista de colores en el cielo: <b>puentes de dulce</b>, <b>discos que giran</b>, una <b>rueda gigante</b> con barras que barren (¡sáltalas!), <b>puños de boxeo</b> que te pueden tirar y un escalón alto (usa el <b>doble salto</b>). Cada 30 m hay un <b>checkpoint</b>: si te caes, vuelves ahí. El primero en llegar a la meta gana. Moverte gasta batería: <b>Q</b> para responder (¡+4.000 por respuesta!).',
+      bots: 'Estás solo en la sala: corres contra 5 bots. Cuando entre un amigo, pueden correr juntos.' },
+    spleef: { titulo: '🔶 SPLEEF', tipo: 'sp', estado: () => MG.state.sp, empezar: () => empezarSpleef({ solo: true }), salir: o => salirSpleef(o),
+      ayuda: 'Una arena gigante con el piso de <b>hexágonos</b>: cuando pisas uno, al ratito <b>se cae</b>. ¡No te quedes quieto! Hay <b>6 capas</b>, una debajo de otra: si se te cae el piso, caes a la de abajo. Si te caes de la última, quedas afuera. <b>Gana el último que quede.</b> Tienes <b>doble salto</b> para cruzar los huecos. Moverte gasta batería: <b>Q</b> para responder (¡+3.000 por respuesta!).',
+      bots: 'Estás solo en la sala: juegas contra 5 bots. Cuando entre un amigo, pueden jugar juntos.' },
+  };
+  const lobbyModo = { carrera: { espera: [], enRonda: false, sentado: false }, spleef: { espera: [], enRonda: false, sentado: false } };
+  let mdModo = null;   // qué modo muestra el panel ahora
+  function abrirModoRonda(modo) {
+    for (const k in keys) keys[k] = false;
+    if (isLocked()) document.exitPointerLock();
+    mdModo = modo;
+    document.getElementById('mdTitulo').textContent = MODOS_RONDA[modo].titulo;
+    document.getElementById('mdAyuda').innerHTML = MODOS_RONDA[modo].ayuda;
+    document.getElementById('mdElegir').hidden = false; document.getElementById('mdFin').hidden = true;
+    mdMsj.textContent = '';
+    pintarModoRonda();
+    mdEl.hidden = false;
+  }
+  function levantarseModo(modo = mdModo) { const L = modo && lobbyModo[modo]; if (L && L.sentado) { enviar({ tipo: MODOS_RONDA[modo].tipo, que: 'salir' }); L.sentado = false; } }
+  function cerrarModoRonda(salir = true) {
+    if (mdEl.hidden) return;
+    mdEl.hidden = true;
+    if (salir && mdModo && !MODOS_RONDA[mdModo].estado()) levantarseModo();
+  }
+  function pintarModoRonda() {
+    const M = MODOS_RONDA[mdModo], L = lobbyModo[mdModo], sala = enSalaAN();
+    if (sala && !L.sentado) { enviar({ tipo: M.tipo, que: 'entrar' }); L.sentado = true; }
+    if (!sala) levantarseModo();
+    document.getElementById('mdModo').textContent = sala ? 'Juegas con los amigos de la sala: con 2 o más, cualquiera aprieta ¡Empezar!' : red.id !== null ? M.bots : 'Juegas contra los bots.';
+    document.getElementById('mdSala').hidden = !sala;
+    if (sala) document.getElementById('mdLista').replaceChildren(...L.espera.map(j => { const li = document.createElement('li'); li.textContent = j.nombre + (j.id === red.id ? ' (tú)' : ''); return li; }));
+    const boton = document.getElementById('mdEmpezar');
+    boton.disabled = sala && (L.espera.length < 2 || L.enRonda);
+    boton.textContent = !sala ? '¡Empezar contra los bots!' : L.enRonda ? 'Hay una ronda jugándose…' : L.espera.length < 2 ? 'Esperando a otro jugador…' : `¡Empezar! (${L.espera.length} jugadores)`;
+  }
+  const repintarModoRonda = () => { if (!mdEl.hidden && mdModo && !document.getElementById('mdElegir').hidden) pintarModoRonda(); };
+  document.getElementById('mdEmpezar').addEventListener('click', () => {
+    if (enSalaAN()) { enviar({ tipo: MODOS_RONDA[mdModo].tipo, que: 'empezar' }); mdMsj.textContent = 'Empezando…'; }
+    else MODOS_RONDA[mdModo].empezar();
+  });
+  // El resultado de la ronda (ganaste: +25 monedas y +30 🎃)
+  function mostrarResultadoRonda() {
+    const modo = MG.state.fase, e = MODOS_RONDA[modo] && MODOS_RONDA[modo].estado(); if (!e || !e.resultado) return;
+    mdModo = modo; cerrarCarga();
+    if (e.resultado.gane && !e.premio) { e.premio = true; save.coins += 25; renderCoins(); ganarSpooky(SPOOKY.porGanar); flashWarn('¡GANASTE!', 2); }
+    document.getElementById('mdTitulo').textContent = MODOS_RONDA[modo].titulo;
+    document.getElementById('mdResultado').textContent = e.resultado.texto + (e.resultado.gane ? ' +25 monedas' : '');
+    document.getElementById('mdElegir').hidden = true; document.getElementById('mdFin').hidden = false;
+    mdEl.hidden = false;
+  }
+  function volverDelResultadoRonda(otra) {
+    const modo = mdModo;
+    mdEl.hidden = true;
+    if (MODOS_RONDA[modo].estado()) MODOS_RONDA[modo].salir(minigameOrigin(MG.k));
+    if (otra) abrirModoRonda(modo); else levantarseModo(modo);
+  }
+  document.getElementById('mdOtra').addEventListener('click', () => volverDelResultadoRonda(true));
+  document.getElementById('mdSalon').addEventListener('click', () => volverDelResultadoRonda(false));
+  document.getElementById('mdCerrar').addEventListener('click', () => { const e = mdModo && MODOS_RONDA[mdModo].estado(); if (e && e.resultado) volverDelResultadoRonda(false); else cerrarModoRonda(); });
+  // Mensajes del servidor sobre la Carrera
+  function mensajeCarrera(m) {
+    const cr = MG.state && MG.state.cr, L = lobbyModo.carrera;
+    if (m.tipo === 'crEspera') {
+      L.espera = Array.isArray(m.jugadores) ? m.jugadores.filter(j => j && Number.isInteger(j.id) && typeof j.nombre === 'string') : [];
+      L.enRonda = !!m.enRonda;
+      repintarModoRonda();
+    } else if (m.tipo === 'crRonda') {
+      if (!Array.isArray(m.jugadores) || !m.jugadores.includes(red.id) || MG.active !== MODES.escuela) return;
+      if (MG.state.fase === 'carrera') salirCarrera(minigameOrigin(MG.k));
+      else if (MG.state.fase !== 'salon') return;   // (si estás jugando otra cosa, no te saca)
+      empezarCarrera({ jugadores: m.jugadores.filter(Number.isInteger), semilla: Number.isInteger(m.semilla) ? m.semilla : 1 });
+    } else if (m.tipo === 'crAviso') { const t = String(m.texto || ''); if (!mdEl.hidden) mdMsj.textContent = t; else avisoModo(t, true); }
+    else if (!cr || cr.solo) return;
+    else if (m.tipo === 'crLlegada' && Number.isInteger(m.id)) llegoCR(m.id, Number.isInteger(m.puesto) ? m.puesto : null, typeof m.nombre === 'string' ? m.nombre.slice(0, 20) : null);
+    else if (m.tipo === 'crFin') terminarCR(Array.isArray(m.llegadas) ? m.llegadas.filter(Number.isInteger) : []);
+  }
+  // Mensajes del servidor sobre el Spleef
+  function mensajeSpleef(m) {
+    const S = MG.state && MG.state.sp, L = lobbyModo.spleef;
+    if (m.tipo === 'spEspera') {
+      L.espera = Array.isArray(m.jugadores) ? m.jugadores.filter(j => j && Number.isInteger(j.id) && typeof j.nombre === 'string') : [];
+      L.enRonda = !!m.enRonda;
+      repintarModoRonda();
+    } else if (m.tipo === 'spRonda') {
+      if (!Array.isArray(m.jugadores) || !m.jugadores.includes(red.id) || MG.active !== MODES.escuela) return;
+      if (MG.state.fase === 'spleef') salirSpleef(minigameOrigin(MG.k));
+      else if (MG.state.fase !== 'salon') return;   // (si estás jugando otra cosa, no te saca)
+      empezarSpleef({ jugadores: m.jugadores.filter(Number.isInteger) });
+    } else if (m.tipo === 'spAviso') { const t = String(m.texto || ''); if (!mdEl.hidden) mdMsj.textContent = t; else avisoModo(t, true); }
+    else if (!S || S.solo) return;
+    else if (m.tipo === 'spPisa' && Array.isArray(m.h)) {
+      // Los hexágonos que pisó alguien (con la hora del servidor): se caen igual para todos
+      for (const p of m.h) if (Array.isArray(p) && Number.isInteger(p[0]) && Number.isInteger(p[1]) && Number.isFinite(p[2]) && p[0] >= 0 && p[0] < SPLEEF.capas && p[1] >= 0 && p[1] < HEXES.length) pisarHex(p[0], p[1], p[2] / 1000);
+    } else if (m.tipo === 'spFuera' && Number.isInteger(m.id)) afueraSP(m.id, typeof m.nombre === 'string' ? m.nombre.slice(0, 20) : null);
+    else if (m.tipo === 'spFin') terminarSP(Number.isInteger(m.ganador) ? m.ganador : null, typeof m.nombre === 'string' ? m.nombre.slice(0, 20) : null);
+  }
   // ¿Dónde estoy? (para decidir a quién ves en la sala)
   function miMg() {
     if (!MG.active) return 0;
@@ -4925,7 +5613,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
     for (const k in keys) keys[k] = false;
     if (isLocked()) document.exitPointerLock();   // para poder usar el mouse en el panel
     if (MG.state.fase !== 'escondidas') document.getElementById('escAvisoPanel').hidden = true;
-    document.getElementById('escSalirTorre').textContent = MG.state.fase === 'escondidas' ? 'Salir de las escondidas (volver al salón)' : MG.state.fase === 'atrapadas' ? 'Salir de Atrapadas Nocivas (volver al salón)' : 'Salir de la torre (volver al salón)';
+    document.getElementById('escSalirTorre').textContent = MG.state.fase === 'escondidas' ? 'Salir de las escondidas (volver al salón)' : MG.state.fase === 'atrapadas' ? 'Salir de Atrapadas Nocivas (volver al salón)' : MG.state.fase === 'carrera' ? 'Salir de la Carrera (volver al salón)' : MG.state.fase === 'spleef' ? 'Salir del Spleef (volver al salón)' : 'Salir de la torre (volver al salón)';
     escuelaEl.hidden = false; escuelaNueva();
   }
   function cerrarCarga() { escuelaEl.hidden = true; clearTimeout(MG.state.espera); }
@@ -4948,10 +5636,11 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
     if (st.esperando) return;   // ya respondiste: espera la siguiente
     st.esperando = true;
     const bien = i === st.correcta;
-    st.bateria = cargarBateria(st.bateria, bien);
+    const cuanto = st.fase === 'carrera' ? CARRERA.bateriaRespuesta : st.fase === 'spleef' ? SPLEEF.bateriaRespuesta : BATERIA.porRespuesta;   // (en la Carrera 4.000, en el Spleef 3.000)
+    st.bateria = cargarBateria(st.bateria, bien, cuanto);
     [...escOpciones.children].forEach((b, k) => { b.disabled = true; if (k === st.correcta) b.classList.add('bien'); else if (k === i) b.classList.add('mal'); });
     escResultado.className = `esc-resultado ${bien ? 'bien' : 'mal'}`;
-    escResultado.textContent = bien ? `¡Correcto! +${fmt(BATERIA.porRespuesta)} 🔋` : 'Incorrecto… esta vez no hay batería';
+    escResultado.textContent = bien ? `¡Correcto! +${fmt(cuanto)} 🔋` : 'Incorrecto… esta vez no hay batería';
     pintarBateria();
     st.espera = setTimeout(() => { if (!escuelaEl.hidden) escuelaNueva(); }, bien ? 900 : 1700);   // si fallas, más tiempo para ver la buena
   }
@@ -4959,6 +5648,8 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
   document.getElementById('escCerrar').addEventListener('click', cerrarCarga);
   document.getElementById('escSalirTorre').addEventListener('click', () => {
     if (MG.state.fase === 'atrapadas') { salirAtrapadas(minigameOrigin(MG.k)); levantarseAN(); return; }   // te vas de la ronda (si tenías la mancha, la recibe otro)
+    if (MG.state.fase === 'carrera') { salirCarrera(minigameOrigin(MG.k)); levantarseModo('carrera'); return; }   // te vas de la carrera
+    if (MG.state.fase === 'spleef') { salirSpleef(minigameOrigin(MG.k)); levantarseModo('spleef'); return; }   // te vas del Spleef (cuenta como caerte)
     if (MG.state.fase !== 'escondidas') { salirTorre(minigameOrigin(MG.k), false); return; }
     salirEscondidas(minigameOrigin(MG.k));
     levantarse();   // te vas de la ronda (si eras el buscador, ganan los camaleones)
@@ -6077,6 +6768,8 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
         profe.sala = leerPreguntas(m.preguntas) || [];   // las preguntas de la clase (se revisan igual que en el servidor)
         escond.enRonda = !!(m.escondidas && m.escondidas.enRonda);
         anLobby.enRonda = !!(m.atrapadas && m.atrapadas.enRonda);
+        lobbyModo.carrera.enRonda = !!(m.carrera && m.carrera.enRonda);
+        lobbyModo.spleef.enRonda = !!(m.spleef && m.spleef.enRonda);
         if (document.hidden) enviar({ tipo: 'visible', v: 0 });
         for (const j of m.jugadores) addFriend(j);
         // En una compu nueva (sin guardado en el navegador) apareces donde te dejó la base de datos
@@ -6090,7 +6783,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
         showToast(n ? `¡Conectado! Hay ${n} amigo${n > 1 ? 's' : ''} jugando` : '¡Conectado! Eres el primero en llegar', false, 3000);
       } else if (m.tipo === 'entra') {
         addFriend(m); showToast(`${m.nombre} entró al juego`);
-        repintarEscondidas(); repintarAtrapadas();
+        repintarEscondidas(); repintarAtrapadas(); repintarModoRonda();
       } else if (m.tipo === 'pos') {
         const f = red.otros.get(m.id);
         if (f) { f.x = m.x; f.y = m.y; f.z = m.z; f.rot = m.rot; f.body.material.color.setHex(m.color); if (f.mg !== m.mg) setFriendMinigame(f, m.mg); agregarMuestra(f.suave, [m.x, m.y, m.z, m.rot], m.t, performance.now()); }
@@ -6101,7 +6794,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
         const f = red.otros.get(m.id);
         if (f) { explode(f); red.otros.delete(m.id); }
         showToast(`💥 ${m.nombre} se desconectó`, true, 3000);
-        repintarEscondidas(); repintarAtrapadas();
+        repintarEscondidas(); repintarAtrapadas(); repintarModoRonda();
       } else if (m.tipo === 'anfitrion') {
         red.anfitrion = m.id;
         red.suaveMundo = nuevoSuavizador();   // el nuevo anfitrión tiene otro reloj: empezamos a guardar de nuevo
@@ -6139,6 +6832,10 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
         else mensajeProfe(String(m.texto || 'No se pudo guardar'), true);
       } else if (['anEspera', 'anRonda', 'anPase', 'anExplota', 'anSale', 'anFin', 'anAviso'].includes(m.tipo)) {
         mensajeAtrapadas(m);
+      } else if (['crEspera', 'crRonda', 'crLlegada', 'crFin', 'crAviso'].includes(m.tipo)) {
+        mensajeCarrera(m);
+      } else if (['spEspera', 'spRonda', 'spPisa', 'spFuera', 'spFin', 'spAviso'].includes(m.tipo)) {
+        mensajeSpleef(m);
       } else if (m.tipo.startsWith('esc')) {
         mensajeEscondidas(m);
       } else if (m.tipo === 'error') {
@@ -6152,6 +6849,7 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
       for (const f of red.otros.values()) scene.remove(f.obj);
       red.otros.clear(); red.ws = null; red.id = null; red.anfitrion = null;
       escond.sentado = false;   // (el servidor ya no te tiene en la espera)
+      lobbyModo.carrera.sentado = false; lobbyModo.spleef.sentado = false;
       // Sin servidor vuelves a jugar solo: tu compu mueve otra vez al gigante, a los bots y las monedas
       for (const c of coins) if (c.userData.taken) { placeCoin(c); c.visible = true; c.userData.taken = false; }
       takeOverWorld();
