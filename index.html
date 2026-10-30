@@ -420,9 +420,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module">
 import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, ESCUELA, ESCUELA_K, SANDBOX_K, enElHoyo, zonaRara, ZONA_RARA, HOYO, escuelaSiguiente, escuelaMezclar, SALON, salonSillas, sillaCercana, faseDeLuz, ARENA_AN, ARENA_AN_X, TERRENO_X, salidaAN, centroArenaAN, plataformasAN, desplazamientoAN, portalesAN, portalCerca, TERRENOS, CARROS, CARRO, carroPos, partesCarro, TORTUGAS, TORTUGA, tortugaPos, partesTortuga, cajasPieza, escaleraCanasta, cajasTerreno, escondites, BOT_ESC, botVe, ordenEscondites, cercaDeLaProfe, preguntasDeLaClase, escaparHTML, NO_MIRES, torreNoMires, seededRandom, debeReaparecer, GUIA_COMO, textoQueHago, lugarDelGuia, GUIA_COLORES, siguienteColorGuia, lugaresArboles, lugaresPasto, libreDePasto, ARBOLES, sombreroDeBot, ETAPAS, etapaDe, cajasDe, decoracionTorre, ovniDesplazamiento, HIELO, deslizar, puedeDobleSalto, gastarBateria, cargarBateria, hayBateria, BATERIA, SPOOKY, sumarTiempoSpooky, DISFRACES, disfrazById, comprarDisfraz, ponerDisfraz, TIENDA_HALLOWEEN, cercaDelVendedor, letrerosEtapas, elegirObjetivoAN, meAburro, MOTIVACION_AN, reboteCaminar, estaCaminando, volumenPasos, puedeAvisar, AVISO_LASER, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, VILLAGE_HOUSE, wallPieces, insideVillageHouse, villageBed, villageEntrance, villageExit, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, squashStretch, ACHIEVEMENTS, achievementById, coinAchievementsFor, TROPHY_TABLE, trophySpot, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
-         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-31-fantasma'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
-import { NOMBRE_SALA, cerebrosNuevos, proximoCerebro, pensar, crearEpisodio, pasoEpisodio, semillaIntento, torreSandbox, BUSCADOR_SB, leerCerebros, nombreGuy, claveGuy, NOMBRE_GUY } from './src/ia.js?v=2026-10-31-fantasma';
-import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, valoresEn, DIA_SEGUNDOS, lugarMoneda, corto, acercar, acercarAngulo, piezasExplosion, leerPreguntas, revisarPreguntas, PROFE, seVen, MG_TORRE, MG_ESCONDIDAS, MG_ATRAPADAS, MG_SOLO, ESC, AN, nuevaRondaAN, pasarAN, explotarAN, empujeAN, mareadoAN, seTocan } from './src/red.js?v=2026-10-31-fantasma';
+         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-10-31-dulces'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
+import { NOMBRE_SALA, cerebrosNuevos, proximoCerebro, pensar, crearEpisodio, pasoEpisodio, semillaIntento, torreSandbox, BUSCADOR_SB, leerCerebros, nombreGuy, claveGuy, NOMBRE_GUY } from './src/ia.js?v=2026-10-31-dulces';
+import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, valoresEn, DIA_SEGUNDOS, lugarMoneda, corto, acercar, acercarAngulo, piezasExplosion, leerPreguntas, revisarPreguntas, PROFE, seVen, MG_TORRE, MG_ESCONDIDAS, MG_ATRAPADAS, MG_SOLO, ESC, AN, nuevaRondaAN, pasarAN, explotarAN, empujeAN, mareadoAN, seTocan } from './src/red.js?v=2026-10-31-dulces';
 (() => {
   // iPhone ignora user-scalable=no: aquí se bloquea el zoom con dos dedos y el doble toque
   for (const ev of ['gesturestart', 'gesturechange']) document.addEventListener(ev, e => e.preventDefault(), { passive: false });
@@ -4397,7 +4397,9 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
       const g = new THREE.Group(), naranja = new THREE.MeshLambertMaterial({ color: 0xff8a1f }), alto = H / 2;
       const cala = new THREE.Mesh(new THREE.SphereGeometry(0.6, 18, 12), naranja); cala.scale.set(1.25, alto / 1.2, 1.1); cala.position.y = alto / 2; g.add(cala);
       for (let k = 0; k < 4; k++) { const gajo = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.04, 6, 20), new THREE.MeshLambertMaterial({ color: 0xe0701a })); gajo.rotation.y = k * Math.PI / 4; gajo.scale.set(1.6, 1.2, 1); gajo.position.y = alto / 2; g.add(gajo); }
-      const tallo = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 0.25, 8), new THREE.MeshLambertMaterial({ color: 0x4d7a2a })); tallo.position.y = alto + 0.1; g.add(tallo);
+      // Arriba está abierta, como un balde de dulces: la boca oscura y el borde
+      const boca = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.04, 20), new THREE.MeshLambertMaterial({ color: 0x3a1a00 })); boca.position.y = alto - 0.04; g.add(boca);
+      const borde = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.05, 6, 24), naranja); borde.rotation.x = Math.PI / 2; borde.position.y = alto - 0.02; g.add(borde);
       const chupetin = (color, x, y, z, ry = 0, rz = 0) => {
         const c = new THREE.Group(); c.position.set(x, y, z); c.rotation.set(0, ry, rz); g.add(c);
         const palo = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.4, 6), new THREE.MeshLambertMaterial({ color: 0xffffff })); palo.position.y = -0.2; c.add(palo);
@@ -4405,9 +4407,15 @@ import { PUERTO, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, 
         const espiral = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.02, 6, 16), new THREE.MeshLambertMaterial({ color: 0xffffff })); espiral.position.z = 0.03; c.add(espiral);
       };
       chupetin(0xff3b6b, -0.22, alto * 0.75, 0.66); chupetin(0x3bc7ff, 0.22, alto * 0.75, 0.66);   // los ojos
-      [[0xffd23f, 0.7, 0.5, 0, 0, -0.6], [0xa94bff, -0.7, 0.55, 0.1, 0, 0.6], [0x2fd16a, 0.1, 0.65, -0.65, 0, 0], [0xff6fa8, -0.3, 0.7, -0.5, 0, 0.3]].forEach(c => chupetin(...c));
-      const dulces = Array.from({ length: 22 }, (_, i) => ({ a: i / 22 * Math.PI * 2, r: 0.85 + (i % 3) * 0.12, c: [0xff3b6b, 0xffd23f, 0x3bc7ff, 0x2fd16a, 0xa94bff][i % 5] }));
-      const im = instancias(new THREE.SphereGeometry(0.07, 8, 6), new THREE.MeshLambertMaterial({ color: 0xffffff }), dulces, (M, p) => M.compose(v3.set(Math.cos(p.a) * p.r, 0.07, Math.sin(p.a) * p.r), q.identity(), s3.set(1.6, 1, 1)));
+      // Los chupetines asomándose ARRIBA, desde el montón de dulces (un poquito inclinados para afuera)
+      [[0xffd23f, 0.22, 0.05, 0, -0.35], [0xa94bff, -0.22, 0.08, 0, 0.35], [0x2fd16a, 0.05, -0.2, Math.PI / 2, -0.3], [0xff6fa8, -0.08, 0.22, Math.PI / 2, 0.3], [0xff9a3d, 0, 0, 0, 0]]
+        .forEach(([c, x, z, ry, rz], i) => chupetin(c, x, alto + 0.42 + (i % 2) * 0.08, z, ry, rz));
+      // Un montón de dulces arriba (una cúpula de caramelitos, que sobresale de la boca)
+      const r = seededRandom(31), dulces = Array.from({ length: 34 }, (_, i) => {
+        const a = r() * Math.PI * 2, d = Math.sqrt(r()) * 0.45;
+        return { x: Math.cos(a) * d, z: Math.sin(a) * d, y: alto + 0.02 + (1 - d / 0.45) * 0.22 + r() * 0.06, giro: r() * 3, c: [0xff3b6b, 0xffd23f, 0x3bc7ff, 0x2fd16a, 0xa94bff, 0xffffff][i % 6] };
+      });
+      const im = instancias(new THREE.SphereGeometry(0.07, 8, 6), new THREE.MeshLambertMaterial({ color: 0xffffff }), dulces, (M, p) => M.compose(v3.set(p.x, p.y, p.z), q.setFromEuler(e3.set(0, p.giro, 0)), s3.set(1.6, 1, 1)));
       dulces.forEach((p, i) => im.setColorAt(i, new THREE.Color(p.c)));
       g.add(im);
       g.userData.ocultaCuerpo = true;   // la calabaza reemplaza al rectángulo
