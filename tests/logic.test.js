@@ -1009,7 +1009,8 @@ describe('modo Escuela', () => {
   it('el salón tiene 12 sillas: adelante a la izquierda "No mires abajo" y atrás a la derecha "Escondidas"', () => {
     const sillas = salonSillas();
     expect(sillas).toHaveLength(12);
-    expect(sillas.filter(s => s.modo)).toEqual([sillas[0], sillas[1], sillas[2], sillas[3], sillas[11]]);
+    expect(sillas.filter(s => s.modo)).toEqual([sillas[0], sillas[1], sillas[2], sillas[3], sillas[4], sillas[11]]);
+    expect(sillas[4].modo).toBe('nave');   // 🚀 Nave entre sospechas
     expect(sillas[1].modo).toBe('carrera'); expect(sillas[2].modo).toBe('spleef');
     expect(sillas[3].modo).toBe('atrapadas');   // la tercera: adelante a la derecha
     expect(sillas[0].modo).toBe('nomires');
@@ -2032,7 +2033,7 @@ describe('🎵 La música que se inventa sola', () => {
   it('cada lugar tiene su canción (de día y de noche en tu mundo)', () => {
     expect(lugarMusica({})).toBe('mundoDia'); expect(lugarMusica({ noche: true })).toBe('mundoNoche');
     expect(lugarMusica({ modo: 'escuela', fase: 'salon' })).toBe('salon');
-    for (const [f, id] of [['nomires', 'torre'], ['escondidas', 'escondidas'], ['atrapadas', 'atrapadas'], ['carrera', 'carrera'], ['spleef', 'spleef']]) expect(lugarMusica({ modo: 'escuela', fase: f })).toBe(id);
+    for (const [f, id] of [['nomires', 'torre'], ['escondidas', 'escondidas'], ['atrapadas', 'atrapadas'], ['carrera', 'carrera'], ['spleef', 'spleef'], ['nave', 'nave']]) expect(lugarMusica({ modo: 'escuela', fase: f })).toBe(id);
     expect(lugarMusica({ modo: 'sandbox', fase: 'sala' })).toBe('sandbox'); expect(lugarMusica({ modo: 'maze' })).toBe('minijuego');
     // todas distintas: otra nota base, otra escala u otra velocidad
     const firmas = Object.values(MUSICAS).map(M => `${M.raiz}-${M.escala}-${M.bpm}`); expect(new Set(firmas).size).toBe(firmas.length);

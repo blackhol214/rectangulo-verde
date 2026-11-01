@@ -476,11 +476,11 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module">
-import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, ESCUELA, ESCUELA_K, SANDBOX_K, enElHoyo, zonaRara, ZONA_RARA, HOYO, escuelaSiguiente, escuelaMezclar, SALON, salonSillas, sillaCercana, faseDeLuz, ARENA_AN, ARENA_AN_X, TERRENO_X, salidaAN, centroArenaAN, plataformasAN, desplazamientoAN, portalesAN, portalCerca, TERRENOS, CARROS, CARRO, carroPos, partesCarro, TORTUGAS, TORTUGA, tortugaPos, partesTortuga, arrastreDe, girarAlrededor, CARRERA, PISTA_CARRERA, posPlatCarrera, punoEn, golpePuno, golpeBarra, salidaCarrera, enMetaCarrera, seCayoCarrera, puestosCarrera, origenCarrera, SILLA_CARRERA, CARRERA_X, puertasReales, lugaresPuertas, vientoTubo, golpeObstaculoCarrera, puedeRecibirGolpe, GOLPE_PAUSA_MS, BOTS_SOLO, BOTS_MIN, BOTS_MAX, BOTS_POR_MODO, limitarBots, leerBots, rosterBots, rumboDeMovimiento, CALIDADES, leerCalidad, leerNivel, siguienteCalidad, calidadInicial, bajarCalidad, leerEstilo, golpeGuardian, GUARDIAN, temporadaDe, TEMPORADAS, particulaEstacion, MUSICAS, midiAFrecuencia, lugarMusica, intensidadMusica, compasMusica, siguienteVolumen, leerVolumen, CORREDOR_CARRERA, PARED, siguienteCheckpoint, SPLEEF, SPLEEF_X, SILLA_SPLEEF, capaY, HEXES, hexEn, hundido, hexSolido, hexSeVe, pisoSpleef, salidaSpleef, fueraSpleef, capaDe, origenSpleef, cajasPieza, escaleraCanasta, cajasTerreno, escondites, BOT_ESC, botVe, ordenEscondites, cercaDeLaProfe, preguntasDeLaClase, escaparHTML, NO_MIRES, torreNoMires, seededRandom, debeReaparecer, GUIA_COMO, textoQueHago, lugarDelGuia, GUIA_COLORES, siguienteColorGuia, lugaresArboles, lugaresPasto, libreDePasto, ARBOLES, sombreroDeBot, ETAPAS, etapaDe, cajasDe, decoracionTorre, ovniDesplazamiento, HIELO, deslizar, puedeDobleSalto, gastarBateria, cargarBateria, hayBateria, BATERIA, ganaSpooky, ojosMilOjos, OJO_MIL, SPOOKY, sumarTiempoSpooky, DISFRACES, disfrazById, comprarDisfraz, ponerDisfraz, TIENDA_HALLOWEEN, cercaDelVendedor, letrerosEtapas, elegirObjetivoAN, meAburro, MOTIVACION_AN, reboteCaminar, estaCaminando, volumenPasos, puedeAvisar, AVISO_LASER, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, VILLAGE_HOUSE, wallPieces, insideVillageHouse, villageBed, villageEntrance, villageExit, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, squashStretch, ACHIEVEMENTS, achievementById, coinAchievementsFor, TROPHY_TABLE, trophySpot, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
-         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-11-01-golpes'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
-import { NOMBRE_SALA, cerebrosNuevos, proximoCerebro, pensar, crearEpisodio, pasoEpisodio, semillaIntento, torreSandbox, BUSCADOR_SB, leerCerebros, nombreGuy, claveGuy, NOMBRE_GUY } from './src/ia.js?v=2026-11-01-golpes';
-import { VERSION } from './src/version.js?v=2026-11-01-golpes';
-import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, valoresEn, DIA_SEGUNDOS, lugarMoneda, corto, acercar, acercarAngulo, piezasExplosion, leerPreguntas, revisarPreguntas, PROFE, seVen, MG_TORRE, MG_ESCONDIDAS, MG_ATRAPADAS, MG_CARRERA, MG_SPLEEF, MG_SOLO, ESC, AN, nuevaRondaAN, pasarAN, explotarAN, empujeAN, mareadoAN, seTocan } from './src/red.js?v=2026-11-01-golpes';
+import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, ESCUELA, ESCUELA_K, SANDBOX_K, enElHoyo, zonaRara, ZONA_RARA, HOYO, escuelaSiguiente, escuelaMezclar, SALON, salonSillas, sillaCercana, faseDeLuz, ARENA_AN, ARENA_AN_X, TERRENO_X, salidaAN, centroArenaAN, plataformasAN, desplazamientoAN, portalesAN, portalCerca, TERRENOS, CARROS, CARRO, carroPos, partesCarro, TORTUGAS, TORTUGA, tortugaPos, partesTortuga, arrastreDe, girarAlrededor, CARRERA, PISTA_CARRERA, posPlatCarrera, punoEn, golpePuno, golpeBarra, salidaCarrera, enMetaCarrera, seCayoCarrera, puestosCarrera, origenCarrera, SILLA_CARRERA, CARRERA_X, puertasReales, lugaresPuertas, vientoTubo, golpeObstaculoCarrera, puedeRecibirGolpe, GOLPE_PAUSA_MS, NAVE_X, NAVE, SALAS_NAVE, SALIDA_NAVE, INICIO_NAVE, salaNaveEn, puertasNave, paredesNave, rutaNave, tocarEspacio, SILLA_NAVE, BOTS_SOLO, BOTS_MIN, BOTS_MAX, BOTS_POR_MODO, limitarBots, leerBots, rosterBots, rumboDeMovimiento, CALIDADES, leerCalidad, leerNivel, siguienteCalidad, calidadInicial, bajarCalidad, leerEstilo, golpeGuardian, GUARDIAN, temporadaDe, TEMPORADAS, particulaEstacion, MUSICAS, midiAFrecuencia, lugarMusica, intensidadMusica, compasMusica, siguienteVolumen, leerVolumen, CORREDOR_CARRERA, PARED, siguienteCheckpoint, SPLEEF, SPLEEF_X, SILLA_SPLEEF, capaY, HEXES, hexEn, hundido, hexSolido, hexSeVe, pisoSpleef, salidaSpleef, fueraSpleef, capaDe, origenSpleef, cajasPieza, escaleraCanasta, cajasTerreno, escondites, BOT_ESC, botVe, ordenEscondites, cercaDeLaProfe, preguntasDeLaClase, escaparHTML, NO_MIRES, torreNoMires, seededRandom, debeReaparecer, GUIA_COMO, textoQueHago, lugarDelGuia, GUIA_COLORES, siguienteColorGuia, lugaresArboles, lugaresPasto, libreDePasto, ARBOLES, sombreroDeBot, ETAPAS, etapaDe, cajasDe, decoracionTorre, ovniDesplazamiento, HIELO, deslizar, puedeDobleSalto, gastarBateria, cargarBateria, hayBateria, BATERIA, ganaSpooky, ojosMilOjos, OJO_MIL, SPOOKY, sumarTiempoSpooky, DISFRACES, disfrazById, comprarDisfraz, ponerDisfraz, TIENDA_HALLOWEEN, cercaDelVendedor, letrerosEtapas, elegirObjetivoAN, meAburro, MOTIVACION_AN, reboteCaminar, estaCaminando, volumenPasos, puedeAvisar, AVISO_LASER, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, VILLAGE_HOUSE, wallPieces, insideVillageHouse, villageBed, villageEntrance, villageExit, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, squashStretch, ACHIEVEMENTS, achievementById, coinAchievementsFor, TROPHY_TABLE, trophySpot, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
+         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-11-01-nave'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
+import { NOMBRE_SALA, cerebrosNuevos, proximoCerebro, pensar, crearEpisodio, pasoEpisodio, semillaIntento, torreSandbox, BUSCADOR_SB, leerCerebros, nombreGuy, claveGuy, NOMBRE_GUY } from './src/ia.js?v=2026-11-01-nave';
+import { VERSION } from './src/version.js?v=2026-11-01-nave';
+import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, valoresEn, DIA_SEGUNDOS, lugarMoneda, corto, acercar, acercarAngulo, piezasExplosion, leerPreguntas, revisarPreguntas, PROFE, seVen, MG_TORRE, MG_ESCONDIDAS, MG_ATRAPADAS, MG_CARRERA, MG_SPLEEF, MG_SOLO, ESC, AN, nuevaRondaAN, pasarAN, explotarAN, empujeAN, mareadoAN, seTocan } from './src/red.js?v=2026-11-01-nave';
 (() => {
   // iPhone ignora user-scalable=no: aquí se bloquea el zoom con dos dedos y el doble toque
   for (const ev of ['gesturestart', 'gesturechange']) document.addEventListener(ev, e => e.preventDefault(), { passive: false });
@@ -2354,7 +2354,8 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
   function letrero(texto, bg, fg, ancho, x, y, z) {
     const c = document.createElement('canvas'); c.width = 512; c.height = 128; const g = c.getContext('2d');
     g.fillStyle = bg; g.beginPath(); g.roundRect(4, 4, 504, 120, 24); g.fill();
-    g.fillStyle = fg; g.font = '800 58px system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(texto, 256, 68);
+    g.font = '800 58px system-ui, sans-serif'; const tam = Math.min(58, Math.floor(58 * 470 / g.measureText(texto).width));   // si el texto es largo, la letra se achica para que quepa
+    g.fillStyle = fg; g.font = `800 ${tam}px system-ui, sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(texto, 256, 68);
     const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c) })); sp.scale.set(ancho, ancho / 4, 1); sp.position.set(x, y, z); scene.add(sp);
     return sp;
   }
@@ -2398,6 +2399,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     MG.built.alienMat = new THREE.MeshLambertMaterial({ color: 0x2c3a33, emissive: 0x0c3a12 });
     MG.built.carreraMat = new THREE.MeshLambertMaterial({ color: 0xff8fc7, emissive: 0x44102a });
     MG.built.spleefMat = new THREE.MeshLambertMaterial({ color: 0xffb066, emissive: 0x3a1a00 });
+    MG.built.naveMat = new THREE.MeshLambertMaterial({ color: 0x9fb6d9, emissive: 0x0d1b3a });
     SILLAS.forEach(s => {
       const escondida = s.modo === 'escondidas', alien = s.modo === 'atrapadas';
       const x = o.x + s.x, z = o.z + s.z, tz = z + SALON.sillaAtras, mat = escondida ? MG.built.escondMat : alien ? MG.built.alienMat : s.modo ? MG.built.sillaMat : madera;
@@ -2431,6 +2433,18 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
         MG.built.hexSilla = cae;
         const l6 = new THREE.PointLight(0xffa94d, 1.4, 6, 1.5); l6.position.set(x, 2, z); scene.add(l6);
         letrero('🔶 Spleef', '#ff8a3d', '#ffffff', 3.2, x, 3.3, z);
+      } else if (s.modo === 'nave') {
+        // ¡La silla quiere despegar! Un cohete blanco con la punta roja, aletas, una ventanita y fuego que sale por abajo
+        for (const parte of [asiento, respaldo]) parte.mesh.material = MG.built.naveMat;
+        const blanco = mgMat(0xf4f6fb), rojo = mgMat(0xff4b4b);
+        const tubo = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 1.1, 18), blanco); tubo.position.set(x, 1.45, z + 0.05); scene.add(tubo);
+        const punta = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.55, 18), rojo); punta.position.set(x, 2.27, z + 0.05); scene.add(punta);
+        for (let k = 0; k < 3; k++) { const a = k * Math.PI * 2 / 3, al = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.4, 0.32), rojo); al.position.set(x + Math.sin(a) * 0.33, 1.05, z + 0.05 + Math.cos(a) * 0.33); al.rotation.y = a; scene.add(al); }
+        const vent = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 10), new THREE.MeshBasicMaterial({ color: 0x7dd3fc })); vent.position.set(x, 1.6, z + 0.33); scene.add(vent);
+        const fuego = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.4, 12), new THREE.MeshBasicMaterial({ color: 0xffb020 })); fuego.rotation.x = Math.PI; fuego.position.set(x, 0.72, z + 0.05); scene.add(fuego);
+        MG.built.fuegoSilla = fuego;
+        const l7 = new THREE.PointLight(0x7dd3fc, 1.4, 6, 1.5); l7.position.set(x, 2, z); scene.add(l7);
+        letrero('🚀 Nave entre sospechas', '#1e3a8a', '#ffffff', 4.4, x, 3.4, z);
       } else if (s.modo === 'carrera') {
         // ¡La silla está lista para correr! Rosada, con una bandera de cuadritos, un disco que gira arriba y un guante de boxeo
         for (const parte of [asiento, respaldo]) parte.mesh.material = MG.built.carreraMat;
@@ -2922,6 +2936,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
       const ala = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.62, 0.06, 20), negro); ala.position.y = H + 0.03; g.add(ala);
       const copa = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.38, 0.5, 20), negro); copa.position.y = H + 0.3; g.add(copa);
       const cinta = new THREE.Mesh(new THREE.CylinderGeometry(0.385, 0.385, 0.09, 20), new THREE.MeshLambertMaterial({ color: 0x7dff9a })); cinta.position.y = H + 0.1; g.add(cinta);
+      g.userData.sombrero = [ala, copa, cinta];
     }
     const et = etiquetaSB(); pintarEtiquetaSB(et, def.nombre); et.position.y = H + (def.sombrero ? 1.15 : 0.6); g.add(et);
     g.visible = false; scene.add(g);
@@ -4159,6 +4174,147 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     const s = SILLAS[SILLA_SPLEEF]; placePlayer(o.x + s.x + 2, 0, o.z + s.z);
     camYaw = Math.PI;
   }
+  // ===== 🚀 Nave entre sospechas (fase 1: explorar la nave). Diseño propio: salas, pasillo, puertas, ventanas al espacio =====
+  // Q sube · E baja · ESPACIO dos veces rápido: modo vuelo (sin gravedad; Q y E para subir y bajar). Los bots pasean con casco de obra.
+  // Una textura de paneles de nave (con canvas): placas con remaches y una franja de luz
+  function texturaNave(base, luz, repX = 1, repY = 1) {
+    const cv = document.createElement('canvas'); cv.width = cv.height = 128; const g = cv.getContext('2d');
+    g.fillStyle = base; g.fillRect(0, 0, 128, 128);
+    g.strokeStyle = 'rgba(0,0,0,.35)'; g.lineWidth = 3; g.strokeRect(2, 2, 124, 124); g.strokeRect(2, 2, 124, 62);
+    g.fillStyle = 'rgba(255,255,255,.12)'; for (const [x, y] of [[10, 10], [118, 10], [10, 54], [118, 54], [10, 74], [118, 74], [10, 118], [118, 118]]) { g.beginPath(); g.arc(x, y, 3, 0, Math.PI * 2); g.fill(); }
+    g.fillStyle = luz; g.fillRect(20, 96, 88, 6);
+    const t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(repX, repY); return t;
+  }
+  function construirNave(o) {
+    const c = { x: o.x + NAVE_X, z: o.z }, grupo = new THREE.Group(); grupo.visible = false; scene.add(grupo);
+    const pls = [], muros = [], caja = new THREE.BoxGeometry(1, 1, 1);
+    // los pisos de cada sala (rejilla metálica del color de la sala)
+    for (const s of SALAS_NAVE) {
+      const ancho = s.x1 - s.x0, largo = s.z1 - s.z0, col = '#' + s.color.toString(16).padStart(6, '0');
+      const piso = new THREE.Mesh(new THREE.PlaneGeometry(ancho, largo), new THREE.MeshLambertMaterial({ map: texturaNave(col, 'rgba(255,255,255,.18)', ancho / 4, largo / 4) }));
+      piso.rotation.x = -Math.PI / 2; piso.position.set(c.x + (s.x0 + s.x1) / 2, 0.02, c.z + (s.z0 + s.z1) / 2); piso.receiveShadow = true; grupo.add(piso);
+      pls.push({ x: c.x + (s.x0 + s.x1) / 2, z: c.z + (s.z0 + s.z1) / 2, hw: ancho / 2, hd: largo / 2, top: 0, bottom: -1 });
+      const cartel = letrero(s.nombre, '#101828', '#7dd3fc', Math.min(8, ancho * 0.6), c.x + (s.x0 + s.x1) / 2, NAVE.alto - 0.6, c.z + (s.z0 + s.z1) / 2); grupo.add(cartel);
+    }
+    // las paredes (las de afuera de algunas salas son ventanas al espacio)
+    const matPared = new THREE.MeshLambertMaterial({ map: texturaNave('#c9d2dc', '#38bdf8', 1, 1) });
+    const vidrio = new THREE.MeshBasicMaterial({ color: 0x9fd8ff, transparent: true, opacity: 0.18, depthWrite: false });
+    for (const w of paredesNave()) {
+      const ventana = w.exterior && SALAS_NAVE[w.sala] && SALAS_NAVE[w.sala].ventanas;
+      const m = new THREE.Mesh(caja, ventana ? vidrio : matPared);
+      m.scale.set(w.x1 - w.x0, NAVE.alto, w.z1 - w.z0); m.position.set(c.x + (w.x0 + w.x1) / 2, NAVE.alto / 2, c.z + (w.z0 + w.z1) / 2);
+      if (!ventana) { m.castShadow = m.receiveShadow = true; } grupo.add(m); muros.push(m);   // (la cámara no atraviesa las paredes)
+      if (ventana) {   // el marco de la ventana (arriba y abajo)
+        for (const [y, h] of [[0.4, 0.8], [NAVE.alto - 0.25, 0.5]]) { const f = new THREE.Mesh(caja, matPared); f.scale.set(w.x1 - w.x0 + 0.02, h, w.z1 - w.z0 + 0.02); f.position.set(c.x + (w.x0 + w.x1) / 2, y, c.z + (w.z0 + w.z1) / 2); grupo.add(f); }
+      }
+      pls.push({ x: c.x + (w.x0 + w.x1) / 2, z: c.z + (w.z0 + w.z1) / 2, hw: (w.x1 - w.x0) / 2, hd: (w.z1 - w.z0) / 2, top: w.y1, bottom: w.y0 });
+    }
+    // los marcos de las puertas: dos postes de luz cyan
+    const luzMat = new THREE.MeshBasicMaterial({ color: 0x22d3ee });
+    for (const p of puertasNave()) {
+      const a = p.eje === 'x' ? { dx: 0, dz: NAVE.puerta / 2 } : { dx: NAVE.puerta / 2, dz: 0 };
+      for (const s of [-1, 1]) { const m = new THREE.Mesh(caja, luzMat); m.scale.set(0.12, 3.2, 0.12); m.position.set(c.x + p.x + s * a.dx, 1.6, c.z + p.z + s * a.dz); grupo.add(m); }
+    }
+    // algo de cada sala (decoración, no choca)
+    const deco = (x, z, sx, sy, sz, color, y = sy / 2, basico = false) => { const m = new THREE.Mesh(caja, basico ? new THREE.MeshBasicMaterial({ color }) : new THREE.MeshLambertMaterial({ color })); m.scale.set(sx, sy, sz); m.position.set(c.x + x, y, c.z + z); grupo.add(m); return m; };
+    const cil = (x, z, r, h, color, y = h / 2, basico = false) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 24), basico ? new THREE.MeshBasicMaterial({ color }) : new THREE.MeshLambertMaterial({ color })); m.position.set(c.x + x, y, c.z + z); grupo.add(m); return m; };
+    for (const z of [-5, 0, 5]) { deco(74, z, 1.4, 1.1, 3, 0x334155); deco(74.3, z, 0.3, 0.6, 2.6, 0x38bdf8, 1.3, true); }   // puente: consolas con pantallas
+    for (const [x, z] of [[33, 9], [41, 9], [33, 15], [41, 15]]) { deco(x, z, 4, 0.9, 2, 0xe2b77a); }                       // comedor: mesas
+    for (const [x, z] of [[32, -8], [38, -8], [44, -8], [32, -14], [38, -14], [44, -14]]) { deco(x, z, 3, 0.8, 3, 0x6b4423); const pl = new THREE.Mesh(new THREE.IcosahedronGeometry(1, 0), new THREE.MeshLambertMaterial({ color: 0x3fbf5f, flatShading: true })); pl.position.set(c.x + x, 1.6, c.z + z); grupo.add(pl); }   // invernadero: macetas con plantas
+    const nucleo = cil(54, -9, 1.6, 4, 0xff6b9a, 2, true); grupo.userData.nucleo = nucleo;                                   // reactor: el núcleo que brilla
+    for (const z of [-7, 7]) cil(-2, z, 2.2, 3.6, 0x7a8796);                                                                 // motores
+    for (const [x, z] of [[16, -7], [22, -10], [18, -13]]) deco(x, z, 2.2, 2.2, 2.2, 0xb08a4a);                             // bodega: cajas
+    for (const z of [6, 9, 12]) deco(15, z, 2, 0.6, 1.2, 0xf1f5f9, 0.5);                                                     // enfermería: camillas
+    for (const [x, z] of [[50, 8], [57, 8]]) { deco(x, z, 3, 1, 1.5, 0x94a3b8); cil(x, z, 0.25, 0.6, 0xa78bfa, 1.3, true); } // laboratorio: mesadas con frascos
+    // la escotilla de salida (en la bodega): un círculo verde que brilla
+    const salida = cil(SALIDA_NAVE.x, SALIDA_NAVE.z, SALIDA_NAVE.radio, 0.08, 0x30d158, 0.05, true); grupo.userData.salida = salida;
+    grupo.add(letrero('↩ SALIDA (al salón)', '#1f8a3b', '#ffffff', 4.5, c.x + SALIDA_NAVE.x, 2.6, c.z + SALIDA_NAVE.z));
+    // el espacio: estrellas alrededor y un planeta lejos
+    const n = 700, pos = new Float32Array(n * 3), rnd = seededRandom(77);
+    for (let i = 0; i < n; i++) { const u = rnd() * Math.PI * 2, v = rnd() * 2 - 1, r = 260, rr = Math.sqrt(1 - v * v) * r; pos.set([c.x + 35 + Math.cos(u) * rr, v * r, c.z + Math.sin(u) * rr], i * 3); }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    grupo.add(new THREE.Points(g, new THREE.PointsMaterial({ color: 0xffffff, size: 1.4, sizeAttenuation: false, fog: false })));
+    const planeta = new THREE.Mesh(new THREE.SphereGeometry(40, 32, 20), new THREE.MeshBasicMaterial({ color: 0x8b5cf6, fog: false })); planeta.position.set(c.x + 260, 40, c.z - 160); grupo.add(planeta);
+    MG.built.nave = { grupo, pls, muros, c, enUso: false };
+  }
+  function ponerNave(o) {
+    if (!MG.built.nave) construirNave(o);
+    const N = MG.built.nave; if (!N.enUso) { platforms.push(...N.pls); cameraBlockers.push(...N.muros); N.grupo.visible = true; N.enUso = true; }
+    return N;
+  }
+  function quitarNave() {
+    const N = MG.built.nave; if (!N || !N.enUso) return;
+    const fuera = new Set(N.pls); for (let k = platforms.length - 1; k >= 0; k--) if (fuera.has(platforms[k])) platforms.splice(k, 1);
+    const muros = new Set(N.muros); for (let k = cameraBlockers.length - 1; k >= 0; k--) if (muros.has(cameraBlockers[k])) cameraBlockers.splice(k, 1);
+    N.grupo.visible = false; N.enUso = false;
+  }
+  // El casco de obra (por ahora los bots están construyendo la nave 🚧)
+  function ponerCasco(b, si) {
+    let k = b.obj.userData.casco;
+    if (!k && si) {
+      k = new THREE.Group(); const amarillo = new THREE.MeshLambertMaterial({ color: 0xffc400 });
+      const copa = new THREE.Mesh(new THREE.SphereGeometry(0.42, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2), amarillo); k.add(copa);
+      const visera = new THREE.Mesh(new THREE.CylinderGeometry(0.58, 0.58, 0.05, 20), amarillo); visera.position.set(0, 0.01, 0.06); k.add(visera);
+      k.position.y = H + 0.02; b.obj.add(k); b.obj.userData.casco = k;
+    }
+    if (k) k.visible = si;
+    for (const m of b.obj.userData.sombrero || []) m.visible = !si;   // (ALBERT se saca el sombrero de copa para ponerse el casco)
+  }
+  const salaAzar = () => Math.floor(Math.random() * SALAS_NAVE.length);
+  function nuevoDestinoNave(b, c) {
+    const desde = salaNaveEn(b.pos.x - c.x, b.pos.z - c.z), hasta = salaAzar(), s = SALAS_NAVE[hasta];
+    const final = { x: s.x0 + 2 + Math.random() * (s.x1 - s.x0 - 4), z: s.z0 + 2 + Math.random() * (s.z1 - s.z0 - 4) };
+    b.camino = [...(desde >= 0 ? rutaNave(desde, hasta) || [] : []), final].map(p => ({ x: c.x + p.x, z: c.z + p.z }));
+    b.descanso = 0;
+  }
+  function entrarNave(o) {
+    const N = ponerNave(o), st = MG.state, c = N.c;
+    const bots = botsSolo(5);
+    bots.forEach((b, k) => { ponerCasco(b, true); const s = SALAS_NAVE[(k + 1) % SALAS_NAVE.length]; b.pos.set(c.x + (s.x0 + s.x1) / 2 + k * 0.7, 0, c.z + (s.z0 + s.z1) / 2); nuevoDestinoNave(b, c); });
+    Object.assign(st, { fase: 'nave', nave: { N, bots, vuelo: { ultimo: -Infinity, volando: false }, espAntes: !!keys.Space } });
+    placePlayer(c.x + INICIO_NAVE.x, 0, c.z + INICIO_NAVE.z); camYaw = -Math.PI / 2;
+    avisoModo('🚀 ¡Bienvenido a la nave! Q sube · E baja · ESPACIO dos veces: volar', false, 3500);
+  }
+  function salirNave(o) {
+    const st = MG.state;
+    if (st.nave) for (const b of st.nave.bots) ponerCasco(b, false);
+    ocultarBotsSolo(); quitarNave();
+    st.fase = 'salon'; st.nave = null;
+    const s = SILLAS[SILLA_NAVE]; placePlayer(o.x + s.x + 2, 0, o.z + s.z); camYaw = Math.PI;
+  }
+  // Q y E (justo antes de la física): caminando, Q te hace flotar hacia arriba y E bajar más rápido; volando no hay gravedad
+  function verticalNave(dt) {
+    const V = MG.state.nave; if (!V) return;
+    const dir = (keys.KeyQ ? 1 : 0) - (keys.KeyE ? 1 : 0);
+    if (V.vuelo.volando) ps.vel.y = dir * NAVE.vuelo + GRAV * dt;   // (+ GRAV·dt: la física le resta la gravedad y queda justo dir·vuelo)
+    else if (dir > 0) ps.vel.y = NAVE.sube + GRAV * dt;
+    else if (dir < 0 && !ps.onGround) ps.vel.y = Math.min(ps.vel.y, -NAVE.sube);
+  }
+  function updateNave(dt, o) {
+    const st = MG.state, V = st.nave, c = V.N.c;
+    // ✈️ dos toques de ESPACIO: modo vuelo
+    if (keys.Space && !V.espAntes) { V.vuelo = tocarEspacio(V.vuelo, ahoraMs()); if (V.vuelo.cambio) avisoModo(V.vuelo.volando ? '✈️ Modo vuelo: SÍ (Q sube · E baja)' : '🚶 Modo vuelo: NO (vuelves a caminar)', false, 1500); }
+    V.espAntes = !!keys.Space;
+    if (ps.pos.y > 14) { ps.pos.y = 14; if (ps.vel.y > 0) ps.vel.y = 0; }   // (el techo de la nave: no te vas al espacio)
+    // la escotilla de salida
+    if (Math.hypot(ps.pos.x - c.x - SALIDA_NAVE.x, ps.pos.z - c.z - SALIDA_NAVE.z) < SALIDA_NAVE.radio && ps.pos.y < 1) { salirNave(o); avisoModo('↩ Volviste al salón', false, 1500); return; }
+    // los bots pasean por la nave (de sala en sala, pasando por las puertas)
+    for (const b of V.bots) {
+      if (b.descanso > 0) { b.descanso -= dt; physics(b, dt, false, JUMP); animarCaminar(b.obj, b.cuerpo, H / 2, dt); continue; }
+      const meta = b.camino[0];
+      if (!meta) { b.descanso = 1 + Math.random() * 3; nuevoDestinoNave(b, c); continue; }
+      let dx = meta.x - b.pos.x, dz = meta.z - b.pos.z; const d = Math.hypot(dx, dz);
+      if (d < 0.8) { b.camino.shift(); continue; }
+      dx /= d; dz /= d; b.walkX = dx * 4.5 * dt; b.walkZ = dz * 4.5 * dt; turnTo(b, dx, dz, dt);
+      physics(b, dt, false, JUMP); animarCaminar(b.obj, b.cuerpo, H / 2, dt);
+      if (b.hitWall && (b.atascado = (b.atascado || 0) + dt) > 2) { b.atascado = 0; nuevoDestinoNave(b, c); } else if (!b.hitWall) b.atascado = 0;
+    }
+    V.N.grupo.userData.nucleo.material.color.setHSL(0.93, 1, 0.55 + 0.15 * Math.sin(MG.t * 3));   // el reactor late
+    const si = salaNaveEn(ps.pos.x - c.x, ps.pos.z - c.z), sala = si >= 0 ? SALAS_NAVE[si].nombre : 'afuera';
+    const Q = IS_TOUCH ? '' : ' · <b>Q</b> sube · <b>E</b> baja · <b>ESPACIO</b> x2: volar';
+    mgHud.innerHTML = `🚀 <b>${escaparHTML(sala)}</b> · ${V.vuelo.volando ? '✈️ volando' : '🚶 caminando'}${Q} · 🟢 salida en la bodega`;
+    mgHud.hidden = false;
+  }
   // E junto a una silla: la del modo te lleva a la torre; las demás todavía no tienen modo
   function sentarse() {
     const o = minigameOrigin(MG.k);
@@ -4171,6 +4327,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     else if (SILLAS[i].modo === 'atrapadas') abrirAtrapadas();
     else if (SILLAS[i].modo === 'carrera') abrirModoRonda('carrera');
     else if (SILLAS[i].modo === 'spleef') abrirModoRonda('spleef');
+    else if (SILLAS[i].modo === 'nave') entrarNave(o);
     else avisoModo('Próximamente: esta silla todavía no tiene modo');
   }
   function entrarTorre(o) {
@@ -4714,6 +4871,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
         if (st.fase === 'atrapadas') { const m = ARENA_AN.mitad - 1; return { x0: ARENA_X - m, x1: ARENA_X + m, z0: -m, z1: m }; }
         if (st.fase === 'carrera') return { x0: CARRERA_X - 12, x1: CARRERA_X + CARRERA.meta.x1 + 4, z0: -26, z1: 26 };   // (más ancho que la pista: así te puedes caer por los costados)
         if (st.fase === 'spleef') { const m = SPLEEF.radio + 2; return { x0: SPLEEF_X - m, x1: SPLEEF_X + m, z0: -m - 14, z1: m }; }   // (con el palco)
+        if (st.fase === 'nave') return { x0: NAVE_X - 12, x1: NAVE_X + 82, z0: -24, z1: 24 };
         return st.fase === 'nomires' ? TORRE_AREA : SALON_AREA;
       },
       get noMove() {
@@ -4725,14 +4883,15 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
         return st.fase === 'nomires' && !hayBateria(st.bateria);   // sin batería no caminas…
       },
       get velocidad() { return MG.state.fase === 'atrapadas' ? AN.vel : undefined; },   // Atrapadas: todos más rápidos (15 en vez de 12)
-      get noJump() { return this.noMove; },                                                   // …ni saltas (pero sí te caes)
+      get noJump() { return this.noMove || (MG.state.fase === 'nave' && !!MG.state.nave && MG.state.nave.vuelo.volando); },   // (volando, ESPACIO no salta)
+      vertical(dt) { if (MG.state.fase === 'nave') verticalNave(dt); },   // 🚀 Q sube · E baja                                                   // …ni saltas (pero sí te caes)
       get onE() { return MG.state.fase === 'salon' ? sentarse : null; },   // E: sentarse (en Escondidas se encuentra tocando: sin E)
       get onQ() { const st = MG.state; return st.fase === 'nomires' || (st.fase === 'escondidas' && !st.esc.fantasma && !st.esc.resultado) || (st.fase === 'atrapadas' && !st.an.fantasma && !st.an.resultado) || (st.fase === 'carrera' && !st.cr.resultado && !st.cr.llegue) || (st.fase === 'spleef' && !st.sp.resultado) ? abrirCarga : null; },  // Q: responder para cargar batería
       get eLabel() { const o = minigameOrigin(MG.k); return MG.state.fase === 'salon' && cercaDelVendedor(ps.pos.x - o.x, ps.pos.z - o.z) ? '🎃 Tienda' : '✋ Sentarse'; },
       // ¿Dónde estoy? (para la red: con quién te ves) · torre: 21 · Escondidas con amigos: 30 + terreno · solo: 99 (no ves a nadie)
-      get mgCodigo() { const st = MG.state; if (st.fase === 'nomires') return MG_TORRE; if (st.fase === 'atrapadas') return st.an.solo ? MG_SOLO : MG_ATRAPADAS; if (st.fase === 'carrera') return st.cr.solo ? MG_SOLO : MG_CARRERA; if (st.fase === 'spleef') return st.sp.solo ? MG_SOLO : MG_SPLEEF; if (st.fase === 'escondidas') return st.esc.solo ? MG_SOLO : MG_ESCONDIDAS + st.esc.terreno; return undefined; },
+      get mgCodigo() { const st = MG.state; if (st.fase === 'nomires') return MG_TORRE; if (st.fase === 'atrapadas') return st.an.solo ? MG_SOLO : MG_ATRAPADAS; if (st.fase === 'carrera') return st.cr.solo ? MG_SOLO : MG_CARRERA; if (st.fase === 'spleef') return st.sp.solo ? MG_SOLO : MG_SPLEEF; if (st.fase === 'escondidas') return st.esc.solo ? MG_SOLO : MG_ESCONDIDAS + st.esc.terreno; if (st.fase === 'nave') return MG_SOLO; return undefined; },
       // El cielo se pone oscuro en el espacio (con estrellas) y en el neón
-      get sky() { if (MG.state.fase === 'spleef') return 0xffd9ec; /* rosadito, de día */ if (MG.state.fase === 'carrera') return 0xa8dcff; /* celeste pastel, como Fall Guys */ if (MG.state.fase === 'escondidas') return 0xefe6d6; if (MG.state.fase === 'atrapadas') return 0x0b2e33; /* el espacio verde azulado oscuro */ if (MG.state.fase !== 'nomires') return undefined; const id = etapaDe(ps.pos.y).id; return id === 'espacio' ? 0x070a1f : id === 'neon' ? 0x0d0618 : undefined; },
+      get sky() { if (MG.state.fase === 'nave') return 0x070a1f; /* 🚀 el espacio */ if (MG.state.fase === 'spleef') return 0xffd9ec; /* rosadito, de día */ if (MG.state.fase === 'carrera') return 0xa8dcff; /* celeste pastel, como Fall Guys */ if (MG.state.fase === 'escondidas') return 0xefe6d6; if (MG.state.fase === 'atrapadas') return 0x0b2e33; /* el espacio verde azulado oscuro */ if (MG.state.fase !== 'nomires') return undefined; const id = etapaDe(ps.pos.y).id; return id === 'espacio' ? 0x070a1f : id === 'neon' ? 0x0d0618 : undefined; },
       // Parado en hielo: resbalas (agarre chico). 0 = piso normal
       get agarre() { return MG.state.fase === 'nomires' && MG.state.enHielo && ps.onGround ? HIELO.agarre : 0; },   // solo resbalas con los pies en el hielo: al saltar, controlas tu salto normal
       get dobleSalto() { const f = MG.state.fase; return f === 'nomires' || f === 'carrera' || f === 'spleef'; },
@@ -4751,9 +4910,9 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
         const i = sillaCercana(ps.pos.x - minigameOrigin(MG.k).x, ps.pos.z - minigameOrigin(MG.k).z, SILLAS);
         if (i < 0) return '';
         const modo = SILLAS[i].modo;
-        return modo === 'nomires' ? `Pulsa <kbd>E</kbd> para jugar <b>No mires abajo</b>` : modo === 'escondidas' ? 'Pulsa <kbd>E</kbd> para jugar <b>Escondidas</b>' : modo === 'atrapadas' ? 'Pulsa <kbd>E</kbd> para jugar <b>Atrapadas Nocivas</b>' : modo === 'carrera' ? 'Pulsa <kbd>E</kbd> para jugar la <b>Carrera</b> 🏁' : modo === 'spleef' ? 'Pulsa <kbd>E</kbd> para jugar <b>Spleef</b> 🔶' : 'Pulsa <kbd>E</kbd> para ver esta silla';
+        return modo === 'nomires' ? `Pulsa <kbd>E</kbd> para jugar <b>No mires abajo</b>` : modo === 'escondidas' ? 'Pulsa <kbd>E</kbd> para jugar <b>Escondidas</b>' : modo === 'atrapadas' ? 'Pulsa <kbd>E</kbd> para jugar <b>Atrapadas Nocivas</b>' : modo === 'carrera' ? 'Pulsa <kbd>E</kbd> para jugar la <b>Carrera</b> 🏁' : modo === 'spleef' ? 'Pulsa <kbd>E</kbd> para jugar <b>Spleef</b> 🔶' : modo === 'nave' ? 'Pulsa <kbd>E</kbd> para entrar a la <b>Nave entre sospechas</b> 🚀' : 'Pulsa <kbd>E</kbd> para ver esta silla';
       },
-      update(dt, o) { const f = MG.state.fase; return f === 'nomires' ? updateTorre(dt, o) : f === 'escondidas' ? updateEscondidas(dt, o) : f === 'atrapadas' ? updateAtrapadas(dt, o) : f === 'carrera' ? updateCarrera(dt, o) : f === 'spleef' ? updateSpleef(dt, o) : updateSalon(o); },
+      update(dt, o) { const f = MG.state.fase; return f === 'nomires' ? updateTorre(dt, o) : f === 'escondidas' ? updateEscondidas(dt, o) : f === 'atrapadas' ? updateAtrapadas(dt, o) : f === 'carrera' ? updateCarrera(dt, o) : f === 'spleef' ? updateSpleef(dt, o) : f === 'nave' ? updateNave(dt, o) : updateSalon(o); },
       end() {
         cerrarCarga(); quitarTorre();
         if (MG.state.esc || !escondEl.hidden) { levantarse(); escondEl.hidden = true; }
@@ -4766,6 +4925,8 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
         quitarCarrera(); for (const b of MG.built.botsCR || []) b.obj.visible = false;
         if (MG.state.sp) levantarseModo('spleef');
         quitarSpleef(); for (const b of MG.built.botsSP || []) b.obj.visible = false;
+        if (MG.state.nave) for (const b of MG.state.nave.bots) ponerCasco(b, false);
+        quitarNave(); MG.state.nave = null;
         ocultarBotsSolo();
       },
     },
@@ -7601,6 +7762,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     }
     if (wantJump && ps.onGround) sfxSalto();   // ¡bup!
     MG.input = { moving, jumped: (wantJump && ps.onGround) || doble };   // la batería de "No mires abajo" lo usa para saber cuánto gastar
+    if (MG.active && MG.active.vertical && !busy) MG.active.vertical(dt);   // (la nave: Q sube, E baja, y volando no hay gravedad)
     const vyAntes = ps.vel.y, enAire = !ps.onGround;
     physics(ps, dt, wantJump, (MG.active && MG.active.jump) || stats.jump);
     if (enAire && ps.onGround && vyAntes < -7) sfxAterrizar(-vyAntes);   // ¡tump! (al caer de alto)

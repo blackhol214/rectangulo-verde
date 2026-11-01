@@ -752,9 +752,9 @@ export const SALON = {
 };
 // Las 12 sillas. La primera (adelante a la izquierda) es "No mires abajo", la segunda la "Carrera"; la última (atrás a la derecha,
 // mirando el salón desde arriba con el pizarrón arriba) es "Escondidas"; las demás, próximamente
-export const SILLA_CARRERA = 1, SILLA_SPLEEF = 2;
+export const SILLA_CARRERA = 1, SILLA_SPLEEF = 2, SILLA_NAVE = 4;   // (la 4: segunda fila, a la izquierda)
 export function salonSillas() {
-  const out = [], modos = { 0: 'nomires', [SILLA_CARRERA]: 'carrera', [SILLA_SPLEEF]: 'spleef', 3: 'atrapadas', 11: 'escondidas' };
+  const out = [], modos = { 0: 'nomires', [SILLA_CARRERA]: 'carrera', [SILLA_SPLEEF]: 'spleef', 3: 'atrapadas', [SILLA_NAVE]: 'nave', 11: 'escondidas' };
   for (const z of SALON.filasZ) for (const x of SALON.mesasX) out.push({ x, z: z - SALON.sillaAtras, modo: modos[out.length] || null });
   return out;
 }
@@ -2108,13 +2108,14 @@ export const MUSICAS = {
   carrera:    { nombre: 'Carrera', raiz: 58, escala: 'mayor', bpm: 138, bpmNormal: 150, progresiones: [[0, 4, 5, 3], [3, 4, 0, 0], [5, 3, 0, 4]], timbres: { bajo: 'square', acorde: 'triangle', melodia: 'square' }, bateria: 'fiesta', corto: true, vol: 0.7 },
   spleef:     { nombre: 'Spleef', raiz: 61, escala: 'lidia', bpm: 128, bpmNormal: 140, progresiones: [[0, 1, 0, 4], [5, 1, 0, 4]], timbres: { bajo: 'square', acorde: 'triangle', melodia: 'triangle' }, bateria: 'fiesta', corto: true, vol: 0.7 },
   sandbox:    { nombre: 'Sandbox', raiz: 60, escala: 'lidia', bpm: 84, bpmNormal: 104, progresiones: [[0, 1, 4, 0], [5, 1, 0, 0]], timbres: { bajo: 'triangle', acorde: 'sine', melodia: 'sine' }, bateria: 'nada', vol: 0.95 },
+  nave:       { nombre: 'Nave entre sospechas', raiz: 57, escala: 'lidia', bpm: 76, bpmNormal: 96, progresiones: [[0, 1, 0, 5], [3, 1, 4, 0]], timbres: { bajo: 'sine', acorde: 'sine', melodia: 'triangle' }, bateria: 'nada', vol: 0.9 },   // 🚀 tranquila, como flotar en el espacio
   minijuego:  { nombre: 'Minijuego', raiz: 67, escala: 'mayor', bpm: 120, bpmNormal: 128, progresiones: [[0, 3, 4, 3], [0, 5, 3, 4]], timbres: { bajo: 'square', acorde: 'triangle', melodia: 'square' }, bateria: 'normal', corto: true, vol: 0.65 },
 };
 // ¿Qué canción va aquí? modo: el minijuego (null = tu mundo) · fase: dónde estás en la escuela · noche: en tu mundo de noche
 export function lugarMusica({ modo = null, fase = null, noche = false } = {}) {
   if (!modo) return noche ? 'mundoNoche' : 'mundoDia';
   if (modo === 'sandbox') return 'sandbox';
-  if (modo === 'escuela') return { nomires: 'torre', escondidas: 'escondidas', atrapadas: 'atrapadas', carrera: 'carrera', spleef: 'spleef' }[fase] || 'salon';
+  if (modo === 'escuela') return { nomires: 'torre', escondidas: 'escondidas', atrapadas: 'atrapadas', carrera: 'carrera', spleef: 'spleef', nave: 'nave' }[fase] || 'salon';
   return 'minijuego';
 }
 const entre01 = x => Math.max(0, Math.min(1, x));
@@ -2129,7 +2130,7 @@ export function intensidadMusica(lugar, d = {}) {
     case 'spleef': return entre01(0.3 + 0.7 * Math.max((d.capa || 0) / 5, d.total > 1 ? 1 - (d.quedan - 1) / (d.total - 1) : 0));
     case 'torre': return entre01(0.2 + 0.09 * ((d.etapa || 1) - 1));
     case 'mundoNoche': return 0.1;
-    case 'mundoDia': case 'sandbox': return 0.25;
+    case 'mundoDia': case 'sandbox': case 'nave': return 0.25;
     default: return 0.4;
   }
 }
