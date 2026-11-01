@@ -252,3 +252,59 @@ describe('💾 Guardar y el nombre', () => {
     expect(claveGuy('Mathias', 'torre')).not.toBe(claveGuy('Mathias', 'escondidas'));
   });
 });
+
+import { agentesDe, salaCarrera, RECOMPENSAS as REC, recompensa as rec, crearEpisodio as crear, pasoEpisodio as paso, EPISODIO_S as EPS, SPLEEF_SB } from '../src/ia.js';
+import { CARRERA, PISTA_CARRERA, puertasReales, SPLEEF } from '../src/logic.js';
+describe('🔶 Sandbox: la sala del Spleef', () => {
+  it('las recompensas de Mathias: puntos por seguir arriba (más en las capas de arriba), caerse de capa y quedar afuera castigan (con licuadora)', () => {
+    expect(rec('spleef', { tipo: 'vivo', seg: 1 }).puntos).toBe(REC.spleef.vivoPorSeg);
+    expect(rec('spleef', { tipo: 'baja' })).toEqual({ puntos: REC.spleef.baja, castigo: true });
+    expect(rec('spleef', { tipo: 'fuera' }).puntos).toBeLessThan(REC.spleef.baja);
+    expect(rec('spleef', { tipo: 'quieto' }).castigo).toBe(true);
+  });
+  it('juegan The Guy y 3 bots en la arena de verdad; lo que pisan se hunde (después de los 3 s seguros) y si se quedan quietos se caen', () => {
+    expect(agentesDe('spleef')).toBe(4);
+    const quieto = Array(N).fill(0); quieto[23] = 5;   // (la salida "quedarse quieto" siempre prendida)
+    const ep = crear('spleef', [quieto, quieto, quieto, quieto], null, 1, true);
+    expect(ep.agentes.every(a => a.y === 62)).toBe(true);
+    while (ep.t < SPLEEF_SB.segura - 0.1) paso(ep);
+    expect(ep.pisadas[0].size).toBe(0);
+    while (ep.t < SPLEEF_SB.segura + 2) paso(ep);
+    expect(ep.pisadas[0].size).toBeGreaterThan(0); expect(ep.agentes[0].capa).toBeGreaterThan(0);   // se le hundió el piso: cayó a la de abajo
+  });
+  it('📈 aprende: después de 10 intentos aguanta mucho más arriba que al principio', () => {
+    for (const sem of [1, 3]) {
+      const c0 = Array.from({ length: 4 }, (_, k) => cerebroNuevo(sem * 50 + k)), otros = c0.slice(1).map(c => c.pesos);
+      const notaS = p => prom(Array.from({ length: 4 }, (_, i) => correrEpisodio('spleef', [p, ...otros], null, 9e6 + i, true)[0]));
+      const cs = entrenar('spleef', c0, 10, { soloAprende: 0 });
+      expect(notaS(cs[0].mejor.pesos)).toBeGreaterThan(notaS(c0[0].pesos) + 15);
+    }
+  }, 30000);
+});
+describe('🏁 Sandbox: la sala de la Carrera', () => {
+  it('las recompensas: +5 por checkpoint (como la torre), castigo por golpes y caídas, premio en la meta', () => {
+    expect(rec('carrera', { tipo: 'checkpoint' }).puntos).toBe(5); expect(rec('carrera', { tipo: 'atras' }).castigo).toBe(true);
+    expect(rec('carrera', { tipo: 'caida' }).castigo).toBe(true); expect(rec('carrera', { tipo: 'meta' }).puntos).toBeGreaterThanOrEqual(20);
+  });
+  it('la pista de verdad: las puertas falsas son pared y cambian con la semilla del intento', () => {
+    const a = salaCarrera(1), b = salaCarrera(2);
+    expect(a.reales).toEqual(PISTA_CARRERA.puertas.map((f, i) => puertasReales(1, i, f.n)));
+    const f = PISTA_CARRERA.puertas[0], paredes = d => d.fijas.filter(c => c.x0 === f.x - 0.5 && c.plat === undefined).length;
+    expect(paredes(a)).toBeGreaterThan(0);
+    expect(new Set([1, 2, 3, 4, 5, 6].map(s => JSON.stringify(salaCarrera(s).reales))).size).toBeGreaterThan(1);
+    void b;
+  });
+  it('si se cae, vuelve a su checkpoint con castigo', () => {
+    const ep = crear('carrera', [Array(N).fill(0)], null, 1, true), a = ep.agentes[0];
+    a.x = 70; a.z = 30; a.y = 30; a.cp = 2;   // en el aire, afuera de la pista
+    let caidas = 0; for (let i = 0; i < 60; i++) { paso(ep); caidas += ep.eventos.filter(e => e.tipo === 'caida').length; }
+    expect(caidas).toBe(1); expect(Math.abs(a.x - (2 * CARRERA.cada + 3))).toBeLessThan(2);
+  });
+  it('📈 aprende: después de 20 intentos llega mucho más lejos que al principio', () => {
+    for (const sem of [1, 5]) {
+      const c0 = [cerebroNuevo(sem * 50)], notaC = p => prom(Array.from({ length: 4 }, (_, i) => correrEpisodio('carrera', [p], null, 9e6 + i, true)[0]));
+      const cs = entrenar('carrera', c0, 20, { soloAprende: 0 });
+      expect(notaC(cs[0].mejor.pesos)).toBeGreaterThan(notaC(c0[0].pesos) + 20);
+    }
+  }, 30000);
+});

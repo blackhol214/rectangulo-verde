@@ -1536,13 +1536,13 @@ export const GUIA_QUE_HAGO = {
   mix: 'Nubes y lava: sube por las nubes con los bots celeste, turquesa y coral sin que la lava alcance a nadie.',
   inverted: 'Mundo al revés: ahora TÚ eres el gigante. Atrapa 10 veces al jugador en tu mitad (salta para alcanzarlo).',
   sandbox: 'Zona rara: todo tiene colores y formas al azar. Camina al portal SANDBOX (adelante) para ver a tu bot The Guy aprender a jugar, o al portal SALIDA (atrás) para volver a tu mundo.',
-  sandboxSala: 'Sandbox: tu bot aprende solito probando y equivocándose. Arriba eliges la sala (No mires abajo, Escondidas o Atrapadas Nocivas), la velocidad (x1, x10 o x50) y le puedes cambiar el nombre. Cuando hace algo mal, ¡tiembla como licuadora! Lo que aprende se guarda en este navegador.',
-  salon: 'Modo Escuela: cada silla es un juego. Acércate a una y pulsa E: la que brilla es «No mires abajo», la que se esconde es «Escondidas» y la que tiene la mancha verde es «Atrapadas Nocivas». La SALIDA está atrás.',
+  sandboxSala: 'Sandbox: tu bot aprende solito probando y equivocándose. Arriba eliges la sala (No mires abajo, Escondidas, Atrapadas Nocivas, Spleef o Carrera), la velocidad (x1, x10 o x50) y le puedes cambiar el nombre. Cuando hace algo mal, ¡tiembla como licuadora! Lo que aprende se guarda en este navegador.',
+  salon: 'Modo Escuela: cada silla es un juego. Acércate a una y pulsa E: la que brilla es «No mires abajo», la que se esconde es «Escondidas», la que tiene la mancha verde es «Atrapadas Nocivas», la rosada con la bandera es la «Carrera» y la de los hexágonos es el «Spleef». La SALIDA está atrás.',
   atrapadas: 'Atrapadas Nocivas: el que tiene la mancha verde alien tiene 15 segundos para pasársela a otro tocándolo. ¡Si se le acaba el tiempo, explota! Gana el último que quede. Usa los portales verdes y las plataformas. Moverte gasta batería: pulsa Q y responde preguntas.',
   fantasmaAN: 'Atrapadas Nocivas: explotaste 💥 y ahora eres un fantasma. Todos te ven, pero ya no puedes tocar a nadie: mira cómo termina la ronda.',
   nomires: 'No mires abajo: sube la torre de 10 etapas sin caerte. Caminar y saltar gasta batería: pulsa Q y responde preguntas para cargarla. ¡Aquí hay doble salto!',
   esconder: 'Escondidas: ¡te toca esconderte! Busca un buen escondite antes de que el buscador termine de contar. Moverte gasta batería: pulsa Q y responde preguntas.',
-  buscar: 'Escondidas: ¡eres el buscador! Mientras cuentas, los demás se esconden; después búscalos y pulsa E cuando estés cerca de alguien.',
+  buscar: 'Escondidas: ¡eres el buscador! Mientras cuentas, los demás se esconden; después búscalos: para encontrar a alguien, ¡tócalo! (como en Atrapadas).',
   fantasma: 'Escondidas: ya te encontraron, ahora eres un fantasma 👻. Mira cómo sigue la ronda hasta que termine.',
 };
 // ¿Dónde estás? id = el minijuego (null = el mundo normal) · fase = la del Modo Escuela · rol / fantasma = en Escondidas
@@ -1651,17 +1651,51 @@ export function soporteAN(x, z) {
 }
 // La zona de una ronda: el cuadrado donde se juega, la velocidad máxima, dónde puede "aparecer" al llegar
 // y los saltos que sí valen (entrar a un portal y salir por su par)
+const ARENA_BAJO = plataformasAN().map(p => { const ax = p.mueve && p.mueve.eje === 'x' ? p.mueve.amp : 0, ay = p.mueve && p.mueve.eje === 'y' ? p.mueve.amp : 0;
+  return { x0: p.x - p.lado / 2 - ax, x1: p.x + p.lado / 2 + ax, z0: p.z - p.lado / 2, z1: p.z + p.lado / 2, top: p.y + ay, ay }; });
+// Lo más alto que hay justo debajo (o cerquita, con margen) en la arena: para saber si alguien flota (las que suben y bajan, a tu altura)
+export function soporteBajoAN(x, z, y, margen = 0.6) {
+  let alto = 0;
+  for (const c of ARENA_BAJO) {
+    if (x < c.x0 - margen || x > c.x1 + margen || z < c.z0 - margen || z > c.z1 + margen) continue;
+    const top = margen > 1 ? c.top : c.top - 2 * c.ay <= y + 0.5 ? Math.min(c.top, y) : -Infinity;
+    if (top > alto) alto = top;
+  }
+  return alto;
+}
 export function zonaAN(k, n) {
   const c = centroArenaAN(), m = ARENA_AN.mitad - 1, P = portalesAN();
   const saltos = P.map(p => { const d = P[p.par]; return { desde: { x: c.x + p.x, y: p.y, z: c.z + p.z }, hasta: { x: c.x + d.salida.x, y: d.y, z: c.z + d.salida.z } }; });
   return { x0: c.x - m, x1: c.x + m, z0: c.z - m, z1: c.z + m, yMin: 0, yMax: alturaMaxAN(), velMax: ARENA_VEL_MAX, llegada: { ...salidaAN(k, n), radio: 4 }, saltos,
-    soporte: (x, z) => soporteAN(x - c.x, z - c.z) };
+    soporte: (x, z) => soporteAN(x - c.x, z - c.z), soporteBajo: (x, z, y, margen) => soporteBajoAN(x - c.x, z - c.z, y, margen) };
 }
-// Escondidas: el terreno entero. Ahí hay carros que te llevan (15 m/s) y encima puedes correr: por eso deja más rápido
-export function zonaEsc(i) {
+// Escondidas: el terreno entero. Ahí hay carros que te llevan (15 m/s) y encima puedes correr: cerca de un carro deja ir más rápido
+const cercaDeUnCarro = (i, t, pos, x0, z0) => !!pos && cajasMovilesEsc(i, t).some(c => pos.x >= x0 + c.x0 - 6 && pos.x <= x0 + c.x1 + 6 && pos.z >= z0 + c.z0 - 6 && pos.z <= z0 + c.z1 + 6 && pos.y <= c.y1 + 4);
+const LANZADORES_ESC = [], PISOS_ESC = [];
+// Lo más alto que hay justo debajo de (x, z) y no más arriba de tus pies (en el terreno i de Escondidas): para saber si estás flotando
+// En la habitación (terreno 1) también cuentan los carros y las tortugas, donde estén en el segundo t de la ronda (con 2 m de margen: internet tarda)
+export function cajasMovilesEsc(i, t) {
+  if (i !== 1 || t === null || t === undefined) return [];
+  return [...CARROS.flatMap((_, k) => { const p = carroPos(k, t), partes = partesCarro(p.giro, k); return [partes.cubierta, partes.cabina].map(q => ({ x0: p.x + q.x - q.hw, x1: p.x + q.x + q.hw, z0: p.z + q.z - q.hd, z1: p.z + q.z + q.hd, y1: q.top })); }),
+    ...cajasTortugas(t)];
+}
+function soporteEsc(i, x0, z0, t) {
+  if (!PISOS_ESC[i]) PISOS_ESC[i] = cajasTerreno(TERRENOS[i]).slice(4).map(c => ({ x0: x0 + c.x0, x1: x0 + c.x1, z0: z0 + c.z0, z1: z0 + c.z1, top: c.y1 }));   // (sin las 4 paredes)
+  const moviles = cajasMovilesEsc(i, t).map(c => ({ x0: x0 + c.x0 - 2, x1: x0 + c.x1 + 2, z0: z0 + c.z0 - 2, z1: z0 + c.z1 + 2, top: c.y1 }));
+  const todas = moviles.length ? PISOS_ESC[i].concat(moviles) : PISOS_ESC[i];
+  // margen: qué tan cerca cuenta (0,6 m = justo debajo; 7 m = "cerquita", para saltar de un mueble a otro)
+  return (x, z, y, margen = 0.6) => { let alto = 0; for (const c of todas) if (x >= c.x0 - margen && x <= c.x1 + margen && z >= c.z0 - margen && z <= c.z1 + margen && (margen > 1 || c.top <= y + 0.5) && c.top > alto) alto = c.top; return alto; };
+}
+// t: el segundo de la ronda (para saber dónde están los carros): cerca de un carro o una tortuga, puedes ir más rápido (te llevan)
+export const VEL_ESC = 14;   // corres a 12 (+ un margen)
+export function zonaEsc(i, t = null, pos = null) {
   const o = minigameOrigin(ESCUELA_K), T = TERRENOS[i], x = o.x + TERRENO_X[i];
+  // los trampolines del terreno (normales, súper, frutas y los amarillos): te pueden lanzar de 18 a 110 m
+  if (!LANZADORES_ESC[i]) LANZADORES_ESC[i] = cajasTerreno(T).filter(c => c.salto).map(c => ({ x0: x + c.x0, x1: x + c.x1, z0: o.z + c.z0, z1: o.z + c.z1, top: c.y1, salto: c.salto }));   // (se calcula una sola vez)
+  const lanzadores = LANZADORES_ESC[i];
   return { x0: x - T.ancho / 2 + 1, x1: x + T.ancho / 2 - 1, z0: o.z - T.largo / 2 + 1, z1: o.z + T.largo / 2 - 1,
-    yMin: 0, yMax: T.alto, velMax: 12 + CARRO.vel + 4, llegada: { x: x + T.spawn.x, z: o.z + T.spawn.z, radio: 10 }, saltos: [] };
+    yMin: 0, yMax: T.alto, velMax: VEL_ESC + (cercaDeUnCarro(i, t, pos, x, o.z) ? CARRO.vel + 3 : 0), llegada: { x: x + T.spawn.x, z: o.z + T.spawn.z, radio: 10 }, saltos: [], lanzadores,
+    soporteBajo: soporteEsc(i, x, o.z, t) };
 }
 
 // ---------- 🏁 Carrera (como Fall Guys): otra silla del Modo Escuela ----------
@@ -1841,7 +1875,7 @@ export function puestosCarrera(corredores, llegadas) {
 export const origenCarrera = () => { const o = minigameOrigin(ESCUELA_K); return { x: o.x + CARRERA_X, z: o.z }; };
 // 🛡️ Lo que vigila el servidor en la carrera. Lo más rápido: corres a 12, más lo que te llevan las plataformas
 // (4 × 1,2 = 4,8 m/s) o el borde de un disco (3,6 × 1,1 ≈ 4 m/s), más un margen
-export const CARRERA_VEL_MAX = 22;
+export const CARRERA_VEL_MAX = 22, CARRERA_VEL = 14;   // (14: corriendo; 22: arriba de algo que se mueve)
 const CARRERA_PISOS = pistaCarrera().plats.map(p => ({ x: p.x, z: p.z, mx: p.ancho / 2 + 8, mz: p.largo / 2 + (p.mueve ? p.mueve.amp : 0) + 8, top: p.y + (p.mueve && p.mueve.eje === 'y' ? p.mueve.amp : 0) + (p.lanza ? 3 : 0) }));
 // Lo más alto que hay debajo (o cerquita: 8 m) de x, z (desde el origen de la pista). Si no hay nada: el piso del mundo (0)
 export function soporteCarrera(x, z) {
@@ -1852,12 +1886,44 @@ export function soporteCarrera(x, z) {
 // La zona de la carrera para el jugador i de n. cpMax: el checkpoint más lejano que el servidor sabe que alcanzaste
 // (si te caes, solo puedes reaparecer en un checkpoint que ya alcanzaste: así nadie "reaparece" más adelante)
 // pos: dónde lo tiene el servidor (si está en un tubo de viento, o cerquita, lo deja ir más rápido)
-export function zonaCarrera(i, n, cpMax = 0, pos = null) {
+// Lo que hay justo debajo (o cerquita, con margen) en la pista: para saber si alguien camina sobre el aire
+const CARRERA_BAJO = pistaCarrera().plats.map(p => { const hw = p.redonda ? p.r : p.ancho / 2, hd = (p.redonda ? p.r : p.largo / 2) + (p.mueve && p.mueve.eje !== 'y' ? p.mueve.amp : 0);
+  const ay = p.mueve && p.mueve.eje === 'y' ? p.mueve.amp : 0;
+  return { x0: p.x - hw, x1: p.x + hw, z0: p.z - hd, z1: p.z + hd, top: p.y + ay, ay }; });
+// (las que suben y bajan: si su recorrido pasa por tus pies, cuentan a tu altura)
+export function soporteBajoCarrera(x, z, y, margen = 0.6) {
+  let alto = 0;
+  for (const c of CARRERA_BAJO) {
+    if (x < c.x0 - margen || x > c.x1 + margen || z < c.z0 - margen || z > c.z1 + margen) continue;
+    const top = margen > 1 ? c.top : c.top - 2 * c.ay <= y + 0.5 ? Math.min(c.top, y) : -Infinity;
+    if (top > alto) alto = top;
+  }
+  return alto;
+}
+// semilla: la de la ronda (dice qué puertas son de verdad: las falsas no se atraviesan, ni por el servidor)
+export function zonaCarrera(i, n, cpMax = 0, pos = null, semilla = null) {
   const c = origenCarrera(), Y = CARRERA.y0, s = salidaCarrera(0, i, n);
+  const enMovil = pos && CARRERA_BAJO.some((b, k) => (PISTA_CARRERA.plats[k].mueve || PISTA_CARRERA.plats[k].gira) && pos.x - c.x >= b.x0 - 3 && pos.x - c.x <= b.x1 + 3 && pos.z - c.z >= b.z0 - 3 && pos.z - c.z <= b.z1 + 3);
+  const reales = semilla === null || semilla === undefined ? null : PISTA_CARRERA.puertas.map((f, k) => puertasReales(semilla, k, f.n));
   const cercaTubo = pos && PISTA_CARRERA.tubos.some(u => pos.x - c.x >= u.x0 - 4 && pos.x - c.x <= u.x1 + 4 && Math.abs(pos.z - c.z - u.z) <= CARRERA.tubo.radio + 4);
-  return { x0: c.x - 12, x1: c.x + CARRERA.meta.x1 + 4, z0: c.z - 26, z1: c.z + 26, yMin: 0, yMax: Y + 4 + 6, velMax: CARRERA_VEL_MAX + (cercaTubo ? CARRERA.tubo.vel : 0),
+  return { x0: c.x - 12, x1: c.x + CARRERA.meta.x1 + 4, z0: c.z - 26, z1: c.z + 26, yMin: 0, yMax: Y + 4 + 6, velMax: (enMovil ? CARRERA_VEL_MAX : CARRERA_VEL) + (cercaTubo ? CARRERA.tubo.vel : 0), doble: true,
     llegada: { x: c.x + s.x, z: c.z + s.z, radio: 4 }, pisoLlegada: Y, saltos: [],
     soporte: (x, z) => soporteCarrera(x - c.x, z - c.z),
+    // 🪂 nada de caminar sobre el aire: si no hay nada debajo y no bajas por más de 1,6 s, te caes
+    soporteBajo: (x, z, y, margen) => soporteBajoCarrera(x - c.x, z - c.z, y, margen),
+    // 🟡 los trampolines inclinados (verde y rojo): te lanzan (su salto: lo que sube con su velocidad hacia arriba)
+    lanzadores: PISTA_CARRERA.lanzas.map(k => { const p = PISTA_CARRERA.plats[k]; return { x0: c.x + p.x - p.ancho / 2, x1: c.x + p.x + p.ancho / 2, z0: c.z + p.z - p.largo / 2, z1: c.z + p.z + p.largo / 2, top: p.y, salto: p.lanza.y ** 2 / 60 + 3 }; }),
+    // 🚪 las puertas falsas son pared: cruzar la fila de puertas solo vale por una de verdad (y por abajo de la viga)
+    cruce: (antes, p) => {
+      if (!reales) return null;
+      for (const [k, f] of PISTA_CARRERA.puertas.entries()) {
+        const W = c.x + f.x, cruza = (antes.x < W - 0.3 && p.x > W - 0.3) || (antes.x > W + 0.3 && p.x < W + 0.3);
+        if (!cruza || Math.min(antes.y, p.y) > Y + CARRERA.puerta.alto) continue;
+        const zz = p.z - c.z, porReal = lugaresPuertas(f).some((q, j) => reales[k][j] && Math.abs(zz - q.z) <= q.ancho / 2 + 0.4);
+        if (!porReal) return { x: antes.x < W ? W - 0.8 : W + 0.8, z: p.z };
+      }
+      return null;
+    },
     // 🧱 en las zonas de puertas: entre las paredes (con un poquito de margen por lo que tarda internet). En el resto, te puedes caer
     limiteZ: x => { const t = corredorEn(x - c.x); return t && { z0: c.z + t.zmin - 0.6, z1: c.z + t.zmax + 0.6 }; },
     // Reaparecer: venías cayéndote (por debajo de la pista) y apareces arriba de un checkpoint que ya alcanzaste
@@ -1890,6 +1956,12 @@ export function golpeValidoCarrera(o, pos, t) {
   }
   const b = P.barras[o - P.punos.length];
   if (Math.hypot(rel.x - b.x, rel.z - b.z) > b.r + 2 || Math.abs(rel.y - b.y) > 3) return null;
+  // ¿la barra pasó de verdad cerca de ti? (un poquito antes o después, por lo que tarda internet: a menos de 2,5 m de la barra)
+  const pasoCerca = [0, -0.15, -0.3, -0.45, -0.6, 0.15].some(d => {
+    const an = b.w * (t + d) + b.fase, ux = Math.cos(an), uz = -Math.sin(an), rx = rel.x - b.x, rz = rel.z - b.z;
+    return Math.abs(rx * ux + rz * uz) <= b.r + 1 && Math.abs(rx * uz - rz * ux) <= 2.5;
+  });
+  if (!pasoCerca) return null;
   const a = b.w * t + b.fase, s = (rel.x - b.x) * Math.cos(a) - (rel.z - b.z) * Math.sin(a);
   const dx = -Math.sin(a) * Math.sign(b.w * s || 1), dz = -Math.cos(a) * Math.sign(b.w * s || 1);
   return { x: dx * CARRERA.barra.vel, y: CARRERA.barra.salto, z: dz * CARRERA.barra.vel };
@@ -2005,7 +2077,7 @@ export const origenSpleef = () => { const o = minigameOrigin(ESCUELA_K); return 
 // 🛡️ Lo que vigila el servidor: corres a 12 (más un margen); de la arena no se sale; empiezas en tu lugar de la capa de arriba
 export function zonaSpleef(i, n) {
   const c = origenSpleef(), s = salidaSpleef(i, n), m = SPLEEF.radio + 2;
-  return { x0: c.x - m, x1: c.x + m, z0: c.z - m, z1: c.z + m, yMin: 0, yMax: capaY(0) + 6, velMax: 15,
+  return { x0: c.x - m, x1: c.x + m, z0: c.z - m, z1: c.z + m, yMin: 0, yMax: capaY(0) + 6, velMax: 15, doble: true,
     llegada: { x: c.x + s.x, z: c.z + s.z, radio: 4 }, pisoLlegada: capaY(0), saltos: [] };
 }
 // ¿Vale que el jugador diga que pisó el hexágono i de la capa k? Solo si está cerca (con su posición en el servidor) y a esa altura
@@ -2231,3 +2303,7 @@ export function calidadInicial({ nucleos = 0, memoria = 0, tactil = false } = {}
 }
 // Si va lento (menos de 30 cuadros por segundo) aun con la resolución más baja, baja un nivel. Nunca sube sola (para que no salte de un lado a otro)
 export const bajarCalidad = (nivel, fps) => (fps >= 30 ? nivel : nivel === 'alta' ? 'media' : 'baja');
+
+// 🧭 Hacia dónde mirar: si se está moviendo (más de 0,5 m/s de costado), hacia donde camina; si no, hacia donde dice su "rot"
+// (así un amigo o un bot que manda siempre el mismo giro igual camina mirando para adelante, y no "deslizándose" de lado)
+export const rumboDeMovimiento = (vx, vz, rot, umbral = 0.5) => (Math.hypot(vx, vz) > umbral ? Math.atan2(vx, vz) : rot);

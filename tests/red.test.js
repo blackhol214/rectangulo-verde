@@ -242,9 +242,11 @@ describe('Escondidas con amigos: la ronda', () => {
     expect(faseRonda(130000)).toBe('fin');
   });
   it('para encontrar a alguien hay que estar cerca', () => {
-    expect(puedeEncontrar({ x: 0, y: 0, z: 0 }, { x: 3, y: 0, z: 2 })).toBe(true);
-    expect(puedeEncontrar({ x: 0, y: 0, z: 0 }, { x: 6, y: 0, z: 0 })).toBe(false);
+    expect(puedeEncontrar({ x: 0, y: 0, z: 0 }, { x: 1, y: 0, z: 1 })).toBe(true);    // tocándolo (con un poquito de margen por internet)
+    expect(puedeEncontrar({ x: 0, y: 0, z: 0 }, { x: 3, y: 0, z: 2 })).toBe(false);   // de lejos ya no vale: hay que tocarlo
     expect(puedeEncontrar({ x: 0, y: 0, z: 0 }, { x: 1, y: 20, z: 0 })).toBe(false);   // arriba de la cama no cuenta
+    expect(puedeEncontrar({ x: 0, y: 0, z: 0 }, { x: 1, y: 3, z: 0 })).toBe(false);    // ni a 3 m de altura
+    expect(ESC.tocar).toBeLessThanOrEqual(1.5); expect(ESC.encontrarDist).toBeLessThan(3);
   });
   it('quién gana', () => {
     expect(ganadorRonda({ camaleones: [2, 3], encontrados: [2, 3], ms: 50000 })).toBe('buscador');   // encontró a todos

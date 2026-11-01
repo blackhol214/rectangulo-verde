@@ -87,16 +87,17 @@ export const MG_TORRE = 21, MG_ESCONDIDAS = 30, MG_ATRAPADAS = 40, MG_CARRERA = 
 export const seVen = (miMg, suMg) => miMg === suMg && miMg !== MG_SOLO;
 
 // ---------- 🙈 Escondidas con amigos (el servidor es el árbitro) ----------
-// 30 s para esconderse (el buscador no ve nada) y 100 s para buscar. Para encontrar, el buscador tiene que estar cerca.
-export const ESC = { esconderMs: 30000, buscarMs: 100000, encontrarDist: 4.5, terrenos: 3 };
+// 30 s para esconderse (el buscador no ve nada) y 100 s para buscar. Para encontrar, el buscador tiene que TOCARLO (como en Atrapadas):
+// tocar: 1,5 m en la compu del buscador · encontrarDist: lo que acepta el servidor (un poquito más, por lo que tarda internet) · alto: diferencia de altura
+export const ESC = { esconderMs: 30000, buscarMs: 100000, tocar: 1.5, encontrarDist: 2.5, alto: 2.5, terrenos: 3 };
 // El buscador: uno al azar entre los que están esperando
 export const elegirBuscador = (ids, azar = Math.random) => ids[Math.min(ids.length - 1, Math.floor(azar() * ids.length))];
 // El terreno de la ronda con amigos: también al azar (lo elige el servidor, no el que aprieta Empezar)
 export const elegirTerreno = (azar = Math.random) => Math.min(ESC.terrenos - 1, Math.floor(azar() * ESC.terrenos));
 // ¿En qué parte de la ronda vamos? (ms: cuánto pasó desde que empezó)
 export const faseRonda = ms => (ms < ESC.esconderMs ? 'esconder' : ms < ESC.esconderMs + ESC.buscarMs ? 'buscar' : 'fin');
-// ¿Está lo bastante cerca para encontrarlo? (con las últimas posiciones que conoce el servidor)
-export const puedeEncontrar = (a, b, max = ESC.encontrarDist) => Math.hypot(a.x - b.x, a.z - b.z) <= max && Math.abs(a.y - b.y) <= 4;
+// ¿Lo tocó? (con las últimas posiciones que conoce el servidor)
+export const puedeEncontrar = (a, b, max = ESC.encontrarDist) => Math.hypot(a.x - b.x, a.z - b.z) <= max && Math.abs(a.y - b.y) <= ESC.alto;
 // ¿Quién ganó? 'buscador' si encontró a todos · 'camaleones' si se acabó el tiempo y queda alguien (o si el buscador se fue)
 // · 'nadie' si todos los camaleones se fueron sin que encontrara a ninguno · null si sigue la ronda
 export function ganadorRonda({ camaleones, encontrados, ms, buscadorSeFue = false }) {
@@ -184,9 +185,24 @@ export const seTocan = (a, b, max = AN.tocar) => Math.hypot(a.x - b.x, a.z - b.z
 //  · no corre más rápido que zona.velMax ni SUBE más rápido que un salto (caerse sí, eso es libre)
 //  · solo salta lejos (o alto) si entró a un portal y sale por su par, a la altura de verdad de la salida
 // saldo y saldoY: como alcancías de metros. Se llenan con el tiempo (hasta un máximo) y cada paso gasta lo que avanza o sube.
-export const VIGILA = { maxSaldo: 3, maxSaldoY: 3.5, subeVel: 13, salto: 3.2, portalEntrada: 2.2, portalSalida: 2.5, cosEmpuje: 0.7, llegarMs: 3000 };
+export const VIGILA = { maxSaldo: 3, maxSaldoY: 3.5, subeVel: 13, salto: 3.2, portalEntrada: 2.2, portalSalida: 2.5, cosEmpuje: 0.7, llegarMs: 3000, trampolinCerca: 2, trampolinAlto: 3, dobleSalto: 5.4, subeS: 0.42, subeDobleS: 0.83, margenS: 0.25 };   // (un salto sube 2,6 m en 0,42 s; el doble, 5,2 m en 0,83 s)
+// 🟡 Trampolines (zona.lanzadores: [{ x0, x1, z0, z1, top, salto }]): si estaba encima de uno (o llegando, a su altura),
+// lo puede lanzar MUY rápido hacia arriba (un trampolín de 40 m sale a 49 m/s): durante el vuelo (lo que tarda en llegar
+// arriba, más un margen) puede subir hasta la altura del trampolín + un poco, sin el límite de "subir de a poco"
+const GRAV_VIGILA = 30;
+function lanzadoPor(zona, antes, ahora) {
+  for (const L of zona.lanzadores || []) {
+    const m = VIGILA.trampolinCerca;
+    if (antes.x < L.x0 - m || antes.x > L.x1 + m || antes.z < L.z0 - m || antes.z > L.z1 + m) continue;
+    if (antes.y < L.top - VIGILA.trampolinAlto || antes.y > L.top + VIGILA.trampolinAlto) continue;
+    const vuela = Math.sqrt(2 * L.salto / GRAV_VIGILA);   // cuánto tarda en llegar arriba
+    return { hasta: ahora + (vuela + 0.8) * 1000, techo: L.top + L.salto + 3 };
+  }
+  return null;
+}
 export function vigilarPos(antes, nuevo, ahora, zona, extra = 0, dirExtra = null) {
-  const ok = (p, ex, saldo, saldoY, corregido = false) => ({ pos: { x: p.x, y: p.y, z: p.z, t: ahora, llego: true, saldo, saldoY }, extra: ex, corregido });
+  const lanzado = antes && antes.llego ? (lanzadoPor(zona, antes, ahora) || (antes.lanzado && ahora < antes.lanzado.hasta ? antes.lanzado : null)) : null;
+  const ok = (p, ex, saldo, saldoY, corregido = false) => ({ pos: { x: p.x, y: p.y, z: p.z, t: ahora, llego: true, saldo, saldoY, ...(lanzado ? { lanzado } : {}) }, extra: ex, corregido });
   const dentro = p => p.x >= zona.x0 && p.x <= zona.x1 && p.z >= zona.z0 && p.z <= zona.z1;
   const piso = zona.yMin ?? 0, techo = zona.yMax ?? Infinity, yLl = zona.pisoLlegada ?? piso;   // (en la carrera empiezas arriba, en la pista)
   if (!antes || !antes.llego) {
@@ -197,9 +213,17 @@ export function vigilarPos(antes, nuevo, ahora, zona, extra = 0, dirExtra = null
     return ok(enSuLugar, extra, VIGILA.maxSaldo, VIGILA.maxSaldoY, true);   // apareció en otro lado (o no llegó a tiempo): lo ponemos en su lugar
   }
   const p = { x: Math.min(zona.x1, Math.max(zona.x0, nuevo.x)), y: Math.min(techo, Math.max(piso, nuevo.y)), z: Math.min(zona.z1, Math.max(zona.z0, nuevo.z)) };
+  // 3, 2, 1… (zona.quietoHasta): antes del "¡ya!" no te puedes ir de tu lugar de salida
+  if (zona.quietoHasta && ahora < zona.quietoHasta) {
+    const l = zona.llegada, dx = p.x - l.x, dz = p.z - l.z, d = Math.hypot(dx, dz), r = l.radio || 2;
+    if (d > r) { p.x = l.x + dx / d * r; p.z = l.z + dz / d * r; }
+  }
   // Un corredor (la Carrera): en cada x, solo puedes estar entre sus paredes
   const L = zona.limiteZ && zona.limiteZ(p.x);
   if (L) p.z = Math.min(L.z1, Math.max(L.z0, p.z));
+  // 🚪 cosas que no se atraviesan (las puertas falsas de la carrera)
+  const bloqueo = zona.cruce && antes.llego ? zona.cruce(antes, p) : null;
+  if (bloqueo) { p.x = bloqueo.x; p.z = bloqueo.z; }
   let corregido = p.x !== nuevo.x || p.y !== nuevo.y || p.z !== nuevo.z;
   const dt = Math.max(0, (ahora - antes.t) / 1000);
   // ¿Reapareció en un checkpoint después de caerse? (la carrera dice si vale: solo en uno que ya alcanzó)
@@ -222,14 +246,35 @@ export function vigilarPos(antes, nuevo, ahora, zona, extra = 0, dirExtra = null
   const saldoY = Math.min(VIGILA.maxSaldoY, (antes.saldoY ?? VIGILA.maxSaldoY) + VIGILA.subeVel * dt);
   let y = p.y, saldoYNuevo = saldoY;
   const sube = p.y - antes.y;
-  if (sube > saldoY) { y = antes.y + saldoY; saldoYNuevo = 0; corregido = true; }
+  if (lanzado) { if (y > lanzado.techo) { y = lanzado.techo; corregido = true; } }   // 🟡 volando por un trampolín: sube rápido (pero no más alto que lo que lanza)
+  else if (sube > saldoY) { y = antes.y + saldoY; saldoYNuevo = 0; corregido = true; }
   else if (sube > 0) saldoYNuevo = saldoY - sube;
   // ¿Está volando? Más de un salto por encima de lo que tiene abajo: no puede seguir subiendo (caerse sí)
-  if (zona.soporte) {
-    const lim = zona.soporte(x, z) + VIGILA.salto;
+  if (zona.soporte && !lanzado) {
+    const lim = zona.soporte(x, z) + (zona.doble ? VIGILA.dobleSalto : VIGILA.salto);   // (donde hay doble salto, sube hasta ~5,2 m)
     if (y > lim && y > antes.y) { y = Math.max(antes.y, lim); corregido = true; }
   }
-  return ok({ x, y, z }, extraNuevo, saldoNuevo, saldoYNuevo, corregido);
+  // 🪂 ¿Flotando? (zona.soporteBajo: lo más alto que tiene justo debajo de los pies). Desde que deja de pisar algo, lo más alto que
+  // puede estar es su altura de ese momento + un doble salto; y pasado lo que dura un doble salto, cae con la gravedad de verdad.
+  // Si está más arriba de eso, lo bajamos (a la velocidad de la gravedad: no importa si "baja un poquito" en cada mensaje).
+  // (los trampolines tienen su permiso; abajo de zona.aireDesde no se revisa: ahí están los carros y las tortugas, que se mueven)
+  let aire = null;
+  if (zona.soporteBajo && !lanzado) {
+    // no puede subir más de un salto por encima de lo que tiene cerca (7 m: lo que avanza saltando de un mueble a otro)
+    const H = zona.doble ? VIGILA.dobleSalto : VIGILA.salto, T = (zona.doble ? VIGILA.subeDobleS : VIGILA.subeS) + VIGILA.margenS;
+    const cercano = zona.soporteBajo(x, z, antes.y, 7);
+    if (y > cercano + H && y > antes.y) { y = Math.max(antes.y, cercano + H); corregido = true; }
+    const base = zona.soporteBajo(x, z, y);
+    if (y - base > 0.6 && y > (zona.aireDesde ?? 2)) {
+      // lo más alto que puede estar t segundos después de dejar el piso: lo que sube su salto (o doble salto), y después cae con la gravedad
+      aire = antes.aire || { t0: antes.t, y0: Math.min(antes.y, y) };
+      const t = (ahora - aire.t0) / 1000, techoAire = aire.y0 + H - (t > T ? 15 * (t - T) ** 2 : 0);
+      if (y > techoAire) { y = Math.max(base, techoAire); corregido = true; }
+    }
+  }
+  const r = ok({ x, y, z }, extraNuevo, saldoNuevo, saldoYNuevo, corregido);
+  if (aire) r.pos.aire = aire;
+  return r;
 }
 
 // Lee un mensaje que llegó por la red. Si viene roto o con trampas, devuelve null.
@@ -252,7 +297,7 @@ export function leerMensaje(texto) {
   if (m.tipo === 'hola') {
     const nombre = limpiarNombre(m.nombre);
     if (!nombre || !esNumero(m.color)) return null;
-    return { tipo: 'hola', nombre, color: m.color, monedas: esEntero(m.monedas, 0, 1e9) ? m.monedas : 0, look: leerLook(m.look) };
+    return { tipo: 'hola', nombre, color: m.color, monedas: esEntero(m.monedas, 0, 1e7) ? m.monedas : 0, look: leerLook(m.look) };   // (más de 10 millones: no es de verdad)
   }
   if (m.tipo === 'pos') {
     if (![m.x, m.y, m.z, m.rot].every(esNumero)) return null;

@@ -390,7 +390,7 @@
 <div id="sandbox" hidden role="region" aria-label="Sandbox de tu bot">
   <div class="sb-fila"><span class="sb-titulo">🧠 SANDBOX · <span id="sbNombre"></span></span><button type="button" id="sbSalir">Salir</button><button type="button" id="sbCerrar" aria-label="Cerrar la tarjeta">×</button></div>
   <div class="sb-fila" id="sbSalas">
-    <button type="button" data-sala="torre">🗼 No mires abajo</button><button type="button" data-sala="escondidas">🙈 Escondidas</button><button type="button" data-sala="atrapadas">👽 Atrapadas</button>
+    <button type="button" data-sala="torre">🗼 No mires abajo</button><button type="button" data-sala="escondidas">🙈 Escondidas</button><button type="button" data-sala="atrapadas">👽 Atrapadas</button><button type="button" data-sala="spleef">🔶 Spleef</button><button type="button" data-sala="carrera">🏁 Carrera</button>
   </div>
   <div class="sb-fila" id="sbTerrenos" hidden>Terreno: <button type="button" data-terreno="0">🏫 Salón</button><button type="button" data-terreno="1">🧸 Habitación</button><button type="button" data-terreno="2">🍳 Cocina</button></div>
   <div class="sb-fila" id="sbVel">Velocidad: <button type="button" data-vel="1">x1</button><button type="button" data-vel="10">x10</button><button type="button" data-vel="50">x50</button></div>
@@ -468,11 +468,11 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module">
-import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, ESCUELA, ESCUELA_K, SANDBOX_K, enElHoyo, zonaRara, ZONA_RARA, HOYO, escuelaSiguiente, escuelaMezclar, SALON, salonSillas, sillaCercana, faseDeLuz, ARENA_AN, ARENA_AN_X, TERRENO_X, salidaAN, centroArenaAN, plataformasAN, desplazamientoAN, portalesAN, portalCerca, TERRENOS, CARROS, CARRO, carroPos, partesCarro, TORTUGAS, TORTUGA, tortugaPos, partesTortuga, arrastreDe, girarAlrededor, CARRERA, PISTA_CARRERA, posPlatCarrera, punoEn, golpePuno, golpeBarra, salidaCarrera, enMetaCarrera, seCayoCarrera, puestosCarrera, origenCarrera, SILLA_CARRERA, CARRERA_X, puertasReales, lugaresPuertas, vientoTubo, CALIDADES, leerCalidad, leerNivel, siguienteCalidad, calidadInicial, bajarCalidad, leerEstilo, golpeGuardian, GUARDIAN, temporadaDe, TEMPORADAS, particulaEstacion, MUSICAS, midiAFrecuencia, lugarMusica, intensidadMusica, compasMusica, siguienteVolumen, leerVolumen, CORREDOR_CARRERA, PARED, siguienteCheckpoint, SPLEEF, SPLEEF_X, SILLA_SPLEEF, capaY, HEXES, hexEn, hundido, hexSolido, hexSeVe, pisoSpleef, salidaSpleef, fueraSpleef, capaDe, origenSpleef, cajasPieza, escaleraCanasta, cajasTerreno, escondites, BOT_ESC, botVe, ordenEscondites, cercaDeLaProfe, preguntasDeLaClase, escaparHTML, NO_MIRES, torreNoMires, seededRandom, debeReaparecer, GUIA_COMO, textoQueHago, lugarDelGuia, GUIA_COLORES, siguienteColorGuia, lugaresArboles, lugaresPasto, libreDePasto, ARBOLES, sombreroDeBot, ETAPAS, etapaDe, cajasDe, decoracionTorre, ovniDesplazamiento, HIELO, deslizar, puedeDobleSalto, gastarBateria, cargarBateria, hayBateria, BATERIA, ganaSpooky, ojosMilOjos, OJO_MIL, SPOOKY, sumarTiempoSpooky, DISFRACES, disfrazById, comprarDisfraz, ponerDisfraz, TIENDA_HALLOWEEN, cercaDelVendedor, letrerosEtapas, elegirObjetivoAN, meAburro, MOTIVACION_AN, reboteCaminar, estaCaminando, volumenPasos, puedeAvisar, AVISO_LASER, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, VILLAGE_HOUSE, wallPieces, insideVillageHouse, villageBed, villageEntrance, villageExit, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, squashStretch, ACHIEVEMENTS, achievementById, coinAchievementsFor, TROPHY_TABLE, trophySpot, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
-         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-11-02-pwa'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
-import { NOMBRE_SALA, cerebrosNuevos, proximoCerebro, pensar, crearEpisodio, pasoEpisodio, semillaIntento, torreSandbox, BUSCADOR_SB, leerCerebros, nombreGuy, claveGuy, NOMBRE_GUY } from './src/ia.js?v=2026-11-02-pwa';
-import { VERSION } from './src/version.js?v=2026-11-02-pwa';
-import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, valoresEn, DIA_SEGUNDOS, lugarMoneda, corto, acercar, acercarAngulo, piezasExplosion, leerPreguntas, revisarPreguntas, PROFE, seVen, MG_TORRE, MG_ESCONDIDAS, MG_ATRAPADAS, MG_CARRERA, MG_SPLEEF, MG_SOLO, ESC, AN, nuevaRondaAN, pasarAN, explotarAN, empujeAN, mareadoAN, seTocan } from './src/red.js?v=2026-11-02-pwa';
+import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, ESCUELA, ESCUELA_K, SANDBOX_K, enElHoyo, zonaRara, ZONA_RARA, HOYO, escuelaSiguiente, escuelaMezclar, SALON, salonSillas, sillaCercana, faseDeLuz, ARENA_AN, ARENA_AN_X, TERRENO_X, salidaAN, centroArenaAN, plataformasAN, desplazamientoAN, portalesAN, portalCerca, TERRENOS, CARROS, CARRO, carroPos, partesCarro, TORTUGAS, TORTUGA, tortugaPos, partesTortuga, arrastreDe, girarAlrededor, CARRERA, PISTA_CARRERA, posPlatCarrera, punoEn, golpePuno, golpeBarra, salidaCarrera, enMetaCarrera, seCayoCarrera, puestosCarrera, origenCarrera, SILLA_CARRERA, CARRERA_X, puertasReales, lugaresPuertas, vientoTubo, rumboDeMovimiento, CALIDADES, leerCalidad, leerNivel, siguienteCalidad, calidadInicial, bajarCalidad, leerEstilo, golpeGuardian, GUARDIAN, temporadaDe, TEMPORADAS, particulaEstacion, MUSICAS, midiAFrecuencia, lugarMusica, intensidadMusica, compasMusica, siguienteVolumen, leerVolumen, CORREDOR_CARRERA, PARED, siguienteCheckpoint, SPLEEF, SPLEEF_X, SILLA_SPLEEF, capaY, HEXES, hexEn, hundido, hexSolido, hexSeVe, pisoSpleef, salidaSpleef, fueraSpleef, capaDe, origenSpleef, cajasPieza, escaleraCanasta, cajasTerreno, escondites, BOT_ESC, botVe, ordenEscondites, cercaDeLaProfe, preguntasDeLaClase, escaparHTML, NO_MIRES, torreNoMires, seededRandom, debeReaparecer, GUIA_COMO, textoQueHago, lugarDelGuia, GUIA_COLORES, siguienteColorGuia, lugaresArboles, lugaresPasto, libreDePasto, ARBOLES, sombreroDeBot, ETAPAS, etapaDe, cajasDe, decoracionTorre, ovniDesplazamiento, HIELO, deslizar, puedeDobleSalto, gastarBateria, cargarBateria, hayBateria, BATERIA, ganaSpooky, ojosMilOjos, OJO_MIL, SPOOKY, sumarTiempoSpooky, DISFRACES, disfrazById, comprarDisfraz, ponerDisfraz, TIENDA_HALLOWEEN, cercaDelVendedor, letrerosEtapas, elegirObjetivoAN, meAburro, MOTIVACION_AN, reboteCaminar, estaCaminando, volumenPasos, puedeAvisar, AVISO_LASER, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, VILLAGE_HOUSE, wallPieces, insideVillageHouse, villageBed, villageEntrance, villageExit, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, squashStretch, ACHIEVEMENTS, achievementById, coinAchievementsFor, TROPHY_TABLE, trophySpot, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
+         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-11-01-antitrampas'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
+import { NOMBRE_SALA, cerebrosNuevos, proximoCerebro, pensar, crearEpisodio, pasoEpisodio, semillaIntento, torreSandbox, BUSCADOR_SB, leerCerebros, nombreGuy, claveGuy, NOMBRE_GUY } from './src/ia.js?v=2026-11-01-antitrampas';
+import { VERSION } from './src/version.js?v=2026-11-01-antitrampas';
+import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, valoresEn, DIA_SEGUNDOS, lugarMoneda, corto, acercar, acercarAngulo, piezasExplosion, leerPreguntas, revisarPreguntas, PROFE, seVen, MG_TORRE, MG_ESCONDIDAS, MG_ATRAPADAS, MG_CARRERA, MG_SPLEEF, MG_SOLO, ESC, AN, nuevaRondaAN, pasarAN, explotarAN, empujeAN, mareadoAN, seTocan } from './src/red.js?v=2026-11-01-antitrampas';
 (() => {
   // iPhone ignora user-scalable=no: aquí se bloquea el zoom con dos dedos y el doble toque
   for (const ev of ['gesturestart', 'gesturechange']) document.addEventListener(ev, e => e.preventDefault(), { passive: false });
@@ -3000,25 +3000,17 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     e.resultado = { gane, texto };
     mostrarResultado();
   }
-  // E en la ronda: si buscas, encontrar al que esté cerca
-  function intentarEncontrar() {
+  // Si buscas: encuentras TOCANDO (como en Atrapadas), sin apretar nada. Con amigos, el servidor revisa que de verdad se tocaron
+  function encontrarTocando() {
     const e = MG.state.esc;
-    if (!e || !soyBuscador() || faseEsc() !== 'buscar') return;
-    if (e.solo) {
-      const bot = MG.built.botEsc;
-      if (Math.hypot(bot.pos.x - ps.pos.x, bot.pos.z - ps.pos.z) < 3.5 && Math.abs(bot.pos.y - ps.pos.y) < 3) terminarSolo(true, '¡Encontraste al bot! 🎉');
-      else avisoModo('Aquí no hay nadie… ¡sigue buscando!');
-      return;
-    }
-    // Con amigos: el más cercano que todavía no encontraste (el servidor revisa que de verdad esté cerca)
-    let mejor = null, dmin = 4;
+    if (!e || e.resultado || !soyBuscador() || faseEsc() !== 'buscar') return;
+    const toca = p => Math.hypot(p.x - ps.pos.x, p.z - ps.pos.z) <= ESC.tocar && Math.abs(p.y - ps.pos.y) <= ESC.alto;
+    if (e.solo) { if (toca(MG.built.botEsc.pos)) terminarSolo(true, '¡Encontraste al bot! 🎉'); return; }
+    if (ahoraMs() - (e.ultimoToque || 0) < 250) return;
     for (const [id, f] of red.otros) {
       if (!e.jugadores.includes(id) || id === e.buscador || e.encontrados.has(id)) continue;
-      const d = Math.hypot(f.x - ps.pos.x, f.z - ps.pos.z);
-      if (d < dmin && Math.abs(f.y - ps.pos.y) < 4) { dmin = d; mejor = id; }
+      if (toca(f.obj.position)) { enviar({ tipo: 'esc', que: 'encontrar', a: id }); e.ultimoToque = ahoraMs(); break; }
     }
-    if (mejor === null) { avisoModo('Aquí no hay nadie… ¡sigue buscando!'); return; }
-    enviar({ tipo: 'esc', que: 'encontrar', a: mejor });
   }
   function updateEscondidas(dt, o) {
     const st = MG.state, e = st.esc, T = e.T, fase = faseEsc(), inp = MG.input || {}, tRonda = (ahoraMs() - e.inicio) / 1000;
@@ -3026,6 +3018,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     // Por si el aviso del final nunca llega (con amigos): 5 segundos después del tiempo, la ronda se da por terminada
     if (!e.solo && !e.resultado && ahoraMs() > e.fin + 5000) { e.resultado = { gane: false, texto: 'La ronda terminó' }; mostrarResultado(); }
     moverCarros(T, tRonda);
+    encontrarTocando();
     // El trampolín súper fuerte
     const pie = ps.standing;
     if (ps.onGround && pie && pie.salto) { ps.vel.y = launchSpeedForHeight(pie.salto, GRAV); ps.onGround = false; sfxTrampolin(); }
@@ -3083,12 +3076,12 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     if (e.solo && fase === 'fin' && !e.resultado) terminarSolo(e.rol === 'esconder', e.rol === 'esconder' ? '¡El bot no te encontró! 🎉' : 'Se acabó el tiempo: el bot se escondió muy bien');
     // El letrero de arriba
     const seg = Math.max(0, Math.ceil(((fase === 'esconder' ? e.finEsconder : e.fin) - ahoraMs()) / 1000));
-    const Q = IS_TOUCH ? '<b>RESPONDER</b>' : '<b>Q</b>', E = IS_TOUCH ? '<b>✋ Encontrar</b>' : '<b>E</b>';
+    const Q = IS_TOUCH ? '<b>RESPONDER</b>' : '<b>Q</b>';
     const bat = e.fantasma ? '👻 eres un fantasma' : hayBateria(st.bateria) ? `🔋 <b>${bateriaTexto(st.bateria)}</b>` : `🔋 <b style="color:#ff5a5a">Sin batería</b>: ${Q}`;
     let txt;
     if (e.resultado) txt = e.resultado.texto;
     else if (fase === 'esconder') txt = soyBuscador() ? `🙈 Cuentas hasta 30… <b>${seg}</b>` : `🏃 ¡Escóndete! <b>${seg} s</b>`;
-    else if (soyBuscador()) txt = `🔎 ¡Busca! Acércate y pulsa ${E} · <b>${seg} s</b>` + (e.solo ? '' : ` · encontrados ${e.encontrados.size}/${e.jugadores.length - 1}`);
+    else if (soyBuscador()) txt = `🔎 ¡Busca! Tócalos para encontrarlos · <b>${seg} s</b>` + (e.solo ? '' : ` · encontrados ${e.encontrados.size}/${e.jugadores.length - 1}`);
     else txt = `🤫 ¡Que no te encuentren! <b>${seg} s</b>`;
     mgHud.innerHTML = `${TERRENOS[e.terreno].emoji} ${txt} · ${bat}`;
     mgHud.hidden = !escuelaEl.hidden || !escondEl.hidden;
@@ -3460,8 +3453,8 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
   const NOMBRES_BOTS_CR = ['Gomita', 'Fresa', 'Nube', 'Mochi', 'Pocky'];
   const COLORES_BOTS_CR = [0xff6fb5, 0x6fc3ff, 0xffd84a, 0x9f7bff, 0x5fe0a8];
   const CAM_META = -Math.PI / 2;   // la cámara mirando hacia la meta (+x)
-  function construirCarrera() {
-    const c = origenCarrera(), Y = CARRERA.y0, grupo = new THREE.Group(); grupo.visible = false; scene.add(grupo);
+  function construirCarrera(c = origenCarrera()) {
+    const Y = CARRERA.y0, grupo = new THREE.Group(); grupo.visible = false; scene.add(grupo);
     const mats = {}, mat = col => mats[col] || (mats[col] = new THREE.MeshLambertMaterial({ color: col }));
     const blanco = mat(0xffffff), caja = new THREE.BoxGeometry(1, 1, 1), cil = new THREE.CylinderGeometry(1, 1, 1, 40), pls = [], piezas = [];
     for (const p of PISTA_CARRERA.plats) {
@@ -3571,8 +3564,8 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     B.grupo.visible = false; B.enUso = false;
   }
   // Mueve todo según el reloj de la carrera (t en segundos): todos lo ven igual
-  function moverCarrera(t) {
-    const B = MG.built.carrera, c = B.c;
+  function moverCarrera(t, B = MG.built.carrera) {
+    const c = B.c;
     for (const q of B.piezas) {
       const { p, pl, g } = q;
       if (!p.mueve && !p.gira) continue;
@@ -3781,7 +3774,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     const rel = { x: ps.pos.x - c.x, y: ps.pos.y, z: ps.pos.z - c.z };
     if (!cr.llegue && !cr.resultado && cr.cp >= CARRERA.checkpoints && enMetaCarrera(rel)) {
       if (cr.solo) llegoCR(0);
-      else if (ahora - (cr.avisoMeta || 0) > 500) { cr.avisoMeta = ahora; enviar({ tipo: 'cr', que: 'llegue' }); }   // (el servidor revisa y avisa a todos)
+      else if (ahora - (cr.avisoMeta || 0) > 500) { cr.avisoMeta = ahora; enviar({ tipo: 'pos', x: corto(ps.pos.x), y: corto(ps.pos.y), z: corto(ps.pos.z), rot: corto(ps.facing), color: body.material.color.getHex(), mg: miMg(), t: Math.round(performance.now()) }); enviar({ tipo: 'cr', que: 'llegue' }); }   // (primero dónde estás: así el servidor también te ve en la meta)   // (el servidor revisa y avisa a todos)
     }
     if (cr.solo && !cr.resultado) {
       moverBotsCR(dt, cr, t, ahora);
@@ -3812,8 +3805,8 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
   const COLORES_BOTS_SP = [0xff6fb5, 0x4dabf7, 0xffd43b, 0x9775fa, 0x51cf66];
   // Los 4.000 hexágonos son SOLO 6 mallas "instanciadas" (una por capa): así va fluido.
   // Chocar con ellos no usa la lista de plataformas: el piso se busca con cuentas (hexEn), mucho más rápido.
-  function construirSpleef() {
-    const c = origenSpleef(), grupo = new THREE.Group(); grupo.visible = false; scene.add(grupo);
+  function construirSpleef(c = origenSpleef()) {
+    const grupo = new THREE.Group(); grupo.visible = false; scene.add(grupo);
     const geo = new THREE.CylinderGeometry(SPLEEF.R * 0.95, SPLEEF.R * 0.95, 0.6, 6), mat = new THREE.MeshLambertMaterial({ color: 0xffffff });
     const capas = [], m4 = new THREE.Matrix4(), col = new THREE.Color();
     for (let k = 0; k < SPLEEF.capas; k++) {
@@ -4586,9 +4579,9 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
       },
       get velocidad() { return MG.state.fase === 'atrapadas' ? AN.vel : undefined; },   // Atrapadas: todos más rápidos (15 en vez de 12)
       get noJump() { return this.noMove; },                                                   // …ni saltas (pero sí te caes)
-      get onE() { return MG.state.fase === 'salon' ? sentarse : MG.state.fase === 'escondidas' && soyBuscador() && faseEsc() === 'buscar' ? intentarEncontrar : null; },   // E: sentarse · en Escondidas, encontrar
+      get onE() { return MG.state.fase === 'salon' ? sentarse : null; },   // E: sentarse (en Escondidas se encuentra tocando: sin E)
       get onQ() { const st = MG.state; return st.fase === 'nomires' || (st.fase === 'escondidas' && !st.esc.fantasma && !st.esc.resultado) || (st.fase === 'atrapadas' && !st.an.fantasma && !st.an.resultado) || (st.fase === 'carrera' && !st.cr.resultado && !st.cr.llegue) || (st.fase === 'spleef' && !st.sp.resultado) ? abrirCarga : null; },  // Q: responder para cargar batería
-      get eLabel() { if (MG.state.fase === 'escondidas') return '✋ Encontrar'; const o = minigameOrigin(MG.k); return MG.state.fase === 'salon' && cercaDelVendedor(ps.pos.x - o.x, ps.pos.z - o.z) ? '🎃 Tienda' : '✋ Sentarse'; },
+      get eLabel() { const o = minigameOrigin(MG.k); return MG.state.fase === 'salon' && cercaDelVendedor(ps.pos.x - o.x, ps.pos.z - o.z) ? '🎃 Tienda' : '✋ Sentarse'; },
       // ¿Dónde estoy? (para la red: con quién te ves) · torre: 21 · Escondidas con amigos: 30 + terreno · solo: 99 (no ves a nadie)
       get mgCodigo() { const st = MG.state; if (st.fase === 'nomires') return MG_TORRE; if (st.fase === 'atrapadas') return st.an.solo ? MG_SOLO : MG_ATRAPADAS; if (st.fase === 'carrera') return st.cr.solo ? MG_SOLO : MG_CARRERA; if (st.fase === 'spleef') return st.sp.solo ? MG_SOLO : MG_SPLEEF; if (st.fase === 'escondidas') return st.esc.solo ? MG_SOLO : MG_ESCONDIDAS + st.esc.terreno; return undefined; },
       // El cielo se pone oscuro en el espacio (con estrellas) y en el neón
@@ -4700,7 +4693,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
   const sbEl = document.getElementById('sandbox'), sbDatos = document.getElementById('sbDatos'), sbNombreEl = document.getElementById('sbNombre');
   const sbInput = document.getElementById('sbNombreInput'), sbGrafico = document.getElementById('sbGrafico'), sbAbrir = document.getElementById('sbAbrir');
   // Dónde queda cada copia (desde el origen del sandbox): la torre, los 3 terrenos y la arena, bien separados
-  const sbOrigenes = O => ({ torre: { x: O.x + 400 - TORRE_X, z: O.z }, terrenos: { x: O.x + 600, z: O.z }, arena: { x: O.x + 2900 - ARENA_X, z: O.z } });
+  const sbOrigenes = O => ({ torre: { x: O.x + 400 - TORRE_X, z: O.z }, terrenos: { x: O.x + 600, z: O.z }, arena: { x: O.x + 2900 - ARENA_X, z: O.z }, carrera: { x: O.x + 3200, z: O.z }, spleef: { x: O.x + 4000, z: O.z } });
   // Usar las funciones que arman los mapas de verdad, pero guardando todo aparte (en MG.built.sb): así no se mezclan con los de verdad
   function enSB(fn) { const real = MG.built; real.sb = real.sb || {}; MG.built = real.sb; try { return fn(); } finally { MG.built = real; } }
   // Un cartelito con un nombre arriba de la cabeza (con canvas: el nombre se dibuja como texto, nunca como HTML)
@@ -4767,6 +4760,14 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
       const T = B.terrenos[terreno];
       return { grupo: T.grupo, pls: T.pls, cx: T.cx, cz: T.cz, T };
     }
+    if (sala === 'carrera') {   // 🏁 la pista de verdad (las puertas de verdad cambian con cada intento)
+      if (!B.carrera) enSB(() => construirCarrera(OR.carrera));
+      return { grupo: B.carrera.grupo, pls: B.carrera.pls, cx: OR.carrera.x, cz: OR.carrera.z, C: B.carrera };
+    }
+    if (sala === 'spleef') {   // 🔶 la arena de hexágonos de verdad
+      if (!B.spleef) enSB(() => construirSpleef(OR.spleef));
+      return { grupo: B.spleef.grupo, pls: [B.spleef.plPalco], cx: OR.spleef.x, cz: OR.spleef.z, SP: B.spleef };
+    }
     if (!B.arenaAN) enSB(() => construirArenaAN(OR.arena));   // la arena de verdad
     const A = B.arenaAN;
     return { grupo: A.grupo, pls: A.pls, cx: A.cx, cz: A.cz, A };
@@ -4777,12 +4778,37 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     if (sb.vista === v) return;
     ocultarVistaSB();
     platforms.push(...v.pls); v.grupo.visible = true; sb.vista = v;
+    if (v.SP) sueloExtra = sueloSandboxSpleef;   // (los hexágonos del Spleef: también los pisas tú)
   }
   function ocultarVistaSB() {
     const sb = MG.state.sb; if (!sb || !sb.vista) return;
     const fuera = new Set(sb.vista.pls);
     for (let k = platforms.length - 1; k >= 0; k--) if (fuera.has(platforms[k])) platforms.splice(k, 1);
-    sb.vista.grupo.visible = false; sb.vista = null;
+    sb.vista.grupo.visible = false; if (sb.vista.SP) sueloExtra = null; sb.vista = null;
+  }
+  // El piso de hexágonos del Spleef del sandbox (los hundidos de SU intento: tú también te caes si pisas un hueco)
+  function sueloSandboxSpleef(st, pies) {
+    const sb = MG.state.sb, v = sb && sb.vista; if (!v || !v.SP || !sb.ep || !sb.ep.pisadas) { st.hexBajo = null; return null; }
+    const p = pisoSpleef(st.pos.x - v.cx, st.pos.z - v.cz, pies, sb.ep.pisadas, sb.ep.t); return p ? p.top : null;
+  }
+  // Los hexágonos del sandbox: todos en su lugar al empezar un intento; los pisados se hunden y desaparecen (igual que en el juego)
+  function pintarHexesSB(v, ep, reiniciar) {
+    const S = v.SP, m4 = S.m4, col = S.col, cambia = new Set();
+    if (reiniciar) { S.capas.forEach((im, k) => { HEXES.forEach((h, i) => { m4.makeTranslation(S.c.x + h.x, capaY(k) - 0.3, S.c.z + h.z); im.setMatrixAt(i, m4); col.setHex(SPLEEF.colores[k]); if ((h.q + 2 * h.r) % 3 === 0) col.offsetHSL(0, 0, 0.08); im.setColorAt(i, col); }); im.instanceMatrix.needsUpdate = true; im.instanceColor.needsUpdate = true; }); S.vistos = new Set(); return; }
+    ep.pisadas.forEach((M, k) => M.forEach((t0, i) => {
+      const clave = k * 10000 + i, d = hundido(ep.t - t0), h = HEXES[i];
+      if (!S.vistos.has(clave)) { S.vistos.add(clave); col.setHex(0xffffff); S.capas[k].setColorAt(i, col); S.capas[k].instanceColor.needsUpdate = true; }
+      if (d === 0 && !S.vistos.has(-clave - 1)) return;
+      if (hexSeVe(t0, ep.t)) m4.makeTranslation(S.c.x + h.x, capaY(k) - 0.3 - d, S.c.z + h.z); else { m4.makeScale(0, 0, 0); S.vistos.add(-clave - 1); }
+      S.capas[k].setMatrixAt(i, m4); cambia.add(k);
+    }));
+    for (const k of cambia) S.capas[k].instanceMatrix.needsUpdate = true;
+  }
+  // Las puertas de la pista del sandbox: las de verdad según la semilla de ESTE intento (todas paradas al empezar)
+  function puertasSB(v, semilla) {
+    const C = v.C, reales = PISTA_CARRERA.puertas.map((f, i) => puertasReales(semilla, i, f.n));
+    for (const p of C.puertas) { p.real = reales[p.f][p.i]; p.rota = null; p.m.visible = true; p.m.rotation.set(0, 0, 0); p.m.position.y = CARRERA.y0 + (CARRERA.puerta.alto - 1.2) / 2; p.signo.visible = true; const k = platforms.indexOf(p.pl); if (k >= 0) platforms.splice(k, 1); if (!p.real) platforms.push(p.pl); }
+    C.rotas = new Set();
   }
   // Los personajes del sandbox (se arman una sola vez): tu Guy, el buscador de Escondidas, los 4 bots y la mancha de Atrapadas
   function personajesSB() {
@@ -4803,6 +4829,8 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
   function miradorSB(sala, v, terreno) {
     if (sala === 'torre') return { x: v.cx + 12, z: v.cz - 16 };
     if (sala === 'escondidas') { const s = TERRENOS[terreno].spawn; return { x: v.cx + s.x, z: v.cz + s.z - 10 }; }
+    if (sala === 'carrera') return { x: v.cx - 4, z: v.cz + 6, y: CARRERA.y0 };   // (en la salida, arriba de la pista)
+    if (sala === 'spleef') return { x: v.cx + SPLEEF.palco.x, z: v.cz + SPLEEF.palco.z, y: SPLEEF.palco.y };   // (en el palco: se ve todo)
     return { x: v.cx, z: v.cz - 22 };
   }
   // ----- Lo que aprendió cada usuario (en este navegador). Cada jugador tiene SU Guy -----
@@ -4841,7 +4869,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     sb.sala = sala; sb.terreno = terreno; sb.pensando = null; sb.portalListo = 0;
     const v = vistaSB(o, sala, terreno); mostrarVistaSB(v);
     // Quién se ve en esta sala
-    B.guy.visible = true; B.buscador.obj.visible = sala === 'escondidas'; B.botsAN.forEach(b => { b.obj.visible = sala === 'atrapadas'; }); B.manchaSB.visible = false;
+    B.guy.visible = true; B.buscador.obj.visible = sala === 'escondidas'; B.botsAN.forEach((b, i) => { b.obj.visible = sala === 'atrapadas' || (sala === 'spleef' && i < 3); }); B.manchaSB.visible = false;
     pintarEtiquetaSB(B.guy.userData.etiqueta, sb.nombre);
     sb.claveCerebros = claveSalaSB(sala, terreno); sb.cerebros = leerCerebrosSB(sala, sb.claveCerebros);
     nuevoIntentoSB();
@@ -4851,7 +4879,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     for (const b of document.querySelectorAll('#sbVel button')) b.classList.toggle('elegido', +b.dataset.vel === sb.vel);
     pintarSeguirSB();
     // Apareces en el mirador de esa sala (porque la elegiste); de ahí caminas libre a donde quieras
-    const mi = miradorSB(sala, v, terreno); placePlayer(mi.x, 0, mi.z); camYaw = Math.PI;
+    const mi = miradorSB(sala, v, terreno); placePlayer(mi.x, mi.y || 0, mi.z); camYaw = sala === 'carrera' ? CAM_META : Math.PI;
   }
   const sbSeguir = document.getElementById('sbSeguir');
   function pintarSeguirSB() { const sb = MG.state.sb; sbSeguir.textContent = `🎥 Seguir a ${sb.nombre}: ${sb.seguir ? 'SÍ' : 'NO'}`; sbSeguir.classList.toggle('elegido', !!sb.seguir); }
@@ -4861,7 +4889,10 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     // Un intento prueba un cerebro nuevo (mutado) y el siguiente muestra lo mejor que sabe (así se ve cuánto aprendió)
     const muestra = sb.cerebros[0].intento % 2 === 1;
     sb.pruebas = sb.cerebros.map(c => (muestra ? { pesos: c.mejor.pesos } : proximoCerebro(c)));
-    sb.ep = crearEpisodio(sb.sala, sb.pruebas.map(p => p.pesos), sb.cerebros.map(c => c.intento), semillaIntento(sb.sala, sb.cerebros[0].intento), false, { terreno: sb.terreno });
+    const semilla = semillaIntento(sb.sala, sb.cerebros[0].intento);
+    sb.ep = crearEpisodio(sb.sala, sb.pruebas.map(p => p.pesos), sb.cerebros.map(c => c.intento), semilla, false, { terreno: sb.terreno });
+    if (sb.vista && sb.vista.SP) pintarHexesSB(sb.vista, sb.ep, true);   // 🔶 todos los hexágonos de vuelta
+    if (sb.vista && sb.vista.C) { puertasSB(sb.vista, semilla); for (const q of sb.vista.C.piezas) q.nuevo = true; }   // 🏁 las puertas de este intento
     sb.acum = 0; pintarGraficoSB();
   }
   function salirSandbox(o) {
@@ -4933,8 +4964,14 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
       if (i >= 0) { const d = v.A.portales[v.A.portales[i].par]; ps.pos.set(d.salida.x, d.y + 0.05, d.salida.z); ps.vel.set(0, 0, 0); sb.portalListo = ahora + 1200; avisoModo('✨ ¡Portal!', false, 900); sfxPortal(); }
     }
     if (sb.sala === 'escondidas' && v.T.carros.length) moverCarros(v.T, tR);
+    if (v.C) {   // 🏁 la pista: lo que se mueve, y las puertas de verdad que el Guy rompe al pasar
+      moverCarrera(tR, v.C);
+      const a0 = ep.agentes[0];
+      for (const p of v.C.puertas) if (p.real && p.rota === null && Math.abs(a0.x - (p.pl.x - v.cx)) < 0.8 && Math.abs(a0.z - (p.pl.z - v.cz)) < p.ancho / 2 && a0.y < p.pl.top) { p.rota = tR; v.C.rotas.add(p.f * 100 + p.i); }
+    }
+    if (v.SP) pintarHexesSB(v, ep, false);   // 🔶 los hexágonos que se hunden
     // Dibujar a cada uno donde está. El que recibió un castigo… ¡tiembla como licuadora!
-    const cuerpos = [B.guy, ...(sb.sala === 'atrapadas' ? B.botsAN.map(b => b.obj) : [])];
+    const cuerpos = [B.guy, ...(sb.sala === 'atrapadas' || sb.sala === 'spleef' ? B.botsAN.map(b => b.obj) : [])];
     ep.agentes.forEach((a, k) => {
       const b = cuerpos[k]; if (!b) return;
       b.position.set(v.cx + a.x, a.y, v.cz + a.z);
@@ -4958,7 +4995,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
         if (cuerpo) { cuerpo.material.transparent = !a.vivo; cuerpo.material.opacity = a.vivo ? 1 : 0.35; }
         if (a.vivo && mareadoAN(ep.ronda, k, ep.t * 1000)) b.rotation.z = Math.sin(tR * 30) * 0.08;
       } else if (cuerpo) { cuerpo.material.transparent = false; cuerpo.material.opacity = 1; }
-      b.visible = true;
+      b.visible = sb.sala !== 'spleef' || a.vivo;   // (en el Spleef, el que se cayó afuera ya no está)
     });
     if (sb.sala === 'escondidas') {
       const bu = ep.buscador; B.buscador.obj.position.set(v.cx + bu.x, bu.y, v.cz + bu.z);
@@ -4988,6 +5025,8 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
   // El área donde puedes caminar en la sala que estás mirando (desde el origen del sandbox)
   function areaSB(o) {
     const sb = MG.state.sb, v = sb && sb.vista; if (!v) return null;
+    if (sb.sala === 'carrera') return { x0: v.cx - o.x - 12, x1: v.cx - o.x + CARRERA.meta.x1 + 4, z0: v.cz - o.z - 26, z1: v.cz - o.z + 26 };
+    if (sb.sala === 'spleef') { const r = SPLEEF.radio + 2; return { x0: v.cx - o.x - r, x1: v.cx - o.x + r, z0: v.cz - o.z - r - 14, z1: v.cz - o.z + r }; }
     const m = sb.sala === 'torre' ? { x: 45, z: 45 } : sb.sala === 'escondidas' ? { x: TERRENOS[sb.terreno].ancho / 2 - 1, z: TERRENOS[sb.terreno].largo / 2 - 1 } : { x: ARENA_AN.mitad - 1, z: ARENA_AN.mitad - 1 };
     return { x0: v.cx - o.x - m.x, x1: v.cx - o.x + m.x, z0: v.cz - o.z - m.z, z1: v.cz - o.z + m.z };
   }
@@ -5665,7 +5704,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     else if (!S || S.solo) return;
     else if (m.tipo === 'spPisa' && Array.isArray(m.h)) {
       // Los hexágonos que pisó alguien (con la hora del servidor): se caen igual para todos
-      for (const p of m.h) if (Array.isArray(p) && Number.isInteger(p[0]) && Number.isInteger(p[1]) && Number.isFinite(p[2]) && p[0] >= 0 && p[0] < SPLEEF.capas && p[1] >= 0 && p[1] < HEXES.length) pisarHex(p[0], p[1], p[2] / 1000);
+      for (const p of m.h) if (Array.isArray(p) && Number.isInteger(p[0]) && Number.isInteger(p[1]) && Number.isFinite(p[2]) && p[2] >= 3000 && p[0] >= 0 && p[0] < SPLEEF.capas && p[1] >= 0 && p[1] < HEXES.length) pisarHex(p[0], p[1], p[2] / 1000);   // (antes del ¡ya! no se hunde nada)
     } else if (m.tipo === 'spFuera' && Number.isInteger(m.id)) afueraSP(m.id, typeof m.nombre === 'string' ? m.nombre.slice(0, 20) : null);
     else if (m.tipo === 'spFin') terminarSP(Number.isInteger(m.ganador) ? m.ganador : null, typeof m.nombre === 'string' ? m.nombre.slice(0, 20) : null);
   }
@@ -7176,7 +7215,8 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
         friendShot(m);
       } else if (m.tipo === 'corrige') {
         // El servidor dice que no estás donde crees (te moviste demasiado rápido, o muy alto): vuelves a donde dice él
-        const st = MG.state, enRonda = MG.active === MODES.escuela && ((st.fase === 'atrapadas' && st.an && !st.an.solo) || (st.fase === 'escondidas' && st.esc && !st.esc.solo));
+        const st = MG.state, enRonda = MG.active === MODES.escuela && ((st.fase === 'atrapadas' && st.an && !st.an.solo) || (st.fase === 'escondidas' && st.esc && !st.esc.solo)
+          || (st.fase === 'carrera' && st.cr && !st.cr.solo) || (st.fase === 'spleef' && st.sp && !st.sp.solo && !st.sp.fuera));
         if (enRonda && [m.x, m.y, m.z].every(Number.isFinite)) { ps.pos.set(m.x, m.y, m.z); ps.vel.set(0, 0, 0); }
       } else if (m.tipo === 'golpe') {
         red.aturdido = 2;
@@ -7255,7 +7295,11 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     for (const f of red.otros.values()) {
       const o = f.obj;
       const v = valoresEn(f.suave, ahora, giroAmigo);
-      if (v) { o.position.set(v[0], v[1], v[2]); o.rotation.y = v[3]; }
+      if (v) {
+        const vx = dt > 0 ? (v[0] - o.position.x) / dt : 0, vz = dt > 0 ? (v[2] - o.position.z) / dt : 0;
+        o.position.set(v[0], v[1], v[2]);
+        o.rotation.y = acercarAngulo(o.rotation.y, rumboDeMovimiento(vx, vz, v[3]), Math.min(1, dt * 10));   // 🧭 mira hacia donde camina (girando suave)
+      }
       bendObj(o, dt);
     }
     // Pedacitos de la explosión: vuelan, caen, giran y se desvanecen

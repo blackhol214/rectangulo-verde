@@ -7,14 +7,17 @@
 //  3. Si con ese cerebro sacó MÁS puntos que con el mejor que tenía, se lo queda. Si no, lo tira.
 // Al principio sus pesos son al azar y además hace muchas cosas al azar ("explora"); con los intentos explora menos.
 // (las versiones ?v= tienen que ser las mismas que en index.html: así el navegador usa una sola copia de cada archivo)
-import { seededRandom, torreNoMires, botVe, tapanVista, saveKey, cajasDe, NO_MIRES, TERRENOS, cajasTerreno, OJO, BOT_ESC, plataformasAN, desplazamientoAN, portalesAN, portalCerca, ARENA_AN, CARROS, CARRO, carroPos, partesCarro, cajasTortugas, elegirObjetivoAN, launchSpeedForHeight, puedeDobleSalto, escondites, ordenEscondites } from './logic.js?v=2026-11-02-pwa';
-import { AN, ESC, nuevaRondaAN, pasarAN, explotarAN, seTocan, mareadoAN, empujeAN, limpiarNombre } from './red.js?v=2026-11-02-pwa';
+import { seededRandom, torreNoMires, botVe, tapanVista, saveKey, cajasDe, NO_MIRES, TERRENOS, cajasTerreno, OJO, BOT_ESC, plataformasAN, desplazamientoAN, portalesAN, portalCerca, ARENA_AN, CARROS, CARRO, carroPos, partesCarro, cajasTortugas, elegirObjetivoAN, launchSpeedForHeight, puedeDobleSalto, escondites, ordenEscondites, SPLEEF, HEXES, hexEn, capaY, pisoSpleef, salidaSpleef, fueraSpleef, capaDe, hexSolido, CARRERA, PISTA_CARRERA, posPlatCarrera, golpePuno, golpeBarra, golpeGuardian, vientoTubo, salidaCarrera, siguienteCheckpoint, enMetaCarrera, seCayoCarrera, puertasReales, lugaresPuertas, CORREDOR_CARRERA, PARED } from './logic.js?v=2026-11-01-antitrampas';
+import { AN, ESC, nuevaRondaAN, pasarAN, explotarAN, seTocan, mareadoAN, empujeAN, limpiarNombre } from './red.js?v=2026-11-01-antitrampas';
 
-export const SALAS = ['torre', 'escondidas', 'atrapadas'];
-export const NOMBRE_SALA = { torre: 'No mires abajo', escondidas: 'Escondidas', atrapadas: 'Atrapadas Nocivas' };
+export const SALAS = ['torre', 'escondidas', 'atrapadas', 'spleef', 'carrera'];
+export const NOMBRE_SALA = { torre: 'No mires abajo', escondidas: 'Escondidas', atrapadas: 'Atrapadas Nocivas', spleef: 'Spleef', carrera: 'Carrera' };
+// Cuántos juegan en cada sala (el 0 siempre es The Guy; los demás son bots que también aprenden)
+export const AGENTES = { atrapadas: 5, spleef: 4 };
+export const agentesDe = sala => AGENTES[sala] || 1;
 // La física de siempre (la misma del juego): gravedad 30, salto 12,5 y caminar a 12 (en Atrapadas, 15)
 export const FISICA = { grav: 30, salto: 12.5, vel: 12, dt: 1 / 30 };
-export const EPISODIO_S = { torre: 25, escondidas: (ESC.esconderMs + ESC.buscarMs) / 1000, atrapadas: 120 };   // Escondidas: 30 s para esconderse + 100 s de búsqueda (como el juego)   // cuánto dura cada intento (en segundos del juego)
+export const EPISODIO_S = { torre: 25, escondidas: (ESC.esconderMs + ESC.buscarMs) / 1000, atrapadas: 120, spleef: 45, carrera: 45 };   // Escondidas: 30 s para esconderse + 100 s de búsqueda (como el juego)   // cuánto dura cada intento (en segundos del juego)
 
 // ---------- 🏆 Las recompensas (las inventó Mathias) ----------
 export const RECOMPENSAS = {
@@ -23,6 +26,12 @@ export const RECOMPENSAS = {
   torre: { checkpoint: 5, atras: -3, caida: -4, quieto: -1, quietoS: 5 },   // +5 por cada plataforma nueva · ir para atrás y caerse, castigo
   escondidas: { escondidoPorSeg: 1, vistoPorSeg: -1, quieto: -3, quietoS: 4, encontrado: -10 }, // escondido suma · si lo ven resta · quieto mucho rato y que lo encuentren: ¡castigo!
   atrapadas: { sinManchaPorSeg: 1, teLaPasan: -5, explotas: -10, ganas: 10 },  // cada segundo sin la mancha suma · que te la pasen o explotar, castigo
+  // Spleef: cada segundo que sigue arriba suma (y más si está en las capas de arriba) · caerse a la capa de abajo, castigo y licuadora
+  // · quedar afuera, ¡castigo grande! · quieto mucho rato en un hexágono: castigo (si no, el "truco" sería no moverse)
+  spleef: { vivoPorSeg: 1, arribaPorSeg: 0.5, baja: -3, fuera: -15, quieto: -2, quietoS: 2 },
+  // Carrera: +5 por cada checkpoint (como la torre) · que te tiren para atrás o caerte, castigo · ¡premio grande en la meta!
+  // (+0,2 por cada metro nuevo que avanza: así sabe que va bien antes de llegar al primer checkpoint)
+  carrera: { checkpoint: 5, avancePorM: 0.2, atras: -2, caida: -4, meta: 20, quieto: -1, quietoS: 4 },
 };
 // Cuántos puntos da (o quita) cada cosa que pasa. evento: { tipo, seg? }. castigo: si hay que sacudirlo (¡como licuadora!)
 export function recompensa(sala, ev) {
@@ -40,6 +49,17 @@ export function recompensa(sala, ev) {
     case 'atrapadas:teLaPasan': return { puntos: R.teLaPasan, castigo: true };
     case 'atrapadas:explotas': return { puntos: R.explotas, castigo: true };
     case 'atrapadas:ganas': return { puntos: R.ganas, castigo: false };
+    case 'spleef:vivo': return { puntos: R.vivoPorSeg * ev.seg, castigo: false };
+    case 'spleef:arriba': return { puntos: R.arribaPorSeg * ev.seg, castigo: false };
+    case 'spleef:baja': return { puntos: R.baja, castigo: true };
+    case 'spleef:fuera': return { puntos: R.fuera, castigo: true };
+    case 'spleef:quieto': return { puntos: R.quieto, castigo: true };
+    case 'carrera:checkpoint': return { puntos: R.checkpoint, castigo: false };
+    case 'carrera:avance': return { puntos: R.avancePorM * ev.seg, castigo: false };   // (seg: los metros nuevos)
+    case 'carrera:atras': return { puntos: R.atras, castigo: true };
+    case 'carrera:caida': return { puntos: R.caida, castigo: true };
+    case 'carrera:meta': return { puntos: R.meta, castigo: false };
+    case 'carrera:quieto': return { puntos: R.quieto, castigo: false };
     default: return { puntos: 0, castigo: false };
   }
 }
@@ -82,7 +102,7 @@ export function proximoCerebro(c) {
 // El juez: ¿cuántos puntos saca el agente k con estos cerebros, en pruebas "limpias" (sin cosas al azar)?
 // Se juzga al cerebro nuevo y al mejor con las MISMAS pruebas: así es justo (los dos con la misma suerte)
 // En Atrapadas el juez mira solo a The Guy (los otros 4 bots aprenden con lo que sacaron en el intento que se vio: son muchos)
-export const PRUEBAS_JUEZ = { torre: 2, escondidas: 1, atrapadas: 3 };
+export const PRUEBAS_JUEZ = { torre: 2, escondidas: 1, atrapadas: 3, spleef: 2, carrera: 1 };
 export function juzgar(sala, pesosDeTodos, k, semilla, opciones = {}) {
   let suma = 0;
   for (let i = 0; i < PRUEBAS_JUEZ[sala]; i++) suma += correrEpisodio(sala, pesosDeTodos, null, semilla * 31 + i, true, opciones)[k];
@@ -105,13 +125,13 @@ export function aprender(c, prueba, visto, nota) {
 }
 // Después de cada intento "piensa": prueba en su cabeza IDEAS más (otras mutaciones) y el juez compara todas con su mejor.
 // Es una función que va de a poquito (yield): así el juego no se traba mientras piensa
-export const IDEAS = { torre: 6, escondidas: 2, atrapadas: 2 };
+export const IDEAS = { torre: 6, escondidas: 2, atrapadas: 2, spleef: 3, carrera: 6 };
 export function* pensar(sala, cerebros, pruebas, vistos, opciones = {}) {
   const semilla = semillaIntento(sala, cerebros[0].intento) + 7, mejores = cerebros.map(c => c.mejor.pesos), out = [];
   for (let k = 0; k < cerebros.length; k++) {
     const c = cerebros[k];
     if (opciones.soloAprende !== undefined && opciones.soloAprende !== k) { out.push(c); continue; }   // (para medir: los demás no aprenden)
-    if (!PRUEBAS_JUEZ[sala] || (sala === 'atrapadas' && k > 0)) {   // sin juez: compara lo que sacó con lo que venía sacando su mejor cerebro (que se va "olvidando" un poquito)
+    if (!PRUEBAS_JUEZ[sala] || (agentesDe(sala) > 1 && k > 0)) {   // (los bots de Atrapadas y del Spleef)   // sin juez: compara lo que sacó con lo que venía sacando su mejor cerebro (que se va "olvidando" un poquito)
       out.push(aprender(c, pruebas[k], vistos[k], { nueva: vistos[k], mejor: c.intento ? c.mejor.puntaje * 0.97 : -Infinity }));
       continue;
     }
@@ -185,6 +205,35 @@ export function salaAtrapadas() {
       limX: ARENA_AN.mitad - 1, limZ: ARENA_AN.mitad - 1, mitad: ARENA_AN.mitad, piso: 0, inicio: { x: 0, y: 0, z: 0 } };
   });
 }
+// 🔶 Spleef: la arena de verdad (6 capas de hexágonos que se hunden con las mismas reglas). Los primeros 3 s no se hunde nada
+// (así tiene tiempo de "despertarse": un comienzo seguro)
+export const SPLEEF_SB = { segura: 3 };
+export const salaSpleef = () => unaVez('spleef', () => ({ inicio: { x: 0, y: capaY(0), z: 0 }, piso: null, radio: SPLEEF.radio }));
+// 🏁 Carrera: la pista de verdad (puños, puertas, tubos, trampolines, ruedas, checkpoints). Las puertas de verdad dependen de la semilla
+// del intento (así aprende a buscar la puerta: a veces es una, a veces otra). Cajas fijas + las que se mueven (cada paso)
+export function salaCarrera(semilla) {
+  const reales = PISTA_CARRERA.puertas.map((f, i) => puertasReales(semilla, i, f.n));
+  return unaVez('carrera:' + reales.map(r => r.map(Number).join('')).join('|'), () => {
+    const P = PISTA_CARRERA, Y = CARRERA.y0, fijas = [], mueven = [];
+    P.plats.forEach((p, i) => {
+      const hw = p.redonda ? p.r * 0.85 : p.ancho / 2, hd = p.redonda ? p.r * 0.85 : p.largo / 2, caja = { x0: p.x - hw, x1: p.x + hw, z0: p.z - hd, z1: p.z + hd, y0: p.y - (p.grosor || 1), y1: p.y, plat: i, lanza: p.lanza || null };
+      (p.mueve ? mueven : fijas).push(caja);
+    });
+    // las puertas falsas, los pilares y las paredes de las zonas de puertas (las de verdad se dejan pasar)
+    P.puertas.forEach((f, fi) => {
+      const L = lugaresPuertas(f); let z = f.z0;
+      const pared = (z0, z1) => { if (z1 - z0 > 0.05) fijas.push({ x0: f.x - 0.5, x1: f.x + 0.5, z0, z1, y0: Y, y1: Y + CARRERA.puerta.alto }); };
+      L.forEach((p, i) => { pared(z, p.z - p.ancho / 2); if (!reales[fi][i]) pared(p.z - p.ancho / 2, p.z + p.ancho / 2); z = p.z + p.ancho / 2; });
+      pared(z, f.z1);
+    });
+    for (const t of CORREDOR_CARRERA) { fijas.push({ x0: t.x0, x1: t.x1, z0: t.zmin - PARED.grosor, z1: t.zmin, y0: Y - PARED.abajo, y1: Y + PARED.arriba }); fijas.push({ x0: t.x0, x1: t.x1, z0: t.zmax, z1: t.zmax + PARED.grosor, y0: Y - PARED.abajo, y1: Y + PARED.arriba }); }
+    return { fijas, indice: indexarCajas(fijas), mueven, reales, inicio: salidaCarrera(0), piso: null };
+  });
+}
+// Las plataformas que se mueven de la carrera, en el segundo t
+function cajasCarreraEn(def, t) {
+  return def.mueven.map(c => { const p = PISTA_CARRERA.plats[c.plat], q = posPlatCarrera(p, t), hw = (c.x1 - c.x0) / 2, hd = (c.z1 - c.z0) / 2; return { ...c, x0: q.x - hw, x1: q.x + hw, z0: q.z - hd, z1: q.z + hd, y0: q.y - (p.grosor || 1), y1: q.y }; });
+}
 // Las cajas de la arena en el segundo t (las que se mueven, donde estén en ese momento)
 export function cajasArena(def, t) {
   return def.plats.map(p => {
@@ -229,11 +278,13 @@ export function moverConCajas(a, dx, dz, cajas, dt, piso = 0) {
 export const terrenoDe = semilla => Math.abs(semilla) % TERRENOS.length;
 // opciones.terreno: en Escondidas, en qué terreno (el que estás mirando); si no, cambia con cada intento
 export function crearEpisodio(sala, cerebros, intentos, semilla, limpio = false, opciones = {}) {
-  const rnd = seededRandom(semilla), def = sala === 'torre' ? salaTorre() : sala === 'escondidas' ? salaEscondidas(opciones.terreno ?? terrenoDe(semilla)) : salaAtrapadas();
-  const n = sala === 'atrapadas' ? 5 : 1;
+  const rnd = seededRandom(semilla), def = sala === 'torre' ? salaTorre() : sala === 'escondidas' ? salaEscondidas(opciones.terreno ?? terrenoDe(semilla))
+    : sala === 'spleef' ? salaSpleef() : sala === 'carrera' ? salaCarrera(semilla) : salaAtrapadas();
+  const n = agentesDe(sala);
   const agentes = Array.from({ length: n }, (_, k) => {
     const ang = (k / n) * Math.PI * 2, r = n > 1 ? 12 : 0;   // en Atrapadas empiezan en un círculo de 12 m, como en el juego
-    return { x: def.inicio.x + Math.cos(ang) * r, y: def.inicio.y, z: def.inicio.z + Math.sin(ang) * r, vy: 0, ex: 0, ez: 0, suelo: true, pisaba: true,
+    const s = sala === 'spleef' ? salidaSpleef(k, n) : null;   // (en el Spleef, en su lugar de la capa de arriba)
+    return { x: s ? s.x : def.inicio.x + Math.cos(ang) * r, y: def.inicio.y, z: s ? s.z : def.inicio.z + Math.sin(ang) * r, vy: 0, ex: 0, ez: 0, suelo: true, pisaba: true, capa: 0, cp: 0, golpeHasta: 0, probadas: {},
       pesos: cerebros[k], explora: limpio ? 0 : exploracion((intentos && intentos[k]) ?? 0), accion: null, cambia: 0, puntaje: 0, temblor: 0, vivo: true,
       plat: 0, maxPlat: 0, saltosAire: 0, dobles: 0, quieto: 0, ultX: 0, ultZ: 0, visto: false, portalListo: 0 };
   });
@@ -243,6 +294,7 @@ export function crearEpisodio(sala, cerebros, intentos, semilla, limpio = false,
     for (const a of agentes) { a.ultX = a.x; a.ultZ = a.z; a.ruta = rutaEscondite(def, a); }
   }
   if (sala === 'atrapadas') ep.ronda = nuevaRondaAN(agentes.map((_, k) => k), 0, rnd);
+  if (sala === 'spleef') ep.pisadas = Array.from({ length: SPLEEF.capas }, () => new Map());
   return ep;
 }
 // Los "sentidos" de cada agente: hacia dónde queda "su meta" (dir) y 6 números que le cuentan qué pasa
@@ -262,6 +314,8 @@ export function sentidos(ep, k) {
     const sd = Math.hypot(a.x - b.x, a.z - b.z);
     return { dir: dirA(hx, hz), entradas: [Math.min(hd, 10) / 5, Math.min(sd, 30) / 15, a.visto ? 1 : 0, a.quieto / RECOMPENSAS.escondidas.quietoS, Math.min(hd, 1), 1] };
   }
+  if (ep.sala === 'spleef') return sentidosSpleef(ep, a);
+  if (ep.sala === 'carrera') return sentidosCarrera(ep, a);
   const r = ep.ronda, soy = r && r.portador === k;
   let tx = 0, tz = 0, d = 20;
   if (r && soy) {
@@ -274,6 +328,55 @@ export function sentidos(ep, k) {
   }
   const borde = Math.min(ep.def.mitad - Math.abs(a.x), ep.def.mitad - Math.abs(a.z)) / ep.def.mitad;   // ¿qué tan cerca de la pared?
   return { dir: dirA(tx, tz), entradas: [Math.min(d, 20) / 10, soy ? 1 : -1, borde, Math.min(d, 2) / 2, mareadoAN(r, k, ep.t * 1000) ? 1 : 0, 1] };
+}
+// Spleef: su meta es un hexágono SANO (que nadie pisó) cerca, en su capa. Le cuenta: qué tan lejos está, si adelante hay un hueco
+// (o un hexágono que se está cayendo), si el que pisa ya se está hundiendo, si está en el piso y en qué capa está
+function sentidosSpleef(ep, a) {
+  const P = ep.pisadas[Math.min(SPLEEF.capas - 1, a.capa)], dirA = (x, z) => { const d = Math.hypot(x, z) || 1; return { x: x / d, z: z / d }; };
+  if (!a.meta || P.has(a.meta.i) || Math.hypot(a.meta.x - a.x, a.meta.z - a.z) < 1.5) {
+    let mejor = null, nota = -Infinity;
+    for (let n = 0; n < 30; n++) {
+      const j = Math.floor(ep.rnd() * HEXES.length), h = HEXES[j], d = Math.hypot(h.x - a.x, h.z - a.z);
+      if (d < 2.5 || d > 9 || P.has(j)) continue;
+      const v = -Math.abs(d - 5) - Math.hypot(h.x, h.z) * 0.05;
+      if (v > nota) { nota = v; mejor = { x: h.x, z: h.z, i: j }; }
+    }
+    a.meta = mejor || { x: -a.x * 0.5, z: -a.z * 0.5, i: -1 };
+  }
+  const dx = a.meta.x - a.x, dz = a.meta.z - a.z, d = Math.hypot(dx, dz) || 1;
+  const adelante = hexEn(a.x + dx / d * 1.8, a.z + dz / d * 1.8), malo = adelante < 0 || (P.has(adelante) && !hexSolido(P.get(adelante), ep.t + 0.3));
+  const abajo = hexEn(a.x, a.z), hundiendo = abajo >= 0 && P.has(abajo);
+  return { dir: dirA(dx, dz), entradas: [Math.min(d, 9) / 6, malo ? 1 : 0, hundiendo ? 1 : 0, a.suelo ? 1 : 0, a.capa / (SPLEEF.capas - 1), 1] };
+}
+// Carrera: su meta es un punto un poco más adelante en la pista (por el medio de la plataforma que viene; en las puertas, la que está
+// probando). Le cuenta: si adelante hay un hueco, si viene un golpe (puño o barra), si está en el piso, qué tan alta está la siguiente
+function sentidosCarrera(ep, a) {
+  const P = PISTA_CARRERA, def = ep.def, t = ep.t, dirA = (x, z) => { const d = Math.hypot(x, z) || 1; return { x: x / d, z: z / d }; };
+  const cajas = def.fijas.concat(ep.moviles);
+  const pisoEn = (x, z) => { let top = null; for (const c of cajas) if (c.plat !== undefined && x >= c.x0 && x <= c.x1 && z >= c.z0 && z <= c.z1 && (top === null || c.y1 > top)) top = c.y1; return top; };
+  // por dónde seguir: la plataforma que hay 4 m más adelante (la más cercana a él de costado); si ahí hay un hueco, la siguiente
+  let cubre = null, sig = null;
+  for (const c of cajas) {
+    if (c.plat === undefined || (c.lanza && c.lanza.x < 0)) continue;   // (el trampolín rojo, no)
+    if (c.x0 <= a.x + 4 && c.x1 >= a.x + 4 && (!cubre || Math.abs((c.z0 + c.z1) / 2 - a.z) < Math.abs((cubre.z0 + cubre.z1) / 2 - a.z))) cubre = c;
+    if (c.x0 > a.x + 1 && c.x0 < a.x + 25 && (!sig || c.x0 < sig.x0)) sig = c;
+  }
+  const guia = cubre || sig;
+  let tx = a.x + 5, tz = guia ? (guia.z0 + guia.z1) / 2 : a.z;
+  // 🚪 una fila de puertas adelante: prueba una (si chocó contra una falsa, la tacha y prueba otra)
+  const fi = P.puertas.findIndex(f => a.x > f.x - 12 && a.x < f.x + 0.5);
+  if (fi >= 0) {
+    const f = P.puertas[fi], L = lugaresPuertas(f), prob = a.probadas[fi] || (a.probadas[fi] = []);
+    if (a.puerta === undefined || a.puertaFila !== fi || prob.includes(a.puerta)) { const libres = L.map((_, i) => i).filter(i => !prob.includes(i)); a.puerta = libres.length ? libres[Math.floor(ep.rnd() * libres.length)] : 0; a.puertaFila = fi; }
+    tz = L[a.puerta].z; tx = Math.abs(a.z - tz) > 0.6 && a.x > f.x - 2.5 ? f.x - 2 : f.x + 3;
+    if (a.choco && a.x > f.x - 1.4 && Math.abs(a.z - tz) < 0.8) prob.push(a.puerta);   // ¡era falsa!
+  }
+  const hueco = pisoEn(a.x + 2, a.z) === null ? 1 : 0;
+  // ¿viene un golpe? (un puño o una barra que lo tocaría en un ratito, un poco más adelante)
+  const pos = { x: a.x + 1.2, y: a.y, z: a.z }; let peligro = 0;
+  for (const f of P.punos) if (Math.abs(f.x - pos.x) < 3 && golpePuno(pos, f, t + 0.35)) peligro = 1;
+  for (const b of P.barras) if (Math.hypot(b.x - pos.x, b.z - pos.z) < b.r + 1 && golpeBarra(pos, b, t + 0.25)) peligro = 1;
+  return { dir: dirA(tx - a.x, tz - a.z), entradas: [hueco, peligro, a.suelo ? 1 : 0, sig ? Math.max(-1, Math.min(1, (sig.y1 - a.y) / 4)) : 0, Math.min(1, Math.abs(tz - a.z) / 4), 1] };
 }
 // El camino al escondite de verdad más cercano (una cueva del terreno): primero su entrada y después adentro
 export function rutaEscondite(def, a) {
@@ -311,7 +414,7 @@ export function pasoEpisodio(ep) {
   ep.t += dt;
   ep.eventos = [];
   // lo que se mueve (la arena, los carros y las tortugas) se calcula cada paso; lo quieto se busca en su cuadro
-  const moviles = S === 'atrapadas' ? cajasArena({ plats: def.mueven }, ep.t) : S === 'escondidas' && def.terreno === 1 ? cajasCarros(ep.t) : NADA;
+  const moviles = S === 'atrapadas' ? cajasArena({ plats: def.mueven }, ep.t) : S === 'escondidas' && def.terreno === 1 ? cajasCarros(ep.t) : S === 'carrera' ? cajasCarreraEn(def, ep.t) : NADA;
   ep.moviles = moviles;
   const cajasCerca = (x, z) => (def.indice ? (moviles.length ? cajasDelCuadro(def.indice, x, z).concat(moviles) : cajasDelCuadro(def.indice, x, z)) : moviles);
   ep.agentes.forEach((a, k) => {
@@ -329,15 +432,18 @@ export function pasoEpisodio(ep) {
     if (ac.saltar && a.suelo) { a.vy = FISICA.salto; a.suelo = false; }
     // 🦘 En la torre también tiene DOBLE SALTO (como tú): en el aire, si "salta" otra vez, salta una vez más.
     // Su "volver a apretar" es cuando ya dejó de subir (vy ≤ 0). En el sandbox la energía es infinita: no gasta batería.
-    else if (S === 'torre' && ac.saltar && puedeDobleSalto({ enElPiso: a.suelo, saltosEnAire: a.saltosAire, apretoRecien: a.vy <= 0, bateria: Infinity })) {
+    else if ((S === 'torre' || S === 'spleef' || S === 'carrera') && ac.saltar && puedeDobleSalto({ enElPiso: a.suelo, saltosEnAire: a.saltosAire, apretoRecien: a.vy <= 0, bateria: Infinity })) {
       a.vy = FISICA.salto; a.saltosAire++; a.dobles++;   // (dobles: el juego lo cuenta para dibujar el anillo y el sonido)
     }
     // 2. Se mueve chocando con las cajas del mapa (con el empujón que traiga, que se va frenando)
-    const sobre = moverConCajas(a, (ux * vel + a.ex) * dt, (uz * vel + a.ez) * dt, cajasCerca(a.x, a.z), dt, def.piso);
+    if (S === 'spleef') { pasoSpleefAgente(ep, a, (ux * vel + a.ex) * dt, (uz * vel + a.ez) * dt, dt); return; }
+    const viento = S === 'carrera' ? vientoTubo(a, PISTA_CARRERA.tubos) : null;   // (en un tubo de viento, te lleva)
+    const sobre = moverConCajas(a, (ux * vel + a.ex + (viento ? viento.x : 0)) * dt, (uz * vel + a.ez + (viento ? viento.z : 0)) * dt, cajasCerca(a.x, a.z), dt, def.piso);
+    if (S === 'carrera') { pasoCarreraAgente(ep, a, sobre, dt); return; }
     const freno = Math.exp(-(a.suelo ? 6 : 0.4) * dt); a.ex *= freno; a.ez *= freno;
     if (a.suelo) a.saltosAire = 0;   // tocó el piso: se recarga el doble salto
     if (sobre && sobre.salto && a.suelo) { a.vy = launchSpeedForHeight(sobre.salto, FISICA.grav); a.suelo = false; }   // ¡un trampolín! (como en el juego)
-    if (S !== 'torre') { a.x = Math.min(def.limX, Math.max(-def.limX, a.x)); a.z = Math.min(def.limZ, Math.max(-def.limZ, a.z)); }
+    if (S !== 'torre' && def.limX) { a.x = Math.min(def.limX, Math.max(-def.limX, a.x)); a.z = Math.min(def.limZ, Math.max(-def.limZ, a.z)); }
     // 3. Lo que pasa en la torre: ¿llegó a una plataforma nueva? ¿volvió para atrás? ¿se cayó al piso?
     if (S === 'torre' && a.suelo && !a.pisaba) {   // recién aterrizó
       if (sobre) {
@@ -364,8 +470,53 @@ export function pasoEpisodio(ep) {
   });
   if (S === 'escondidas') pasoEscondidas(ep, dt);
   if (S === 'atrapadas') pasoAtrapadas(ep, dt);
+  if (S === 'spleef' && ep.agentes.every(a => !a.vivo)) ep.fin = true;
   if (ep.t >= EPISODIO_S[S]) ep.fin = true;
   return ep;
+}
+// Quedarse quieto mucho rato: castigo (para que no "haga trampa" sin moverse)
+function revisarQuieto(ep, a, S, dt) {
+  if (Math.hypot(a.x - a.ultX, a.z - a.ultZ) > 1) { a.ultX = a.x; a.ultZ = a.z; a.quieto = 0; }
+  else if ((a.quieto += dt) >= RECOMPENSAS[S].quietoS) { sumar(ep, a, S, { tipo: 'quieto' }); a.quieto = 0; }
+}
+// 🔶 Spleef: el piso son los hexágonos (los mismos de la sala de verdad). Lo que pisa se empieza a hundir (después de los 3 s seguros)
+function pasoSpleefAgente(ep, a, dx, dz, dt) {
+  a.x += dx; a.z += dz;
+  const yAntes = a.y; a.vy -= FISICA.grav * dt; a.y += a.vy * dt;
+  const p = pisoSpleef(a.x, a.z, yAntes, ep.pisadas, ep.t);
+  if (p && a.y <= p.top) { a.y = p.top; a.vy = 0; a.suelo = true; } else a.suelo = false;
+  const freno = Math.exp(-(a.suelo ? 6 : 0.4) * dt); a.ex *= freno; a.ez *= freno;
+  if (a.suelo) {
+    a.saltosAire = 0;
+    if (ep.t >= SPLEEF_SB.segura && !ep.pisadas[p.capa].has(p.i)) ep.pisadas[p.capa].set(p.i, ep.t);
+    if (p.capa > a.capa) { sumar(ep, a, 'spleef', { tipo: 'baja', capa: p.capa }); a.capa = p.capa; a.meta = null; }   // ¡se cayó a la capa de abajo!
+  }
+  if (fueraSpleef(a.y)) { a.vivo = false; sumar(ep, a, 'spleef', { tipo: 'fuera' }); return; }   // ¡afuera!
+  sumar(ep, a, 'spleef', { tipo: 'vivo', seg: dt });
+  sumar(ep, a, 'spleef', { tipo: 'arriba', seg: dt * (SPLEEF.capas - 1 - a.capa) / (SPLEEF.capas - 1) });   // más puntos más arriba
+  revisarQuieto(ep, a, 'spleef', dt);
+}
+// 🏁 Carrera: checkpoints (en orden), golpes (puños, barras, el guardián de las puertas), trampolines, caerse y la meta
+function pasoCarreraAgente(ep, a, sobre, dt) {
+  const P = PISTA_CARRERA, t = ep.t, R = RECOMPENSAS.carrera;
+  const freno = Math.exp(-(a.suelo ? 6 : 0.4) * dt); a.ex *= freno; a.ez *= freno;
+  if (a.suelo) a.saltosAire = 0;
+  if (a.suelo && sobre && sobre.lanza) { a.ex = sobre.lanza.x; a.vy = sobre.lanza.y; a.suelo = false; }   // ¡un trampolín! (el rojo te tira para atrás)
+  if (t >= a.golpeHasta) {
+    let g = null;
+    for (const f of P.punos) if (!g && Math.abs(f.x - a.x) < 3) g = golpePuno(a, f, t);
+    for (const b of P.barras) if (!g && Math.hypot(b.x - a.x, b.z - a.z) < b.r + 1) g = golpeBarra(a, b, t);
+    for (const f of P.puertas) if (!g) g = golpeGuardian(a, f);
+    if (g) { a.ex = g.x; a.ez = g.z; a.vy = g.y; a.suelo = false; a.golpeHasta = t + 0.5; sumar(ep, a, 'carrera', { tipo: 'atras' }); }
+  }
+  if (a.y >= CARRERA.y0 - 0.5) {
+    const n = siguienteCheckpoint(a.cp, a.x); if (n > a.cp) { a.cp = n; sumar(ep, a, 'carrera', { tipo: 'checkpoint', cp: n }); }
+    if (a.maxX === undefined) a.maxX = a.x;
+    if (a.x > a.maxX + 0.5) { sumar(ep, a, 'carrera', { tipo: 'avance', seg: a.x - a.maxX }); a.maxX = a.x; }   // metros nuevos
+  }
+  if (seCayoCarrera(a.y)) { sumar(ep, a, 'carrera', { tipo: 'caida' }); const s = salidaCarrera(a.cp); a.x = s.x; a.y = s.y; a.z = s.z; a.vy = 0; a.ex = a.ez = 0; a.puerta = undefined; return; }
+  if (a.cp >= CARRERA.checkpoints && enMetaCarrera(a)) { sumar(ep, a, 'carrera', { tipo: 'meta' }); ep.fin = true; return; }
+  revisarQuieto(ep, a, 'carrera', dt);
 }
 // Escondidas: el buscador de VERDAD (el mismo cerebro que moverBotEsc del juego), pero buscando al Guy en vez de a ti:
 // 30 s contando (mirando a la pared), después recorre los escondites en orden al azar (entrando a las cuevas y subiendo
@@ -455,7 +606,7 @@ export const semillaIntento = (sala, intento) => 1000 + SALAS.indexOf(sala) * 10
 // Guardar / leer lo que aprendió (en el navegador). Devuelve null si está roto
 export function leerCerebros(texto, sala) {
   try {
-    const d = JSON.parse(texto), n = sala === 'atrapadas' ? 5 : 1;
+    const d = JSON.parse(texto), n = agentesDe(sala);
     if (!d || !Array.isArray(d.cerebros) || d.cerebros.length !== n) return null;
     const ok = d.cerebros.every(c => c && Array.isArray(c.pesos) && c.pesos.length === ENTRADAS * SALIDAS && c.pesos.every(Number.isFinite)
       && c.mejor && Array.isArray(c.mejor.pesos) && c.mejor.pesos.length === ENTRADAS * SALIDAS && Number.isInteger(c.intento) && Array.isArray(c.historial));
@@ -463,7 +614,7 @@ export function leerCerebros(texto, sala) {
     return d.cerebros.map(c => ({ ...c, notas: Array.isArray(c.notas) ? c.notas.filter(Number.isFinite).slice(-200) : [], historial: c.historial.filter(Number.isFinite).slice(-200), mejor: { pesos: c.mejor.pesos, puntaje: Number.isFinite(c.mejor.puntaje) ? c.mejor.puntaje : 0 }, sigma: Number.isFinite(c.sigma) ? c.sigma : 0.6, semilla: Number.isInteger(c.semilla) ? c.semilla : 1 }));
   } catch (e) { return null; }
 }
-export const cerebrosNuevos = sala => Array.from({ length: sala === 'atrapadas' ? 5 : 1 }, (_, k) => cerebroNuevo(SALAS.indexOf(sala) * 10 + k + 1));
+export const cerebrosNuevos = sala => Array.from({ length: agentesDe(sala) }, (_, k) => cerebroNuevo(SALAS.indexOf(sala) * 10 + k + 1));
 // Entrenar varios intentos seguidos (sin dibujar): para los tests
 export function entrenar(sala, cerebros, n, opciones = {}) {
   let cs = cerebros;

@@ -4,7 +4,7 @@
 //  · Los archivos con versión (src/…js?v=…) y los íconos se usan de lo guardado (nunca cambian: cada versión tiene otra dirección).
 //  · Nada más: ni el WebSocket de la sala, ni otros sitios, ni los links de Cloudflare.
 // VERSION: la misma que src/version.js (un test lo revisa). Cuando cambia, este archivo cambia → la compu ve que hay versión nueva.
-const VERSION = '2026-11-02-pwa';
+const VERSION = '2026-11-01-antitrampas';
 const CACHE = 'rectangulo-verde-' + VERSION;
 const GUARDAR = ['./', './index.html', './manifest.webmanifest', './iconos/icono-192.png', './iconos/icono-512.png',
   ...['logic', 'red', 'ia', 'version'].map(f => `./src/${f}.js?v=${VERSION}`)];

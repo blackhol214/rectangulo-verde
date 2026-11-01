@@ -88,15 +88,17 @@ function revisarFinRonda() {
 }
 // Alguien se fue (cerró o salió de la silla): ya no juega en la ronda
 function sacarDeEscondidas(id) {
-  esc.espera.delete(id);
-  const r = esc.ronda;
-  if (r) {
+  const estaba = esc.espera.delete(id), r = esc.ronda;
+  if (r && r.jugadores.includes(id) && !(r.salieron || []).includes(id)) {
+    r.salieron = [...(r.salieron || []), id];   // se fue de la ronda: aunque se vuelva a sentar, ya no está en esta ronda (espera a la próxima)
     if (r.buscador !== id && r.camaleones.includes(id)) r.camaleones = r.camaleones.filter(c => c !== id);
-    if (r.jugadores.includes(id)) revisarFinRonda();   // si se fue el buscador, ganan los camaleones
+    revisarFinRonda();   // si se fue el buscador, ganan los camaleones
   }
-  if (esc.ronda === r) avisarEspera();   // (si la ronda terminó, revisarFinRonda ya avisó)
+  if (estaba && esc.ronda === r) avisarEspera();   // (solo si de verdad estaba sentado; si la ronda terminó, revisarFinRonda ya avisó)
 }
-const sinWs = ({ ws, ...j }) => j;
+// Lo que los demás pueden saber de un jugador (nada de lo que el servidor usa por dentro: posiciones vigiladas, checkpoints, contraseñas…)
+// (las monedas de cada uno son solo suyas: no se le cuentan a nadie)
+const sinWs = j => ({ id: j.id, nombre: j.nombre, color: j.color, rot: j.rot, mg: j.mg, look: j.look, visible: j.visible, x: j.x, y: j.y, z: j.z });
 
 // ---------- 👽 Atrapadas Nocivas ----------
 // espera: los sentados en la silla · ronda: { jugadores, vivos, portador, fin (hora en ms), ultimoPase } (ver red.js)
@@ -164,6 +166,7 @@ function sacarDeCarrera(id) {
 // ronda: { jugadores, vivos, orden (los que se cayeron, en orden), inicio, pisadas (una por capa: hexágono → segundo), salieron }
 // nuevas: las pisadas que todavía no se mandaron (se mandan juntas cada 0,1 s: así todos ven caer los mismos hexágonos)
 const sp = { espera: new Set(), ronda: null, nuevas: [] };
+const SPLEEF_CUENTA_MS = 3000;   // la cuenta regresiva (la misma que en el juego)
 const avisoSP = (ws, texto) => ws.send(JSON.stringify({ tipo: 'spAviso', texto }));
 const enRondaSP = id => !!(sp.ronda && sp.ronda.jugadores.includes(id) && !sp.ronda.salieron.includes(id) && sp.espera.has(id));
 const vivoSP = id => enRondaSP(id) && sp.ronda.vivos.includes(id);
@@ -172,7 +175,7 @@ function avisarEsperaSP() {
 }
 // Alguien pisó el hexágono i de la capa k: desde ahora (el reloj del servidor) empieza a caerse
 function pisarSP(k, i) {
-  const r = sp.ronda; if (!r || r.pisadas[k].has(i)) return;
+  const r = sp.ronda; if (!r || r.pisadas[k].has(i) || Date.now() < r.inicio + SPLEEF_CUENTA_MS) return;   // (durante el 3, 2, 1 no se hunde nada)
   const t = (Date.now() - r.inicio) / 1000; r.pisadas[k].set(i, t); sp.nuevas.push([k, i, Math.round(t * 1000)]);
 }
 function revisarSP() {
@@ -195,14 +198,29 @@ function sacarDeSpleef(id, nombre) {
   if (r && r.jugadores.includes(id) && !r.salieron.includes(id)) { eliminarSP(id, nombre, true); if (sp.ronda === r) r.salieron.push(id); }
   if (estaba) avisarEsperaSP();
 }
+// Un jugador está en UNA sola espera y UNA sola ronda a la vez: al sentarse en una silla, se levanta de las otras
+const enRondaEsc = id => !!(esc.ronda && esc.ronda.jugadores.includes(id) && esc.espera.has(id) && !(esc.ronda.salieron || []).includes(id));
+function enOtraRonda(id, modo) {
+  return (modo !== 'esc' && enRondaEsc(id)) || (modo !== 'an' && enRondaAN(id)) || (modo !== 'cr' && enRondaCR(id)) || (modo !== 'sp' && enRondaSP(id));
+}
+function salirDeOtrasEsperas(yo, modo) {
+  if (modo !== 'esc' && esc.espera.has(yo.id)) sacarDeEscondidas(yo.id);
+  if (modo !== 'an' && an.espera.has(yo.id)) sacarDeAtrapadas(yo.id, yo.nombre);
+  if (modo !== 'cr' && cr.espera.has(yo.id)) sacarDeCarrera(yo.id);
+  if (modo !== 'sp' && sp.espera.has(yo.id)) sacarDeSpleef(yo.id, yo.nombre);
+}
 // 🛡️ La zona que vigila el servidor para este jugador (o null si no está jugando una ronda)
 function zonaDe(id) {
-  if (vivoSP(id)) { const r = sp.ronda; return { ...zonaSpleef(r.jugadores.indexOf(id), r.jugadores.length), llegarHasta: r.inicio + VIGILA.llegarMs }; }
-  if (enRondaCR(id)) { const r = cr.ronda, j = conectados.get(id); return { ...zonaCarrera(r.jugadores.indexOf(id), r.jugadores.length, j.cpCarrera || 0, j), llegarHasta: r.inicio + VIGILA.llegarMs }; }
+  if (vivoSP(id)) {   // (en el Spleef, lo que tiene debajo son los hexágonos que todavía no se cayeron: los que sabe el servidor)
+    const r = sp.ronda, c = origenSpleef(), t = (Date.now() - r.inicio) / 1000;
+    const soporteBajo = (x, z, y, margen = 0.6) => { const p = pisoSpleef(x - c.x, z - c.z, margen > 1 ? y + 6 : y, r.pisadas, t); return p ? p.top : 0; };
+    return { ...zonaSpleef(r.jugadores.indexOf(id), r.jugadores.length), llegarHasta: r.inicio + VIGILA.llegarMs, soporteBajo, quietoHasta: r.inicio + SPLEEF_CUENTA_MS - 300 };
+  }
+  if (enRondaCR(id)) { const r = cr.ronda, j = conectados.get(id); return { ...zonaCarrera(r.jugadores.indexOf(id), r.jugadores.length, j.cpCarrera || 0, j, r.semilla), llegarHasta: r.inicio + VIGILA.llegarMs, quietoHasta: r.inicio + 3000 - 300 }; }   // (quietoHasta: el 3, 2, 1, con un poquito de margen por internet)
   // llegarHasta: si a los 3 s no llegó a su lugar (se quedó afuera), el servidor lo pone ahí igual
   if (enRondaAN(id)) return { ...zonaAN(an.ronda.jugadores.indexOf(id), an.ronda.jugadores.length), llegarHasta: an.ronda.inicio + VIGILA.llegarMs };
   const r = esc.ronda;
-  if (r && r.jugadores.includes(id) && esc.espera.has(id)) return { ...zonaEsc(r.terreno), llegarHasta: r.inicio + VIGILA.llegarMs };
+  if (r && r.jugadores.includes(id) && esc.espera.has(id) && !(r.salieron || []).includes(id)) return { ...zonaEsc(r.terreno, (Date.now() - r.inicio) / 1000, conectados.get(id)), llegarHasta: r.inicio + VIGILA.llegarMs };
   return null;
 }
 // Al empezar una ronda, se olvida de dónde estaba (tiene que aparecer en su lugar de salida)
@@ -271,10 +289,10 @@ const servidor = Bun.serve({
       yo.ultimo = Date.now();   // sigue jugando (no cerró ni cambió de pestaña)
       if (m.tipo === 'pos') {
         // El mg lo pone el servidor si estás jugando una ronda (y nadie de afuera puede decir que está adentro)
-        const r = esc.ronda, enRonda = r && r.jugadores.includes(yo.id) && esc.espera.has(yo.id);
+        const r = esc.ronda, enRonda = enRondaEsc(yo.id);
         yo.mg = mgDelServidor(m.mg, enRonda ? r.terreno : null, enRondaAN(yo.id), enRondaCR(yo.id) ? MG_CARRERA : enRondaSP(yo.id) ? MG_SPLEEF : null);
         // 🛡️ En una ronda, el servidor revisa que no vaya más rápido de lo posible ni se salga de la zona
-        const zona = zonaDe(yo.id), ahora = Date.now(), yAntes = yo.vigilado ? yo.vigilado.y : yo.y;
+        const zona = zonaDe(yo.id), ahora = Date.now();
         if (zona) {
           const conEmpuje = ahora < (yo.extraHasta || 0);
           const v = vigilarPos(yo.vigilado, m, ahora, zona, conEmpuje ? yo.extra || 0 : 0, conEmpuje ? yo.empujeDir : null);
@@ -287,15 +305,10 @@ const servidor = Bun.serve({
           if (vivoSP(yo.id) && v.pos.llego) {
             const r = sp.ronda, c = origenSpleef(), t = (ahora - r.inicio) / 1000, piso = pisoSpleef(yo.x - c.x, yo.z - c.z, yo.y, r.pisadas, t);
             if (piso && yo.y - piso.top < 0.5) pisarSP(piso.capa, piso.i);
-            if (fueraSpleef(yo.y)) eliminarSP(yo.id, yo.nombre);
-            else if (!piso || yo.y - piso.top > 0.5) {   // en el aire (saltar está bien: al subir no tarda más de medio segundo)
-              yo.flota = yo.y >= yAntes - 0.05 ? (yo.flota || 0) + Math.min(0.5, (ahora - (yo.flotaEn || ahora)) / 1000) : 0;
-              if (yo.flota > 1.6) { yo.flota = 0; yo.y -= 4; yo.vigilado.y = yo.y; ws.send(JSON.stringify({ tipo: 'corrige', x: corto(yo.x), y: corto(yo.y), z: corto(yo.z) })); }
-            } else yo.flota = 0;
-            yo.flotaEn = ahora;
+            if (fueraSpleef(yo.y)) eliminarSP(yo.id, yo.nombre);   // (flotar en el aire lo frena vigilarPos, con la gravedad de verdad)
           }
           // Si su compu quedó muy lejos de donde dice el servidor (¿trampa?), le avisamos dónde está de verdad (como mucho 1 vez por segundo)
-          if (v.corregido && Math.hypot(m.x - yo.x, m.y - yo.y, m.z - yo.z) > 4 && ahora - (yo.corregidoEn || 0) > 1000) {
+          if (v.corregido && Math.hypot(m.x - yo.x, m.y - yo.y, m.z - yo.z) > 2.5 && ahora - (yo.corregidoEn || 0) > 500) {   // (así tu compu y el servidor nunca quedan muy distintos)
             yo.corregidoEn = ahora;
             ws.send(JSON.stringify({ tipo: 'corrige', x: corto(yo.x), y: corto(yo.y), z: corto(yo.z) }));
           }
@@ -311,7 +324,8 @@ const servidor = Bun.serve({
         yo.look = m.look;
         ws.publish('juego', JSON.stringify({ tipo: 'look', id: yo.id, look: m.look }));
       } else if (m.tipo === 'moneda') {
-        // Alguien agarró una moneda: aparece en otro lugar para todos
+        // Alguien agarró una moneda: aparece en otro lugar para todos (solo si de verdad estaba al lado de esa moneda)
+        if (Math.hypot(yo.x - monedas[m.i].x, yo.z - monedas[m.i].z) > 3 || yo.y > 4) return;
         monedas[m.i] = lugarMoneda();
         aTodos({ tipo: 'moneda', i: m.i, x: corto(monedas[m.i].x), z: corto(monedas[m.i].z) });
       } else if (m.tipo === 'hora') {
@@ -321,7 +335,7 @@ const servidor = Bun.serve({
         diaPueblo = m.dia;
         ws.publish('juego', JSON.stringify({ tipo: 'dia', dia: m.dia }));
       } else if (m.tipo === 'mundo' && yo.id === anfitrion) {
-        ultimoMundo = Date.now();
+        ultimoMundo = Date.now(); yo.mandoMundo = true; yo.sinMundo = 0;
         ws.publish('juego', JSON.stringify(m));   // solo el anfitrión cuenta cómo está el mundo
       } else if (m.tipo === 'evento') {
         const host = conectados.get(anfitrion);
@@ -330,7 +344,7 @@ const servidor = Bun.serve({
         ws.publish('juego', JSON.stringify({ ...m, id: yo.id }));
       } else if (m.tipo === 'an') {
         const r = an.ronda;
-        if (m.que === 'entrar') { if (!an.espera.has(yo.id)) { an.espera.add(yo.id); avisarEsperaAN(); } }
+        if (m.que === 'entrar') { if (enOtraRonda(yo.id, 'an')) return avisoAN(ws, 'Estás jugando otra ronda: termínala primero'); salirDeOtrasEsperas(yo, 'an'); if (!an.espera.has(yo.id)) { an.espera.add(yo.id); avisarEsperaAN(); } }
         else if (m.que === 'salir') sacarDeAtrapadas(yo.id, yo.nombre);
         else if (m.que === 'empezar') {
           if (r) return avisoAN(ws, 'Ya hay una ronda jugándose: espera a que termine');
@@ -356,7 +370,7 @@ const servidor = Bun.serve({
         }
       } else if (m.tipo === 'cr') {
         const r = cr.ronda;
-        if (m.que === 'entrar') { if (!cr.espera.has(yo.id)) { cr.espera.add(yo.id); avisarEsperaCR(); } }
+        if (m.que === 'entrar') { if (enOtraRonda(yo.id, 'cr')) return avisoCR(ws, 'Estás jugando otra ronda: termínala primero'); salirDeOtrasEsperas(yo, 'cr'); if (!cr.espera.has(yo.id)) { cr.espera.add(yo.id); avisarEsperaCR(); } }
         else if (m.que === 'salir') sacarDeCarrera(yo.id);
         else if (m.que === 'empezar') {
           if (r) return avisoCR(ws, 'Ya hay una carrera: espera a que termine');
@@ -386,7 +400,7 @@ const servidor = Bun.serve({
         }
       } else if (m.tipo === 'sp') {
         const r = sp.ronda;
-        if (m.que === 'entrar') { if (!sp.espera.has(yo.id)) { sp.espera.add(yo.id); avisarEsperaSP(); } }
+        if (m.que === 'entrar') { if (enOtraRonda(yo.id, 'sp')) return avisoSP(ws, 'Estás jugando otra ronda: termínala primero'); salirDeOtrasEsperas(yo, 'sp'); if (!sp.espera.has(yo.id)) { sp.espera.add(yo.id); avisarEsperaSP(); } }
         else if (m.que === 'salir') sacarDeSpleef(yo.id, yo.nombre);
         else if (m.que === 'empezar') {
           if (r) return avisoSP(ws, 'Ya hay un Spleef: espera a que termine');
@@ -406,7 +420,7 @@ const servidor = Bun.serve({
         }
       } else if (m.tipo === 'esc') {
         const r = esc.ronda;
-        if (m.que === 'entrar') { esc.espera.add(yo.id); avisarEspera(); }
+        if (m.que === 'entrar') { if (enOtraRonda(yo.id, 'esc')) return avisoEsc(ws, 'Estás jugando otra ronda: termínala primero'); salirDeOtrasEsperas(yo, 'esc'); if (!esc.espera.has(yo.id)) { esc.espera.add(yo.id); avisarEspera(); } }   // (si ya estaba, no avisa de nuevo)
         else if (m.que === 'salir') sacarDeEscondidas(yo.id);
         else if (m.que === 'empezar') {
           if (r) return avisoEsc(ws, 'Ya hay una ronda jugándose: espera a que termine');
@@ -418,7 +432,7 @@ const servidor = Bun.serve({
           if (!r || r.buscador !== yo.id || faseRonda(Date.now() - r.inicio) !== 'buscar') return;
           const otro = conectados.get(m.a);
           if (!otro || !r.camaleones.includes(m.a) || r.encontrados.includes(m.a)) return;
-          if (!puedeEncontrar(yo, otro)) return avisoEsc(ws, '¡Casi! Acércate más');
+          if (!puedeEncontrar(yo, otro)) return;   // (no lo tocó de verdad: nada)
           r.encontrados.push(m.a);
           aTodos({ tipo: 'escEncontrado', id: m.a, por: yo.id });
           revisarFinRonda();
@@ -466,7 +480,10 @@ const servidor = Bun.serve({
 // (pasarle el control a otra pestaña escondida solo haría que el gigante y los bots salten de una compu a otra).
 function cambiarAnfitrion() {
   const antes = anfitrion;
-  const activos = [...conectados.values()].filter(j => j.id !== anfitrion && j.visible && Date.now() - (j.ultimo || 0) < 2000);
+  const viejo = conectados.get(anfitrion);
+  if (viejo && Date.now() - ultimoMundo > 3000) viejo.sinMundo = Date.now();   // (no mandó cómo está el mundo: por un minuto no vuelve a ser anfitrión)
+  const activos = [...conectados.values()].filter(j => j.id !== anfitrion && j.visible && Date.now() - (j.ultimo || 0) < 2000 && Date.now() - (j.sinMundo || 0) > 60000)
+    .sort((a, b) => (b.mandoMundo ? 1 : 0) - (a.mandoMundo ? 1 : 0));   // primero los que ya fueron buenos anfitriones
   const nuevo = activos[0] || (conectados.has(anfitrion) ? null : [...conectados.values()][0]);
   if (nuevo) anfitrion = nuevo.id;
   else if (!conectados.has(anfitrion)) anfitrion = null;

@@ -1632,12 +1632,14 @@ describe('🛡️ Las zonas que vigila el servidor', () => {
       expect(v.corregido).toBe(false);
     });
   });
-  it('Escondidas: la zona es el terreno y deja ir arriba de un carro corriendo', () => {
+  it('Escondidas: la zona es el terreno; corriendo, a lo que corres (14); arriba de un carro, más rápido (te lleva)', () => {
     TT.forEach((T, i) => {
       const z = zonaEsc(i), o = mo(EK);
       expect(z.x1 - z.x0).toBe(T.ancho - 2); expect(z.llegada.x).toBe(o.x + TERRENO_X[i] + T.spawn.x);
-      expect(z.velMax).toBeGreaterThanOrEqual(27);
+      expect(z.velMax).toBeLessThanOrEqual(15);
     });
+    const o = mo(EK), p = carroP(0, 5), enCarro = { x: o.x + TERRENO_X[1] + p.x, y: 1, z: o.z + p.z };
+    expect(zonaEsc(1, 5, enCarro).velMax).toBeGreaterThanOrEqual(27);
   });
 });
 import { ARENA_VEL_MAX } from '../src/logic.js';
@@ -2240,5 +2242,129 @@ describe('⚙️ Calidad de los gráficos', () => {
     expect(bajarCalidad('alta', 20)).toBe('media'); expect(bajarCalidad('media', 20)).toBe('baja'); expect(bajarCalidad('baja', 10)).toBe('baja'); expect(bajarCalidad('alta', 50)).toBe('alta');
     expect(['auto', 'alta', 'media', 'baja'].map(siguienteCalidad)).toEqual(['alta', 'media', 'baja', 'auto']);
     expect(leerCalidad('ultra')).toBe('auto'); expect(leerCalidad(null)).toBe('auto'); expect(leerNivel('auto')).toBeNull(); expect(leerNivel('baja')).toBe('baja');
+  });
+});
+
+import { zonaEsc as zonaE, TERRENOS as TER, cajasTerreno as cajasT, launchSpeedForHeight as lanzar, minigameOrigin as origenMG, ESCUELA_K as EK, TERRENO_X as TX, carroPos as carroP, CARROS as CARS } from '../src/logic.js';
+import { vigilarPos as vigila } from '../src/red.js';
+describe('🟡 Escondidas con amigos: el servidor deja usar los trampolines (y los carros)', () => {
+  const vuelo = (ti, salto, cambio = p => p) => {
+    const z = zonaE(ti), o = origenMG(EK), cx = o.x + TX[ti], pad = cajasT(TER[ti]).find(c => c.salto === salto), px = cx + (pad.x0 + pad.x1) / 2, pz = o.z + (pad.z0 + pad.z1) / 2;
+    let antes = vigila({ x: px - 3, y: 0, z: pz, t: 0, llego: true, saldo: 3, saldoY: 3.5 }, { x: px - 1, y: 2.5, z: pz }, 100, z).pos, corr = 0, maxY = 0;
+    const v = lanzar(salto, 30);
+    for (let t = 0.1; t < 8; t += 0.1) { const y = 2 + v * t - 15 * t * t; if (y < 2) break; const r = vigila(antes, cambio({ x: px, y, z: pz }), 100 + t * 1000, z); if (r.corregido) corr++; antes = r.pos; maxY = Math.max(maxY, r.pos.y); }
+    return { corr, maxY, top: 2 + salto };
+  };
+  it('todos los trampolines de los 3 terrenos (de 18 a 110 m): el vuelo entero, sin correcciones', () => {
+    TER.forEach((T, ti) => { for (const c of cajasT(T).filter(c => c.salto)) { const r = vuelo(ti, c.salto); expect(r.corr, `terreno ${ti}, salto ${c.salto}`).toBe(0); expect(r.maxY).toBeGreaterThan(r.top - 1); } });
+  });
+  it('pero no puedes subir más alto de lo que lanza el trampolín', () => {
+    const r = vuelo(0, 40, p => ({ ...p, y: p.y * 1.6 }));
+    expect(r.corr).toBeGreaterThan(0); expect(r.maxY).toBeLessThanOrEqual(2 + 40 + 3);
+  });
+  it('lejos de un trampolín, subir rapidísimo sigue sin valer (no se puede volar)', () => {
+    const z = zonaE(0), o = origenMG(EK), x = o.x + TX[0], zz = o.z - 40;
+    let a = { x, y: 0, z: zz, t: 0, llego: true, saldo: 3, saldoY: 3.5 }, corr = 0;
+    for (let k = 1; k <= 10; k++) { const r = vigila(a, { x, y: k * 4, z: zz }, k * 100, z); if (r.corregido) corr++; a = r.pos; }
+    expect(corr).toBeGreaterThan(5); expect(a.y).toBeLessThan(20);
+  });
+  it('arriba de un carro (15 m/s) y caminando encima: sin correcciones', () => {
+    const z = zonaE(1), o = origenMG(EK), cx = o.x + TX[1];
+    for (let i = 0; i < CARS.length; i++) {
+      let p0 = carroP(i, 0), a = { x: cx + p0.x, y: 1.2, z: o.z + p0.z, t: 0, llego: true, saldo: 3, saldoY: 3.5 }, corr = 0;
+      for (let k = 1; k <= 50; k++) { const p = carroP(i, k / 10); const r = vigila(a, { x: cx + p.x + Math.min(k, 10) * 0.3, y: 1.2, z: o.z + p.z }, k * 100, zonaE(1, k / 10, a)); if (r.corregido) corr++; a = r.pos; }
+      expect(corr, `carro ${i}`).toBe(0);
+    }
+  });
+});
+
+describe('🪂 Escondidas con amigos: nadie puede volar (pero los trampolines y los muebles altos sí valen)', () => {
+  const o = origenMG(EK);
+  it('flotar quieto a 20 m en el aire: el servidor lo baja', () => {
+    const z = zonaE(1); let x = o.x + TX[1], zz = o.z - 30;
+    for (let k = 0; k < 200 && z.soporteBajo(x, zz, 20) > 0; k++) { x += 3; zz += 1; }   // (un lugar sin muebles debajo)
+    expect(z.soporteBajo(x, zz, 20)).toBe(0);
+    let a = { x, y: 20, z: zz, t: 0, llego: true, saldo: 3, saldoY: 3.5 }, corr = 0;
+    for (let k = 1; k <= 30; k++) { const r = vigila(a, { x, y: 20, z: zz }, k * 100, z); if (r.corregido) corr++; a = r.pos; }
+    expect(corr).toBeGreaterThan(0); expect(a.y).toBeLessThan(15);   // (y no puede volver a subir: no tiene nada cerca de donde saltar)
+  });
+  it('parado arriba de un mueble alto (el refri a 90 m): no se corrige', () => {
+    const T = TER[2], refri = cajasT(T).slice(4).sort((p, q) => q.y1 - p.y1)[0], z = zonaE(2);
+    const x = o.x + TX[2] + (refri.x0 + refri.x1) / 2, zz = o.z + (refri.z0 + refri.z1) / 2;
+    let a = { x, y: refri.y1, z: zz, t: 0, llego: true, saldo: 3, saldoY: 3.5 }, corr = 0;
+    for (let k = 1; k <= 40; k++) { const r = vigila(a, { x: x + (k % 5) * 0.3, y: refri.y1, z: zz }, k * 100, z); if (r.corregido) corr++; a = r.pos; }
+    expect(refri.y1).toBeGreaterThan(50); expect(corr).toBe(0);
+  });
+  it('un salto normal (sube medio segundo) y caerse desde lo más alto: no se corrige', () => {
+    const z = zonaE(0), x = o.x + TX[0], zz = o.z - 30;
+    let a = { x, y: 0, z: zz, t: 0, llego: true, saldo: 3, saldoY: 3.5 }, corr = 0;
+    for (let k = 1; k <= 10; k++) { const t = k / 10, y = Math.max(0, 12.5 * t - 15 * t * t); const r = vigila(a, { x, y, z: zz }, k * 100, z); if (r.corregido) corr++; a = r.pos; }
+    expect(corr).toBe(0);
+  });
+});
+
+import { zonaCarrera as zonaCR, origenCarrera as origenCR, PISTA_CARRERA as PISTA2, puertasReales as reales2, lugaresPuertas as lugares2, CARRERA as CR3, zonaAN as zonaA, centroArenaAN as centroA, golpeValidoCarrera as golpeV2, VEL_ESC } from '../src/logic.js';
+describe('🛡️ Ronda de trampas (los bots de prueba): bloqueadas; y lo que se juega de verdad, permitido', () => {
+  const c = origenCR(), Y = CR3.y0, pos0 = (x, y, z) => ({ x, y, z, t: 0, llego: true, saldo: 3, saldoY: 3.5 });
+  const camino = (zona, a, pasos) => { let corr = 0; pasos.forEach((q, k) => { const r = vigila(a, q, (k + 1) * 100, typeof zona === 'function' ? zona(a) : zona); if (r.corregido) corr++; a = r.pos; }); return { a, corr }; };
+  it('🚪 Carrera: por una puerta FALSA no se pasa (ni con el servidor); por la de verdad, sí', () => {
+    const sem = 7, f = PISTA2.puertas[0], L = lugares2(f), R = reales2(sem, 0, f.n), real = L.find((_, j) => R[j]), falsa = L.find((_, j) => !R[j]);
+    const z = zonaCR(0, 1, 9, null, sem);
+    const pasar = q => camino(z, pos0(c.x + f.x - 1.5, Y, c.z + q.z), [1, 2, 3].map(k => ({ x: c.x + f.x - 1.5 + k, y: Y, z: c.z + q.z })));
+    expect(pasar(falsa).a.x).toBeLessThan(c.x + f.x); expect(pasar(real).a.x).toBeGreaterThan(c.x + f.x);
+  });
+  it('🪂 Carrera: caminar sobre el aire (a la misma altura sobre un hueco) no vale; volar con el trampolín verde sí', () => {
+    const verde = PISTA2.plats[PISTA2.lanzas[0]], x0 = c.x + verde.x + verde.ancho / 2 + 3;   // (ya lejos del trampolín)
+    const r = camino(zonaCR(0, 1, 12), pos0(x0, Y, c.z + verde.z), Array.from({ length: 25 }, (_, k) => ({ x: x0 + (k + 1) * 0.5, y: Y, z: c.z + verde.z })));
+    expect(r.corr).toBeGreaterThan(0); expect(r.a.y).toBeLessThan(Y - 3);
+    const v = { x: CR3.lanza.vel, y: CR3.lanza.salto }, xs = c.x + verde.x;
+    const vuelo = camino(zonaCR(0, 1, 12), pos0(xs, Y, c.z + verde.z), Array.from({ length: 12 }, (_, k) => { const t = (k + 1) / 10; return { x: xs + v.x * t, y: Math.max(Y, Y + v.y * t - 15 * t * t), z: c.z + verde.z }; }));
+    expect(vuelo.a.y).toBeGreaterThan(Y - 1);   // (el vuelo hacia arriba no se corrige; el empujón de lado lo valida el golpe del trampolín)
+  });
+  it('🦘 Carrera: el doble salto (5 m) al escalón alto vale', () => {
+    const esc = PISTA2.plats.find(p => p.tipo === 'escalon'), x = c.x + esc.x - esc.ancho / 2 - 1;
+    const r = camino(zonaCR(0, 1, 6), pos0(x, Y, c.z), Array.from({ length: 12 }, (_, k) => { const t = (k + 1) / 10, y = t < 0.42 ? 12.5 * t - 15 * t * t : 2.6 + 12.5 * (t - 0.42) - 15 * (t - 0.42) ** 2; return { x: x + Math.min(1.6, t * 4), y: Y + Math.max(0, Math.min(y, 4.6)), z: c.z }; }));
+    expect(r.corr).toBe(0);
+  });
+  it('🏎️ Carrera: correr a 21 m/s por la pista no vale; arriba de algo que se mueve, sí te puede llevar más rápido', () => {
+    const x = c.x + 40; const r = camino(zonaCR(0, 1, 1), pos0(x, Y, c.z), Array.from({ length: 10 }, (_, k) => ({ x: x + (k + 1) * 2.1, y: Y, z: c.z })));
+    expect(r.corr).toBeGreaterThan(0);
+    const mov = PISTA2.plats.find(p => p.mueve && p.mueve.eje !== 'y');
+    expect(zonaCR(0, 1, 4, { x: c.x + mov.x, y: Y, z: c.z + mov.z }).velMax).toBeGreaterThan(zonaCR(0, 1, 4, { x: c.x + 40, y: Y, z: c.z }).velMax);
+  });
+  it('🏎️ Escondidas: 26 m/s corriendo (lejos de los carros) no vale', () => {
+    const o = origenMG(EK), x = o.x + TX[0], zz = o.z - 30;
+    const r = camino(a => zonaE(0, 5, a), pos0(x, 0, zz), Array.from({ length: 10 }, (_, k) => ({ x: x + (k + 1) * 2.6, y: 0, z: zz })));
+    expect(r.corr).toBeGreaterThan(0); expect(VEL_ESC).toBeLessThanOrEqual(15);
+  });
+  it('👽 Atrapadas: flotar quieto a 3,15 m (para que nadie te toque) no vale', () => {
+    const k = centroA(); let x = k.x + 2, zz = k.z + 2;
+    const r = camino(zonaA(0, 2), pos0(x, 3.15, zz), Array.from({ length: 30 }, () => ({ x, y: 3.15, z: zz })));
+    expect(r.corr).toBeGreaterThan(0); expect(r.a.y).toBeLessThan(3.15);   // (a lo más, como alguien que salta sin parar: así sí lo pueden tocar)
+  });
+  it('🪂 bajar de a poquito (15 cm por mensaje) tampoco salva a un volador', () => {
+    const o = origenMG(EK); const z = zonaE(1); let x = o.x + TX[1], zz = o.z - 30;
+    for (let k = 0; k < 200 && z.soporteBajo(x, zz, 20) > 0; k++) { x += 3; zz += 1; }
+    const r = camino(z, pos0(x, 20, zz), Array.from({ length: 40 }, (_, k) => ({ x, y: 20 - (k + 1) * 0.15, z: zz })));
+    expect(r.a.y).toBeLessThan(10);
+  });
+  it('⏱️ 3, 2, 1: antes del "¡ya!" no te puedes ir de tu lugar', () => {
+    const z = { ...zonaCR(0, 1, 0), quietoHasta: 2700 }, s = z.llegada;
+    const r = camino(z, pos0(s.x, Y, s.z), Array.from({ length: 10 }, (_, k) => ({ x: s.x + (k + 1) * 1.2, y: Y, z: s.z })));
+    expect(Math.hypot(r.a.x - s.x, r.a.z - s.z)).toBeLessThanOrEqual(4.01);
+  });
+  it('🎡 un golpe de barra que no pasó cerca no vale (y uno de verdad sí)', () => {
+    const o = PISTA2.punos.length, b = PISTA2.barras[0], t = 2, a = b.w * t + b.fase;
+    const enLaBarra = { x: c.x + b.x + Math.cos(a) * 6, y: Y, z: c.z + b.z - Math.sin(a) * 6 };
+    const lejosDeLaBarra = { x: c.x + b.x + Math.cos(a + Math.PI / 2) * 6, y: Y, z: c.z + b.z - Math.sin(a + Math.PI / 2) * 6 };
+    expect(golpeV2(o, enLaBarra, t)).not.toBeNull(); expect(golpeV2(o, lejosDeLaBarra, t)).toBeNull();
+  });
+});
+
+import { rumboDeMovimiento } from '../src/logic.js';
+describe('🧭 Los demás miran hacia donde caminan', () => {
+  it('moviéndose: mira hacia donde va; quieto (o casi): usa el giro que manda', () => {
+    expect(rumboDeMovimiento(0, 5, 2)).toBeCloseTo(0); expect(rumboDeMovimiento(5, 0, 2)).toBeCloseTo(Math.PI / 2); expect(rumboDeMovimiento(-3, -3, 0)).toBeCloseTo(-3 * Math.PI / 4);
+    expect(rumboDeMovimiento(0.2, 0.2, 1.3)).toBe(1.3); expect(rumboDeMovimiento(0, 0, -2)).toBe(-2);
   });
 });
