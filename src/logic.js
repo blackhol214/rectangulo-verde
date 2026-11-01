@@ -2326,10 +2326,13 @@ export const BOTS_SOLO = [
 ];
 export const BOTS_MIN = 1, BOTS_MAX = BOTS_SOLO.length;
 // Cuántos bots por modo si nunca elegiste (los de siempre)
-export const BOTS_POR_MODO = { escondidas: 1, atrapadas: 4, carrera: 5, spleef: 5 };
-export const limitarBots = n => { const v = Number(n); return Number.isFinite(v) ? Math.min(BOTS_MAX, Math.max(BOTS_MIN, Math.round(v))) : null; };
+export const BOTS_POR_MODO = { escondidas: 1, atrapadas: 4, carrera: 5, spleef: 5, nave: 5 };
+// Algunos modos tienen menos bots como máximo (la Nave: ALBERT + 4 = 6 con vos)
+export const BOTS_MAX_MODO = { nave: 5 };
+export const maxBots = modo => BOTS_MAX_MODO[modo] ?? BOTS_MAX;
+export const limitarBots = (n, modo) => { const v = Number(n); return Number.isFinite(v) ? Math.min(maxBots(modo), Math.max(BOTS_MIN, Math.round(v))) : null; };
 // Lo guardado (en el navegador): si no hay nada o algo raro, los de siempre de ese modo
-export const leerBots = (texto, modo) => (texto === null || texto === undefined || texto === '' ? BOTS_POR_MODO[modo] : limitarBots(texto) ?? BOTS_POR_MODO[modo]);
+export const leerBots = (texto, modo) => (texto === null || texto === undefined || texto === '' ? BOTS_POR_MODO[modo] : limitarBots(texto, modo) ?? BOTS_POR_MODO[modo]);
 // Los n bots que juegan (siempre empieza con ALBERT)
 export const rosterBots = n => BOTS_SOLO.slice(0, limitarBots(n) ?? BOTS_MIN);
 
@@ -2337,10 +2340,10 @@ export const rosterBots = n => BOTS_SOLO.slice(0, limitarBots(n) ?? BOTS_MIN);
 // El plano: salas rectangulares (en metros enteros, desde el origen de la nave) unidas por un pasillo central largo.
 // Diseño nuestro: la nave es como una flecha que apunta hacia +x (el puente de mando adelante y los motores atrás).
 export const NAVE_X = 4500;   // dentro del minijuego del Modo Escuela, lejos de todo lo demás
-export const NAVE = { alto: 5, grosor: 0.3, puerta: 3, vuelo: 7, sube: 7 };
+export const NAVE = { alto: 5, grosor: 0.3, puerta: 3 };
 export const SALAS_NAVE = [
   { id: 'pasillo', nombre: 'Pasillo central', x0: 8, x1: 62, z0: -3, z1: 3, color: 0x5c6f82, pasillo: true },
-  { id: 'puente', nombre: 'Puente de mando', x0: 62, x1: 78, z0: -9, z1: 9, color: 0x2f5d8a, ventanas: true },
+  { id: 'escaner', nombre: 'Escáner de virus', x0: 62, x1: 78, z0: -9, z1: 9, color: 0x2f5d8a, ventanas: true },
   { id: 'motores', nombre: 'Sala de motores', x0: -8, x1: 8, z0: -13, z1: 13, color: 0x8a4b2f },
   { id: 'enfermeria', nombre: 'Enfermería', x0: 12, x1: 28, z0: 3, z1: 15, color: 0x3f9a8a },
   { id: 'comedor', nombre: 'Comedor', x0: 28, x1: 46, z0: 3, z1: 20, color: 0xb8863b, ventanas: true },
@@ -2397,12 +2400,203 @@ export function rutaNave(desde, hasta) {
   const out = []; for (let s = hasta; previo.get(s); s = previo.get(s).s) out.unshift({ x: previo.get(s).p.x, z: previo.get(s).p.z });
   return out;
 }
-// ✈️ Volar: tocar ESPACIO dos veces rápido (en menos de 0,35 s) prende o apaga el modo vuelo
-export const DOBLE_TOQUE_MS = 350;
-export function tocarEspacio(est, ahora) {
-  if (ahora - est.ultimo <= DOBLE_TOQUE_MS) return { ultimo: -Infinity, volando: !est.volando, cambio: true };   // (el tercer toque cuenta como uno nuevo)
-  return { ultimo: ahora, volando: est.volando, cambio: false };
+// ===== 🚀 Nave entre sospechas, fase 2 (reglas de Mathias): tareas, impostor, escotillas, reuniones y votación =====
+const mezclarNave = (arr, azar) => { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(azar() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const salaPorId = id => SALAS_NAVE.find(s => s.id === id);
+
+// Las cosas de cada sala: SÓLIDAS (chocan el jugador y los bots). tipo: cómo se dibuja · x, z: el centro · an (x), la (z), al (alto)
+export const PROPS_NAVE = [
+  ...[-5, 0, 5].map(z => ({ sala: 'escaner', tipo: 'consola', x: 74, z, an: 1.4, la: 3, al: 1.1 })),
+  ...[[33, 8], [41, 8], [33, 16], [41, 16]].map(([x, z]) => ({ sala: 'comedor', tipo: 'mesa', x, z, an: 4, la: 2, al: 0.9 })),
+  { sala: 'comedor', tipo: 'mesaReunion', x: 37, z: 12, an: 2.6, la: 2.6, al: 1 },
+  ...[[33, -7], [40, -7], [33, -16], [40, -16]].map(([x, z]) => ({ sala: 'invernadero', tipo: 'maceta', x, z, an: 3, la: 3, al: 0.8 })),
+  { sala: 'reactor', tipo: 'nucleo', x: 54, z: -9, an: 3.2, la: 3.2, al: 4 },
+  ...[-7, 7].map(z => ({ sala: 'motores', tipo: 'motor', x: -2, z, an: 4.4, la: 4.4, al: 3.6 })),
+  ...[[16, -7], [22, -10], [19, -14]].map(([x, z]) => ({ sala: 'bodega', tipo: 'cajon', x, z, an: 2.2, la: 2.2, al: 2.2 })),
+  ...[5.5, 9, 12.5].map(z => ({ sala: 'enfermeria', tipo: 'camilla', x: 15, z, an: 2, la: 1.2, al: 0.6 })),
+  ...[50, 57].map(x => ({ sala: 'laboratorio', tipo: 'mesada', x, z: 7, an: 3, la: 1.5, al: 1 })),
+];
+// La caja de colisión de cada cosa (como las paredes: x0, x1, z0, z1, y0, y1)
+export const cajaProp = p => ({ x0: p.x - p.an / 2, x1: p.x + p.an / 2, z0: p.z - p.la / 2, z1: p.z + p.la / 2, y0: 0, y1: p.al });
+const dentroDeProp = (x, z, margen = 0) => PROPS_NAVE.some(p => Math.abs(x - p.x) < p.an / 2 + margen && Math.abs(z - p.z) < p.la / 2 + margen);
+
+// Las 8 tareas (una por sala). x, z: donde se hace (pulsa E ahí). La caja se recoge en el reactor y se deja en la bodega
+export const TAREAS_NAVE = [
+  { id: 'cables', sala: 'motores', nombre: 'Conectar los cables', icono: '🔌', x: 4, z: -4 },
+  { id: 'caja', sala: 'bodega', nombre: 'Llevar la caja del reactor a la bodega', icono: '📦', x: 25, z: -14, recoger: { x: 59, z: -5 } },
+  { id: 'plantas', sala: 'invernadero', nombre: 'Abonar las plantas y cortar la maleza', icono: '🌱', x: 35, z: -11 },
+  { id: 'motor', sala: 'reactor', nombre: 'Arreglar el motor dañado', icono: '⚙️', x: 50, z: -13 },
+  { id: 'virus', sala: 'escaner', nombre: 'Limpiar el virus de la roca', icono: '🔬', x: 70, z: 0 },
+  { id: 'muestras', sala: 'laboratorio', nombre: 'Revisar las muestras del comedor', icono: '🧪', x: 53.5, z: 11 },
+  { id: 'comida', sala: 'comedor', nombre: 'Sacarle el hongo a la comida', icono: '🍎', x: 30.5, z: 18 },
+  { id: 'camillas', sala: 'enfermeria', nombre: 'Arreglar las camillas', icono: '🛏️', x: 19, z: 9 },
+];
+export const tareaNave = id => TAREAS_NAVE.find(t => t.id === id);
+// El botón de reunión de emergencia (en la mesa redonda del comedor)
+export const BOTON_REUNION = { x: 37, z: 12, cerca: 2.6, usos: 1, espera: 20 };   // 1 vez por jugador en cada ronda; 20 s después de empezar o de otra reunión
+// Las escotillas secretas (solo el impostor las usa): 3 redes; E en una te lleva a la siguiente de su red
+export const ESCOTILLAS_NAVE = [
+  { id: 'a1', red: 'A', x: -4, z: -11 }, { id: 'a2', red: 'A', x: 26, z: -6 }, { id: 'a3', red: 'A', x: 60, z: -13 },
+  { id: 'b1', red: 'B', x: -4, z: 11 }, { id: 'b2', red: 'B', x: 25, z: 13 }, { id: 'b3', red: 'B', x: 60, z: 13 },
+  { id: 'c1', red: 'C', x: 69, z: -7 }, { id: 'c2', red: 'C', x: 44, z: 19 }, { id: 'c3', red: 'C', x: 44, z: -18.5 },
+];
+export function siguienteEscotilla(id) {
+  const e = ESCOTILLAS_NAVE.find(v => v.id === id); if (!e) return null;
+  const red = ESCOTILLAS_NAVE.filter(v => v.red === e.red); return red[(red.indexOf(e) + 1) % red.length];
 }
+// Las distancias de las acciones (en metros) y las esperas (en segundos)
+export const ACCION_NAVE = { tarea: 1.8, escotilla: 1.4, ataque: 1.8, reporte: 3, testigos: 9, esperaAtaque: 25, esperaAtaqueBot: 30, primerAtaque: 20, esperaSabotaje: 15 };
+// 💡 Sabotaje de las luces: 10 s a oscuras para la tripulación (el impostor ve normal). Después hay que esperar para volver a apagarlas
+export const APAGON = { dura: 10, espera: 35, primero: 15, vista: 6 };   // vista: hasta dónde ven los tripulantes (m)
+export const puedeApagar = (t, finAnterior) => t >= APAGON.primero && t - finAnterior >= APAGON.espera;
+const cerca = (a, b, d) => Math.hypot(a.x - b.x, a.z - b.z) <= d;
+export const cercaDe = cerca;
+
+// Un punto libre al azar dentro de una sala (para pasear): lejos de las paredes y de las cosas
+export function puntoLibreNave(salaId, azar = Math.random) {
+  const s = salaPorId(salaId);
+  for (let i = 0; i < 40; i++) { const x = s.x0 + 1.5 + azar() * (s.x1 - s.x0 - 3), z = s.z0 + 1.5 + azar() * (s.z1 - s.z0 - 3); if (!dentroDeProp(x, z, 0.9)) return { x, z }; }
+  return { x: (s.x0 + s.x1) / 2, z: (s.z0 + s.z1) / 2 };
+}
+
+// ----- Las tareas: quién tiene cuáles -----
+// personas: ['yo', 'b0', 'b1', …] · el jugador (si no es impostor) tiene las 8; cada bot, `porBot` al azar; el impostor ninguna (hace como que)
+export function repartirTareas(personas, impostor, azar = Math.random, porBot = 3) {
+  const out = {};
+  for (const p of personas) {
+    if (p === impostor) { out[p] = {}; continue; }
+    const ids = p === 'yo' ? TAREAS_NAVE.map(t => t.id) : mezclarNave(TAREAS_NAVE.map(t => t.id), azar).slice(0, porBot);
+    out[p] = Object.fromEntries(ids.map(id => [id, false]));
+  }
+  return out;
+}
+export function progresoNave(rep) { let hechas = 0, total = 0; for (const p in rep) for (const id in rep[p]) { total++; if (rep[p][id]) hechas++; } return { hechas, total }; }
+export const marcarTarea = (rep, quien, id) => (rep[quien] && id in rep[quien] ? { ...rep, [quien]: { ...rep[quien], [id]: true } } : rep);
+// 💥 Sabotaje: la tarea se rompe para TODOS los que ya la habían hecho (hay que hacerla otra vez)
+export function sabotearTarea(rep, id) {
+  let deshechas = 0; const out = {};
+  for (const p in rep) { out[p] = { ...rep[p] }; if (out[p][id]) { out[p][id] = false; deshechas++; } }
+  return { rep: out, deshechas };
+}
+// ¿Quién ganó? tripulación: todas las tareas hechas · impostor: quedan tantos tripulantes vivos como impostores (o menos) · null: sigue
+export function resultadoNave({ hechas, total, tripulantesVivos, impostoresVivos }) {
+  if (impostoresVivos <= 0) return 'tripulacion';
+  if (total > 0 && hechas >= total) return 'tripulacion';
+  if (tripulantesVivos <= impostoresVivos) return 'impostor';
+  return null;
+}
+export const elegirImpostor = (n, azar = Math.random) => Math.min(n - 1, Math.floor(azar() * n));
+// 👻 Los fantasmas no los ve NADIE… menos el impostor (regla de Mathias)
+export const veFantasmas = soyImpostor => !!soyImpostor;
+// ¿Hay testigos? (otro tripulante vivo cerca del atacante o de la víctima)
+export const hayTestigos = (atacante, victima, otros, radio = ACCION_NAVE.testigos) => otros.some(o => cerca(o, atacante, radio) || cerca(o, victima, radio));
+// ¿Qué hace la E? (lo primero que se pueda, en este orden). Si no hay nada cerca: null
+// c: { impostor, victima (alguien atacable cerca), atacarListo, escotilla (cerca), boton (cerca y con usos), caja: 'recoger'|'dejar'|null, tarea (cerca) }
+export function accionNaveE(c) {
+  if (c.impostor && c.victima && c.atacarListo) return 'atacar';
+  if (c.impostor && c.escotilla) return 'escotilla';
+  if (c.boton) return 'boton';
+  if (c.caja) return 'caja';
+  if (c.tarea) return 'tarea';
+  return null;
+}
+// Los lugares de la reunión: en ronda alrededor de la mesa del comedor
+export function puestosReunion(n) {
+  return Array.from({ length: n }, (_, i) => { const a = (i / n) * Math.PI * 2; return { x: BOTON_REUNION.x + Math.cos(a) * 2.7, z: BOTON_REUNION.z + Math.sin(a) * 2.7, mira: a + Math.PI }; });
+}
+
+// ----- Los paneles de las tareas (lo que pasa adentro, sin dibujos) -----
+// 🔌 Cables: 4 colores; a la izquierda en un orden y a la derecha en otro. Se une cada uno con el de su color
+export const COLORES_CABLES = [{ id: 'rojo', hex: '#ff4b4b' }, { id: 'azul', hex: '#3b82f6' }, { id: 'amarillo', hex: '#facc15' }, { id: 'verde', hex: '#22c55e' }];
+export function nuevosCables(azar = Math.random) { const ids = COLORES_CABLES.map((_, i) => i); return { izq: mezclarNave(ids, azar), der: mezclarNave(ids, azar), unidos: [] }; }
+export function unirCable(est, i, j) {
+  if (est.unidos.includes(est.izq[i]) || est.izq[i] !== est.der[j]) return { est, ok: false };
+  return { est: { ...est, unidos: [...est.unidos, est.izq[i]] }, ok: true };
+}
+export const cablesListos = est => est.unidos.length === COLORES_CABLES.length;
+// 🦠 / 🌿 Cosas que se multiplican (el virus, la maleza): cada una, cada `cada` segundos, hace otra al lado (hasta `max`)
+// (solo los primeros `padres` se multiplican a la vez: así, sacándolos rápido, siempre se puede ganar)
+export const VIRUS = { inicio: 3, cada: 2.4, max: 26, salto: 0.13, padres: 3 };
+export const MALEZA = { inicio: 5, cada: 2, max: 14, salto: 0.18, padres: 3 };
+const entre = (v, a, b) => Math.max(a, Math.min(b, v));
+export function sembrar(n, azar = Math.random, R = VIRUS) { return Array.from({ length: n }, () => ({ x: 0.15 + azar() * 0.7, y: 0.15 + azar() * 0.7, t: azar() * R.cada })); }
+export function multiplicar(lista, dt, R, azar = Math.random) {
+  const out = lista.map((b, i) => (i < R.padres ? { ...b, t: b.t + dt } : { ...b })), nuevos = [];
+  for (const b of out) {
+    if (b.t < R.cada) continue;
+    b.t -= R.cada;
+    if (out.length + nuevos.length < R.max) nuevos.push({ x: entre(b.x + (azar() - 0.5) * 2 * R.salto, 0.06, 0.94), y: entre(b.y + (azar() - 0.5) * 2 * R.salto, 0.06, 0.94), t: 0 });
+  }
+  return out.concat(nuevos);
+}
+// 🌱 Plantas débiles (se abonan con un clic) + maleza que vuelve a crecer
+export function nuevasPlantas(azar = Math.random) { return { plantas: [false, false, false, false], maleza: sembrar(MALEZA.inicio, azar, MALEZA) }; }
+export const plantasListas = est => est.plantas.every(Boolean) && est.maleza.length === 0;
+// ⚙️ El motor dañado: 5 cables, cada uno es una pregunta bien respondida (no da batería)
+export const MOTOR_CABLES = 5;
+export const responderMotor = (cables, bien) => (bien ? Math.min(MOTOR_CABLES, cables + 1) : cables);
+// 🧪 Las muestras: se miran (clic) y las que tienen hongo se tiran (otro clic). Las limpias no se tiran
+export function nuevasMuestras(azar = Math.random, n = 6) {
+  const malas = mezclarNave([...Array(n).keys()], azar).slice(0, 2 + Math.floor(azar() * 2));
+  return Array.from({ length: n }, (_, i) => ({ moho: malas.includes(i), vista: false, tirada: false }));
+}
+export function tocarMuestra(lista, i) {
+  const m = lista[i]; if (!m || m.tirada) return { lista, que: null };
+  if (!m.vista) return { lista: lista.map((x, k) => (k === i ? { ...x, vista: true } : x)), que: m.moho ? 'hongo' : 'limpia' };
+  if (m.moho) return { lista: lista.map((x, k) => (k === i ? { ...x, tirada: true } : x)), que: 'tirada' };
+  return { lista, que: 'limpia' };
+}
+export const muestrasListas = lista => lista.every(m => !m.moho || m.tirada);
+// 🍎🥔 La comida con hongo: cada manzana o papa tiene 1 a 3 manchas; se sacan con clic
+export function nuevaComida(azar = Math.random, n = 6) {
+  return Array.from({ length: n }, (_, i) => ({ tipo: i % 2 ? 'papa' : 'manzana', hongos: Array.from({ length: 1 + Math.floor(azar() * 3) }, () => ({ x: 0.25 + azar() * 0.5, y: 0.25 + azar() * 0.5 })) }));
+}
+export const sacarHongo = (comida, c, h) => comida.map((f, k) => (k === c ? { ...f, hongos: f.hongos.filter((_, j) => j !== h) } : f));
+export const comidaLista = comida => comida.every(f => f.hongos.length === 0);
+// 🛏️ Las camillas: 3, cada una con 3 fallas escondidas entre 6 partes
+export const PARTES_CAMILLA = [
+  { id: 'rueda1', nombre: 'Rueda', bien: '🛞', mal: '💢' }, { id: 'rueda2', nombre: 'Rueda', bien: '🛞', mal: '💢' },
+  { id: 'colchon', nombre: 'Colchón', bien: '🛏️', mal: '🕳️' }, { id: 'almohada', nombre: 'Almohada', bien: '☁️', mal: '🪶' },
+  { id: 'tornillo', nombre: 'Tornillo', bien: '🔩', mal: '🌀' }, { id: 'freno', nombre: 'Freno', bien: '🛑', mal: '❔' },
+];
+export function nuevasCamillas(azar = Math.random, n = 3) {
+  return Array.from({ length: n }, () => { const malas = mezclarNave(PARTES_CAMILLA.map((_, i) => i), azar).slice(0, 3); return PARTES_CAMILLA.map((_, i) => malas.includes(i)); });
+}
+export function arreglarParte(camillas, c, p) {
+  if (!camillas[c] || !camillas[c][p]) return { camillas, ok: false };
+  return { camillas: camillas.map((cm, k) => (k === c ? cm.map((m, j) => (j === p ? false : m)) : cm)), ok: true };
+}
+export const camillaLista = cm => cm.every(m => !m);
+
+// ----- 🗣️ Reuniones: chat (solo durante la reunión) y votación -----
+export const CHAT_NAVE = { max: 100, cadaMs: 2000 };
+// Palabras feas en español → *** (una lista corta; se compara sin tildes ni mayúsculas y la palabra entera)
+const FEAS = ['idiota', 'estupido', 'tonto', 'imbecil', 'mierda', 'puta', 'puto', 'pendejo', 'cabron', 'maldito', 'maldita', 'joder', 'carajo', 'boludo', 'pelotudo', 'culero', 'verga', 'coño', 'mamon', 'gilipollas', 'huevon', 'weon', 'conchetumare', 'perra', 'zorra', 'marica', 'idiotas', 'estupidos', 'tontos', 'pendejos'];
+const sinTildes = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+// Limpia un mensaje del chat: sin enlaces, sin espacios de más, hasta 100 letras y sin palabras feas. '' = no se manda
+export function limpiarChat(texto) {
+  let t = String(texto ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ');
+  t = t.replace(/\b(?:https?:\/\/|www\.)\S*/gi, '[enlace]').replace(/\b[\w-]+\.(?:com|net|org|io|gg|ly|xyz|me|tv|app|dev|co)(?:\/\S*)?\b/gi, '[enlace]');
+  t = t.replace(/\s+/g, ' ').trim().slice(0, CHAT_NAVE.max);
+  t = t.replace(/[\p{L}\p{N}]+/gu, w => (FEAS.includes(sinTildes(w)) ? '*'.repeat(Math.max(3, w.length)) : w));
+  return t;
+}
+export const puedeEscribir = (ultimo, ahora) => ahora - ultimo >= CHAT_NAVE.cadaMs;
+// ¿Quién puede escribir y quién lee? Los fantasmas no le hablan a los vivos (sus mensajes solo los ven otros fantasmas y el impostor)
+export const chatVisible = ({ deFantasma }, { soyFantasma, soyImpostor }) => !deFantasma || soyFantasma || soyImpostor;
+export const VOTACION = { segundos: 20 };
+// Cuenta los votos ({ quienVota: porQuien }): el que tiene más sale expulsado; empate (o nadie votó) → nadie
+export function contarVotos(votos) {
+  const cuenta = {};
+  for (const k in votos) if (votos[k] != null) cuenta[votos[k]] = (cuenta[votos[k]] || 0) + 1;
+  const orden = Object.entries(cuenta).sort((a, b) => b[1] - a[1]);
+  if (!orden.length) return { expulsado: null, empate: false, cuenta };
+  if (orden.length > 1 && orden[0][1] === orden[1][1]) return { expulsado: null, empate: true, cuenta };
+  return { expulsado: orden[0][0], empate: false, cuenta };
+}
+export const mensajeExpulsion = (nombre, eraImpostor) => (eraImpostor ? `${nombre} era el impostor :D` : `${nombre} no era impostor :v`);
+// ¿Se puede apretar el botón de emergencia? (le quedan usos y ya pasó la espera)
+export const puedeBotonReunion = (usados, segundosDesde) => usados < BOTON_REUNION.usos && segundosDesde >= BOTON_REUNION.espera;
 
 // 🥊 ¿Qué obstáculo de la carrera te pega en el segundo t? (el guardián de las puertas, un puño o una barra)
 // rel: tus pies desde el origen de la pista · alto: tu altura. Devuelve { o (su número), g (el empujón) } o null

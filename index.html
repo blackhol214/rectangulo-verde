@@ -152,6 +152,54 @@
   .swatch { display:inline-block; width:14px; height:14px; border-radius:4px; margin-right:6px; vertical-align:-2px; box-shadow:inset 0 0 0 1px rgba(0,0,0,.25); }
   .shop-item .buy.on { background:#c98a00; }
   .trophy-note { background:#fff8e0 !important; box-shadow:inset 0 0 0 2px #ffc83d !important; }
+  /* 🚀 Nave entre sospechas: paneles de tareas, cartel, reunión y la lista de tareas */
+  #naveTarea .shop-card, #naveReunion .shop-card { width:min(680px, 100%); }
+  #naveModal .shop-card { width:min(520px, 100%); text-align:center; }
+  #naveModal h2, #naveReunion h2 { margin:0; font:900 24px system-ui, sans-serif; color:#1e3a8a; text-align:center; }
+  #naveTarea .shop-head h2 { color:#1e3a8a; }
+  .nave-botones { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+  #naveTareaZona { position:relative; width:100%; aspect-ratio:16 / 10; border-radius:12px; overflow:hidden; background:radial-gradient(circle at 50% 40%, #1e293b, #0b1120); touch-action:none; user-select:none; -webkit-user-select:none; }
+  #naveTareaZona.nave-libre { aspect-ratio:auto; min-height:200px; padding:12px; display:flex; flex-direction:column; gap:10px; background:#f1f5f9; touch-action:manipulation; }
+  #naveTareaZona.nave-grilla { aspect-ratio:auto; display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; padding:12px; touch-action:manipulation; }
+  .nave-svg { position:absolute; inset:0; width:100%; height:100%; }
+  .nave-cosa { position:absolute; transform:translate(-50%, -50%); font-size:clamp(26px, 6vw, 40px); line-height:1; background:none; border:0; padding:0; cursor:pointer; }
+  .nave-planta { font-size:clamp(36px, 8vw, 56px); }
+  .nave-planta.ok { filter:drop-shadow(0 0 8px #facc15); cursor:default; }
+  .maleza { cursor:crosshair; }
+  .nave-grande { position:absolute; inset:0; display:grid; place-items:center; font-size:96px; }
+  .nave-cartel { position:absolute; left:4%; top:8%; width:28%; padding:8px; border-radius:10px; background:#fef3c7; color:#7c2d12; display:flex; flex-direction:column; align-items:center; gap:6px; font:800 14px system-ui, sans-serif; text-align:center; }
+  .nave-roca { position:absolute; left:38%; top:8%; width:58%; height:84%; border-radius:46% 54% 50% 50% / 55% 45% 55% 45%; background:radial-gradient(circle at 35% 30%, #a8a29e, #57534e); box-shadow:0 0 0 6px #0ea5e9, 0 0 0 12px #0f172a; }
+  .nave-blob { display:block; width:26px; height:26px; border-radius:50% 45% 55% 50%; background:radial-gradient(circle at 35% 35%, #93c5fd, #1d4ed8); box-shadow:0 0 6px #60a5fa; }
+  .nave-blob.virus { position:absolute; transform:translate(-50%, -50%); cursor:pointer; animation:naveLatir .8s ease-in-out infinite alternate; }
+  @keyframes naveLatir { to { transform:translate(-50%, -50%) scale(1.15); } }
+  .nave-muestra { border:0; border-radius:50%; aspect-ratio:1; background:radial-gradient(circle, #f8fafc 55%, #cbd5e1 56%); font:800 14px system-ui, sans-serif; color:#334155; cursor:pointer; touch-action:manipulation; }
+  .nave-muestra.moho { background:radial-gradient(circle at 40% 40%, #65a30d 0 12%, transparent 13%), radial-gradient(circle at 62% 58%, #4d7c0f 0 10%, transparent 11%), radial-gradient(circle, #f8fafc 55%, #cbd5e1 56%); color:#3f6212; }
+  .nave-muestra.limpia { color:#15803d; } .nave-muestra.tirada { opacity:.4; cursor:default; }
+  .nave-comida { position:relative; display:grid; place-items:center; background:#fff7ed; border-radius:12px; min-height:90px; }
+  .nave-fruta { font-size:clamp(44px, 9vw, 64px); }
+  .nave-hongo { position:absolute; width:22px; height:22px; transform:translate(-50%, -50%); border:0; border-radius:50%; background:radial-gradient(circle at 40% 40%, #a3e635, #4d7c0f); box-shadow:0 0 0 2px rgba(255,255,255,.6); cursor:pointer; touch-action:manipulation; }
+  .nave-cables { display:flex; gap:8px; justify-content:center; }
+  .nave-cables span { width:44px; height:16px; border-radius:8px; background:#cbd5e1; display:grid; place-items:center; font-size:12px; }
+  .nave-cables span.on { background:#facc15; }
+  .nave-titulito { margin:0; text-align:center; font:800 16px system-ui, sans-serif; color:#1e3a8a; }
+  .nave-camilla { display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; padding:14px; border-radius:14px; background:#e2e8f0; border-bottom:10px solid #94a3b8; }
+  .nave-parte { display:flex; flex-direction:column; align-items:center; gap:4px; padding:10px 6px; border:2px solid #cbd5e1; border-radius:12px; background:#fff; font-size:28px; cursor:pointer; touch-action:manipulation; }
+  .nave-parte small { font:700 12px system-ui, sans-serif; color:#334155; }
+  .nave-parte.rota { transform:rotate(-4deg); background:#fff1f2; }
+  #naveChat { height:160px; overflow:auto; background:#0f172a; color:#e2e8f0; border-radius:10px; padding:8px 10px; font:14px/1.4 system-ui, sans-serif; }
+  #naveChat p { margin:0 0 4px; overflow-wrap:anywhere; } #naveChat p.sistema { color:#facc15; font-weight:700; } #naveChat p.fantasma { opacity:.6; font-style:italic; }
+  #naveChatForm { display:flex; gap:8px; }
+  #naveChatForm input { flex:1; min-width:0; padding:10px; border-radius:10px; border:2px solid #cbd5e1; font:15px system-ui, sans-serif; }
+  #naveChatForm button { border:0; border-radius:10px; padding:0 14px; background:#2563eb; color:#fff; font:700 14px system-ui, sans-serif; cursor:pointer; }
+  #naveVotos { display:grid; grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); gap:8px; }
+  .nave-voto { display:flex; flex-direction:column; align-items:center; gap:2px; padding:10px; border:0; border-radius:10px; background:#e0e7ff; cursor:pointer; font:700 15px system-ui, sans-serif; color:#1e1b4b; touch-action:manipulation; }
+  .nave-voto.elegido { outline:3px solid #2563eb; } .nave-voto:disabled { cursor:default; opacity:.8; }
+  #naveLista { position:fixed; left:12px; top:64px; z-index:5; width:min(240px, 46vw); max-height:45vh; overflow:hidden; padding:8px 10px; border-radius:12px; background:rgba(15,23,42,.72); color:#fff; font:13px/1.35 system-ui, sans-serif; pointer-events:none; }
+  #naveLista ul { list-style:none; margin:6px 0 0; padding:0; } #naveLista li.cab { font-weight:800; color:#facc15; }
+  .nave-barra { height:10px; border-radius:5px; background:rgba(255,255,255,.2); overflow:hidden; } .nave-barra i { display:block; height:100%; width:0; background:#22c55e; transition:width .3s; }
+  #naveLuces { pointer-events:auto; margin-top:8px; width:100%; border:0; border-radius:8px; padding:8px; background:#f59e0b; color:#1f2937; font:800 13px system-ui, sans-serif; cursor:pointer; touch-action:manipulation; }
+  #naveLuces:disabled { opacity:.6; cursor:default; }
+  @media (pointer:coarse) { #naveTarea .keys { display:none; } }
   /* Modo Escuela: panel de preguntas para cargar la batería (color violeta) */
   #escuela .shop-card { width:min(640px, 100%); }
   #escuela .shop-head h2 { color:#5b3df5; }
@@ -327,6 +375,31 @@
 </div>
 <button type="button" id="saveBtn">GUARDAR</button>
 <button type="button" id="responderBtn" hidden>RESPONDER</button>
+<!-- 🚀 Nave entre sospechas: el panel de una tarea, el cartel (empezar / rol / final), la reunión (chat y votación) y la lista de tareas -->
+<div id="naveTarea" class="panel" hidden role="dialog" aria-modal="true" aria-labelledby="naveTareaTit">
+  <div class="shop-card">
+    <div class="shop-head"><h2 id="naveTareaTit"></h2><button type="button" id="naveTareaCerrar">Cerrar <span class="keys">(Esc)</span></button></div>
+    <p class="esc-ayuda" id="naveTareaAyuda"></p>
+    <div id="naveTareaZona"></div>
+    <p class="esc-resultado" id="naveTareaMsj" aria-live="polite"></p>
+    <button type="button" class="esc-salir" id="naveSabotear" hidden>💥 Sabotear esta tarea</button>
+  </div>
+</div>
+<div id="naveModal" class="panel" hidden role="dialog" aria-modal="true" aria-labelledby="naveModalTit">
+  <div class="shop-card"><h2 id="naveModalTit"></h2><p class="esc-ayuda" id="naveModalTxt"></p><div id="naveModalExtra"></div><div class="nave-botones" id="naveModalBotones"></div></div>
+</div>
+<div id="naveReunion" class="panel" hidden role="dialog" aria-modal="true" aria-labelledby="naveReunionTit">
+  <div class="shop-card">
+    <h2 id="naveReunionTit"></h2>
+    <p class="esc-ayuda" id="naveReunionTxt"></p>
+    <div id="naveChat" aria-live="polite"></div>
+    <form id="naveChatForm"><input id="naveChatTexto" maxlength="100" autocomplete="off" placeholder="Escribe algo (máx. 100 letras)" aria-label="Mensaje para la reunión"><button type="submit">Enviar</button></form>
+    <p class="esc-resultado" id="naveReunionTiempo" aria-live="polite"></p>
+    <button type="button" class="esc-salir" id="naveVotar">🗳️ Votar</button>
+    <div id="naveVotos"></div>
+  </div>
+</div>
+<div id="naveLista" hidden><div class="nave-barra" title="Tareas de toda la tripulación"><i id="naveBarra"></i></div><ul id="naveTareas"></ul><button type="button" id="naveLuces" hidden>💡 Apagar luces (Q)</button></div>
 <div id="touchActions">
   <button type="button" class="shop" data-act="shop">🛒 Tienda</button>
   <button type="button" data-act="guia">🤖 Guía</button>
@@ -476,11 +549,11 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module">
-import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, ESCUELA, ESCUELA_K, SANDBOX_K, enElHoyo, zonaRara, ZONA_RARA, HOYO, escuelaSiguiente, escuelaMezclar, SALON, salonSillas, sillaCercana, faseDeLuz, ARENA_AN, ARENA_AN_X, TERRENO_X, salidaAN, centroArenaAN, plataformasAN, desplazamientoAN, portalesAN, portalCerca, TERRENOS, CARROS, CARRO, carroPos, partesCarro, TORTUGAS, TORTUGA, tortugaPos, partesTortuga, arrastreDe, girarAlrededor, CARRERA, PISTA_CARRERA, posPlatCarrera, punoEn, golpePuno, golpeBarra, salidaCarrera, enMetaCarrera, seCayoCarrera, puestosCarrera, origenCarrera, SILLA_CARRERA, CARRERA_X, puertasReales, lugaresPuertas, vientoTubo, golpeObstaculoCarrera, puedeRecibirGolpe, GOLPE_PAUSA_MS, NAVE_X, NAVE, SALAS_NAVE, SALIDA_NAVE, INICIO_NAVE, salaNaveEn, puertasNave, paredesNave, rutaNave, tocarEspacio, SILLA_NAVE, BOTS_SOLO, BOTS_MIN, BOTS_MAX, BOTS_POR_MODO, limitarBots, leerBots, rosterBots, rumboDeMovimiento, CALIDADES, leerCalidad, leerNivel, siguienteCalidad, calidadInicial, bajarCalidad, leerEstilo, golpeGuardian, GUARDIAN, temporadaDe, TEMPORADAS, particulaEstacion, MUSICAS, midiAFrecuencia, lugarMusica, intensidadMusica, compasMusica, siguienteVolumen, leerVolumen, CORREDOR_CARRERA, PARED, siguienteCheckpoint, SPLEEF, SPLEEF_X, SILLA_SPLEEF, capaY, HEXES, hexEn, hundido, hexSolido, hexSeVe, pisoSpleef, salidaSpleef, fueraSpleef, capaDe, origenSpleef, cajasPieza, escaleraCanasta, cajasTerreno, escondites, BOT_ESC, botVe, ordenEscondites, cercaDeLaProfe, preguntasDeLaClase, escaparHTML, NO_MIRES, torreNoMires, seededRandom, debeReaparecer, GUIA_COMO, textoQueHago, lugarDelGuia, GUIA_COLORES, siguienteColorGuia, lugaresArboles, lugaresPasto, libreDePasto, ARBOLES, sombreroDeBot, ETAPAS, etapaDe, cajasDe, decoracionTorre, ovniDesplazamiento, HIELO, deslizar, puedeDobleSalto, gastarBateria, cargarBateria, hayBateria, BATERIA, ganaSpooky, ojosMilOjos, OJO_MIL, SPOOKY, sumarTiempoSpooky, DISFRACES, disfrazById, comprarDisfraz, ponerDisfraz, TIENDA_HALLOWEEN, cercaDelVendedor, letrerosEtapas, elegirObjetivoAN, meAburro, MOTIVACION_AN, reboteCaminar, estaCaminando, volumenPasos, puedeAvisar, AVISO_LASER, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, VILLAGE_HOUSE, wallPieces, insideVillageHouse, villageBed, villageEntrance, villageExit, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, squashStretch, ACHIEVEMENTS, achievementById, coinAchievementsFor, TROPHY_TABLE, trophySpot, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
-         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-11-01-nave'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
-import { NOMBRE_SALA, cerebrosNuevos, proximoCerebro, pensar, crearEpisodio, pasoEpisodio, semillaIntento, torreSandbox, BUSCADOR_SB, leerCerebros, nombreGuy, claveGuy, NOMBRE_GUY } from './src/ia.js?v=2026-11-01-nave';
-import { VERSION } from './src/version.js?v=2026-11-01-nave';
-import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, valoresEn, DIA_SEGUNDOS, lugarMoneda, corto, acercar, acercarAngulo, piezasExplosion, leerPreguntas, revisarPreguntas, PROFE, seVen, MG_TORRE, MG_ESCONDIDAS, MG_ATRAPADAS, MG_CARRERA, MG_SPLEEF, MG_SOLO, ESC, AN, nuevaRondaAN, pasarAN, explotarAN, empujeAN, mareadoAN, seTocan } from './src/red.js?v=2026-11-01-nave';
+import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, ESCUELA, ESCUELA_K, SANDBOX_K, enElHoyo, zonaRara, ZONA_RARA, HOYO, escuelaSiguiente, escuelaMezclar, SALON, salonSillas, sillaCercana, faseDeLuz, ARENA_AN, ARENA_AN_X, TERRENO_X, salidaAN, centroArenaAN, plataformasAN, desplazamientoAN, portalesAN, portalCerca, TERRENOS, CARROS, CARRO, carroPos, partesCarro, TORTUGAS, TORTUGA, tortugaPos, partesTortuga, arrastreDe, girarAlrededor, CARRERA, PISTA_CARRERA, posPlatCarrera, punoEn, golpePuno, golpeBarra, salidaCarrera, enMetaCarrera, seCayoCarrera, puestosCarrera, origenCarrera, SILLA_CARRERA, CARRERA_X, puertasReales, lugaresPuertas, vientoTubo, golpeObstaculoCarrera, puedeRecibirGolpe, GOLPE_PAUSA_MS, NAVE_X, NAVE, SALAS_NAVE, SALIDA_NAVE, INICIO_NAVE, salaNaveEn, puertasNave, paredesNave, rutaNave, SILLA_NAVE, PROPS_NAVE, TAREAS_NAVE, tareaNave, BOTON_REUNION, ESCOTILLAS_NAVE, siguienteEscotilla, ACCION_NAVE, APAGON, puedeApagar, cercaDe, puntoLibreNave, repartirTareas, progresoNave, marcarTarea, sabotearTarea, resultadoNave, elegirImpostor, veFantasmas, hayTestigos, accionNaveE, puestosReunion, COLORES_CABLES, nuevosCables, unirCable, cablesListos, VIRUS, MALEZA, sembrar, multiplicar, nuevasPlantas, plantasListas, MOTOR_CABLES, responderMotor, nuevasMuestras, tocarMuestra, muestrasListas, nuevaComida, sacarHongo, comidaLista, PARTES_CAMILLA, nuevasCamillas, arreglarParte, camillaLista, limpiarChat, puedeEscribir, chatVisible, VOTACION, contarVotos, mensajeExpulsion, puedeBotonReunion, maxBots, BOTS_SOLO, BOTS_MIN, BOTS_MAX, BOTS_POR_MODO, limitarBots, leerBots, rosterBots, rumboDeMovimiento, CALIDADES, leerCalidad, leerNivel, siguienteCalidad, calidadInicial, bajarCalidad, leerEstilo, golpeGuardian, GUARDIAN, temporadaDe, TEMPORADAS, particulaEstacion, MUSICAS, midiAFrecuencia, lugarMusica, intensidadMusica, compasMusica, siguienteVolumen, leerVolumen, CORREDOR_CARRERA, PARED, siguienteCheckpoint, SPLEEF, SPLEEF_X, SILLA_SPLEEF, capaY, HEXES, hexEn, hundido, hexSolido, hexSeVe, pisoSpleef, salidaSpleef, fueraSpleef, capaDe, origenSpleef, cajasPieza, escaleraCanasta, cajasTerreno, escondites, BOT_ESC, botVe, ordenEscondites, cercaDeLaProfe, preguntasDeLaClase, escaparHTML, NO_MIRES, torreNoMires, seededRandom, debeReaparecer, GUIA_COMO, textoQueHago, lugarDelGuia, GUIA_COLORES, siguienteColorGuia, lugaresArboles, lugaresPasto, libreDePasto, ARBOLES, sombreroDeBot, ETAPAS, etapaDe, cajasDe, decoracionTorre, ovniDesplazamiento, HIELO, deslizar, puedeDobleSalto, gastarBateria, cargarBateria, hayBateria, BATERIA, ganaSpooky, ojosMilOjos, OJO_MIL, SPOOKY, sumarTiempoSpooky, DISFRACES, disfrazById, comprarDisfraz, ponerDisfraz, TIENDA_HALLOWEEN, cercaDelVendedor, letrerosEtapas, elegirObjetivoAN, meAburro, MOTIVACION_AN, reboteCaminar, estaCaminando, volumenPasos, puedeAvisar, AVISO_LASER, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, VILLAGE_HOUSE, wallPieces, insideVillageHouse, villageBed, villageEntrance, villageExit, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, squashStretch, ACHIEVEMENTS, achievementById, coinAchievementsFor, TROPHY_TABLE, trophySpot, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
+         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-11-01-nave2'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
+import { NOMBRE_SALA, cerebrosNuevos, proximoCerebro, pensar, crearEpisodio, pasoEpisodio, semillaIntento, torreSandbox, BUSCADOR_SB, leerCerebros, nombreGuy, claveGuy, NOMBRE_GUY } from './src/ia.js?v=2026-11-01-nave2';
+import { VERSION } from './src/version.js?v=2026-11-01-nave2';
+import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, valoresEn, DIA_SEGUNDOS, lugarMoneda, corto, acercar, acercarAngulo, piezasExplosion, leerPreguntas, revisarPreguntas, PROFE, seVen, MG_TORRE, MG_ESCONDIDAS, MG_ATRAPADAS, MG_CARRERA, MG_SPLEEF, MG_SOLO, ESC, AN, nuevaRondaAN, pasarAN, explotarAN, empujeAN, mareadoAN, seTocan } from './src/red.js?v=2026-11-01-nave2';
 (() => {
   // iPhone ignora user-scalable=no: aquí se bloquea el zoom con dos dedos y el doble toque
   for (const ev of ['gesturestart', 'gesturechange']) document.addEventListener(ev, e => e.preventDefault(), { passive: false });
@@ -936,6 +1009,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
   let firstPerson = false, fpPitch = 0;
   addEventListener('keydown', e => {
     if (!loginEl.hidden) return;                 // en la pantalla de inicio: solo se escribe el usuario
+    if (MG.state && MG.state.fase === 'nave' && naveAbierta()) { if (e.code === 'Escape' && !naveTareaEl.hidden) cerrarTareaNave(); return; }   // 🚀 un panel de la nave abierto (tarea, cartel, reunión): las teclas son para el panel
     if (e.target && e.target.id === 'sbNombreInput') { if (e.code === 'Escape') abrirPanelSB(false); return; }   // escribiendo el nombre de tu bot del sandbox (las teclas no te mueven)
     if (e.code === 'Escape' && !sbEl.hidden) { abrirPanelSB(false); return; }   // Esc cierra la tarjeta del sandbox
     // En el sandbox, mirando Escondidas: 1 = salón, 2 = habitación, 3 = cocina (aquí esas teclas no hacen nada más)
@@ -2964,9 +3038,9 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
       const t = document.createElement('span'); t.className = 'bots-tit'; t.textContent = '🤖 Bots:';
       const menos = document.createElement('button'); menos.type = 'button'; menos.textContent = '−'; menos.disabled = n <= BOTS_MIN; menos.setAttribute('aria-label', 'Un bot menos');
       const num = document.createElement('b'); num.textContent = String(n); num.setAttribute('aria-live', 'polite');
-      const mas = document.createElement('button'); mas.type = 'button'; mas.textContent = '+'; mas.disabled = n >= BOTS_MAX; mas.setAttribute('aria-label', 'Un bot más');
+      const mas = document.createElement('button'); mas.type = 'button'; mas.textContent = '+'; mas.disabled = n >= maxBots(modo); mas.setAttribute('aria-label', 'Un bot más');
       const nombres = document.createElement('small'); nombres.textContent = rosterBots(n).map(d => d.nombre).join(' · ');
-      const cambiar = d => { try { localStorage.setItem('rv-bots-' + modo, String(limitarBots(cuantosBots(modo) + d))); } catch (e) {} pintar(); alCambiar(); };
+      const cambiar = d => { try { localStorage.setItem('rv-bots-' + modo, String(limitarBots(cuantosBots(modo) + d, modo))); } catch (e) {} pintar(); alCambiar(); };
       menos.addEventListener('click', () => cambiar(-1)); mas.addEventListener('click', () => cambiar(+1));
       fila.append(t, menos, num, mas, nombres);
     };
@@ -4174,8 +4248,8 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     const s = SILLAS[SILLA_SPLEEF]; placePlayer(o.x + s.x + 2, 0, o.z + s.z);
     camYaw = Math.PI;
   }
-  // ===== 🚀 Nave entre sospechas (fase 1: explorar la nave). Diseño propio: salas, pasillo, puertas, ventanas al espacio =====
-  // Q sube · E baja · ESPACIO dos veces rápido: modo vuelo (sin gravedad; Q y E para subir y bajar). Los bots pasean con casco de obra.
+  // ===== 🚀 Nave entre sospechas (diseño de Mathias, todo propio): 9 salas, 8 tareas, un impostor, escotillas, reuniones y votación =====
+  // Jugando solo, con bots (ALBERT + hasta 4). E: tareas, botón, caja, escotillas y atacar (impostor) · F: reportar un cuerpo · Q (impostor): apagar las luces
   // Una textura de paneles de nave (con canvas): placas con remaches y una franja de luz
   function texturaNave(base, luz, repX = 1, repY = 1) {
     const cv = document.createElement('canvas'); cv.width = cv.height = 128; const g = cv.getContext('2d');
@@ -4185,16 +4259,23 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     g.fillStyle = luz; g.fillRect(20, 96, 88, 6);
     const t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(repX, repY); return t;
   }
+  // Un dibujito flotante (un emoji en un canvas)
+  function spriteEmoji(txt, tam = 1) {
+    const cv = document.createElement('canvas'); cv.width = cv.height = 128; const g = cv.getContext('2d');
+    g.font = '96px system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(txt, 64, 70);
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), depthWrite: false })); sp.scale.set(tam, tam, 1); return sp;
+  }
   function construirNave(o) {
     const c = { x: o.x + NAVE_X, z: o.z }, grupo = new THREE.Group(); grupo.visible = false; scene.add(grupo);
     const pls = [], muros = [], caja = new THREE.BoxGeometry(1, 1, 1);
-    // los pisos de cada sala (rejilla metálica del color de la sala)
+    const solido = (x, z, an, la, al) => pls.push({ x: c.x + x, z: c.z + z, hw: an / 2, hd: la / 2, top: al, bottom: 0 });
+    // los pisos de cada sala (rejilla metálica del color de la sala) y su nombre
     for (const s of SALAS_NAVE) {
       const ancho = s.x1 - s.x0, largo = s.z1 - s.z0, col = '#' + s.color.toString(16).padStart(6, '0');
       const piso = new THREE.Mesh(new THREE.PlaneGeometry(ancho, largo), new THREE.MeshLambertMaterial({ map: texturaNave(col, 'rgba(255,255,255,.18)', ancho / 4, largo / 4) }));
       piso.rotation.x = -Math.PI / 2; piso.position.set(c.x + (s.x0 + s.x1) / 2, 0.02, c.z + (s.z0 + s.z1) / 2); piso.receiveShadow = true; grupo.add(piso);
       pls.push({ x: c.x + (s.x0 + s.x1) / 2, z: c.z + (s.z0 + s.z1) / 2, hw: ancho / 2, hd: largo / 2, top: 0, bottom: -1 });
-      const cartel = letrero(s.nombre, '#101828', '#7dd3fc', Math.min(8, ancho * 0.6), c.x + (s.x0 + s.x1) / 2, NAVE.alto - 0.6, c.z + (s.z0 + s.z1) / 2); grupo.add(cartel);
+      grupo.add(letrero(s.nombre, '#101828', '#7dd3fc', Math.min(8, ancho * 0.6), c.x + (s.x0 + s.x1) / 2, NAVE.alto - 0.6, c.z + (s.z0 + s.z1) / 2));
     }
     // las paredes (las de afuera de algunas salas son ventanas al espacio)
     const matPared = new THREE.MeshLambertMaterial({ map: texturaNave('#c9d2dc', '#38bdf8', 1, 1) });
@@ -4204,9 +4285,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
       const m = new THREE.Mesh(caja, ventana ? vidrio : matPared);
       m.scale.set(w.x1 - w.x0, NAVE.alto, w.z1 - w.z0); m.position.set(c.x + (w.x0 + w.x1) / 2, NAVE.alto / 2, c.z + (w.z0 + w.z1) / 2);
       if (!ventana) { m.castShadow = m.receiveShadow = true; } grupo.add(m); muros.push(m);   // (la cámara no atraviesa las paredes)
-      if (ventana) {   // el marco de la ventana (arriba y abajo)
-        for (const [y, h] of [[0.4, 0.8], [NAVE.alto - 0.25, 0.5]]) { const f = new THREE.Mesh(caja, matPared); f.scale.set(w.x1 - w.x0 + 0.02, h, w.z1 - w.z0 + 0.02); f.position.set(c.x + (w.x0 + w.x1) / 2, y, c.z + (w.z0 + w.z1) / 2); grupo.add(f); }
-      }
+      if (ventana) for (const [y, h] of [[0.4, 0.8], [NAVE.alto - 0.25, 0.5]]) { const f = new THREE.Mesh(caja, matPared); f.scale.set(w.x1 - w.x0 + 0.02, h, w.z1 - w.z0 + 0.02); f.position.set(c.x + (w.x0 + w.x1) / 2, y, c.z + (w.z0 + w.z1) / 2); grupo.add(f); }
       pls.push({ x: c.x + (w.x0 + w.x1) / 2, z: c.z + (w.z0 + w.z1) / 2, hw: (w.x1 - w.x0) / 2, hd: (w.z1 - w.z0) / 2, top: w.y1, bottom: w.y0 });
     }
     // los marcos de las puertas: dos postes de luz cyan
@@ -4215,27 +4294,54 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
       const a = p.eje === 'x' ? { dx: 0, dz: NAVE.puerta / 2 } : { dx: NAVE.puerta / 2, dz: 0 };
       for (const s of [-1, 1]) { const m = new THREE.Mesh(caja, luzMat); m.scale.set(0.12, 3.2, 0.12); m.position.set(c.x + p.x + s * a.dx, 1.6, c.z + p.z + s * a.dz); grupo.add(m); }
     }
-    // algo de cada sala (decoración, no choca)
-    const deco = (x, z, sx, sy, sz, color, y = sy / 2, basico = false) => { const m = new THREE.Mesh(caja, basico ? new THREE.MeshBasicMaterial({ color }) : new THREE.MeshLambertMaterial({ color })); m.scale.set(sx, sy, sz); m.position.set(c.x + x, y, c.z + z); grupo.add(m); return m; };
-    const cil = (x, z, r, h, color, y = h / 2, basico = false) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 24), basico ? new THREE.MeshBasicMaterial({ color }) : new THREE.MeshLambertMaterial({ color })); m.position.set(c.x + x, y, c.z + z); grupo.add(m); return m; };
-    for (const z of [-5, 0, 5]) { deco(74, z, 1.4, 1.1, 3, 0x334155); deco(74.3, z, 0.3, 0.6, 2.6, 0x38bdf8, 1.3, true); }   // puente: consolas con pantallas
-    for (const [x, z] of [[33, 9], [41, 9], [33, 15], [41, 15]]) { deco(x, z, 4, 0.9, 2, 0xe2b77a); }                       // comedor: mesas
-    for (const [x, z] of [[32, -8], [38, -8], [44, -8], [32, -14], [38, -14], [44, -14]]) { deco(x, z, 3, 0.8, 3, 0x6b4423); const pl = new THREE.Mesh(new THREE.IcosahedronGeometry(1, 0), new THREE.MeshLambertMaterial({ color: 0x3fbf5f, flatShading: true })); pl.position.set(c.x + x, 1.6, c.z + z); grupo.add(pl); }   // invernadero: macetas con plantas
-    const nucleo = cil(54, -9, 1.6, 4, 0xff6b9a, 2, true); grupo.userData.nucleo = nucleo;                                   // reactor: el núcleo que brilla
-    for (const z of [-7, 7]) cil(-2, z, 2.2, 3.6, 0x7a8796);                                                                 // motores
-    for (const [x, z] of [[16, -7], [22, -10], [18, -13]]) deco(x, z, 2.2, 2.2, 2.2, 0xb08a4a);                             // bodega: cajas
-    for (const z of [6, 9, 12]) deco(15, z, 2, 0.6, 1.2, 0xf1f5f9, 0.5);                                                     // enfermería: camillas
-    for (const [x, z] of [[50, 8], [57, 8]]) { deco(x, z, 3, 1, 1.5, 0x94a3b8); cil(x, z, 0.25, 0.6, 0xa78bfa, 1.3, true); } // laboratorio: mesadas con frascos
+    // Las cosas de cada sala: todas SÓLIDAS (chocan tú y los bots)
+    const mat = (color, basico = false) => basico ? new THREE.MeshBasicMaterial({ color }) : new THREE.MeshLambertMaterial({ color });
+    const cubo = (x, z, sx, sy, sz, color, y = sy / 2, basico = false) => { const m = new THREE.Mesh(caja, mat(color, basico)); m.scale.set(sx, sy, sz); m.position.set(c.x + x, y, c.z + z); m.castShadow = !basico; grupo.add(m); return m; };
+    const cil = (x, z, r, h, color, y = h / 2, basico = false) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 24), mat(color, basico)); m.position.set(c.x + x, y, c.z + z); grupo.add(m); return m; };
+    let nucleo = null, boton = null;
+    for (const p of PROPS_NAVE) {
+      solido(p.x, p.z, p.an, p.la, p.al);
+      if (p.tipo === 'consola') { cubo(p.x, p.z, p.an, p.al, p.la, 0x334155); cubo(p.x + 0.3, p.z, 0.3, 0.6, p.la - 0.4, 0x38bdf8, p.al + 0.3, true); }
+      else if (p.tipo === 'mesa') cubo(p.x, p.z, p.an, p.al, p.la, 0xe2b77a);
+      else if (p.tipo === 'mesaReunion') { cil(p.x, p.z, p.an / 2, p.al, 0x94a3b8); cil(p.x, p.z, 0.45, 0.12, 0x334155, p.al + 0.06); boton = cil(p.x, p.z, 0.32, 0.18, 0xff3b3b, p.al + 0.2, true); }
+      else if (p.tipo === 'maceta') { cubo(p.x, p.z, p.an, p.al, p.la, 0x6b4423); const pl = new THREE.Mesh(new THREE.IcosahedronGeometry(1, 0), new THREE.MeshLambertMaterial({ color: 0x3fbf5f, flatShading: true })); pl.position.set(c.x + p.x, 1.6, c.z + p.z); grupo.add(pl); }
+      else if (p.tipo === 'nucleo') nucleo = cil(p.x, p.z, p.an / 2, p.al, 0xff6b9a, p.al / 2, true);
+      else if (p.tipo === 'motor') cil(p.x, p.z, p.an / 2, p.al, 0x7a8796);
+      else if (p.tipo === 'cajon') cubo(p.x, p.z, p.an, p.al, p.la, 0xb08a4a);
+      else if (p.tipo === 'camilla') { cubo(p.x, p.z, p.an, p.al, p.la, 0xf1f5f9); cubo(p.x - p.an / 2 + 0.25, p.z, 0.4, 0.15, p.la - 0.2, 0xbfdbfe, p.al + 0.08); }
+      else if (p.tipo === 'mesada') { cubo(p.x, p.z, p.an, p.al, p.la, 0x94a3b8); cil(p.x, p.z, 0.25, 0.6, 0xa78bfa, p.al + 0.3, true); }
+    }
+    grupo.add(letrero('🚨 Reunión de emergencia', '#b91c1c', '#ffffff', 4.2, c.x + BOTON_REUNION.x, 3.2, c.z + BOTON_REUNION.z));
+    // Donde se hace cada tarea: un anillo en el piso y su dibujito arriba
+    const tareas = {};
+    for (const t of TAREAS_NAVE) {
+      const anillo = new THREE.Mesh(new THREE.RingGeometry(0.75, 1, 28), new THREE.MeshBasicMaterial({ color: 0xffd400, side: THREE.DoubleSide, transparent: true, opacity: 0.85 }));
+      anillo.rotation.x = -Math.PI / 2; anillo.position.set(c.x + t.x, 0.05, c.z + t.z); grupo.add(anillo);
+      const ic = spriteEmoji(t.icono, 0.9); ic.position.set(c.x + t.x, 2.3, c.z + t.z); grupo.add(ic);
+      tareas[t.id] = { anillo, ic };
+    }
+    // La caja (se recoge en el reactor) y el lugar marcado donde se deja (en la bodega)
+    const cv = document.createElement('canvas'); cv.width = cv.height = 64; const g = cv.getContext('2d');
+    for (let k = -64; k < 128; k += 16) { g.fillStyle = (k / 16) % 2 ? '#111' : '#ffd400'; g.beginPath(); g.moveTo(k, 0); g.lineTo(k + 8, 0); g.lineTo(k + 72, 64); g.lineTo(k + 64, 64); g.fill(); }
+    const T = tareaNave('caja'), zona = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(cv) }));
+    zona.rotation.x = -Math.PI / 2; zona.position.set(c.x + T.x, 0.04, c.z + T.z); grupo.add(zona);
+    const cajaMesh = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.8, 0.8), new THREE.MeshLambertMaterial({ map: texturaNave('#c08a3e', '#ffd400') })); grupo.add(cajaMesh);
+    // Las escotillas secretas: rejillas en el piso (todos las ven… solo el impostor las usa)
+    const rejaMat = mat(0x1f2937), bordeMat = mat(0xf97316);
+    for (const e of ESCOTILLAS_NAVE) {
+      cubo(e.x, e.z, 1.5, 0.06, 1.5, 0xf97316, 0.03); cubo(e.x, e.z, 1.2, 0.08, 1.2, 0x1f2937, 0.04);
+      for (let k = -2; k <= 2; k++) cubo(e.x + k * 0.22, e.z, 0.06, 0.1, 1.1, 0x64748b, 0.05);
+    }
     // la escotilla de salida (en la bodega): un círculo verde que brilla
-    const salida = cil(SALIDA_NAVE.x, SALIDA_NAVE.z, SALIDA_NAVE.radio, 0.08, 0x30d158, 0.05, true); grupo.userData.salida = salida;
+    cil(SALIDA_NAVE.x, SALIDA_NAVE.z, SALIDA_NAVE.radio, 0.08, 0x30d158, 0.05, true);
     grupo.add(letrero('↩ SALIDA (al salón)', '#1f8a3b', '#ffffff', 4.5, c.x + SALIDA_NAVE.x, 2.6, c.z + SALIDA_NAVE.z));
     // el espacio: estrellas alrededor y un planeta lejos
     const n = 700, pos = new Float32Array(n * 3), rnd = seededRandom(77);
     for (let i = 0; i < n; i++) { const u = rnd() * Math.PI * 2, v = rnd() * 2 - 1, r = 260, rr = Math.sqrt(1 - v * v) * r; pos.set([c.x + 35 + Math.cos(u) * rr, v * r, c.z + Math.sin(u) * rr], i * 3); }
-    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-    grupo.add(new THREE.Points(g, new THREE.PointsMaterial({ color: 0xffffff, size: 1.4, sizeAttenuation: false, fog: false })));
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    grupo.add(new THREE.Points(geo, new THREE.PointsMaterial({ color: 0xffffff, size: 1.4, sizeAttenuation: false, fog: false })));
     const planeta = new THREE.Mesh(new THREE.SphereGeometry(40, 32, 20), new THREE.MeshBasicMaterial({ color: 0x8b5cf6, fog: false })); planeta.position.set(c.x + 260, 40, c.z - 160); grupo.add(planeta);
-    MG.built.nave = { grupo, pls, muros, c, enUso: false };
+    MG.built.nave = { grupo, pls, muros, c, enUso: false, nucleo, boton, tareas, cajaMesh };
   }
   function ponerNave(o) {
     if (!MG.built.nave) construirNave(o);
@@ -4248,73 +4354,561 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     const muros = new Set(N.muros); for (let k = cameraBlockers.length - 1; k >= 0; k--) if (muros.has(cameraBlockers[k])) cameraBlockers.splice(k, 1);
     N.grupo.visible = false; N.enUso = false;
   }
-  // El casco de obra (por ahora los bots están construyendo la nave 🚧)
+  // El casco de obra (los bots están terminando de construir la nave 🚧)
   function ponerCasco(b, si) {
     let k = b.obj.userData.casco;
     if (!k && si) {
       k = new THREE.Group(); const amarillo = new THREE.MeshLambertMaterial({ color: 0xffc400 });
-      const copa = new THREE.Mesh(new THREE.SphereGeometry(0.42, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2), amarillo); k.add(copa);
+      k.add(new THREE.Mesh(new THREE.SphereGeometry(0.42, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2), amarillo));
       const visera = new THREE.Mesh(new THREE.CylinderGeometry(0.58, 0.58, 0.05, 20), amarillo); visera.position.set(0, 0.01, 0.06); k.add(visera);
       k.position.y = H + 0.02; b.obj.add(k); b.obj.userData.casco = k;
     }
     if (k) k.visible = si;
     for (const m of b.obj.userData.sombrero || []) m.visible = !si;   // (ALBERT se saca el sombrero de copa para ponerse el casco)
+    if (!si && b.obj.userData.llave) b.obj.userData.llave.visible = false;
   }
-  const salaAzar = () => Math.floor(Math.random() * SALAS_NAVE.length);
-  function nuevoDestinoNave(b, c) {
-    const desde = salaNaveEn(b.pos.x - c.x, b.pos.z - c.z), hasta = salaAzar(), s = SALAS_NAVE[hasta];
-    const final = { x: s.x0 + 2 + Math.random() * (s.x1 - s.x0 - 4), z: s.z0 + 2 + Math.random() * (s.z1 - s.z0 - 4) };
-    b.camino = [...(desde >= 0 ? rutaNave(desde, hasta) || [] : []), final].map(p => ({ x: c.x + p.x, z: c.z + p.z }));
-    b.descanso = 0;
+
+  // ----- Los paneles (HTML) -----
+  let naveZona = document.getElementById('naveTareaZona');
+  const naveTareaEl = document.getElementById('naveTarea'), naveMsj = document.getElementById('naveTareaMsj');
+  const naveModalEl = document.getElementById('naveModal'), naveReunionEl = document.getElementById('naveReunion'), naveListaEl = document.getElementById('naveLista');
+  const naveLucesBtn = document.getElementById('naveLuces');
+  const elN = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt !== undefined) e.textContent = txt; return e; };
+  const naveAbierta = () => !naveTareaEl.hidden || !naveModalEl.hidden || !naveReunionEl.hidden;
+  function soltarMouse() { for (const k in keys) keys[k] = false; if (isLocked()) document.exitPointerLock(); }
+  // Un cartel con botones (empezar, el rol, el final)
+  function modalNave(titulo, texto, botones) {
+    soltarMouse();
+    document.getElementById('naveModalTit').textContent = titulo;
+    document.getElementById('naveModalTxt').textContent = texto;
+    const extra = document.getElementById('naveModalExtra'); extra.replaceChildren();
+    const fila = document.getElementById('naveModalBotones'); fila.replaceChildren();
+    for (const [txt, fn] of botones) { const b = elN('button', 'esc-salir', txt); b.type = 'button'; b.addEventListener('click', () => { naveModalEl.hidden = true; fn(); }); fila.append(b); }
+    naveModalEl.hidden = false;
+    return extra;
+  }
+  // E en la silla: elegir cuántos bots y despegar
+  function abrirNave(o) {
+    const extra = modalNave('🚀 Nave entre sospechas', 'Uno de los que están en la nave es el IMPOSTOR (¡puedes ser tú!). La tripulación hace las tareas; el impostor sabotea y ataca sin que lo vean.', [['🚀 ¡Despegar!', () => entrarNave(o)], ['Cerrar', () => {}]]);
+    extra.append(controlBots('nave'));
   }
   function entrarNave(o) {
-    const N = ponerNave(o), st = MG.state, c = N.c;
-    const bots = botsSolo(5);
-    bots.forEach((b, k) => { ponerCasco(b, true); const s = SALAS_NAVE[(k + 1) % SALAS_NAVE.length]; b.pos.set(c.x + (s.x0 + s.x1) / 2 + k * 0.7, 0, c.z + (s.z0 + s.z1) / 2); nuevoDestinoNave(b, c); });
-    Object.assign(st, { fase: 'nave', nave: { N, bots, vuelo: { ultimo: -Infinity, volando: false }, espAntes: !!keys.Space } });
+    const N = ponerNave(o), st = MG.state;
+    Object.assign(st, { fase: 'nave', nave: { N, o } });
+    empezarRondaNave();
+  }
+
+  // ----- La ronda -----
+  const yoEnNave = () => MG.state.nave && MG.state.nave.gente[0];
+  const soyImpostorNave = () => { const V = MG.state.nave; return !!V && V.impostor === 'yo'; };
+  const posDe = p => (p.yo ? ps.pos : p.bot.pos);
+  const salaDe = p => { const V = MG.state.nave, P = posDe(p), i = salaNaveEn(P.x - V.N.c.x, P.z - V.N.c.z); return i >= 0 ? SALAS_NAVE[i].nombre : 'el espacio'; };
+  const rel = P => ({ x: P.x - MG.state.nave.N.c.x, z: P.z - MG.state.nave.N.c.z });
+  function limpiarRondaNave() {
+    const V = MG.state.nave; if (!V || !V.gente) return;
+    cerrarTareaNave(); naveReunionEl.hidden = true; clearInterval(V.reunionTimer);
+    for (const cu of V.cuerpos) { scene.remove(cu.g); }
+    V.cuerpos = [];
+    for (const p of V.gente) if (p.bot) { ponerCasco(p.bot, false); p.bot.cuerpo.material.transparent = false; p.bot.cuerpo.material.opacity = 1; }
+    body.material.transparent = false; body.material.opacity = 1; player.visible = true;
+    luzNave(false);
+  }
+  function empezarRondaNave() {
+    const V = MG.state.nave, c = V.N.c;
+    limpiarRondaNave(); naveModalEl.hidden = true;
+    const bots = botsSolo(cuantosBots('nave'));
+    const gente = [{ id: 'yo', nombre: 'Tú', yo: true, vivo: true }, ...bots.map((b, k) => ({ id: 'b' + k, nombre: b.def.nombre, bot: b, vivo: true, ia: { camino: [], hacer: null, trabajo: 0 } }))];
+    const impostor = gente[elegirImpostor(gente.length)].id;
+    Object.assign(V, { gente, impostor, rep: repartirTareas(gente.map(p => p.id), impostor), cuerpos: [], t: 0, ultimoAtaque: 0, ultimaReunion: 0, ultimoSabotaje: -99,
+      botonUsos: {}, caja: 'reactor', fin: null, reunion: null, accion: null, apagon: { hasta: -1, fin: -Infinity }, impBot: { proxApagon: 25 + Math.random() * 20 } });
+    bots.forEach((b, k) => {
+      ponerCasco(b, true); const s = SALAS_NAVE[(k + 1) % SALAS_NAVE.length], p = puntoLibreNave(s.id);
+      b.pos.set(c.x + p.x, 0, c.z + p.z); b.atascado = 0; b.esquivar = 0;
+      if (!b.obj.userData.llave) { const ll = spriteEmoji('🔧', 0.7); ll.position.y = H + 1.6; b.obj.add(ll); b.obj.userData.llave = ll; }
+      b.obj.userData.llave.visible = false;
+      planBotNave(gente[k + 1]);
+    });
     placePlayer(c.x + INICIO_NAVE.x, 0, c.z + INICIO_NAVE.z); camYaw = -Math.PI / 2;
-    avisoModo('🚀 ¡Bienvenido a la nave! Q sube · E baja · ESPACIO dos veces: volar', false, 3500);
+    naveListaEl.hidden = false;
+    const imp = impostor === 'yo';
+    modalNave(imp ? '😈 ¡Eres el IMPOSTOR!' : '🧑‍🚀 Eres TRIPULANTE',
+      imp ? 'Que no te descubran. E: atacar (sin testigos), meterte por las escotillas 🕳️ o sabotear una tarea. Q: apagar las luces 💡. Ganas si quedan tantos tripulantes como impostores.'
+          : `Haz tus tareas (la lista está a la izquierda) con E. Si encuentras a alguien desmayado, F para reportar. El botón rojo del comedor llama a una reunión. En la nave hay ${gente.length} y uno es el impostor…`,
+      [['¡A jugar!', () => {}]]);
   }
   function salirNave(o) {
     const st = MG.state;
-    if (st.nave) for (const b of st.nave.bots) ponerCasco(b, false);
+    limpiarRondaNave(); naveModalEl.hidden = true; naveListaEl.hidden = true; naveLucesBtn.hidden = true;
     ocultarBotsSolo(); quitarNave();
     st.fase = 'salon'; st.nave = null;
     const s = SILLAS[SILLA_NAVE]; placePlayer(o.x + s.x + 2, 0, o.z + s.z); camYaw = Math.PI;
   }
-  // Q y E (justo antes de la física): caminando, Q te hace flotar hacia arriba y E bajar más rápido; volando no hay gravedad
-  function verticalNave(dt) {
-    const V = MG.state.nave; if (!V) return;
-    const dir = (keys.KeyQ ? 1 : 0) - (keys.KeyE ? 1 : 0);
-    if (V.vuelo.volando) ps.vel.y = dir * NAVE.vuelo + GRAV * dt;   // (+ GRAV·dt: la física le resta la gravedad y queda justo dir·vuelo)
-    else if (dir > 0) ps.vel.y = NAVE.sube + GRAV * dt;
-    else if (dir < 0 && !ps.onGround) ps.vel.y = Math.min(ps.vel.y, -NAVE.sube);
+
+  // ----- Los bots: hacen sus tareas (o, el impostor, hace como que y sabotea) -----
+  function caminoA(p, destino) {
+    const V = MG.state.nave, c = V.N.c, P = rel(posDe(p)), desde = salaNaveEn(P.x, P.z), hasta = salaNaveEn(destino.x, destino.z);
+    p.ia.camino = [...(desde >= 0 && hasta >= 0 ? rutaNave(desde, hasta) || [] : []), destino].map(q => ({ x: c.x + q.x, z: c.z + q.z }));
+  }
+  function planBotNave(p) {
+    const V = MG.state.nave, ia = p.ia, azar = Math.random();
+    ia.trabajo = 0; ia.hacer = null;
+    if (p.id === V.impostor && p.vivo) {
+      if (azar < 0.3) { const e = ESCOTILLAS_NAVE[Math.floor(Math.random() * ESCOTILLAS_NAVE.length)]; ia.hacer = { tipo: 'escotilla', id: e.id }; caminoA(p, e); return; }
+      const t = TAREAS_NAVE[Math.floor(Math.random() * TAREAS_NAVE.length)];
+      ia.hacer = { tipo: azar < 0.55 && V.t - V.ultimoSabotaje > ACCION_NAVE.esperaSabotaje * 2 ? 'sabotear' : 'fingir', id: t.id }; caminoA(p, t); return;
+    }
+    const pend = Object.keys(V.rep[p.id] || {}).filter(id => !V.rep[p.id][id]);
+    if (pend.length) { const t = tareaNave(pend[Math.floor(Math.random() * pend.length)]); ia.hacer = { tipo: 'tarea', id: t.id }; caminoA(p, t); return; }
+    ia.hacer = { tipo: 'pasear' }; caminoA(p, puntoLibreNave(SALAS_NAVE[Math.floor(Math.random() * SALAS_NAVE.length)].id));
+  }
+  function updateBotNave(p, dt) {
+    const V = MG.state.nave, b = p.bot, ia = p.ia;
+    b.obj.userData.llave.visible = ia.trabajo > 0 && (p.vivo || soyImpostorNave());
+    if (ia.trabajo > 0) {
+      ia.trabajo -= dt; b.walkX = b.walkZ = 0; physics(b, dt, false, JUMP); animarCaminar(b.obj, b.cuerpo, H / 2, dt, false);
+      if (ia.trabajo <= 0) {
+        if (ia.hacer.tipo === 'tarea') V.rep = marcarTarea(V.rep, p.id, ia.hacer.id);
+        else if (ia.hacer.tipo === 'sabotear') sabotearNave(ia.hacer.id, p);
+        planBotNave(p);
+      }
+      return;
+    }
+    const meta = ia.camino[0];
+    if (!meta) {   // llegó
+      const h = ia.hacer;
+      if (h.tipo === 'tarea') ia.trabajo = 5 + Math.random() * 4;
+      else if (h.tipo === 'fingir' || h.tipo === 'sabotear') ia.trabajo = 3 + Math.random() * 2;
+      else if (h.tipo === 'escotilla') { saltarEscotilla(p, h.id); planBotNave(p); }
+      else planBotNave(p);
+      return;
+    }
+    const d = caminarBotEsc(b, meta, 4.5, dt);
+    if (d < 0.7) ia.camino.shift();
+    if (b.esquivar > 0 && (ia.esquivas = (ia.esquivas || 0) + dt) > 6) { ia.esquivas = 0; planBotNave(p); }   // (si no hay caso, elige otra cosa)
+  }
+  // El bot impostor: si alguien está solo (sin testigos) y ya puede, lo persigue y lo ataca
+  function cazarNave(p, dt) {
+    const V = MG.state.nave;
+    if (!p.vivo || V.t < ACCION_NAVE.primerAtaque || V.t - V.ultimoAtaque < ACCION_NAVE.esperaAtaqueBot) return false;
+    const yo = posDe(p), trip = V.gente.filter(q => q.vivo && q.id !== V.impostor);
+    let mejor = null, dm = 12;
+    for (const v of trip) { const d = Math.hypot(posDe(v).x - yo.x, posDe(v).z - yo.z); if (d < dm && !hayTestigos(yo, posDe(v), trip.filter(q => q !== v).map(posDe))) { dm = d; mejor = v; } }
+    if (!mejor) return false;
+    if (dm <= ACCION_NAVE.ataque) { atacarNave(p, mejor); planBotNave(p); return true; }
+    p.ia.trabajo = 0; caminarBotEsc(p.bot, posDe(mejor), 5, dt); return true;
+  }
+  // 🕳️ Escotilla: te metes y sales por la siguiente de su red
+  function saltarEscotilla(p, id) {
+    const V = MG.state.nave, sig = siguienteEscotilla(id); if (!sig) return;
+    const P = posDe(p); P.set(V.N.c.x + sig.x, 0, V.N.c.z + sig.z);
+    if (p.yo) { ps.vel.set(0, 0, 0); sfxNotas([['C5', 0, 0.08], ['G4', 0.08, 0.1], ['C4', 0.16, 0.12]], 'triangle', 0.08); }
+  }
+  // 💥 Sabotaje: la tarea se rompe para todos los que la habían hecho
+  function sabotearNave(id, quien) {
+    const V = MG.state.nave, t = tareaNave(id), r = sabotearTarea(V.rep, id);
+    V.rep = r.rep; V.ultimoSabotaje = V.t;
+    if (id === 'caja' && V.caja !== 'reactor' && !V.rep.yo?.caja) V.caja = 'reactor';
+    sfxNotas([['E5', 0, 0.1], ['C5', 0.1, 0.1], ['A4', 0.2, 0.2]], 'sawtooth', 0.05);
+    avisoModo(`⚠️ ¡Sabotaje en ${SALAS_NAVE.find(s => s.id === t.sala).nombre}! «${t.nombre}» se rompió${r.deshechas ? ': hay que hacerla otra vez' : ''}`, true, 3500);
+  }
+  // 💡 Apagón: 10 s a oscuras para la tripulación
+  function apagarLucesNave() {
+    const V = MG.state.nave; if (!V || V.fin || V.reunion || !puedeApagar(V.t, V.apagon.fin)) return false;
+    V.apagon = { hasta: V.t + APAGON.dura, fin: V.t + APAGON.dura };
+    sfxNotas([['A3', 0, 0.3], ['E3', 0.3, 0.4]], 'sawtooth', 0.06);
+    avisoModo('⚠️ ¡Sabotearon las luces!', true, 2500);
+    return true;
+  }
+  let nieblaAntes = null;
+  function luzNave(oscuro) {
+    if (oscuro && !nieblaAntes) { nieblaAntes = { near: scene.fog.near, far: scene.fog.far }; scene.fog.near = 0.5; scene.fog.far = APAGON.vista; }
+    else if (!oscuro && nieblaAntes) { scene.fog.near = nieblaAntes.near; scene.fog.far = nieblaAntes.far; nieblaAntes = null; }
+  }
+  addEventListener('keydown', e => { if (e.code === 'KeyQ' && !e.repeat && MG.state && MG.state.fase === 'nave' && soyImpostorNave() && yoEnNave().vivo && !naveAbierta()) apagarLucesNave(); });
+  naveLucesBtn.addEventListener('click', () => { apagarLucesNave(); naveLucesBtn.blur(); });
+
+  // 👊 El ataque (dibujos animados: ¡PUM!, se cae y queda desmayado con estrellitas). La víctima es un fantasma
+  function atacarNave(atacante, victima) {
+    const V = MG.state.nave, P = posDe(victima).clone();
+    sfxPuno(); sfxNotas([['G4', 0.05, 0.1], ['D4', 0.15, 0.1], ['G3', 0.25, 0.25]], 'triangle', 0.08);
+    const g = new THREE.Group(), color = victima.yo ? body.material.color.getHex() : victima.bot.def.color;
+    const cu = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), new THREE.MeshLambertMaterial({ color })); cu.position.y = H / 2; g.add(cu);
+    for (const ex of [-0.22, 0.22]) { const x = spriteEmoji('✖️', 0.3); x.position.set(ex, H * 0.78, D / 2 + 0.05); g.add(x); }
+    const est = spriteEmoji('💫', 0.9); est.position.set(0, H + 0.4, 0); g.add(est);
+    g.position.set(P.x, 0, P.z); g.rotation.y = victima.yo ? ps.facing : victima.bot.facing; scene.add(g);
+    V.cuerpos.push({ id: victima.id, nombre: victima.nombre, sala: salaDe(victima), g, cae: 0, pos: P, est });
+    victima.vivo = false; V.ultimoAtaque = V.t;
+    if (victima.yo) {
+      body.material.transparent = true; body.material.opacity = 0.35;
+      cerrarTareaNave();
+      avisoModo(`💥 ¡PUM! ${atacante.nombre} era el impostor. Ahora eres un fantasma 👻: nadie te ve, pero puedes terminar tus tareas`, true, 5000);
+    } else {
+      victima.bot.cuerpo.material.transparent = true; victima.bot.cuerpo.material.opacity = 0.35;
+      victima.ia.trabajo = 0; planBotNave(victima);
+      if (atacante.yo) avisoModo(`👊 ¡PUM! ${victima.nombre} quedó desmayado`, false, 1800);
+    }
+  }
+
+  // ----- ¿Qué hace la E aquí? -----
+  function calcularAccionNave() {
+    const V = MG.state.nave, yo = V.gente[0], R = rel(ps.pos), imp = V.impostor === 'yo';
+    let victima = null, dv = ACCION_NAVE.ataque;
+    if (imp && yo.vivo) for (const p of V.gente) if (!p.yo && p.vivo) { const d = Math.hypot(p.bot.pos.x - ps.pos.x, p.bot.pos.z - ps.pos.z); if (d <= dv) { dv = d; victima = p; } }
+    const escotilla = imp && yo.vivo ? ESCOTILLAS_NAVE.find(e => cercaDe(e, R, ACCION_NAVE.escotilla)) : null;
+    const boton = yo.vivo && cercaDe(BOTON_REUNION, R, BOTON_REUNION.cerca) && puedeBotonReunion(V.botonUsos.yo || 0, V.t - V.ultimaReunion);
+    const T = tareaNave('caja'), tengoCaja = !imp && V.rep.yo && V.rep.yo.caja === false;
+    const caja = !tengoCaja ? null : V.caja === 'reactor' && cercaDe(T.recoger, R, ACCION_NAVE.tarea) ? 'recoger' : V.caja === 'yo' && cercaDe(T, R, ACCION_NAVE.tarea) ? 'dejar' : null;
+    let tarea = null;
+    for (const t of TAREAS_NAVE) {
+      if (!cercaDe(t, R, ACCION_NAVE.tarea)) continue;
+      if (imp ? yo.vivo && V.t - V.ultimoSabotaje >= ACCION_NAVE.esperaSabotaje : t.id !== 'caja' && V.rep.yo && V.rep.yo[t.id] === false) { tarea = t; break; }
+    }
+    const atacarListo = V.t >= ACCION_NAVE.primerAtaque && V.t - V.ultimoAtaque >= ACCION_NAVE.esperaAtaque;
+    const tipo = accionNaveE({ impostor: imp, victima, atacarListo, escotilla, boton, caja, tarea });
+    return tipo ? { tipo, victima, escotilla, caja, tarea } : null;
+  }
+  const cuerpoCerca = () => { const V = MG.state.nave; return V && V.gente[0].vivo && !V.reunion && !V.fin ? V.cuerpos.find(cu => Math.hypot(cu.pos.x - ps.pos.x, cu.pos.z - ps.pos.z) <= ACCION_NAVE.reporte) : null; };
+  function usarENave() {
+    const V = MG.state.nave, A = V && V.accion; if (!A || V.fin || V.reunion || naveAbierta()) return;
+    if (A.tipo === 'atacar') atacarNave(V.gente[0], A.victima);
+    else if (A.tipo === 'escotilla') saltarEscotilla(V.gente[0], A.escotilla.id);
+    else if (A.tipo === 'boton') { V.botonUsos.yo = (V.botonUsos.yo || 0) + 1; sfxNotas([['A5', 0, 0.15], ['E5', 0.18, 0.15], ['A5', 0.36, 0.15], ['E5', 0.54, 0.15]], 'square', 0.06); abrirReunion(V.gente[0], null); }
+    else if (A.tipo === 'caja') {
+      if (A.caja === 'recoger') { V.caja = 'yo'; avisoModo('📦 ¡Agarraste la caja! Llévala a la bodega (el cuadrado amarillo y negro)', false, 2500); }
+      else { V.caja = 'dejada'; terminarTareaNave('caja'); }
+    }
+    else if (A.tipo === 'tarea') abrirTareaNave(A.tarea.id);
+  }
+  function reportarNave() { const cu = cuerpoCerca(); if (cu) abrirReunion(MG.state.nave.gente[0], cu); }
+
+  // ----- Los paneles de las tareas -----
+  let tareaTimer = 0, soltarPanel = null;
+  addEventListener('pointerup', e => { if (soltarPanel) soltarPanel(e); });
+  function cerrarTareaNave() { clearInterval(tareaTimer); tareaTimer = 0; soltarPanel = null; naveTareaEl.hidden = true;
+    const nueva = naveZona.cloneNode(false); nueva.className = ''; naveZona.replaceWith(nueva); naveZona = nueva;   // (una zona nueva cada vez: sin los clics de la tarea anterior)
+    if (MG.state.nave) MG.state.nave.tarea = null;
+  }
+  document.getElementById('naveTareaCerrar').addEventListener('click', cerrarTareaNave);
+  function terminarTareaNave(id) {
+    const V = MG.state.nave; V.rep = marcarTarea(V.rep, 'yo', id);
+    sfxCoin(); avisoModo(`✅ ¡Tarea lista: ${tareaNave(id).nombre}!`, false, 1800);
+    if (!naveTareaEl.hidden) { naveMsj.textContent = '✅ ¡Listo!'; naveMsj.className = 'esc-resultado bien'; setTimeout(() => { if (V.tarea === id) cerrarTareaNave(); }, 700); }
+  }
+  // Clic o dedo arrastrando: todo lo que toca con la clase `clase` (sirve para cortar la maleza o limpiar el virus de una pasada)
+  function barrer(zona, clase, alTocar) {
+    let apretado = false;
+    const tocar = e => { const x = document.elementFromPoint(e.clientX, e.clientY), b = x && x.closest('.' + clase); if (b && zona.contains(b)) alTocar(+b.dataset.i); };
+    zona.addEventListener('pointerdown', e => { apretado = true; try { zona.setPointerCapture(e.pointerId); } catch (er) {} tocar(e); });
+    zona.addEventListener('pointermove', e => { if (apretado) tocar(e); });
+    for (const ev of ['pointerup', 'pointercancel']) zona.addEventListener(ev, () => { apretado = false; });
+  }
+  const pct = v => (v * 100).toFixed(1) + '%';
+  function abrirTareaNave(id) {
+    const V = MG.state.nave, t = tareaNave(id), imp = V.impostor === 'yo';
+    soltarMouse(); cerrarTareaNave(); V.tarea = id;
+    document.getElementById('naveTareaTit').textContent = `${t.icono} ${t.nombre}`;
+    const ayuda = document.getElementById('naveTareaAyuda'), sab = document.getElementById('naveSabotear');
+    naveMsj.textContent = ''; naveMsj.className = 'esc-resultado'; sab.hidden = !imp;
+    naveTareaEl.hidden = false;
+    const z = naveZona;
+    if (imp) {
+      ayuda.textContent = 'Eres el impostor 😈: esta tarea es de mentira para ti… pero la puedes SABOTEAR. Todos los que ya la hicieron tendrán que hacerla otra vez.';
+      z.append(elN('div', 'nave-grande', t.icono)); return;
+    }
+    const listo = () => terminarTareaNave(id);
+    if (id === 'cables') {
+      ayuda.textContent = 'Arrastra cada cable hasta el enchufe de su mismo color.';
+      let est = nuevosCables();
+      const NS = 'http://www.w3.org/2000/svg', svg = document.createElementNS(NS, 'svg'); svg.setAttribute('viewBox', '0 0 160 100'); svg.setAttribute('class', 'nave-svg'); z.append(svg);
+      const Y = i => 14 + i * 24, hex = i => COLORES_CABLES[i].hex;
+      const dib = (tag, at) => { const e = document.createElementNS(NS, tag); for (const k in at) e.setAttribute(k, at[k]); svg.append(e); return e; };
+      est.izq.forEach((col, i) => { dib('rect', { x: 0, y: Y(i) - 3, width: 16, height: 6, fill: hex(col) }); dib('circle', { cx: 18, cy: Y(i), r: 6, fill: hex(col), stroke: '#fff', 'stroke-width': 1 }); });
+      est.der.forEach((col, j) => { dib('rect', { x: 144, y: Y(j) - 6, width: 16, height: 12, rx: 2, fill: '#1e293b', stroke: hex(col), 'stroke-width': 2 }); dib('circle', { cx: 142, cy: Y(j), r: 3, fill: hex(col) }); });
+      let arrastre = null;
+      const punto = e => { const r = svg.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * 160, y: (e.clientY - r.top) / r.height * 100 }; };
+      svg.addEventListener('pointerdown', e => {
+        const p = punto(e), i = [0, 1, 2, 3].find(k => Math.hypot(p.x - 18, p.y - Y(k)) < 11 && !est.unidos.includes(est.izq[k])); if (i === undefined) return;
+        arrastre = { i, linea: dib('line', { x1: 18, y1: Y(i), x2: p.x, y2: p.y, stroke: hex(est.izq[i]), 'stroke-width': 4, 'stroke-linecap': 'round' }) };
+        try { svg.setPointerCapture(e.pointerId); } catch (er) {}
+      });
+      svg.addEventListener('pointermove', e => { if (!arrastre) return; const p = punto(e); arrastre.ultimo = p; arrastre.linea.setAttribute('x2', p.x); arrastre.linea.setAttribute('y2', p.y); });
+      const soltar = e => {
+        if (!arrastre) return; const p = e && e.clientX !== undefined && (e.clientX || e.clientY) ? punto(e) : arrastre.ultimo || { x: 0, y: 0 }, j = [0, 1, 2, 3].find(k => Math.hypot(p.x - 142, p.y - Y(k)) < 13), a = arrastre; arrastre = null;
+        const r = j === undefined ? { ok: false } : unirCable(est, a.i, j);
+        if (!r.ok) { a.linea.remove(); if (j !== undefined) { naveMsj.textContent = '¡Ese no es su color!'; naveMsj.className = 'esc-resultado mal'; } return; }
+        est = r.est; a.linea.setAttribute('x2', 142); a.linea.setAttribute('y2', Y(j)); naveMsj.textContent = '⚡'; naveMsj.className = 'esc-resultado bien';
+        if (cablesListos(est)) listo();
+      };
+      svg.addEventListener('pointerup', soltar); soltarPanel = soltar;   // (si el dedo se suelta afuera del dibujo, también)
+      svg.addEventListener('pointercancel', () => { if (arrastre) { arrastre.linea.remove(); arrastre = null; } });
+    } else if (id === 'plantas') {
+      ayuda.textContent = 'Toca las plantas débiles 🥀 para abonarlas, y corta TODA la maleza 🌿 (pasa el mouse o el dedo apretando). ¡La maleza vuelve a crecer rápido!';
+      let est = nuevasPlantas();
+      const pintar = () => {
+        z.replaceChildren();
+        est.plantas.forEach((ok, i) => { const b = elN('button', 'nave-cosa nave-planta' + (ok ? ' ok' : ''), ok ? '🌷' : '🥀'); b.type = 'button'; b.style.left = pct(0.12 + i * 0.22); b.style.top = '66%'; b.dataset.i = i; b.setAttribute('aria-label', ok ? 'Planta abonada' : 'Planta débil: abonar'); z.append(b); });
+        est.maleza.forEach((m, i) => { const w = elN('span', 'nave-cosa maleza', '🌿'); w.style.left = pct(m.x); w.style.top = pct(m.y * 0.55); w.dataset.i = i; z.append(w); });
+      };
+      z.addEventListener('click', e => { const b = e.target.closest('.nave-planta'); if (b && !est.plantas[+b.dataset.i]) { est = { ...est, plantas: est.plantas.map((v, k) => v || k === +b.dataset.i) }; pintar(); if (plantasListas(est)) listo(); } });
+      barrer(z, 'maleza', i => { est = { ...est, maleza: est.maleza.filter((_, k) => k !== i) }; pintar(); if (plantasListas(est)) listo(); });
+      tareaTimer = setInterval(() => { const n = est.maleza.length; est = { ...est, maleza: multiplicar(est.maleza, 0.1, MALEZA) }; if (est.maleza.length !== n) pintar(); }, 100);
+      pintar();
+    } else if (id === 'motor') {
+      ayuda.textContent = `El motor está dañado y la nave se puede caer 😱. Cada respuesta buena conecta un cable (${MOTOR_CABLES} cables). Aquí no se gana batería.`;
+      let cables = 0, preg = -1;
+      const fila = elN('div', 'nave-cables'), q = elN('p', 'esc-pregunta'), ops = elN('div', 'esc-opciones'); z.classList.add('nave-libre'); z.append(fila, q, ops);
+      const nueva = () => {
+        fila.replaceChildren(...Array.from({ length: MOTOR_CABLES }, (_, i) => elN('span', i < cables ? 'on' : '', i < cables ? '⚡' : '·')));
+        const banco = preguntasClase(); preg = escuelaSiguiente(preg, Math.random, banco.length); const P = banco[preg] || banco[0], m = escuelaMezclar(P);
+        q.textContent = P.p; ops.replaceChildren();
+        m.opciones.forEach((op, i) => { const b = elN('button', '', op); b.type = 'button'; b.addEventListener('click', () => {
+          const bien = i === m.correcta; cables = responderMotor(cables, bien);
+          naveMsj.textContent = bien ? '✅ ¡Cable conectado!' : '❌ Esa no. ¡Otra pregunta!'; naveMsj.className = 'esc-resultado ' + (bien ? 'bien' : 'mal');
+          for (const x of ops.children) x.disabled = true;
+          if (cables >= MOTOR_CABLES) { fila.replaceChildren(...Array.from({ length: MOTOR_CABLES }, () => elN('span', 'on', '⚡'))); listo(); } else setTimeout(() => { if (V.tarea === 'motor') nueva(); }, 700);
+        }); ops.append(b); });
+      };
+      nueva();
+    } else if (id === 'virus') {
+      ayuda.textContent = 'El virus azul se multiplica en la roca. ¡Sácalo todo (clic o arrastrando) antes de que se llene!';
+      const cartel = elN('div', 'nave-cartel'); cartel.append(elN('span', 'nave-blob muestra'), elN('b', '', 'Eso es malo'));
+      const roca = elN('div', 'nave-roca'); z.append(cartel, roca);
+      let v = sembrar(VIRUS.inicio, Math.random, VIRUS);
+      const pintar = () => { roca.replaceChildren(...v.map((b, i) => { const e = elN('span', 'nave-blob virus'); e.style.left = pct(b.x); e.style.top = pct(b.y); e.dataset.i = i; return e; })); };
+      barrer(roca, 'virus', i => { v = v.filter((_, k) => k !== i); pintar(); if (!v.length) { clearInterval(tareaTimer); listo(); } });
+      tareaTimer = setInterval(() => { const n = v.length; v = multiplicar(v, 0.1, VIRUS); if (v.length !== n) pintar(); }, 100);
+      pintar();
+    } else if (id === 'muestras') {
+      ayuda.textContent = 'Toca cada muestra para mirarla con la lupa 🔍. Si tiene hongo, tócala otra vez para tirarla 🗑️. Las limpias se quedan.';
+      let l = nuevasMuestras(); z.classList.add('nave-grilla');
+      const pintar = () => z.replaceChildren(...l.map((m, i) => { const b = elN('button', 'nave-muestra' + (m.tirada ? ' tirada' : m.vista ? (m.moho ? ' moho' : ' limpia') : ''), m.tirada ? '🗑️' : !m.vista ? '🧫 ?' : m.moho ? '🍄 ¡hongo!' : '✅ limpia'); b.type = 'button'; b.dataset.i = i; return b; }));
+      z.addEventListener('click', e => { const b = e.target.closest('.nave-muestra'); if (!b) return; const r = tocarMuestra(l, +b.dataset.i); l = r.lista; pintar(); if (muestrasListas(l)) listo(); });
+      pintar();
+    } else if (id === 'comida') {
+      ayuda.textContent = 'A las manzanas y las papas les salió hongo. Toca cada manchita verde para sacarla.';
+      let c = nuevaComida(); z.classList.add('nave-grilla');
+      const pintar = () => z.replaceChildren(...c.map((f, i) => {
+        const caja = elN('div', 'nave-comida'); caja.append(elN('span', 'nave-fruta', f.tipo === 'papa' ? '🥔' : '🍎'));
+        f.hongos.forEach((h, j) => { const s = elN('button', 'nave-hongo'); s.type = 'button'; s.style.left = pct(h.x); s.style.top = pct(h.y); s.dataset.c = i; s.dataset.h = j; s.setAttribute('aria-label', 'Sacar hongo'); caja.append(s); });
+        return caja;
+      }));
+      z.addEventListener('click', e => { const s = e.target.closest('.nave-hongo'); if (!s) return; c = sacarHongo(c, +s.dataset.c, +s.dataset.h); pintar(); if (comidaLista(c)) listo(); });
+      pintar();
+    } else if (id === 'camillas') {
+      ayuda.textContent = 'Cada camilla tiene 3 cosas rotas. Encuéntralas y tócalas para arreglarlas (así, si alguien se enferma, se cura).';
+      let cs = nuevasCamillas(), k = 0; z.classList.add('nave-libre');
+      const pintar = () => {
+        z.replaceChildren(elN('p', 'nave-titulito', `Camilla ${k + 1} de ${cs.length}`));
+        const cama = elN('div', 'nave-camilla');
+        PARTES_CAMILLA.forEach((pa, p) => { const mal = cs[k][p], b = elN('button', 'nave-parte' + (mal ? ' rota' : '')); b.type = 'button'; b.dataset.p = p; b.append(elN('span', '', mal ? pa.mal : pa.bien), elN('small', '', pa.nombre)); cama.append(b); });
+        z.append(cama);
+      };
+      z.addEventListener('click', e => {
+        const b = e.target.closest('.nave-parte'); if (!b) return; const r = arreglarParte(cs, k, +b.dataset.p);
+        if (!r.ok) { naveMsj.textContent = 'Esa parte está bien 👍'; naveMsj.className = 'esc-resultado'; return; }
+        cs = r.camillas; naveMsj.textContent = '🔧 ¡Arreglado!'; naveMsj.className = 'esc-resultado bien';
+        if (camillaLista(cs[k])) { if (k + 1 < cs.length) { k++; setTimeout(pintar, 350); } else { pintar(); listo(); return; } }
+        pintar();
+      });
+      pintar();
+    }
+  }
+  document.getElementById('naveSabotear').addEventListener('click', () => { const V = MG.state.nave; if (V && V.tarea) { sabotearNave(V.tarea, V.gente[0]); cerrarTareaNave(); } });
+
+  // ----- 🗣️ Reunión: chat (solo aquí), y votación (20 s, sin saltar) -----
+  const naveChat = document.getElementById('naveChat'), naveChatIn = document.getElementById('naveChatTexto'), naveVotar = document.getElementById('naveVotar'), naveVotos = document.getElementById('naveVotos');
+  const FRASES_BOT = {
+    acusa: ['Yo vi a {x} cerca de {s}… sospechoso 🤔', '¡Fue {x}! Lo vi salir de {s}', '{x} estaba solo en {s}, raro…', 'No sé… yo voto por {x}'],
+    defiende: ['¡Yo no fui! Estaba haciendo mis tareas 🔧', 'pero si yo no soy 😭', 'Yo iba con {x}, {x} no es', 'Estuve todo el rato en {s}'],
+  };
+  function decirNave(p, texto) {
+    const R = MG.state.nave.reunion; if (!R) return;
+    R.chat.push({ quien: p.nombre, texto, deFantasma: !p.vivo }); pintarChatNave();
+  }
+  function pintarChatNave() {
+    const V = MG.state.nave, R = V.reunion, yo = V.gente[0];
+    naveChat.replaceChildren(...R.chat.filter(m => chatVisible(m, { soyFantasma: !yo.vivo, soyImpostor: V.impostor === 'yo' })).map(m => {
+      const l = elN('p', m.sistema ? 'sistema' : m.deFantasma ? 'fantasma' : ''); if (!m.sistema) l.append(elN('b', '', (m.deFantasma ? '👻 ' : '') + m.quien + ': ')); l.append(document.createTextNode(m.texto)); return l;   // (siempre como texto: nunca se arma HTML con lo que escribe alguien)
+    }));
+    naveChat.scrollTop = naveChat.scrollHeight;
+  }
+  function abrirReunion(quien, cuerpo) {
+    const V = MG.state.nave, c = V.N.c;
+    cerrarTareaNave(); soltarMouse();
+    V.reunion = { quien, cuerpo, chat: [], fase: 'chat', votos: {}, ultimoMsj: -Infinity, inicio: ahoraMs(), hablar: [] };
+    V.apagon.hasta = -1;
+    // todos (los vivos) a la mesa del comedor; los desmayados se los llevan a la enfermería (ya no se ven)
+    const vivos = V.gente.filter(p => p.vivo), L = puestosReunion(vivos.length);
+    vivos.forEach((p, i) => { const P = posDe(p); P.set(c.x + L[i].x, 0, c.z + L[i].z); if (p.bot) { p.ia.trabajo = 0; p.ia.camino = []; p.bot.facing = Math.atan2(BOTON_REUNION.x - L[i].x, BOTON_REUNION.z - L[i].z); p.bot.obj.rotation.y = p.bot.facing; } });
+    if (quien.yo && V.caja === 'yo') {} // (la caja sigue contigo)
+    for (const cu of V.cuerpos) scene.remove(cu.g);
+    V.cuerpos = [];
+    document.getElementById('naveReunionTit').textContent = cuerpo ? '📢 ¡REPORTE!' : '🚨 ¡REUNIÓN DE EMERGENCIA!';
+    document.getElementById('naveReunionTxt').textContent = quien.yo ? (cuerpo ? `Encontraste a ${cuerpo.nombre} desmayado en ${cuerpo.sala}.` : 'Apretaste el botón rojo.') : cuerpo ? `${quien.nombre} encontró a ${cuerpo.nombre} desmayado en ${cuerpo.sala}.` : `${quien.nombre} apretó el botón rojo.`;
+    naveVotos.replaceChildren(); naveVotar.hidden = !V.gente[0].vivo;   // (los fantasmas no empiezan la votación)
+    document.getElementById('naveReunionTiempo').textContent = '';
+    naveChatIn.value = ''; naveChatIn.disabled = false;
+    naveReunionEl.hidden = false;
+    pintarChatNave();
+    // lo que dicen los bots (cada uno, lo que "vio")
+    const vivosBots = vivos.filter(p => p.bot);
+    for (const p of vivosBots) {
+      const otros = vivos.filter(q => q !== p), sosp = p.id !== V.impostor && Math.random() < 0.4 && V.gente.find(q => q.id === V.impostor).vivo ? V.gente.find(q => q.id === V.impostor) : otros[Math.floor(Math.random() * otros.length)];
+      p.ia.sospecha = sosp ? sosp.id : null;
+      const tipo = Math.random() < 0.6 ? 'acusa' : 'defiende', fr = FRASES_BOT[tipo][Math.floor(Math.random() * FRASES_BOT[tipo].length)];
+      const txt = fr.replaceAll('{x}', sosp ? sosp.nombre : 'alguien').replaceAll('{s}', SALAS_NAVE[Math.floor(Math.random() * SALAS_NAVE.length)].nombre);
+      V.reunion.hablar.push({ en: 1 + Math.random() * 6, p, txt });
+    }
+    clearInterval(V.reunionTimer); V.reunionTimer = setInterval(tickReunion, 200);
+  }
+  function tickReunion() {
+    const V = MG.state.nave, R = V && V.reunion; if (!R) return;
+    const seg = (ahoraMs() - R.inicio) / 1000;
+    for (const h of R.hablar) if (!h.dicho && seg >= h.en) { h.dicho = true; decirNave(h.p, h.txt); }
+    if (R.fase === 'chat' && seg > 30) { const b = V.gente.find(p => p.bot && p.vivo); empezarVotacion(b ? b.nombre : 'Alguien'); }   // si nadie aprieta Votar, un bot lo hace
+    if (R.fase === 'votar') {
+      const falta = Math.max(0, Math.ceil((R.finVoto - ahoraMs()) / 1000));
+      document.getElementById('naveReunionTiempo').textContent = `🗳️ ¡A votar! Quedan ${falta} s`;
+      for (const p of V.gente) if (p.bot && p.vivo && !(p.id in R.votos) && ahoraMs() >= R.votoBot[p.id]) votarNave(p, p.id === V.impostor ? azarVivo(V, p, true) : (V.gente.find(q => q.id === p.ia.sospecha && q.vivo) || azarVivo(V, p)));
+      const vivos = V.gente.filter(p => p.vivo);
+      if (ahoraMs() >= R.finVoto || vivos.every(p => p.id in R.votos)) terminarVotacion();
+    }
+  }
+  const azarVivo = (V, p, tripulante = false) => { const l = V.gente.filter(q => q.vivo && q !== p && (!tripulante || q.id !== V.impostor)); return l[Math.floor(Math.random() * l.length)] || null; };
+  function empezarVotacion(quien) {
+    const V = MG.state.nave, R = V.reunion; if (!R || R.fase !== 'chat') return;
+    R.fase = 'votar'; R.finVoto = ahoraMs() + VOTACION.segundos * 1000; R.votoBot = {};
+    for (const p of V.gente) if (p.bot) R.votoBot[p.id] = ahoraMs() + (3 + Math.random() * 12) * 1000;
+    R.chat.push({ sistema: true, texto: `🗳️ ${quien === 'Tú' ? 'Empezaste' : quien + ' empezó'} la votación. ¡Hay ${VOTACION.segundos} segundos y no se puede saltar!` }); pintarChatNave();
+    naveVotar.hidden = true; pintarVotosNave();
+  }
+  naveVotar.addEventListener('click', () => empezarVotacion('Tú'));
+  function pintarVotosNave() {
+    const V = MG.state.nave, R = V.reunion, yo = V.gente[0];
+    naveVotos.replaceChildren(...V.gente.filter(p => p.vivo).map(p => {
+      const b = elN('button', 'nave-voto' + (R.votos.yo === p.id ? ' elegido' : ''), ''); b.type = 'button';
+      const n = Object.values(R.votos).length; b.append(elN('b', '', p.nombre), elN('small', '', p.id in R.votos ? '✔ votó' : '…'));
+      b.disabled = !yo.vivo || 'yo' in R.votos; b.addEventListener('click', () => { votarNave(yo, p); });
+      return b;
+    }));
+  }
+  function votarNave(quien, porQuien) {
+    const R = MG.state.nave.reunion; if (!R || R.fase !== 'votar' || !quien.vivo || quien.id in R.votos || !porQuien) return;
+    R.votos[quien.id] = porQuien.id; pintarVotosNave();
+  }
+  function terminarVotacion() {
+    const V = MG.state.nave, R = V.reunion; R.fase = 'resultado';
+    const r = contarVotos(R.votos), exp = r.expulsado && V.gente.find(p => p.id === r.expulsado);
+    const cuantos = V.gente.filter(p => p.vivo).map(p => `${p.nombre}: ${r.cuenta[p.id] || 0}`).join(' · ');
+    let txt = r.empate ? '🤝 ¡Empate! Nadie fue expulsado.' : !exp ? 'Nadie votó: nadie fue expulsado.' : mensajeExpulsion(exp.nombre === 'Tú' ? 'Tú' : exp.nombre, exp.id === V.impostor);
+    if (exp && exp.yo) txt = exp.id === V.impostor ? 'Tú eras el impostor :D ¡te descubrieron!' : 'Tú no eras impostor :v';
+    if (exp) { exp.vivo = false; exp.expulsado = true; if (exp.bot) { exp.bot.cuerpo.material.transparent = true; exp.bot.cuerpo.material.opacity = 0.35; } else { body.material.transparent = true; body.material.opacity = 0.35; } }
+    R.chat.push({ sistema: true, texto: `Votos → ${cuantos}` }, { sistema: true, texto: txt }); pintarChatNave();
+    document.getElementById('naveReunionTiempo').textContent = txt;
+    naveVotos.replaceChildren(); naveChatIn.disabled = true;
+    const seguir = elN('button', 'esc-salir', 'Seguir jugando'); seguir.type = 'button'; seguir.addEventListener('click', cerrarReunion); naveVotos.append(seguir);
+  }
+  function cerrarReunion() {
+    const V = MG.state.nave; clearInterval(V.reunionTimer); naveReunionEl.hidden = true;
+    V.reunion = null; V.ultimaReunion = V.t; V.ultimoAtaque = Math.max(V.ultimoAtaque, V.t - ACCION_NAVE.esperaAtaqueBot + 10);   // (el impostor espera un poquito antes de volver a atacar)
+    for (const p of V.gente) if (p.bot) planBotNave(p);
+  }
+  function enviarChatNave() {
+    const V = MG.state.nave, R = V && V.reunion; if (!R || R.fase === 'resultado') return;
+    const t = limpiarChat(naveChatIn.value); if (!t) return;
+    if (!puedeEscribir(R.ultimoMsj, ahoraMs())) { if (R.fase === 'chat') document.getElementById('naveReunionTiempo').textContent = '⏳ Espera 2 segundos entre mensajes'; return; }
+    R.ultimoMsj = ahoraMs(); naveChatIn.value = ''; if (R.fase === 'chat') document.getElementById('naveReunionTiempo').textContent = '';
+    decirNave(V.gente[0], t);
+    // (con amigos, esto irá al servidor: { tipo: 'naveChat', texto } y el servidor lo limpia y lo reparte)
+  }
+  document.getElementById('naveChatForm').addEventListener('submit', e => { e.preventDefault(); enviarChatNave(); });
+
+  // ----- Cada cuadro -----
+  function terminarRondaNave(quien) {
+    const V = MG.state.nave; if (V.fin) return; V.fin = quien;
+    cerrarTareaNave(); luzNave(false);
+    const imp = V.gente.find(p => p.id === V.impostor);
+    const yoImp = V.impostor === 'yo', gane = (quien === 'impostor') === yoImp;
+    if (gane) sfxNotas([['C5', 0, 0.12], ['E5', 0.12, 0.12], ['G5', 0.24, 0.12], ['C6', 0.36, 0.3]], 'square', 0.07);
+    modalNave(quien === 'impostor' ? '😈 ¡Ganó el impostor!' : '🏆 ¡Ganó la tripulación!',
+      `${gane ? '¡Ganaste! ' : 'Perdiste… '}El impostor era ${yoImp ? 'TÚ' : imp.nombre}.`,
+      [['🔁 Otra ronda', () => empezarRondaNave()], ['↩ Volver al salón', () => salirNave(V.o)]]);
   }
   function updateNave(dt, o) {
     const st = MG.state, V = st.nave, c = V.N.c;
-    // ✈️ dos toques de ESPACIO: modo vuelo
-    if (keys.Space && !V.espAntes) { V.vuelo = tocarEspacio(V.vuelo, ahoraMs()); if (V.vuelo.cambio) avisoModo(V.vuelo.volando ? '✈️ Modo vuelo: SÍ (Q sube · E baja)' : '🚶 Modo vuelo: NO (vuelves a caminar)', false, 1500); }
-    V.espAntes = !!keys.Space;
-    if (ps.pos.y > 14) { ps.pos.y = 14; if (ps.vel.y > 0) ps.vel.y = 0; }   // (el techo de la nave: no te vas al espacio)
+    if (!V.gente) return;
+    const pausa = !!(V.fin || V.reunion || !naveModalEl.hidden);
+    if (!pausa) V.t += dt;
     // la escotilla de salida
-    if (Math.hypot(ps.pos.x - c.x - SALIDA_NAVE.x, ps.pos.z - c.z - SALIDA_NAVE.z) < SALIDA_NAVE.radio && ps.pos.y < 1) { salirNave(o); avisoModo('↩ Volviste al salón', false, 1500); return; }
-    // los bots pasean por la nave (de sala en sala, pasando por las puertas)
-    for (const b of V.bots) {
-      if (b.descanso > 0) { b.descanso -= dt; physics(b, dt, false, JUMP); animarCaminar(b.obj, b.cuerpo, H / 2, dt); continue; }
-      const meta = b.camino[0];
-      if (!meta) { b.descanso = 1 + Math.random() * 3; nuevoDestinoNave(b, c); continue; }
-      let dx = meta.x - b.pos.x, dz = meta.z - b.pos.z; const d = Math.hypot(dx, dz);
-      if (d < 0.8) { b.camino.shift(); continue; }
-      dx /= d; dz /= d; b.walkX = dx * 4.5 * dt; b.walkZ = dz * 4.5 * dt; turnTo(b, dx, dz, dt);
-      physics(b, dt, false, JUMP); animarCaminar(b.obj, b.cuerpo, H / 2, dt);
-      if (b.hitWall && (b.atascado = (b.atascado || 0) + dt) > 2) { b.atascado = 0; nuevoDestinoNave(b, c); } else if (!b.hitWall) b.atascado = 0;
+    if (!pausa && Math.hypot(ps.pos.x - c.x - SALIDA_NAVE.x, ps.pos.z - c.z - SALIDA_NAVE.z) < SALIDA_NAVE.radio && ps.pos.y < 1) { salirNave(o); avisoModo('↩ Volviste al salón', false, 1500); return; }
+    const imp = V.impostor === 'yo';
+    // los bots
+    if (!pausa) for (const p of V.gente) {
+      if (!p.bot) continue;
+      if (p.id === V.impostor && p.vivo) {
+        if (cazarNave(p, dt)) continue;
+        if (V.t >= V.impBot.proxApagon && apagarLucesNave()) V.impBot.proxApagon = V.t + APAGON.espera + 10 + Math.random() * 30;
+      }
+      updateBotNave(p, dt);
+      // un tripulante vivo que ve un cuerpo, lo reporta
+      if (p.vivo && p.id !== V.impostor && V.t > 2) { const cu = V.cuerpos.find(k => k.cae >= 1 && Math.hypot(k.pos.x - p.bot.pos.x, k.pos.z - p.bot.pos.z) < 3.2); if (cu) { abrirReunion(p, cu); break; } }
     }
-    V.N.grupo.userData.nucleo.material.color.setHSL(0.93, 1, 0.55 + 0.15 * Math.sin(MG.t * 3));   // el reactor late
-    const si = salaNaveEn(ps.pos.x - c.x, ps.pos.z - c.z), sala = si >= 0 ? SALAS_NAVE[si].nombre : 'afuera';
-    const Q = IS_TOUCH ? '' : ' · <b>Q</b> sube · <b>E</b> baja · <b>ESPACIO</b> x2: volar';
-    mgHud.innerHTML = `🚀 <b>${escaparHTML(sala)}</b> · ${V.vuelo.volando ? '✈️ volando' : '🚶 caminando'}${Q} · 🟢 salida en la bodega`;
-    mgHud.hidden = false;
+    // 👻 los fantasmas solo los ve el impostor (y tú te ves a ti mismo, transparente)
+    const veo = veFantasmas(imp);
+    for (const p of V.gente) if (p.bot) p.bot.obj.visible = p.vivo || veo;
+    // los desmayados se caen (una vez)
+    for (const cu of V.cuerpos) if (cu.cae < 1) { cu.cae = Math.min(1, cu.cae + dt * 3); cu.g.rotation.x = -Math.PI / 2 * cu.cae * cu.cae; }
+    for (const cu of V.cuerpos) cu.est.material.rotation += dt * 2;
+    // la caja
+    const T = tareaNave('caja'), CM = V.N.cajaMesh;
+    if (V.caja === 'yo') CM.position.set(ps.pos.x, ps.pos.y + H + 0.5, ps.pos.z);
+    else if (V.caja === 'dejada') CM.position.set(c.x + T.x, 0.4, c.z + T.z);
+    else CM.position.set(c.x + T.recoger.x, 0.4, c.z + T.recoger.z);
+    // los anillos de las tareas: amarillo = te falta · verde = hecha · naranja = (impostor) se puede sabotear
+    for (const t of TAREAS_NAVE) { const A = V.N.tareas[t.id]; A.anillo.material.color.setHex(imp ? 0xff8a3d : V.rep.yo && V.rep.yo[t.id] ? 0x30d158 : 0xffd400); }
+    V.N.nucleo.material.color.setHSL(0.93, 1, 0.55 + 0.15 * Math.sin(MG.t * 3));   // el reactor late
+    // 💡 el apagón (el impostor ve normal)
+    const oscuro = V.t < V.apagon.hasta;
+    luzNave(oscuro && !imp);
+    // ¿qué hace la E? ¿y la F?
+    V.accion = pausa || naveAbierta() ? null : calcularAccionNave();
+    // ¿ganó alguien?
+    if (!V.fin && !pausa) {
+      const { hechas, total } = progresoNave(V.rep), impVivo = V.gente.find(p => p.id === V.impostor).vivo;
+      const r = resultadoNave({ hechas, total, tripulantesVivos: V.gente.filter(p => p.vivo && p.id !== V.impostor).length, impostoresVivos: impVivo ? 1 : 0 });
+      if (r) terminarRondaNave(r);
+    }
+    pintarHudNave(oscuro);
   }
+  function pintarHudNave(oscuro) {
+    const V = MG.state.nave, yo = V.gente[0], imp = V.impostor === 'yo', R = rel(ps.pos), si = salaNaveEn(R.x, R.z), sala = si >= 0 ? SALAS_NAVE[si].nombre : 'afuera';
+    const espera = Math.max(0, Math.ceil(Math.max(ACCION_NAVE.primerAtaque - V.t, ACCION_NAVE.esperaAtaque - (V.t - V.ultimoAtaque))));
+    const rol = !yo.vivo ? '👻 Fantasma' : imp ? `😈 Impostor · 👊 ${espera ? espera + ' s' : '¡listo!'}` : '🧑‍🚀 Tripulante';
+    const luces = oscuro ? ` · ⚠️ ¡Sabotearon las luces! ${Math.ceil(V.apagon.hasta - V.t)} s` : '';
+    mgHud.innerHTML = `🚀 ${rol} · 📍 <b>${escaparHTML(sala)}</b>${luces}`;
+    mgHud.hidden = false;
+    // la lista de tareas y la barra de la tripulación
+    const { hechas, total } = progresoNave(V.rep);
+    document.getElementById('naveBarra').style.width = pct(total ? hechas / total : 0);
+    const lista = document.getElementById('naveTareas'), filas = imp ? TAREAS_NAVE.map(t => `🎭 ${t.nombre}`) : TAREAS_NAVE.filter(t => V.rep.yo && t.id in V.rep.yo).map(t => `${V.rep.yo[t.id] ? '✅' : '⬜'} ${t.nombre}`);
+    const cab = imp ? '😈 Tareas de mentira (sabotéalas)' : !yo.vivo ? '👻 Termina tus tareas' : 'Tus tareas';
+    const clave = cab + filas.join('|');
+    if (lista.dataset.clave !== clave) { lista.dataset.clave = clave; lista.replaceChildren(elN('li', 'cab', cab), ...filas.map(f => elN('li', '', f))); }
+    const puede = imp && yo.vivo && !V.fin && puedeApagar(V.t, V.apagon.fin);
+    naveLucesBtn.hidden = !(imp && yo.vivo); naveLucesBtn.disabled = !puede;
+    const txt = puede ? '💡 Apagar luces (Q)' : `💡 Luces: espera ${Math.max(0, Math.ceil(Math.max(APAGON.primero - V.t, APAGON.espera - (V.t - V.apagon.fin))))} s`;
+    if (naveLucesBtn.textContent !== txt) naveLucesBtn.textContent = txt;
+  }
+  function promptNave() {
+    const V = MG.state.nave; if (!V || !V.gente) return '';
+    const A = V.accion, R = cuerpoCerca() ? ' · Pulsa <kbd>F</kbd> para <b>reportar</b> 📢' : '';
+    if (!A) return R ? R.slice(3) : '';
+    const t = A.tipo === 'atacar' ? `Pulsa <kbd>E</kbd> para atacar a <b>${escaparHTML(A.victima.nombre)}</b> 👊` : A.tipo === 'escotilla' ? 'Pulsa <kbd>E</kbd> para meterte por la escotilla 🕳️'
+      : A.tipo === 'boton' ? 'Pulsa <kbd>E</kbd> para llamar a una <b>reunión de emergencia</b> 🚨' : A.tipo === 'caja' ? (A.caja === 'recoger' ? 'Pulsa <kbd>E</kbd> para agarrar la <b>caja</b> 📦' : 'Pulsa <kbd>E</kbd> para dejar la <b>caja</b> aquí 📦')
+      : V.impostor === 'yo' ? `Pulsa <kbd>E</kbd> para sabotear <b>${escaparHTML(A.tarea.nombre)}</b> 💥` : `Pulsa <kbd>E</kbd>: <b>${escaparHTML(A.tarea.nombre)}</b> ${A.tarea.icono}`;
+    return t + R;
+  }
+  const etiquetaENave = () => { const A = MG.state.nave && MG.state.nave.accion; return !A ? '✋' : A.tipo === 'atacar' ? '👊 Atacar' : A.tipo === 'escotilla' ? '🕳️ Escotilla' : A.tipo === 'boton' ? '🚨 Reunión' : A.tipo === 'caja' ? '📦 Caja' : soyImpostorNave() ? '💥 Sabotear' : '🔧 Tarea'; };
   // E junto a una silla: la del modo te lleva a la torre; las demás todavía no tienen modo
   function sentarse() {
     const o = minigameOrigin(MG.k);
@@ -4327,7 +4921,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     else if (SILLAS[i].modo === 'atrapadas') abrirAtrapadas();
     else if (SILLAS[i].modo === 'carrera') abrirModoRonda('carrera');
     else if (SILLAS[i].modo === 'spleef') abrirModoRonda('spleef');
-    else if (SILLAS[i].modo === 'nave') entrarNave(o);
+    else if (SILLAS[i].modo === 'nave') abrirNave(o);
     else avisoModo('Próximamente: esta silla todavía no tiene modo');
   }
   function entrarTorre(o) {
@@ -4883,11 +5477,12 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
         return st.fase === 'nomires' && !hayBateria(st.bateria);   // sin batería no caminas…
       },
       get velocidad() { return MG.state.fase === 'atrapadas' ? AN.vel : undefined; },   // Atrapadas: todos más rápidos (15 en vez de 12)
-      get noJump() { return this.noMove || (MG.state.fase === 'nave' && !!MG.state.nave && MG.state.nave.vuelo.volando); },   // (volando, ESPACIO no salta)
-      vertical(dt) { if (MG.state.fase === 'nave') verticalNave(dt); },   // 🚀 Q sube · E baja                                                   // …ni saltas (pero sí te caes)
-      get onE() { return MG.state.fase === 'salon' ? sentarse : null; },   // E: sentarse (en Escondidas se encuentra tocando: sin E)
+      get noJump() { return this.noMove; },                                                   // …ni saltas (pero sí te caes)
+      get onE() { const st = MG.state; return st.fase === 'salon' ? sentarse : st.fase === 'nave' && st.nave && st.nave.accion ? usarENave : null; },
+      get onF() { return MG.state.fase === 'nave' && cuerpoCerca() ? reportarNave : null; },   // 🚀 F: reportar
+      get fLabel() { return '📢 Reportar'; },   // E: sentarse (en Escondidas se encuentra tocando: sin E)
       get onQ() { const st = MG.state; return st.fase === 'nomires' || (st.fase === 'escondidas' && !st.esc.fantasma && !st.esc.resultado) || (st.fase === 'atrapadas' && !st.an.fantasma && !st.an.resultado) || (st.fase === 'carrera' && !st.cr.resultado && !st.cr.llegue) || (st.fase === 'spleef' && !st.sp.resultado) ? abrirCarga : null; },  // Q: responder para cargar batería
-      get eLabel() { const o = minigameOrigin(MG.k); return MG.state.fase === 'salon' && cercaDelVendedor(ps.pos.x - o.x, ps.pos.z - o.z) ? '🎃 Tienda' : '✋ Sentarse'; },
+      get eLabel() { if (MG.state.fase === 'nave') return etiquetaENave(); const o = minigameOrigin(MG.k); return MG.state.fase === 'salon' && cercaDelVendedor(ps.pos.x - o.x, ps.pos.z - o.z) ? '🎃 Tienda' : '✋ Sentarse'; },
       // ¿Dónde estoy? (para la red: con quién te ves) · torre: 21 · Escondidas con amigos: 30 + terreno · solo: 99 (no ves a nadie)
       get mgCodigo() { const st = MG.state; if (st.fase === 'nomires') return MG_TORRE; if (st.fase === 'atrapadas') return st.an.solo ? MG_SOLO : MG_ATRAPADAS; if (st.fase === 'carrera') return st.cr.solo ? MG_SOLO : MG_CARRERA; if (st.fase === 'spleef') return st.sp.solo ? MG_SOLO : MG_SPLEEF; if (st.fase === 'escondidas') return st.esc.solo ? MG_SOLO : MG_ESCONDIDAS + st.esc.terreno; if (st.fase === 'nave') return MG_SOLO; return undefined; },
       // El cielo se pone oscuro en el espacio (con estrellas) y en el neón
@@ -4904,6 +5499,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
         placePlayer(o.x + SALON.puerta.x, 0, o.z - SALON.largo / 2 + 5);   // entras por la puerta de atrás
       },
       prompt() {
+        if (MG.state.fase === 'nave') return promptNave();
         if (MG.state.fase !== 'salon') return '';
         if (cercaDelVendedor(ps.pos.x - minigameOrigin(MG.k).x, ps.pos.z - minigameOrigin(MG.k).z)) return 'Pulsa <kbd>E</kbd> para la <b>tienda de Halloween</b> 🎃';
         if (cercaDeLaProfe(ps.pos.x - minigameOrigin(MG.k).x, ps.pos.z - minigameOrigin(MG.k).z)) return 'Pulsa <kbd>E</kbd> para el modo profe';
@@ -4925,7 +5521,8 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
         quitarCarrera(); for (const b of MG.built.botsCR || []) b.obj.visible = false;
         if (MG.state.sp) levantarseModo('spleef');
         quitarSpleef(); for (const b of MG.built.botsSP || []) b.obj.visible = false;
-        if (MG.state.nave) for (const b of MG.state.nave.bots) ponerCasco(b, false);
+        if (MG.state.nave) limpiarRondaNave();
+        naveModalEl.hidden = true; naveListaEl.hidden = true; naveLucesBtn.hidden = true;
         quitarNave(); MG.state.nave = null;
         ocultarBotsSolo();
       },
@@ -6179,6 +6776,8 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     if (responderBtn.hidden === showResponder) responderBtn.hidden = !showResponder;
     const eLabel = (MG.active && MG.active.eLabel) || '✋ Buscar';   // cada minijuego puede ponerle su nombre al botón ✋
     if (touchBtns.mgE.textContent !== eLabel) touchBtns.mgE.textContent = eLabel;
+    const fLabel = (MG.active && MG.active.fLabel) || '💧 Agua';
+    if (touchBtns.mgF.textContent !== fLabel) touchBtns.mgF.textContent = fLabel;
     for (const k in show) if (touchBtns[k].hidden === show[k]) touchBtns[k].hidden = !show[k];
     if (shootBtn.hidden === stats.blaster) shootBtn.hidden = !stats.blaster;
   }
@@ -7762,7 +8361,6 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     }
     if (wantJump && ps.onGround) sfxSalto();   // ¡bup!
     MG.input = { moving, jumped: (wantJump && ps.onGround) || doble };   // la batería de "No mires abajo" lo usa para saber cuánto gastar
-    if (MG.active && MG.active.vertical && !busy) MG.active.vertical(dt);   // (la nave: Q sube, E baja, y volando no hay gravedad)
     const vyAntes = ps.vel.y, enAire = !ps.onGround;
     physics(ps, dt, wantJump, (MG.active && MG.active.jump) || stats.jump);
     if (enAire && ps.onGround && vyAntes < -7) sfxAterrizar(-vyAntes);   // ¡tump! (al caer de alto)

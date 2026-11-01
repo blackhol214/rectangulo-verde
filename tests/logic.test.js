@@ -2380,6 +2380,7 @@ describe('🤖 Los bots de los modos (jugando solo)', () => {
   });
   it('entre 1 y 11 (lo raro o vacío vuelve a los de siempre de cada modo)', () => {
     expect(limitarBots(0)).toBe(1); expect(limitarBots(50)).toBe(11); expect(limitarBots(4.6)).toBe(5); expect(limitarBots('x')).toBeNull();
+    expect(limitarBots(9, 'nave')).toBe(5); expect(limitarBots(0, 'nave')).toBe(1); expect(leerBots('9', 'nave')).toBe(5); expect(leerBots(null, 'nave')).toBe(5);   // 🚀 la Nave: ALBERT + 4 como máximo
     expect(leerBots('7', 'carrera')).toBe(7); expect(leerBots(null, 'atrapadas')).toBe(BOTS_POR_MODO.atrapadas); expect(leerBots('hola', 'spleef')).toBe(BOTS_POR_MODO.spleef);
     expect(rosterBots(99)).toHaveLength(11); expect(rosterBots(-3)).toHaveLength(1);
   });
@@ -2392,10 +2393,10 @@ describe('🤖 Los bots de los modos (jugando solo)', () => {
   });
 });
 
-import { SALAS_NAVE, puertasNave, paredesNave, salaNaveEn, rutaNave, tocarEspacio, DOBLE_TOQUE_MS, SALIDA_NAVE, INICIO_NAVE, NAVE } from '../src/logic.js';
+import { SALAS_NAVE, puertasNave, paredesNave, salaNaveEn, rutaNave, SALIDA_NAVE, INICIO_NAVE, NAVE } from '../src/logic.js';
 describe('🚀 Nave entre sospechas: el plano (diseño propio)', () => {
   it('salas con nombres en español, ninguna encimada con otra', () => {
-    expect(SALAS_NAVE.map(s => s.nombre)).toContain('Puente de mando'); expect(new Set(SALAS_NAVE.map(s => s.id)).size).toBe(SALAS_NAVE.length);
+    expect(SALAS_NAVE.map(s => s.nombre)).toContain('Escáner de virus'); expect(new Set(SALAS_NAVE.map(s => s.id)).size).toBe(SALAS_NAVE.length);
     for (let a = 0; a < SALAS_NAVE.length; a++) for (let b = a + 1; b < SALAS_NAVE.length; b++) {
       const A = SALAS_NAVE[a], B = SALAS_NAVE[b], ix = Math.min(A.x1, B.x1) - Math.max(A.x0, B.x0), iz = Math.min(A.z1, B.z1) - Math.max(A.z0, B.z0);
       expect(ix > 0 && iz > 0, `${A.id} y ${B.id}`).toBe(false);
@@ -2418,17 +2419,9 @@ describe('🚀 Nave entre sospechas: el plano (diseño propio)', () => {
     for (const p of puertasNave()) { const c = { x: p.x, z: p.z }; expect(W.some(w => c.x > w.x0 - 0.01 && c.x < w.x1 + 0.01 && c.z > w.z0 - 0.01 && c.z < w.z1 + 0.01)).toBe(false); }
     expect(W.some(w => w.exterior)).toBe(true);
   });
-  it('el camino de los bots: de los motores al puente, pasando por el pasillo', () => {
-    const r = rutaNave(SALAS_NAVE.findIndex(s => s.id === 'motores'), SALAS_NAVE.findIndex(s => s.id === 'puente'));
+  it('el camino de los bots: de los motores al escáner, pasando por el pasillo', () => {
+    const r = rutaNave(SALAS_NAVE.findIndex(s => s.id === 'motores'), SALAS_NAVE.findIndex(s => s.id === 'escaner'));
     expect(r).toHaveLength(2); expect(salaNaveEn(INICIO_NAVE.x, INICIO_NAVE.z)).toBe(0);
-  });
-  it('✈️ dos toques rápidos de ESPACIO prenden el vuelo; otros dos lo apagan; dos lentos no hacen nada', () => {
-    let e = { ultimo: -Infinity, volando: false };
-    e = tocarEspacio(e, 1000); expect(e.volando).toBe(false);
-    e = tocarEspacio(e, 1000 + DOBLE_TOQUE_MS - 50); expect(e).toMatchObject({ volando: true, cambio: true });
-    e = tocarEspacio(e, 1400); expect(e.volando).toBe(true);   // el tercero: empieza de nuevo
-    e = tocarEspacio(e, 2400); expect(e.volando).toBe(true);   // lento: nada
-    e = tocarEspacio(e, 2500); expect(e.volando).toBe(false);
   });
 });
 
@@ -2451,4 +2444,171 @@ describe('🥊 La Carrera de verdad sigue pegando (a ti y a los bots)', () => {
     expect(puedeRecibirGolpe(ahora - 1, ahora)).toBe(true);                // ya pasó
     expect(puedeRecibirGolpe(ahora + 3_000_000, ahora)).toBe(true);        // (el error de antes: quedaba inmune por mucho rato)
   });
+});
+
+import { PROPS_NAVE, cajaProp, TAREAS_NAVE, tareaNave, BOTON_REUNION, ESCOTILLAS_NAVE, siguienteEscotilla, ACCION_NAVE, puntoLibreNave, repartirTareas, progresoNave, marcarTarea, sabotearTarea,
+  resultadoNave, elegirImpostor, veFantasmas, hayTestigos, accionNaveE, puestosReunion, nuevosCables, unirCable, cablesListos, COLORES_CABLES, VIRUS, MALEZA, sembrar, multiplicar,
+  nuevasPlantas, plantasListas, MOTOR_CABLES, responderMotor, nuevasMuestras, tocarMuestra, muestrasListas, nuevaComida, sacarHongo, comidaLista, nuevasCamillas, arreglarParte, camillaLista,
+  limpiarChat, puedeEscribir, chatVisible, CHAT_NAVE, contarVotos, mensajeExpulsion, puedeBotonReunion, SALAS_NAVE as SN, salaNaveEn as salaEn, puertasNave as puertasN, SALIDA_NAVE as SAL, INICIO_NAVE as INI, seededRandom as srN } from '../src/logic.js';
+describe('🚀 Nave, fase 2: el mapa de las tareas, las cosas sólidas y las escotillas', () => {
+  const sala = id => SN.findIndex(s => s.id === id);
+  const enProp = (p, m = 0) => PROPS_NAVE.some(q => Math.abs(p.x - q.x) < q.an / 2 + m && Math.abs(p.z - q.z) < q.la / 2 + m);
+  it('la sala de adelante ahora es el "Escáner de virus"', () => {
+    expect(SN.map(s => s.nombre)).toContain('Escáner de virus'); expect(SN.map(s => s.nombre)).not.toContain('Puente de mando');
+  });
+  it('cada cosa está adentro de su sala (lejos de las paredes) y no tapa ninguna puerta', () => {
+    for (const p of PROPS_NAVE) {
+      const s = SN[sala(p.sala)], c = cajaProp(p);
+      expect(c.x0 >= s.x0 + 0.5 && c.x1 <= s.x1 - 0.5 && c.z0 >= s.z0 + 0.5 && c.z1 <= s.z1 - 0.5, `${p.tipo} en ${p.sala}`).toBe(true);
+      for (const d of puertasN()) expect(Math.hypot(d.x - Math.max(c.x0, Math.min(d.x, c.x1)), d.z - Math.max(c.z0, Math.min(d.z, c.z1))), `${p.tipo} tapa una puerta`).toBeGreaterThan(1.6);
+    }
+  });
+  it('8 tareas, una en cada sala (menos el pasillo); se puede llegar a todas (no están adentro de una cosa)', () => {
+    expect(TAREAS_NAVE).toHaveLength(8); expect(new Set(TAREAS_NAVE.map(t => t.sala)).size).toBe(8);
+    for (const t of TAREAS_NAVE) {
+      expect(salaEn(t.x, t.z), t.id).toBe(sala(t.sala)); expect(enProp(t, 0.7), t.id).toBe(false);
+      if (t.recoger) { expect(salaEn(t.recoger.x, t.recoger.z)).toBe(sala('reactor')); expect(enProp(t.recoger, 0.7)).toBe(false); }
+    }
+    expect(tareaNave('caja').sala).toBe('bodega');
+  });
+  it('el botón de emergencia está en la mesa del comedor, y los puestos de la reunión no caen adentro de nada', () => {
+    expect(salaEn(BOTON_REUNION.x, BOTON_REUNION.z)).toBe(sala('comedor'));
+    expect(PROPS_NAVE.some(p => p.tipo === 'mesaReunion' && p.x === BOTON_REUNION.x && p.z === BOTON_REUNION.z)).toBe(true);
+    for (const n of [2, 6, 12]) for (const p of puestosReunion(n)) { expect(enProp(p, 0.45)).toBe(false); expect(salaEn(p.x, p.z)).toBe(sala('comedor')); }
+  });
+  it('las escotillas: 3 redes que conectan salas distintas; nunca encima de una tarea, una cosa o la salida', () => {
+    const redes = new Set(ESCOTILLAS_NAVE.map(e => e.red)); expect(redes.size).toBe(3);
+    for (const e of ESCOTILLAS_NAVE) {
+      expect(salaEn(e.x, e.z), e.id).toBeGreaterThanOrEqual(0); expect(enProp(e, 0.8), e.id).toBe(false);
+      for (const t of TAREAS_NAVE) expect(Math.hypot(e.x - t.x, e.z - t.z), `${e.id} y ${t.id}`).toBeGreaterThan(2.5);
+      expect(Math.hypot(e.x - SAL.x, e.z - SAL.z)).toBeGreaterThan(3);
+    }
+    for (const r of redes) { const red = ESCOTILLAS_NAVE.filter(e => e.red === r); expect(new Set(red.map(e => salaEn(e.x, e.z))).size).toBe(red.length); }
+    // dar la vuelta: a1 → a2 → a3 → a1
+    expect(siguienteEscotilla('a1').id).toBe('a2'); expect(siguienteEscotilla('a3').id).toBe('a1'); expect(siguienteEscotilla('zz')).toBeNull();
+  });
+  it('los bots pasean por puntos libres (dentro de la sala, fuera de las cosas)', () => {
+    const r = srN(5);
+    for (const s of SN) for (let i = 0; i < 20; i++) { const p = puntoLibreNave(s.id, r); expect(salaEn(p.x, p.z)).toBe(sala(s.id)); expect(enProp(p, 0.8)).toBe(false); }
+    expect(enProp(INI, 1)).toBe(false);
+  });
+});
+describe('🚀 Nave, fase 2: tareas, sabotaje, impostor y quién gana', () => {
+  const personas = ['yo', 'b0', 'b1', 'b2', 'b3', 'b4'];
+  it('el jugador tiene las 8 tareas, cada bot 3 distintas, y el impostor ninguna', () => {
+    const rep = repartirTareas(personas, 'b2', srN(3));
+    expect(Object.keys(rep.yo)).toHaveLength(8); expect(rep.b2).toEqual({});
+    for (const b of ['b0', 'b1', 'b3', 'b4']) expect(new Set(Object.keys(rep[b])).size).toBe(3);
+    expect(progresoNave(rep)).toEqual({ hechas: 0, total: 8 + 4 * 3 });
+    const yoImp = repartirTareas(personas, 'yo', srN(3)); expect(yoImp.yo).toEqual({}); expect(progresoNave(yoImp).total).toBe(15);
+  });
+  it('marcar y sabotear: el sabotaje deshace la tarea a TODOS los que la habían hecho', () => {
+    let rep = repartirTareas(['yo', 'b0'], 'zz', srN(1));
+    const de0 = Object.keys(rep.b0)[0];
+    rep = marcarTarea(marcarTarea(rep, 'yo', de0), 'b0', de0);
+    expect(progresoNave(rep).hechas).toBe(2);
+    expect(marcarTarea(rep, 'b0', 'noexiste')).toBe(rep);
+    const s = sabotearTarea(rep, de0); expect(s.deshechas).toBe(2); expect(progresoNave(s.rep).hechas).toBe(0);
+    expect(rep.yo[de0]).toBe(true);   // (no cambia el original)
+  });
+  it('gana la tripulación con todas las tareas (o si echan al impostor); gana el impostor si quedan tantos tripulantes como impostores', () => {
+    expect(resultadoNave({ hechas: 20, total: 20, tripulantesVivos: 2, impostoresVivos: 1 })).toBe('tripulacion');
+    expect(resultadoNave({ hechas: 3, total: 20, tripulantesVivos: 1, impostoresVivos: 1 })).toBe('impostor');
+    expect(resultadoNave({ hechas: 3, total: 20, tripulantesVivos: 4, impostoresVivos: 0 })).toBe('tripulacion');
+    expect(resultadoNave({ hechas: 3, total: 20, tripulantesVivos: 2, impostoresVivos: 1 })).toBeNull();
+  });
+  it('el impostor sale de cualquiera (el jugador también puede ser)', () => {
+    const r = srN(9), vistos = new Set(); for (let i = 0; i < 200; i++) vistos.add(elegirImpostor(6, r));
+    expect([...vistos].sort()).toEqual([0, 1, 2, 3, 4, 5]); expect(elegirImpostor(6, () => 0.99999)).toBe(5);
+  });
+  it('👻 los fantasmas solo los ve el impostor; los testigos frenan al bot impostor', () => {
+    expect(veFantasmas(true)).toBe(true); expect(veFantasmas(false)).toBe(false);
+    const a = { x: 0, z: 0 }, v = { x: 1, z: 0 };
+    expect(hayTestigos(a, v, [{ x: 30, z: 0 }])).toBe(false); expect(hayTestigos(a, v, [{ x: 8, z: 0 }])).toBe(true);
+  });
+  it('la E hace lo primero que se pueda: atacar, escotilla (impostor), botón, caja, tarea… y si no hay nada, nada', () => {
+    expect(accionNaveE({ impostor: true, victima: 'b1', atacarListo: true, tarea: 'x' })).toBe('atacar');
+    expect(accionNaveE({ impostor: true, victima: 'b1', atacarListo: false, escotilla: 'a1' })).toBe('escotilla');
+    expect(accionNaveE({ impostor: false, victima: 'b1', atacarListo: true, escotilla: 'a1', tarea: 'x' })).toBe('tarea');
+    expect(accionNaveE({ boton: true, tarea: 'x' })).toBe('boton'); expect(accionNaveE({ caja: 'recoger', tarea: 'x' })).toBe('caja');
+    expect(accionNaveE({})).toBeNull();
+  });
+  it('el botón de emergencia: 1 vez por ronda y después de la espera', () => {
+    expect(puedeBotonReunion(0, 5)).toBe(false); expect(puedeBotonReunion(0, BOTON_REUNION.espera)).toBe(true); expect(puedeBotonReunion(1, 999)).toBe(false);
+  });
+});
+describe('🚀 Nave, fase 2: lo de adentro de cada tarea', () => {
+  it('🔌 cables: solo se une el del mismo color, y una vez', () => {
+    let e = nuevosCables(srN(2)); const i = 0, j = e.der.indexOf(e.izq[0]), otro = (j + 1) % 4;
+    expect(unirCable(e, i, otro).ok).toBe(false);
+    let r = unirCable(e, i, j); expect(r.ok).toBe(true); e = r.est; expect(unirCable(e, i, j).ok).toBe(false);
+    for (let k = 1; k < COLORES_CABLES.length; k++) e = unirCable(e, k, e.der.indexOf(e.izq[k])).est;
+    expect(cablesListos(e)).toBe(true);
+  });
+  it('🦠 el virus se multiplica (hasta el máximo), pero si lo sacas rápido se termina', () => {
+    const r = srN(4); let v = sembrar(VIRUS.inicio, r);
+    for (let s = 0; s < 120; s++) v = multiplicar(v, 0.5, VIRUS, r);
+    expect(v.length).toBe(VIRUS.max); expect(v.every(b => b.x >= 0 && b.x <= 1 && b.y >= 0 && b.y <= 1)).toBe(true);
+    expect(multiplicar([], 10, VIRUS, r)).toEqual([]);   // si no queda ninguno, no vuelve
+    // alguien que saca uno cada 0,45 s le gana al virus (y a la maleza) aunque esté lleno
+    for (const R of [VIRUS, MALEZA]) { let l = sembrar(R.max, r, R), t = 0; while (l.length && t < 60) { l = multiplicar(l, 0.45, R, r); l = l.slice(1); t += 0.45; } expect(l.length, R === VIRUS ? 'virus' : 'maleza').toBe(0); }
+  });
+  it('🌱 plantas: abonar las 4 y sacar toda la maleza', () => {
+    const e = nuevasPlantas(srN(1)); expect(plantasListas(e)).toBe(false);
+    expect(plantasListas({ plantas: [true, true, true, true], maleza: [] })).toBe(true); expect(plantasListas({ plantas: [true, true, true, true], maleza: e.maleza })).toBe(false);
+  });
+  it('⚙️ el motor: 5 respuestas buenas (las malas no restan)', () => {
+    let c = 0; c = responderMotor(c, false); expect(c).toBe(0); for (let i = 0; i < 9; i++) c = responderMotor(c, true); expect(c).toBe(MOTOR_CABLES);
+  });
+  it('🧪 muestras: mirar, tirar las que tienen hongo; las limpias no se tiran', () => {
+    let l = nuevasMuestras(srN(6)); const malas = l.filter(m => m.moho).length; expect(malas).toBeGreaterThanOrEqual(2); expect(malas).toBeLessThanOrEqual(3);
+    const limpia = l.findIndex(m => !m.moho), mala = l.findIndex(m => m.moho);
+    let r = tocarMuestra(l, limpia); expect(r.que).toBe('limpia'); r = tocarMuestra(r.lista, limpia); expect(r.lista[limpia].tirada).toBe(false);
+    r = tocarMuestra(r.lista, mala); expect(r.que).toBe('hongo'); r = tocarMuestra(r.lista, mala); expect(r.que).toBe('tirada');
+    l = r.lista; l.forEach((m, i) => { if (m.moho && !m.tirada) { l = tocarMuestra(tocarMuestra(l, i).lista, i).lista; } }); expect(muestrasListas(l)).toBe(true);
+  });
+  it('🍎 comida: sacar todas las manchas de hongo', () => {
+    let c = nuevaComida(srN(7)); expect(c.map(f => f.tipo)).toContain('papa');
+    while (!comidaLista(c)) { const k = c.findIndex(f => f.hongos.length); c = sacarHongo(c, k, 0); }
+    expect(comidaLista(c)).toBe(true);
+  });
+  it('🛏️ camillas: 3 fallas en cada una; tocar una parte sana no hace nada', () => {
+    let c = nuevasCamillas(srN(8)); expect(c).toHaveLength(3); for (const cm of c) expect(cm.filter(Boolean)).toHaveLength(3);
+    const sana = c[0].indexOf(false); expect(arreglarParte(c, 0, sana).ok).toBe(false);
+    for (let k = 0; k < 3; k++) c[k].forEach((m, p) => { if (m) c = arreglarParte(c, k, p).camillas; });
+    expect(c.every(camillaLista)).toBe(true);
+  });
+});
+describe('🚀 Nave, fase 2: el chat de la reunión y la votación', () => {
+  it('limpia los mensajes: hasta 100 letras, sin enlaces, sin palabras feas', () => {
+    expect(limpiarChat('  NO, YO IBA CON AMARILLO, ÉL NO ES  ')).toBe('NO, YO IBA CON AMARILLO, ÉL NO ES');
+    expect(limpiarChat('x'.repeat(300))).toHaveLength(CHAT_NAVE.max);
+    expect(limpiarChat('mira https://algo.com/x y www.otro.net')).not.toMatch(/https|www|algo\.com/);
+    expect(limpiarChat('entra a juegos.gg ya')).not.toMatch(/juegos\.gg/);
+    expect(limpiarChat('eres un IDIOTA y un estúpido')).toBe('eres un ****** y un ********');
+    expect(limpiarChat('tontería no es palabra fea')).toBe('tontería no es palabra fea');   // (palabras enteras)
+    expect(limpiarChat('<img src=x onerror=alert(1)>')).toContain('<img');   // (se muestra como texto, con textContent)
+    expect(limpiarChat('   ')).toBe('');
+  });
+  it('1 mensaje cada 2 segundos; los fantasmas no le hablan a los vivos', () => {
+    expect(puedeEscribir(1000, 2500)).toBe(false); expect(puedeEscribir(1000, 3000)).toBe(true);
+    expect(chatVisible({ deFantasma: true }, { soyFantasma: false, soyImpostor: false })).toBe(false);
+    expect(chatVisible({ deFantasma: true }, { soyFantasma: true })).toBe(true);
+    expect(chatVisible({ deFantasma: false }, {})).toBe(true);
+  });
+  it('votación: gana el que tiene más votos; empate o nadie → nadie sale', () => {
+    expect(contarVotos({ yo: 'b1', b0: 'b1', b1: 'yo' })).toMatchObject({ expulsado: 'b1', empate: false });
+    expect(contarVotos({ yo: 'b1', b0: 'yo' })).toMatchObject({ expulsado: null, empate: true });
+    expect(contarVotos({})).toMatchObject({ expulsado: null, empate: false });
+    expect(mensajeExpulsion('Azul', false)).toBe('Azul no era impostor :v'); expect(mensajeExpulsion('Azul', true)).toBe('Azul era el impostor :D');
+  });
+});
+import { APAGON, puedeApagar, maxBots } from '../src/logic.js';
+describe('🚀 Nave, fase 2: el apagón y los bots', () => {
+  it('💡 las luces se pueden apagar después de un rato, y no seguido', () => {
+    expect(puedeApagar(5, -Infinity)).toBe(false); expect(puedeApagar(APAGON.primero, -Infinity)).toBe(true);
+    expect(puedeApagar(40, 30)).toBe(false); expect(puedeApagar(30 + APAGON.espera, 30)).toBe(true);
+    expect(APAGON.dura).toBe(10);
+  });
+  it('en la Nave hay como mucho 5 bots (6 con vos); en los otros modos, 11', () => { expect(maxBots('nave')).toBe(5); expect(maxBots('carrera')).toBe(11); });
 });
