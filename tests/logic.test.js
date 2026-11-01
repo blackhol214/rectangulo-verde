@@ -2368,3 +2368,25 @@ describe('🧭 Los demás miran hacia donde caminan', () => {
     expect(rumboDeMovimiento(0.2, 0.2, 1.3)).toBe(1.3); expect(rumboDeMovimiento(0, 0, -2)).toBe(-2);
   });
 });
+
+import { BOTS_SOLO, BOTS_MIN, BOTS_MAX, BOTS_POR_MODO, limitarBots, leerBots, rosterBots, DISFRACES as DISF } from '../src/logic.js';
+describe('🤖 Los bots de los modos (jugando solo)', () => {
+  it('ALBERT siempre, después Amarillo, Rojo, Azul, Verde, Ghoul, Naranja, Rosa, Gris, Blanco y Misterio (11 como mucho)', () => {
+    expect(BOTS_SOLO.map(b => b.nombre)).toEqual(['ALBERT', 'Amarillo', 'Rojo', 'Azul', 'Verde', 'Ghoul', 'Naranja', 'Rosa', 'Gris', 'Blanco', 'Misterio']);
+    expect(BOTS_MIN).toBe(1); expect(BOTS_MAX).toBe(11);
+    expect(rosterBots(1).map(b => b.id)).toEqual(['albert']); expect(rosterBots(3).map(b => b.nombre)).toEqual(['ALBERT', 'Amarillo', 'Rojo']);
+    expect(new Set(BOTS_SOLO.map(b => b.color)).size).toBe(11);   // cada uno de su color
+  });
+  it('entre 1 y 11 (lo raro o vacío vuelve a los de siempre de cada modo)', () => {
+    expect(limitarBots(0)).toBe(1); expect(limitarBots(50)).toBe(11); expect(limitarBots(4.6)).toBe(5); expect(limitarBots('x')).toBeNull();
+    expect(leerBots('7', 'carrera')).toBe(7); expect(leerBots(null, 'atrapadas')).toBe(BOTS_POR_MODO.atrapadas); expect(leerBots('hola', 'spleef')).toBe(BOTS_POR_MODO.spleef);
+    expect(rosterBots(99)).toHaveLength(11); expect(rosterBots(-3)).toHaveLength(1);
+  });
+  it('los disfraces: Ghoul de Fantasmita, Misterio de "Qué dulce" (y existen en la tienda); ALBERT con sombrero', () => {
+    const disf = Object.fromEntries(BOTS_SOLO.filter(b => b.disfraz).map(b => [b.id, b.disfraz]));
+    expect(disf).toEqual({ ghoul: 'fantasmita', misterio: 'dulce' });
+    for (const id of Object.values(disf)) expect(DISF.some(d => d.id === id)).toBe(true);
+    expect(DISF.find(d => d.id === 'dulce').nombre).toMatch(/dulce/i);
+    expect(BOTS_SOLO[0].sombrero).toBe(true);
+  });
+});

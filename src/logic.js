@@ -1859,8 +1859,8 @@ export function golpeBarra(pos, b, t) {
 export const checkpointDe = x => Math.max(0, Math.min(CARRERA.checkpoints, Math.floor(x / CARRERA.cada)));
 // Dónde reapareces (o empiezas): en el checkpoint k, en tu carril (i de n), mirando hacia la meta
 export function salidaCarrera(k, i = 0, n = 1) {
-  const sep = Math.min(1.6, 12 / Math.max(1, n));
-  return { x: k === 0 ? -1 : k * CARRERA.cada + 3, z: (i - (n - 1) / 2) * sep, y: CARRERA.y0 };
+  const sep = Math.min(1.6, 13 / Math.max(1, n)), fila = n > 8 && i % 2 ? 1.6 : 0;   // (con muchos: en dos filas, para no quedar encimados)
+  return { x: (k === 0 ? -1 : k * CARRERA.cada + 3) + fila, z: (i - (n - 1) / 2) * sep, y: CARRERA.y0 };
 }
 // ¿Llegaste a la meta? (pos desde el origen de la pista)
 export const enMetaCarrera = pos => pos.x >= CARRERA.meta.x0 && pos.x <= CARRERA.meta.x1 + 0.5 && Math.abs(pos.z) <= CARRERA.meta.z + 0.5 && pos.y >= CARRERA.y0 - 0.5;
@@ -2307,3 +2307,27 @@ export const bajarCalidad = (nivel, fps) => (fps >= 30 ? nivel : nivel === 'alta
 // 🧭 Hacia dónde mirar: si se está moviendo (más de 0,5 m/s de costado), hacia donde camina; si no, hacia donde dice su "rot"
 // (así un amigo o un bot que manda siempre el mismo giro igual camina mirando para adelante, y no "deslizándose" de lado)
 export const rumboDeMovimiento = (vx, vz, rot, umbral = 0.5) => (Math.hypot(vx, vz) > umbral ? Math.atan2(vx, vz) : rot);
+
+// ---------- 🤖 Los bots de los modos (jugando solo): ALBERT siempre, y hasta 10 más, en este orden ----------
+// color: el de su cuerpo · disfraz: el que lleva puesto (los de la tienda de Halloween) · sombrero: el de ALBERT
+export const BOTS_SOLO = [
+  { id: 'albert', nombre: 'ALBERT', color: 0x1f8a4c, sombrero: true },
+  { id: 'amarillo', nombre: 'Amarillo', color: 0xffd43b },
+  { id: 'rojo', nombre: 'Rojo', color: 0xe03131 },
+  { id: 'azul', nombre: 'Azul', color: 0x1c7ed6 },
+  { id: 'verde', nombre: 'Verde', color: 0x74d65a },
+  { id: 'ghoul', nombre: 'Ghoul', color: 0xdfe6ee, disfraz: 'fantasmita' },   // (un fantasmita: blanco grisáceo)
+  { id: 'naranja', nombre: 'Naranja', color: 0xff922b },
+  { id: 'rosa', nombre: 'Rosa', color: 0xf783ac },
+  { id: 'gris', nombre: 'Gris', color: 0x868e96 },
+  { id: 'blanco', nombre: 'Blanco', color: 0xf8f9fa },
+  { id: 'misterio', nombre: 'Misterio', color: 0x5f3dc4, disfraz: 'dulce' },   // (morado misterioso, con el disfraz "Qué dulce")
+];
+export const BOTS_MIN = 1, BOTS_MAX = BOTS_SOLO.length;
+// Cuántos bots por modo si nunca elegiste (los de siempre)
+export const BOTS_POR_MODO = { escondidas: 1, atrapadas: 4, carrera: 5, spleef: 5 };
+export const limitarBots = n => { const v = Number(n); return Number.isFinite(v) ? Math.min(BOTS_MAX, Math.max(BOTS_MIN, Math.round(v))) : null; };
+// Lo guardado (en el navegador): si no hay nada o algo raro, los de siempre de ese modo
+export const leerBots = (texto, modo) => (texto === null || texto === undefined || texto === '' ? BOTS_POR_MODO[modo] : limitarBots(texto) ?? BOTS_POR_MODO[modo]);
+// Los n bots que juegan (siempre empieza con ALBERT)
+export const rosterBots = n => BOTS_SOLO.slice(0, limitarBots(n) ?? BOTS_MIN);

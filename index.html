@@ -72,6 +72,11 @@
   .clock { position:fixed; right:16px; top:calc(66px + env(safe-area-inset-top,0px)); display:flex; align-items:center; gap:8px; background:var(--panel); padding:6px 12px; border-radius:10px; font:700 14px system-ui, sans-serif; color:#16301f; font-variant-numeric:tabular-nums; backdrop-filter:blur(6px); }
   .clock #clockIcon { font:400 16px Impact, "Arial Narrow Bold", sans-serif; letter-spacing:.04em; color:#c98a00; }
   .clock.night #clockIcon { color:#3b4fa8; }
+  .bots-fila { display:flex; flex-wrap:wrap; align-items:center; gap:6px 8px; margin:8px 0; font:700 14px system-ui, sans-serif; }
+  .bots-fila button { min-width:44px; min-height:40px; border:0; border-radius:10px; background:#2fae4e; color:#fff; font:900 22px system-ui, sans-serif; cursor:pointer; }
+  .bots-fila button:disabled { opacity:.35; cursor:default; }
+  .bots-fila b { min-width:26px; text-align:center; font-size:20px; }
+  .bots-fila small { flex-basis:100%; color:#4a5f52; font-weight:600; }
   #musicaBtn { position:fixed; right:16px; top:calc(146px + env(safe-area-inset-top,0px)); z-index:5; border:0; border-radius:10px; padding:6px 10px; background:var(--panel); font:700 13px system-ui, sans-serif; color:#3b2a6b; cursor:pointer; backdrop-filter:blur(6px); }
   #estiloBtn { position:fixed; right:16px; top:calc(180px + env(safe-area-inset-top,0px)); z-index:5; border:0; border-radius:10px; padding:5px 9px; background:var(--panel); font:700 12px system-ui, sans-serif; color:#3b2a6b; cursor:pointer; backdrop-filter:blur(6px); }
   #nuevaVersion { position:fixed; left:50%; top:calc(62px + env(safe-area-inset-top,0px)); transform:translateX(-50%); z-index:40; display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:6px 10px; width:max-content; max-width:calc(100% - 32px); box-sizing:border-box; padding:10px 14px; border-radius:14px; background:#16301f; color:#fff; font:700 15px system-ui, sans-serif; box-shadow:0 8px 24px rgba(0,0,0,.35); }
@@ -374,7 +379,8 @@
       <div id="escondTerrenoFila"><p class="shop-group">Elige el terreno (¡todo es 50 veces más grande!)</p>
       <div class="escond-terrenos" id="escondTerrenos"></div></div>
       <div id="escondRolFila"><p class="shop-group">¿Qué quieres hacer?</p>
-        <div class="escond-roles"><button type="button" data-rol="esconder">🏃 Me escondo<br><small>el bot me busca</small></button><button type="button" data-rol="buscar">🔎 Busco<br><small>el bot se esconde</small></button></div></div>
+        <div class="escond-roles"><button type="button" data-rol="esconder">🏃 Me escondo<br><small>ALBERT busca (los demás bots se esconden contigo)</small></button><button type="button" data-rol="buscar">🔎 Busco<br><small>todos los bots se esconden: ¡encuéntralos a todos!</small></button></div></div>
+      <div id="escondBots"></div>
       <div id="escondSala"><p class="shop-group">Sentados en la silla de Escondidas</p><ul id="escondLista"></ul></div>
       <p class="profe-msj" id="escondMsj" aria-live="polite"></p>
       <button type="button" class="escond-empezar" id="escondEmpezar">¡Empezar!</button>
@@ -406,6 +412,7 @@
     <div id="anElegir">
       <p class="esc-ayuda">El que tiene la <b>mancha verde alien</b> tiene <b>15 segundos</b> para pasársela a otro <b>tocándolo</b>. Si se le acaba el tiempo… ¡explota! 💥 y queda de fantasma. Gana el último que quede. Usa los <b>portales verdes</b> y las plataformas. Moverte gasta batería (Q para responder; ¡la ronda no se detiene mientras respondes!).</p>
       <p class="esc-ayuda" id="anModo"></p>
+      <div id="anBots"></div>
       <div id="anSala"><p class="shop-group">Sentados en la silla</p><ul id="anLista"></ul></div>
       <p class="profe-msj" id="anMsj" aria-live="polite"></p>
       <button type="button" class="escond-empezar" id="anEmpezar">¡Empezar!</button>
@@ -422,6 +429,7 @@
     <div id="mdElegir">
       <p class="esc-ayuda" id="mdAyuda"></p>
       <p class="esc-ayuda" id="mdModo"></p>
+      <div id="mdBots"></div>
       <div id="mdSala"><p class="shop-group">Sentados en la silla</p><ul id="mdLista"></ul></div>
       <p class="profe-msj" id="mdMsj" aria-live="polite"></p>
       <button type="button" class="escond-empezar" id="mdEmpezar">¡Empezar!</button>
@@ -468,11 +476,11 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module">
-import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, ESCUELA, ESCUELA_K, SANDBOX_K, enElHoyo, zonaRara, ZONA_RARA, HOYO, escuelaSiguiente, escuelaMezclar, SALON, salonSillas, sillaCercana, faseDeLuz, ARENA_AN, ARENA_AN_X, TERRENO_X, salidaAN, centroArenaAN, plataformasAN, desplazamientoAN, portalesAN, portalCerca, TERRENOS, CARROS, CARRO, carroPos, partesCarro, TORTUGAS, TORTUGA, tortugaPos, partesTortuga, arrastreDe, girarAlrededor, CARRERA, PISTA_CARRERA, posPlatCarrera, punoEn, golpePuno, golpeBarra, salidaCarrera, enMetaCarrera, seCayoCarrera, puestosCarrera, origenCarrera, SILLA_CARRERA, CARRERA_X, puertasReales, lugaresPuertas, vientoTubo, rumboDeMovimiento, CALIDADES, leerCalidad, leerNivel, siguienteCalidad, calidadInicial, bajarCalidad, leerEstilo, golpeGuardian, GUARDIAN, temporadaDe, TEMPORADAS, particulaEstacion, MUSICAS, midiAFrecuencia, lugarMusica, intensidadMusica, compasMusica, siguienteVolumen, leerVolumen, CORREDOR_CARRERA, PARED, siguienteCheckpoint, SPLEEF, SPLEEF_X, SILLA_SPLEEF, capaY, HEXES, hexEn, hundido, hexSolido, hexSeVe, pisoSpleef, salidaSpleef, fueraSpleef, capaDe, origenSpleef, cajasPieza, escaleraCanasta, cajasTerreno, escondites, BOT_ESC, botVe, ordenEscondites, cercaDeLaProfe, preguntasDeLaClase, escaparHTML, NO_MIRES, torreNoMires, seededRandom, debeReaparecer, GUIA_COMO, textoQueHago, lugarDelGuia, GUIA_COLORES, siguienteColorGuia, lugaresArboles, lugaresPasto, libreDePasto, ARBOLES, sombreroDeBot, ETAPAS, etapaDe, cajasDe, decoracionTorre, ovniDesplazamiento, HIELO, deslizar, puedeDobleSalto, gastarBateria, cargarBateria, hayBateria, BATERIA, ganaSpooky, ojosMilOjos, OJO_MIL, SPOOKY, sumarTiempoSpooky, DISFRACES, disfrazById, comprarDisfraz, ponerDisfraz, TIENDA_HALLOWEEN, cercaDelVendedor, letrerosEtapas, elegirObjetivoAN, meAburro, MOTIVACION_AN, reboteCaminar, estaCaminando, volumenPasos, puedeAvisar, AVISO_LASER, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, VILLAGE_HOUSE, wallPieces, insideVillageHouse, villageBed, villageEntrance, villageExit, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, squashStretch, ACHIEVEMENTS, achievementById, coinAchievementsFor, TROPHY_TABLE, trophySpot, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
-         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-11-01-antitrampas'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
-import { NOMBRE_SALA, cerebrosNuevos, proximoCerebro, pensar, crearEpisodio, pasoEpisodio, semillaIntento, torreSandbox, BUSCADOR_SB, leerCerebros, nombreGuy, claveGuy, NOMBRE_GUY } from './src/ia.js?v=2026-11-01-antitrampas';
-import { VERSION } from './src/version.js?v=2026-11-01-antitrampas';
-import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, valoresEn, DIA_SEGUNDOS, lugarMoneda, corto, acercar, acercarAngulo, piezasExplosion, leerPreguntas, revisarPreguntas, PROFE, seVen, MG_TORRE, MG_ESCONDIDAS, MG_ATRAPADAS, MG_CARRERA, MG_SPLEEF, MG_SOLO, ESC, AN, nuevaRondaAN, pasarAN, explotarAN, empujeAN, mareadoAN, seTocan } from './src/red.js?v=2026-11-01-antitrampas';
+import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, ESCUELA, ESCUELA_K, SANDBOX_K, enElHoyo, zonaRara, ZONA_RARA, HOYO, escuelaSiguiente, escuelaMezclar, SALON, salonSillas, sillaCercana, faseDeLuz, ARENA_AN, ARENA_AN_X, TERRENO_X, salidaAN, centroArenaAN, plataformasAN, desplazamientoAN, portalesAN, portalCerca, TERRENOS, CARROS, CARRO, carroPos, partesCarro, TORTUGAS, TORTUGA, tortugaPos, partesTortuga, arrastreDe, girarAlrededor, CARRERA, PISTA_CARRERA, posPlatCarrera, punoEn, golpePuno, golpeBarra, salidaCarrera, enMetaCarrera, seCayoCarrera, puestosCarrera, origenCarrera, SILLA_CARRERA, CARRERA_X, puertasReales, lugaresPuertas, vientoTubo, BOTS_SOLO, BOTS_MIN, BOTS_MAX, BOTS_POR_MODO, limitarBots, leerBots, rosterBots, rumboDeMovimiento, CALIDADES, leerCalidad, leerNivel, siguienteCalidad, calidadInicial, bajarCalidad, leerEstilo, golpeGuardian, GUARDIAN, temporadaDe, TEMPORADAS, particulaEstacion, MUSICAS, midiAFrecuencia, lugarMusica, intensidadMusica, compasMusica, siguienteVolumen, leerVolumen, CORREDOR_CARRERA, PARED, siguienteCheckpoint, SPLEEF, SPLEEF_X, SILLA_SPLEEF, capaY, HEXES, hexEn, hundido, hexSolido, hexSeVe, pisoSpleef, salidaSpleef, fueraSpleef, capaDe, origenSpleef, cajasPieza, escaleraCanasta, cajasTerreno, escondites, BOT_ESC, botVe, ordenEscondites, cercaDeLaProfe, preguntasDeLaClase, escaparHTML, NO_MIRES, torreNoMires, seededRandom, debeReaparecer, GUIA_COMO, textoQueHago, lugarDelGuia, GUIA_COLORES, siguienteColorGuia, lugaresArboles, lugaresPasto, libreDePasto, ARBOLES, sombreroDeBot, ETAPAS, etapaDe, cajasDe, decoracionTorre, ovniDesplazamiento, HIELO, deslizar, puedeDobleSalto, gastarBateria, cargarBateria, hayBateria, BATERIA, ganaSpooky, ojosMilOjos, OJO_MIL, SPOOKY, sumarTiempoSpooky, DISFRACES, disfrazById, comprarDisfraz, ponerDisfraz, TIENDA_HALLOWEEN, cercaDelVendedor, letrerosEtapas, elegirObjetivoAN, meAburro, MOTIVACION_AN, reboteCaminar, estaCaminando, volumenPasos, puedeAvisar, AVISO_LASER, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, VILLAGE_HOUSE, wallPieces, insideVillageHouse, villageBed, villageEntrance, villageExit, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, squashStretch, ACHIEVEMENTS, achievementById, coinAchievementsFor, TROPHY_TABLE, trophySpot, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
+         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-11-01-sandbox-jugador'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
+import { NOMBRE_SALA, cerebrosNuevos, proximoCerebro, pensar, crearEpisodio, pasoEpisodio, semillaIntento, torreSandbox, BUSCADOR_SB, leerCerebros, nombreGuy, claveGuy, NOMBRE_GUY } from './src/ia.js?v=2026-11-01-sandbox-jugador';
+import { VERSION } from './src/version.js?v=2026-11-01-sandbox-jugador';
+import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, valoresEn, DIA_SEGUNDOS, lugarMoneda, corto, acercar, acercarAngulo, piezasExplosion, leerPreguntas, revisarPreguntas, PROFE, seVen, MG_TORRE, MG_ESCONDIDAS, MG_ATRAPADAS, MG_CARRERA, MG_SPLEEF, MG_SOLO, ESC, AN, nuevaRondaAN, pasarAN, explotarAN, empujeAN, mareadoAN, seTocan } from './src/red.js?v=2026-11-01-sandbox-jugador';
 (() => {
   // iPhone ignora user-scalable=no: aquí se bloquea el zoom con dos dedos y el doble toque
   for (const ev of ['gesturestart', 'gesturechange']) document.addEventListener(ev, e => e.preventDefault(), { passive: false });
@@ -2903,6 +2911,52 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
       T.grupo.visible = false; T.enUso = false;
     }
   }
+  // ===== 🤖 Los bots de los modos (jugando solo): ALBERT siempre, y hasta 10 más (Amarillo, Rojo, Azul…) =====
+  // Cada uno con su color, su nombre arriba y, algunos, su disfraz (Ghoul de Fantasmita, Misterio de "Qué dulce"). ALBERT, con sombrero
+  function hacerBotSolo(def) {
+    const g = new THREE.Group(), b = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), new THREE.MeshLambertMaterial({ color: def.color }));
+    b.position.y = H / 2; b.castShadow = true; g.add(b);
+    for (const ex of [-0.22, 0.22]) { const e = new THREE.Mesh(eyeGeo, eyeMat); e.scale.z = 0.5; e.position.set(ex, H * 0.78, D / 2 + 0.02); g.add(e); }
+    if (def.sombrero) {   // ALBERT: un sombrero de copa negro con cinta verde
+      const negro = new THREE.MeshLambertMaterial({ color: 0x1b1b1b });
+      const ala = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.62, 0.06, 20), negro); ala.position.y = H + 0.03; g.add(ala);
+      const copa = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.38, 0.5, 20), negro); copa.position.y = H + 0.3; g.add(copa);
+      const cinta = new THREE.Mesh(new THREE.CylinderGeometry(0.385, 0.385, 0.09, 20), new THREE.MeshLambertMaterial({ color: 0x7dff9a })); cinta.position.y = H + 0.1; g.add(cinta);
+    }
+    const et = etiquetaSB(); pintarEtiquetaSB(et, def.nombre); et.position.y = H + (def.sombrero ? 1.15 : 0.6); g.add(et);
+    g.visible = false; scene.add(g);
+    if (def.disfraz) vestir(g, b, def.disfraz);
+    const st = makeState(g); st.cuerpo = b; st.def = def; return st;
+  }
+  // Los n bots que juegan ahora (se arman una sola vez y se usan en todos los modos)
+  function botsSolo(n) {
+    const lista = MG.built.botsSolo = MG.built.botsSolo || [];
+    return rosterBots(n).map((def, k) => {
+      const b = lista[k] || (lista[k] = hacerBotSolo(def));
+      b.obj.visible = true; b.vel.set(0, 0, 0); b.carrying = null; b.onGround = true; b.cuerpo.material.transparent = false; b.cuerpo.material.opacity = 1; b.cuerpo.rotation.z = 0;
+      return b;
+    });
+  }
+  function ocultarBotsSolo() { for (const b of MG.built.botsSolo || []) b.obj.visible = false; }
+  // Cuántos bots eligió para cada modo (se acuerda en este navegador)
+  const cuantosBots = modo => { try { return leerBots(localStorage.getItem('rv-bots-' + modo), modo); } catch (e) { return BOTS_POR_MODO[modo]; } };
+  // El control "🤖 Bots: [−] N [+]" (con los nombres de los que juegan)
+  function controlBots(modo, alCambiar = () => {}) {
+    const fila = document.createElement('div'); fila.className = 'bots-fila';
+    const pintar = () => {
+      const n = cuantosBots(modo);
+      fila.replaceChildren();
+      const t = document.createElement('span'); t.className = 'bots-tit'; t.textContent = '🤖 Bots:';
+      const menos = document.createElement('button'); menos.type = 'button'; menos.textContent = '−'; menos.disabled = n <= BOTS_MIN; menos.setAttribute('aria-label', 'Un bot menos');
+      const num = document.createElement('b'); num.textContent = String(n); num.setAttribute('aria-live', 'polite');
+      const mas = document.createElement('button'); mas.type = 'button'; mas.textContent = '+'; mas.disabled = n >= BOTS_MAX; mas.setAttribute('aria-label', 'Un bot más');
+      const nombres = document.createElement('small'); nombres.textContent = rosterBots(n).map(d => d.nombre).join(' · ');
+      const cambiar = d => { try { localStorage.setItem('rv-bots-' + modo, String(limitarBots(cuantosBots(modo) + d))); } catch (e) {} pintar(); alCambiar(); };
+      menos.addEventListener('click', () => cambiar(-1)); mas.addEventListener('click', () => cambiar(+1));
+      fila.append(t, menos, num, mas, nombres);
+    };
+    pintar(); return fila;
+  }
   // ----- La ronda de Escondidas -----
   // MG.state.esc = { solo, rol ('esconder' o 'buscar': lo que haces TÚ), terreno, inicio, finEsconder, fin (en ms de performance.now()),
   //                  jugadores, buscador (id), encontrados: Set, fantasma, resultado }
@@ -2936,17 +2990,104 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     const enCirculo = e.rol === 'esconder' && !solo;
     placePlayer(T.cx + spawn.x + (enCirculo ? Math.cos(ang) * 6 : 0), 0, T.cz + spawn.z + (enCirculo ? Math.sin(ang) * 6 : 0));
     camYaw = Math.PI;   // mirando hacia el fondo (+z)
-    if (solo) {   // el bot
-      if (!MG.built.botEsc) MG.built.botEsc = hacerBotEsc();
-      const bot = MG.built.botEsc; bot.obj.visible = true; bot.vel.set(0, 0, 0);
-      bot.orden = ordenEscondites(T.lugares); bot.paso = 0; bot.modo = 'contar'; bot.atascado = 0; bot.esquivar = 0; bot.ultimo = null;
-      if (e.rol === 'esconder') { bot.pos.set(T.cx + spawn.x, 0, T.cz + spawn.z + 4); bot.facing = Math.PI; bot.obj.rotation.y = Math.PI; }
-      else { const lugar = T.lugares[bot.orden[0]]; bot.pos.set(lugar.x, lugar.y, lugar.z); bot.modo = 'escondido'; }   // (puede ser arriba de la cama o adentro de una canasta)
-      bot.camino = null; bot.salida = null;
-    }
+    if (solo) { e.cuantos = datos.bots ?? cuantosBots('escondidas'); empezarBotsEsc(e, T, spawn); }   // 🤖 ALBERT y los que elegiste
     abrirCarga();   // el aviso de esconderse (con la cuenta) sale arriba de este panel
   }
-  // El bot: mientras cuentas no se mueve; después revisa escondites y te persigue si te ve
+  // ----- Escondidas jugando solo, con varios bots -----
+  // 🔎 "Busco": TODOS los bots se esconden (cada uno en un escondite distinto) y tienes que encontrarlos a todos (tocándolos).
+  // 🏃 "Me escondo": ALBERT busca, y los demás bots se esconden contigo (camaleones). ALBERT busca a todos; si te encuentra a ti,
+  //    pierdes. Si se acaba el tiempo y no te encontró, ganas (y te cuenta a cuántos bots encontró). Con 1 bot: es ALBERT buscando, como siempre.
+  function empezarBotsEsc(e, T, spawn) {
+    const n = e.cuantos, bots = botsSolo(n), orden = ordenEscondites(T.lugares);
+    e.bots = bots.map((st, k) => {
+      const rol = e.rol === 'esconder' && k === 0 ? 'buscar' : 'esconder';
+      Object.assign(st, { rol, modo: rol === 'buscar' ? 'contar' : 'yendo', encontrado: false, atascado: 0, esquivar: 0, camino: null, salida: null, metaVieja: null, tMeta: 0, olvido: 0, objetivo: null,
+        orden: ordenEscondites(T.lugares), paso: 0 });
+      if (rol === 'buscar') { st.pos.set(T.cx + spawn.x, 0, T.cz + spawn.z + 4); st.facing = Math.PI; st.obj.rotation.y = Math.PI; }
+      else {
+        const lugar = T.lugares[orden[(k + (e.rol === 'buscar' ? 0 : 1)) % orden.length]], otraVuelta = Math.floor(k / orden.length);   // (si hay más bots que escondites: un poquito al lado)
+        if (e.rol === 'buscar') { st.pos.set(lugar.x + otraVuelta * 1.2, lugar.y, lugar.z); st.modo = 'escondido'; }   // ya están escondidos (tú contabas con los ojos cerrados)
+        else {   // salen de la salida (en ronda alrededor tuyo) y van caminando a su escondite mientras ALBERT cuenta
+          const ang = k / n * Math.PI * 2; st.pos.set(T.cx + spawn.x + Math.cos(ang) * 4, 0, T.cz + spawn.z + Math.sin(ang) * 4);
+          st.camino = lugar.ruta ? [...lugar.ruta] : [lugar.entrada, lugar].filter(Boolean); st.lugarFinal = { x: lugar.x + otraVuelta * 1.2, y: lugar.y, z: lugar.z };
+        }
+      }
+      return st;
+    });
+  }
+  // Caminar hacia "meta" chocando con todo (como tú): salta si choca o si lo que busca está un poco más arriba; los trampolines lo lanzan
+  function caminarBotEsc(bot, meta, vel, dt) {
+    let dx = meta.x - bot.pos.x, dz = meta.z - bot.pos.z;
+    const d = Math.hypot(dx, dz) || 1; dx /= d; dz /= d;
+    if (bot.esquivar > 0) { bot.esquivar -= dt; [dx, dz] = [-dz * bot.lado, dx * bot.lado]; }   // ¿se atascó? un ratito de lado
+    bot.walkX = dx * vel * dt; bot.walkZ = dz * vel * dt;
+    turnTo(bot, dx, dz, dt);
+    const antes = bot.pos.clone(), subir = (meta.y || 0) > bot.pos.y + 0.4 && d < 2.6;
+    if (bot.carrying) { bot.pos.x += bot.carrying.dx; bot.pos.z += bot.carrying.dz; }
+    physics(bot, dt, bot.onGround && (bot.hitWall || subir), JUMP);
+    if (bot.onGround && bot.standing && bot.standing.salto) { bot.vel.y = launchSpeedForHeight(bot.standing.salto, GRAV); bot.onGround = false; }
+    if (bot.hitWall && bot.pos.distanceTo(antes) < vel * dt * 0.3) { if ((bot.atascado += dt) > 0.6) { bot.esquivar = 1.2; bot.lado = Math.random() < 0.5 ? 1 : -1; bot.atascado = 0; } }
+    else bot.atascado = 0;
+    animarCaminar(bot.obj, bot.cuerpo, H / 2, dt);
+    return d;
+  }
+  // Seguir su camino (puntos por donde pasar). Devuelve el punto al que va, o null si ya llegó al final
+  function seguirCamino(bot, dt) {
+    if (!bot.camino || !bot.camino.length) return null;
+    let meta = bot.camino[0];
+    if (meta !== bot.metaVieja) { bot.metaVieja = meta; bot.tMeta = 0; }
+    if ((bot.tMeta += dt) > 8) { bot.camino.shift(); return bot.camino[0] || null; }   // (8 s sin llegar: se lo salta)
+    const cerca = Math.hypot(bot.pos.x - meta.x, bot.pos.z - meta.z) < 1.6;
+    if ((meta.tramp && bot.pos.y > 4) || (cerca && (meta.y === undefined || Math.abs(bot.pos.y - meta.y) < 1.2))) { bot.camino.shift(); meta = bot.camino[0] || null; }
+    return meta;
+  }
+  function moverBotsEsc(dt, e) {
+    const T = e.T, fase = faseEsc();
+    for (const bot of e.bots) {
+      if (bot.rol === 'esconder') {
+        if (bot.encontrado) { physics(bot, dt, false, JUMP); continue; }   // ya lo encontraron: queda de fantasma, mirando
+        if (bot.modo === 'escondido') { bot.cuerpo.position.y = H / 2 + Math.max(0, Math.sin(MG.t * 2 + bot.def.color)) * 0.15; physics(bot, dt, false, JUMP); continue; }   // asomándose un poquito
+        const meta = seguirCamino(bot, dt) || bot.lugarFinal;   // va a su escondite
+        if (!meta) { bot.modo = 'escondido'; continue; }
+        const d = caminarBotEsc(bot, meta, BOT_ESC.persigue, dt);
+        if (meta === bot.lugarFinal && d < 1.2) bot.modo = 'escondido';
+        continue;
+      }
+      // ALBERT busca: mientras cuenta no se mueve; después revisa escondites y persigue al que vea (a ti o a un bot)
+      if (fase === 'esconder') { physics(bot, dt, false, JUMP); continue; }
+      const escondidos = [...(e.fantasma ? [] : [{ pos: ps.pos, yo: true }]), ...e.bots.filter(b => b.rol === 'esconder' && !b.encontrado).map(b => ({ pos: b.pos, bot: b }))];
+      const vistos = (bot.onGround || bot.modo === 'perseguir') ? escondidos.filter(c => botVe(bot.pos, c.pos, T.cajas)) : [];
+      if (vistos.length) { vistos.sort((p, q) => p.pos.distanceTo(bot.pos) - q.pos.distanceTo(bot.pos)); bot.objetivo = vistos[0]; bot.modo = 'perseguir'; bot.olvido = BOT_ESC.olvida; bot.camino = null; }
+      else if (bot.modo === 'perseguir' && (bot.olvido -= dt) <= 0) { bot.modo = 'buscar'; bot.objetivo = null; }
+      if (bot.modo === 'contar') bot.modo = 'buscar';
+      let meta;
+      if (bot.modo === 'perseguir' && bot.objetivo) meta = bot.objetivo.pos;
+      else {
+        if (!bot.camino || !bot.camino.length) {
+          if (bot.salida) { bot.camino = [...bot.salida]; bot.salida = null; }
+          else { const lugar = T.lugares[bot.orden[bot.paso++ % bot.orden.length]]; bot.camino = lugar.ruta ? [...lugar.ruta] : [lugar.entrada, lugar].filter(Boolean); bot.salida = lugar.salida || null; }
+        }
+        meta = seguirCamino(bot, dt) || bot.pos;
+      }
+      caminarBotEsc(bot, meta, bot.modo === 'perseguir' ? BOT_ESC.persigue : BOT_ESC.busca, dt);
+      // ¿Tocó a alguien? ¡Lo encontró!
+      for (const c of escondidos) {
+        if (Math.hypot(bot.pos.x - c.pos.x, bot.pos.z - c.pos.z) >= BOT_ESC.atrapa || Math.abs(bot.pos.y - c.pos.y) >= 2) continue;
+        if (c.yo) { terminarSolo(false, `¡${bot.def.nombre} te encontró! 🙈`); return; }
+        encontrarBotEsc(c.bot, bot.def.nombre);
+        if (bot.objetivo === c) { bot.objetivo = null; bot.modo = 'buscar'; }
+      }
+    }
+  }
+  // Un bot escondido fue encontrado (por ALBERT o por ti): queda de fantasma
+  function encontrarBotEsc(b, por) {
+    const e = MG.state.esc; if (!e || b.encontrado) return;
+    b.encontrado = true; b.cuerpo.material.transparent = true; b.cuerpo.material.opacity = 0.35; e.encontrados.add(b.def.id);
+    const quedan = e.bots.filter(x => x.rol === 'esconder' && !x.encontrado).length;
+    avisoModo(por ? `🎯 ${por} encontró a ${b.def.nombre}` : `🎯 ¡Encontraste a ${b.def.nombre}!${quedan ? ` Quedan ${quedan}` : ''}`, false, 1800);
+    if (!por && !quedan) terminarSolo(true, e.bots.length > 1 ? `¡Encontraste a los ${e.bots.length} bots! 🎉` : `¡Encontraste a ${b.def.nombre}! 🎉`);
+  }
+  // (el de antes, con un solo bot: ya no se usa jugando solo)
   function moverBotEsc(dt, e) {
     const bot = MG.built.botEsc, T = e.T, fase = faseEsc();
     if (bot.modo === 'escondido') { bot.cuerpo.position.y = H / 2 + Math.max(0, Math.sin(MG.t * 2)) * 0.15; physics(bot, dt, false, JUMP); return; }   // asomándose un poquito
@@ -3005,7 +3146,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     const e = MG.state.esc;
     if (!e || e.resultado || !soyBuscador() || faseEsc() !== 'buscar') return;
     const toca = p => Math.hypot(p.x - ps.pos.x, p.z - ps.pos.z) <= ESC.tocar && Math.abs(p.y - ps.pos.y) <= ESC.alto;
-    if (e.solo) { if (toca(MG.built.botEsc.pos)) terminarSolo(true, '¡Encontraste al bot! 🎉'); return; }
+    if (e.solo) { for (const b of e.bots) if (b.rol === 'esconder' && !b.encontrado && toca(b.pos)) encontrarBotEsc(b, null); return; }   // (a cada uno, tocándolo)
     if (ahoraMs() - (e.ultimoToque || 0) < 250) return;
     for (const [id, f] of red.otros) {
       if (!e.jugadores.includes(id) || id === e.buscador || e.encontrados.has(id)) continue;
@@ -3022,7 +3163,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     // El trampolín súper fuerte
     const pie = ps.standing;
     if (ps.onGround && pie && pie.salto) { ps.vel.y = launchSpeedForHeight(pie.salto, GRAV); ps.onGround = false; sfxTrampolin(); }
-    if (e.solo && !e.resultado) { moverBotEsc(dt, e); const bb = MG.built.botEsc; if (bb.modo !== 'escondido') animarCaminar(bb.obj, bb.cuerpo, H / 2, dt); }
+    if (e.solo && !e.resultado) moverBotsEsc(dt, e);
     restoEscondidas(dt, o);
   }
   // Los carros de juguete: se mueven según el reloj de la ronda (todos los ven igual) y te llevan encima
@@ -3073,7 +3214,11 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
       avisoPanel.classList.toggle('rojo', soyBuscador());
     }
     // Fin del tiempo (jugando solo: lo decide esta compu; con amigos, el servidor)
-    if (e.solo && fase === 'fin' && !e.resultado) terminarSolo(e.rol === 'esconder', e.rol === 'esconder' ? '¡El bot no te encontró! 🎉' : 'Se acabó el tiempo: el bot se escondió muy bien');
+    if (e.solo && fase === 'fin' && !e.resultado) {
+      const escondidos = e.bots.filter(b => b.rol === 'esconder'), hallados = escondidos.filter(b => b.encontrado).length;
+      if (e.rol === 'esconder') terminarSolo(true, `¡ALBERT no te encontró! 🎉${escondidos.length ? ` (encontró a ${hallados} de ${escondidos.length} bots)` : ''}`);
+      else terminarSolo(false, escondidos.length > 1 ? `Se acabó el tiempo: te faltaron ${escondidos.length - hallados} bots` : 'Se acabó el tiempo: ALBERT se escondió muy bien');
+    }
     // El letrero de arriba
     const seg = Math.max(0, Math.ceil(((fase === 'esconder' ? e.finEsconder : e.fin) - ahoraMs()) / 1000));
     const Q = IS_TOUCH ? '<b>RESPONDER</b>' : '<b>Q</b>';
@@ -3081,7 +3226,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     let txt;
     if (e.resultado) txt = e.resultado.texto;
     else if (fase === 'esconder') txt = soyBuscador() ? `🙈 Cuentas hasta 30… <b>${seg}</b>` : `🏃 ¡Escóndete! <b>${seg} s</b>`;
-    else if (soyBuscador()) txt = `🔎 ¡Busca! Tócalos para encontrarlos · <b>${seg} s</b>` + (e.solo ? '' : ` · encontrados ${e.encontrados.size}/${e.jugadores.length - 1}`);
+    else if (soyBuscador()) txt = `🔎 ¡Busca! Tócalos para encontrarlos · <b>${seg} s</b> · encontrados ${e.encontrados.size}/${e.solo ? e.bots.length : e.jugadores.length - 1}`;
     else txt = `🤫 ¡Que no te encuentren! <b>${seg} s</b>`;
     mgHud.innerHTML = `${TERRENOS[e.terreno].emoji} ${txt} · ${bat}`;
     mgHud.hidden = !escuelaEl.hidden || !escondEl.hidden;
@@ -3093,6 +3238,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     const st = MG.state, e = st.esc;
     cerrarCarga(); quitarTerrenos(); escNegro.hidden = true;
     if (MG.built.botEsc) MG.built.botEsc.obj.visible = false;
+    ocultarBotsSolo();
     body.material.transparent = false; body.material.opacity = 1;
     st.fase = 'salon'; st.esc = null;
     const s = SILLAS[11]; placePlayer(o.x + s.x + 2, 0, o.z + s.z);
@@ -3212,22 +3358,23 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     const a = MG.state.an;
     if (a.solo) {
       if (id === 0) return { pos: ps.pos, obj: player, cuerpo: body, nombre: 'tú' };
-      const b = a.bots[id - 1]; return b && { pos: b.pos, obj: b.obj, cuerpo: b.cuerpo, nombre: NOMBRES_BOTS_AN[id - 1] };
+      const b = a.bots[id - 1]; return b && { pos: b.pos, obj: b.obj, cuerpo: b.cuerpo, nombre: (a.nombres || NOMBRES_BOTS_AN)[id - 1] };
     }
     if (id === red.id) return { pos: ps.pos, obj: player, cuerpo: body, nombre: 'tú' };
     const f = red.otros.get(id); return f && { pos: f.obj.position, obj: f.obj, cuerpo: f.body, nombre: f.nombre, datos: f };
   }
   const yoAN = () => (MG.state.an.solo ? 0 : red.id);
-  // Empezar una ronda. solo: contra 4 bots · con amigos: lo que mandó el servidor (anRonda)
+  // Empezar una ronda. solo: contra los bots que elegiste (ALBERT y hasta 10 más) · con amigos: lo que mandó el servidor (anRonda)
   function empezarAtrapadas(o, datos) {
     cerrarAtrapadas(false);
     const A = ponerArenaAN(o), ahora = ahoraMs(), solo = !!datos.solo;
     const a = { solo, inicio: ahora, jugadores: [], vivos: new Set(), portador: null, fin: 0, fantasma: false, resultado: null, A, ronda: null, bots: [], ultimoEnvio: 0, cooldownPortal: 0, despierta: ahora + 3000 };
     if (solo) {
-      a.jugadores = [0, 1, 2, 3, 4];
+      const nb = datos.bots ?? cuantosBots('atrapadas');   // 🤖 ALBERT y los que elegiste
+      a.jugadores = Array.from({ length: nb + 1 }, (_, k) => k);
       a.ronda = nuevaRondaAN(a.jugadores, ahora);
-      a.bots = NOMBRES_BOTS_AN.map((n, i) => { const b = MG.built.botsAN && MG.built.botsAN[i] || hacerBotAN(BOT_COLORS[(i * 3) % BOT_COLORS.length]); b.obj.visible = true; b.vel.set(0, 0, 0); b.cuerpo.material.transparent = false; b.cuerpo.material.opacity = 1; b.meta = null; b.atascado = 0; b.esquivar = 0; b.portalListo = 0; b.ignora = {}; b.seguimiento = null; return b; });
-      MG.built.botsAN = a.bots;
+      a.nombres = rosterBots(nb).map(d => d.nombre);
+      a.bots = botsSolo(nb).map(b => { Object.assign(b, { meta: null, atascado: 0, esquivar: 0, portalListo: 0, ignora: {}, seguimiento: null, mareo: 0, destrabar: null, chequeo: null, salioDe: null }); return b; });
     } else a.jugadores = datos.jugadores;
     Object.assign(MG.state, { fase: 'atrapadas', bateria: 0, an: a });
     borrarRastro();
@@ -3405,7 +3552,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
         const { ronda, exploto: id, ganador } = explotarAN(a.ronda, ahora);
         exploto(id);
         if (!ronda) { a.vivos = new Set(ganador === null ? [] : [ganador]); a.portador = null; }
-        if (!ronda) terminarAN(ganador === 0, ganador === 0 ? '¡Ganaste! Eres el último que quedó 👽🏆' : `Ganó ${NOMBRES_BOTS_AN[ganador - 1] || 'un bot'}`);
+        if (!ronda) terminarAN(ganador === 0, ganador === 0 ? '¡Ganaste! Eres el último que quedó 👽🏆' : `Ganó ${(a.nombres || NOMBRES_BOTS_AN)[ganador - 1] || 'un bot'}`);
         else { a.ronda = ronda; sincronizarDesdeRonda(); }
       }
     }
@@ -3444,6 +3591,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     const st = MG.state;
     cerrarCarga(); quitarArenaAN(); mancha.visible = false; borrarRastro();
     for (const b of MG.built.botsAN || []) b.obj.visible = false;
+    ocultarBotsSolo();
     body.material.transparent = false; body.material.opacity = 1;
     st.fase = 'salon'; st.an = null;
     const s = SILLAS[3]; placePlayer(o.x + s.x + 2, 0, o.z + s.z);
@@ -3596,8 +3744,8 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     st.facing += pl.dg; st.obj.rotation.y = st.facing;
   }
   // El viento de los tubos te lleva; los trampolines te tiran; las puertas de verdad se rompen cuando pasas. Devuelve el número del trampolín usado, o -1
-  function obstaculosCarrera(st, dt, t) {
-    const B = MG.built.carrera, c = B.c, rel = { x: st.pos.x - c.x, y: st.pos.y, z: st.pos.z - c.z };
+  function obstaculosCarrera(st, dt, t, B = MG.built.carrera) {   // (B: la pista; el sandbox tiene su copia)
+    const c = B.c, rel = { x: st.pos.x - c.x, y: st.pos.y, z: st.pos.z - c.z };
     const v = vientoTubo(rel, PISTA_CARRERA.tubos); if (v) { st.pos.x += v.x * dt; st.pos.z += v.z * dt; }
     for (const p of B.puertas) if (p.real && p.rota === null && Math.abs(st.pos.x - p.pl.x) < 0.8 && Math.abs(st.pos.z - p.pl.z) < p.ancho / 2 && st.pos.y < p.pl.top) { p.rota = t; B.rotas.add(p.f * 100 + p.i); if (st === ps || Math.abs(ps.pos.x - p.pl.x) < 25) sfxPuerta(); }
     const pl = st.standing;
@@ -3618,12 +3766,12 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     o.connect(g).connect(sfx); o.start(t0); o.stop(t0 + 0.32);
   }
   // ¿Le pegó un puño o una barra? (a ti o a un bot). Devuelve el número del obstáculo, o -1
-  function golpeCarrera(st, t) {
-    const c = MG.built.carrera.c, rel = { x: st.pos.x - c.x, y: st.pos.y, z: st.pos.z - c.z }, P = PISTA_CARRERA;
+  function golpeCarrera(st, t, B = MG.built.carrera) {
+    const c = B.c, rel = { x: st.pos.x - c.x, y: st.pos.y, z: st.pos.z - c.z }, P = PISTA_CARRERA;
     if (MG.t < (st.golpeHasta || 0)) return -1;   // (recién golpeado: un ratito sin que le vuelvan a pegar)
     let g = null, o = -1;
     // 🥊 el guardián de las puertas (si pasas por arriba)
-    P.puertas.forEach((f, i) => { if (!g && (g = golpeGuardian(rel, f))) { o = P.punos.length + P.barras.length + P.lanzas.length + i; MG.built.carrera.guardianes[i].t = t; } });
+    P.puertas.forEach((f, i) => { if (!g && (g = golpeGuardian(rel, f))) { o = P.punos.length + P.barras.length + P.lanzas.length + i; B.guardianes[i].t = t; } });
     for (let i = 0; i < P.punos.length && !g; i++) if (Math.abs(rel.x - P.punos[i].x) < 3 && (g = golpePuno(rel, P.punos[i], t, H))) o = i;
     for (let i = 0; i < P.barras.length && !g; i++) { const b = P.barras[i]; if (Math.hypot(rel.x - b.x, rel.z - b.z) < b.r + 1 && (g = golpeBarra(rel, b, t))) o = P.punos.length + i; }
     if (!g) return -1;
@@ -3645,19 +3793,18 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     const st = makeState(g); st.cuerpo = b; return st;
   }
   const yoCR = () => (MG.state.cr.solo ? 0 : red.id);
-  // Empezar una carrera. solo: contra 5 bots · con amigos: lo que mandó el servidor (crRonda)
+  // Empezar una carrera. solo: contra los bots que elegiste · con amigos: lo que mandó el servidor (crRonda)
   function empezarCarrera(datos) {
     cerrarModoRonda(false);
     const semilla = Number.isInteger(datos.semilla) ? datos.semilla : Math.floor(Math.random() * 1e9);   // (con amigos la manda el servidor: las mismas puertas para todos)
     const B = ponerCarrera(semilla), ahora = ahoraMs(), solo = !!datos.solo, c = B.c;
-    const cr = { solo, inicio: ahora, salida: ahora + 3000, jugadores: solo ? [0, 1, 2, 3, 4, 5] : datos.jugadores, llegadas: [], primera: 0, cp: 0, llegue: false, resultado: null, bots: [], B, cuenta: 4 };
+    const nb = solo ? (datos.bots ?? cuantosBots('carrera')) : 0;   // 🤖 ALBERT y los que elegiste
+    const cr = { solo, inicio: ahora, salida: ahora + 3000, jugadores: solo ? Array.from({ length: nb + 1 }, (_, k) => k) : datos.jugadores, nombresBots: rosterBots(nb || 1).map(d => d.nombre), llegadas: [], primera: 0, cp: 0, llegue: false, resultado: null, bots: [], B, cuenta: 4 };
     if (solo) {
-      cr.bots = NOMBRES_BOTS_CR.map((n, i) => {
-        const b = (MG.built.botsCR && MG.built.botsCR[i]) || hacerBotCR(COLORES_BOTS_CR[i]);
-        Object.assign(b, { cp: 0, llego: false, sobre: null, saltosAire: 0, probadas: {}, puerta: undefined, vel0: 9.6 + i * 0.45 + Math.random() * 0.5, despiste: 0, chequeo: null, golpeHasta: 0 });
-        b.vel.set(0, 0, 0); b.obj.visible = true; return b;
+      cr.bots = botsSolo(nb).map((b, i) => {
+        Object.assign(b, { cp: 0, llego: false, sobre: null, saltosAire: 0, probadas: {}, puerta: undefined, vel0: 9.6 + (i % 5) * 0.45 + Math.random() * 0.5, despiste: 0, chequeo: null, golpeHasta: 0 });
+        return b;
       });
-      MG.built.botsCR = cr.bots;
     }
     Object.assign(MG.state, { fase: 'carrera', bateria: 0, cr });
     const n = cr.jugadores.length;
@@ -3746,13 +3893,13 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     if (!cr.primera) cr.primera = ahoraMs();
     const p = puesto || cr.llegadas.indexOf(id) + 1, yo = id === yoCR();
     if (yo) { cr.llegue = true; avisoModo(p === 1 ? '🏁 ¡LLEGASTE PRIMERO!' : `🏁 ¡Llegaste! Puesto ${p}`, false, 3000); }
-    else avisoModo(`🏁 ${nombre || (cr.solo ? NOMBRES_BOTS_CR[id - 1] : 'Alguien')} llegó ${p === 1 ? 'primero' : 'en el puesto ' + p}`, false, 1800);
+    else avisoModo(`🏁 ${nombre || (cr.solo ? cr.nombresBots[id - 1] : 'Alguien')} llegó ${p === 1 ? 'primero' : 'en el puesto ' + p}`, false, 1800);
   }
   function terminarCR(llegadas) {
     const cr = MG.state.cr; if (!cr || cr.resultado) return;
     if (llegadas) cr.llegadas = llegadas;
     const yo = yoCR(), gane = cr.llegadas[0] === yo, mi = cr.llegadas.indexOf(yo) + 1;
-    const nombre = id => (cr.solo ? NOMBRES_BOTS_CR[id - 1] : (cr.nombres && cr.nombres[id]) || (red.otros.get(id) || {}).nombre) || 'alguien';
+    const nombre = id => (cr.solo ? cr.nombresBots[id - 1] : (cr.nombres && cr.nombres[id]) || (red.otros.get(id) || {}).nombre) || 'alguien';
     const texto = gane ? '¡Ganaste la carrera! 🏁🏆' : cr.llegadas.length ? `Ganó ${nombre(cr.llegadas[0])}${mi ? ` · tú llegaste en el puesto ${mi}` : ' · no llegaste a la meta'}` : 'Nadie llegó a la meta';
     cr.resultado = { gane, texto };
     mostrarResultadoRonda();
@@ -3796,6 +3943,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     const st = MG.state;
     cerrarCarga(); quitarCarrera();
     for (const b of MG.built.botsCR || []) b.obj.visible = false;
+    ocultarBotsSolo();
     st.fase = 'salon'; st.cr = null;
     const s = SILLAS[SILLA_CARRERA]; placePlayer(o.x + s.x + 2, 0, o.z + s.z);
     camYaw = Math.PI;
@@ -3873,18 +4021,17 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
   function empezarSpleef(datos) {
     cerrarModoRonda(false);
     const ahora = ahoraMs(), solo = !!datos.solo;
-    const S = { solo, inicio: ahora, salida: ahora + 3000, t: 0, jugadores: solo ? [0, 1, 2, 3, 4, 5] : datos.jugadores, vivos: null, fuera: false, resultado: null, bots: [], cuenta: 4,
+    const nb = solo ? (datos.bots ?? cuantosBots('spleef')) : 0;   // 🤖 ALBERT y los que elegiste
+    const S = { solo, inicio: ahora, salida: ahora + 3000, t: 0, jugadores: solo ? Array.from({ length: nb + 1 }, (_, k) => k) : datos.jugadores, nombresBots: rosterBots(nb || 1).map(d => d.nombre), vivos: null, fuera: false, resultado: null, bots: [], cuenta: 4,
       pisadas: Array.from({ length: SPLEEF.capas }, () => new Map()), activos: [], cola: [], ultimoEnvio: 0, nombres: {} };
     S.vivos = new Set(S.jugadores);
     Object.assign(MG.state, { fase: 'spleef', bateria: 0, sp: S });
     const B = ponerSpleef(), c = B.c, n = S.jugadores.length;
     if (solo) {
-      S.bots = NOMBRES_BOTS_SP.map((nombre, i) => {
-        const b = (MG.built.botsSP && MG.built.botsSP[i]) || hacerBotSP(COLORES_BOTS_SP[i]);
-        Object.assign(b, { meta: null, metaHasta: 0, saltosAire: 0, vel0: 9.5 + i * 0.4 + Math.random() * 0.6, fuera: false, despiste: 0, hexBajo: null });
-        b.vel.set(0, 0, 0); b.obj.visible = true; b.cuerpo.material.transparent = false; b.cuerpo.material.opacity = 1; return b;
+      S.bots = botsSolo(nb).map((b, i) => {
+        Object.assign(b, { meta: null, metaHasta: 0, saltosAire: 0, vel0: 9.5 + (i % 5) * 0.4 + Math.random() * 0.6, fuera: false, despiste: 0, hexBajo: null });
+        return b;
       });
-      MG.built.botsSP = S.bots;
     }
     S.jugadores.forEach((id, i) => {
       const s = salidaSpleef(i, n), x = c.x + s.x, z = c.z + s.z;
@@ -3907,13 +4054,13 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
       avisoModo('😢 Qué mal, te caíste. Mientras tanto, mira a los otros jugadores', true, 3500);
     } else {
       if (S.solo) { const b = S.bots[id - 1]; b.fuera = true; b.pos.set(B.c.x + P.x + (id - 3) * 2.5, P.y, B.c.z + P.z); b.vel.set(0, 0, 0); b.cuerpo.material.transparent = true; b.cuerpo.material.opacity = 0.4; }
-      avisoModo(`💥 ¡${nombre || (S.solo ? NOMBRES_BOTS_SP[id - 1] : (red.otros.get(id) || {}).nombre) || 'Alguien'} se cayó! Quedan ${S.vivos.size}`, false, 1800);
+      avisoModo(`💥 ¡${nombre || (S.solo ? S.nombresBots[id - 1] : (red.otros.get(id) || {}).nombre) || 'Alguien'} se cayó! Quedan ${S.vivos.size}`, false, 1800);
     }
   }
   function terminarSP(ganador, nombre = null, texto = null) {
     const S = MG.state.sp; if (!S || S.resultado) return;
     const gane = ganador === yoSP();
-    const quien = nombre || (S.solo ? NOMBRES_BOTS_SP[ganador - 1] : (red.otros.get(ganador) || {}).nombre);
+    const quien = nombre || (S.solo ? S.nombresBots[ganador - 1] : (red.otros.get(ganador) || {}).nombre);
     if (!texto && !gane && S.miPuesto) texto = `Ganó ${quien || 'alguien'} · tú quedaste en el puesto ${S.miPuesto} de ${S.jugadores.length}`;
     S.resultado = { gane, texto: texto || (gane ? '¡Ganaste el Spleef! Fuiste el último en caer 🔶🏆' : ganador === null || ganador === undefined ? 'Se terminó: nadie ganó' : `Ganó ${quien || 'alguien'}`) };
     mostrarResultadoRonda();
@@ -3988,7 +4135,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
   // 👀 Mirando desde afuera: la cámara sigue a uno de los que siguen jugando
   function entidadSP(id) {
     const S = MG.state.sp; if (!S || id === null || id === undefined) return null;
-    if (S.solo) { const b = S.bots[id - 1]; return b && { pos: b.pos, nombre: NOMBRES_BOTS_SP[id - 1] }; }
+    if (S.solo) { const b = S.bots[id - 1]; return b && { pos: b.pos, nombre: S.nombresBots[id - 1] }; }
     const f = red.otros.get(id); return f && { pos: f.obj.position, nombre: f.nombre };
   }
   function cambiarMirandoSP(paso) {
@@ -4007,6 +4154,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     const st = MG.state;
     cerrarCarga(); quitarSpleef();
     for (const b of MG.built.botsSP || []) b.obj.visible = false;
+    ocultarBotsSolo();
     body.material.transparent = false; body.material.opacity = 1;
     st.fase = 'salon'; st.sp = null;
     const s = SILLAS[SILLA_SPLEEF]; placePlayer(o.x + s.x + 2, 0, o.z + s.z);
@@ -4619,6 +4767,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
         quitarCarrera(); for (const b of MG.built.botsCR || []) b.obj.visible = false;
         if (MG.state.sp) levantarseModo('spleef');
         quitarSpleef(); for (const b of MG.built.botsSP || []) b.obj.visible = false;
+        ocultarBotsSolo();
       },
     },
     // 🕳️ La zona rara (llegas cayendo por el hoyo de la casa morada) y el 🧠 sandbox de The Guy
@@ -4627,7 +4776,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
       get camaraEn() { const sb = MG.state.sb, B = MG.built.sb; return MG.state.fase === 'sala' && sb && sb.seguir && B && B.guy ? B.guy.position : null; },   // "Seguir": solo la cámara
       get mgCodigo() { return MG_SOLO; },                    // nadie más te ve aquí (y tú no ves a nadie)
       // 🦘 En la torre del sandbox tienes doble salto, igual que en la torre de verdad… ¡pero con energía infinita!
-      get dobleSalto() { const sb = MG.state.sb; return MG.state.fase === 'sala' && !!sb && sb.sala === 'torre'; },
+      get dobleSalto() { const sb = MG.state.sb; return MG.state.fase === 'sala' && !!sb && (sb.sala === 'torre' || sb.sala === 'spleef' || sb.sala === 'carrera'); },   // (como en los de verdad)
       energiaInfinita: true,
       get sky() { const sb = MG.state.sb; if (MG.state.fase !== 'sala') return 0x3b1d5e; return sb && sb.sala === 'atrapadas' ? 0x0b2e33 : sb && sb.sala === 'escondidas' ? 0xefe6d6 : 0x1e2a3a; },
       get area() {
@@ -4804,6 +4953,18 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     }));
     for (const k of cambia) S.capas[k].instanceMatrix.needsUpdate = true;
   }
+  // 🏁 Tú en la pista del sandbox: lo mismo que en la Carrera de verdad (golpes, viento, trampolines, puertas, discos) y tus checkpoints
+  function jugadorCarreraSB(v, dt, t) {
+    const sb = MG.state.sb, C = v.C, c = C.c;
+    girarConDisco(ps);
+    const tr = obstaculosCarrera(ps, dt, t, C);
+    if (tr >= 0) { sfxResorte(); avisoModo(PISTA_CARRERA.plats[PISTA_CARRERA.lanzas[tr]].lanza.x > 0 ? '↗️ ¡BOING hacia adelante!' : '↩️ ¡Ups! Trampolín hacia atrás', PISTA_CARRERA.plats[PISTA_CARRERA.lanzas[tr]].lanza.x < 0, 1000); }
+    const o = golpeCarrera(ps, t, C);
+    if (o >= 0) { sfxPuno(); avisoModo(o < PISTA_CARRERA.punos.length ? '🥊 ¡PUM!' : o >= PISTA_CARRERA.punos.length + PISTA_CARRERA.barras.length ? '🥊 ¡No se vale saltar las puertas! Hay que pasar por una' : '💫 ¡Te barrió la rueda!', true, 1200); }
+    if (ps.pos.y >= CARRERA.y0 - 0.5) { const n = siguienteCheckpoint(sb.cpJugador || 0, ps.pos.x - c.x); if (n > (sb.cpJugador || 0)) { sb.cpJugador = n; avisoModo(`🚩 Checkpoint ${n}/${CARRERA.checkpoints}`, false, 1200); sfxCheckpoint(); } }
+    if (seCayoCarrera(ps.pos.y)) { const s = salidaCarrera(sb.cpJugador || 0); placePlayer(c.x + s.x, s.y, c.z + s.z); ps.facing = Math.PI / 2; player.rotation.y = ps.facing; camYaw = CAM_META; avisoModo(sb.cpJugador ? `¡Te caíste! Vuelves al checkpoint ${sb.cpJugador}` : '¡Te caíste! Vuelves a la salida', true, 1500); }
+    if ((sb.cpJugador || 0) >= CARRERA.checkpoints && enMetaCarrera({ x: ps.pos.x - c.x, y: ps.pos.y, z: ps.pos.z - c.z }) && !sb.metaJugador) { sb.metaJugador = true; sfxGanar(); avisoModo('🏁 ¡Llegaste a la meta!', false, 2500); }
+  }
   // Las puertas de la pista del sandbox: las de verdad según la semilla de ESTE intento (todas paradas al empezar)
   function puertasSB(v, semilla) {
     const C = v.C, reales = PISTA_CARRERA.puertas.map((f, i) => puertasReales(semilla, i, f.n));
@@ -4879,6 +5040,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     for (const b of document.querySelectorAll('#sbVel button')) b.classList.toggle('elegido', +b.dataset.vel === sb.vel);
     pintarSeguirSB();
     // Apareces en el mirador de esa sala (porque la elegiste); de ahí caminas libre a donde quieras
+    sb.cpJugador = 0; sb.metaJugador = false;   // (tus checkpoints en la Carrera del sandbox)
     const mi = miradorSB(sala, v, terreno); placePlayer(mi.x, mi.y || 0, mi.z); camYaw = sala === 'carrera' ? CAM_META : Math.PI;
   }
   const sbSeguir = document.getElementById('sbSeguir');
@@ -4923,7 +5085,8 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     const texto = `${NOMBRE_SALA[sb.sala]} · Intento ${c0.intento + 1} · Puntos ahora: ${pts} · Su mejor cerebro: ${mejor} · explora ${Math.round(a.explora * 100)} %`;
     if (sbDatos.textContent !== texto) sbDatos.textContent = texto;
     const extra = sb.pensando ? ' · 🤔 pensando…' : sb.sala === 'escondidas' ? ` · ${IS_TOUCH ? 'terreno: botones de la tarjeta' : 'teclas 1·2·3: salón · habitación · cocina'}` : '';
-    mgHud.texto = null; mgHudEl.textContent = `🧠 ${sb.nombre} aprende ${NOMBRE_SALA[sb.sala]} · intento ${c0.intento + 1} · ${pts} puntos${quieto}${extra}`;
+    const tuyo = sb.sala === 'carrera' && sb.vista && sb.vista.C ? ` · tú: 🚩 ${sb.cpJugador || 0}/${CARRERA.checkpoints} · ${Math.max(0, Math.min(CARRERA.largo, Math.floor(ps.pos.x - sb.vista.C.c.x)))} m` : '';
+    mgHud.texto = null; mgHudEl.textContent = `🧠 ${sb.nombre} aprende ${NOMBRE_SALA[sb.sala]} · intento ${c0.intento + 1} · ${pts} puntos${quieto}${extra}${tuyo}`;
   }
   // Cada cuadro: el sandbox avanza "vel" pasos de 1/30 s (x1 = tiempo real; x10 y x50 = más rápido) y se dibuja.
   // Tú caminas libre: el Guy no sabe que estás ahí (no te empuja, no te lleva, no te choca).
@@ -4970,6 +5133,8 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
       for (const p of v.C.puertas) if (p.real && p.rota === null && Math.abs(a0.x - (p.pl.x - v.cx)) < 0.8 && Math.abs(a0.z - (p.pl.z - v.cz)) < p.ancho / 2 && a0.y < p.pl.top) { p.rota = tR; v.C.rotas.add(p.f * 100 + p.i); }
     }
     if (v.SP) pintarHexesSB(v, ep, false);   // 🔶 los hexágonos que se hunden
+    if (v.SP && ps.pos.y < SPLEEF.fuera) { placePlayer(v.cx + SPLEEF.palco.x, SPLEEF.palco.y, v.cz + SPLEEF.palco.z); avisoModo('💥 ¡Te caíste! Vuelves al palco', true, 1500); }
+    if (v.C) jugadorCarreraSB(v, dt, tR);   // 🏁 a ti también te pegan los puños, te llevan los tubos… y tienes checkpoints
     // Dibujar a cada uno donde está. El que recibió un castigo… ¡tiembla como licuadora!
     const cuerpos = [B.guy, ...(sb.sala === 'atrapadas' || sb.sala === 'spleef' ? B.botsAN.map(b => b.obj) : [])];
     ep.agentes.forEach((a, k) => {
@@ -5479,7 +5644,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     const sala = enSalaEsc();
     if (sala && !escond.sentado) { enviar({ tipo: 'esc', que: 'entrar' }); escond.sentado = true; }   // te sientas: quedas en la espera de la sala
     if (!sala) levantarse();   // te quedaste solo: te levantas de la espera (así nadie te mete a una ronda mientras juegas contra el bot)
-    document.getElementById('escondModo').textContent = !sala && red.id !== null ? 'Estás solo en la sala: juegas contra el bot. Cuando entre un amigo, pueden jugar juntos.' : sala ? 'Juegas con los amigos de la sala: cuando haya 2 o más, cualquiera aprieta ¡Empezar! y el servidor elige al azar el terreno (todo 50 veces más grande) y quién busca.' : 'Juegas solo contra el bot.';
+    document.getElementById('escondModo').textContent = !sala && red.id !== null ? 'Estás solo en la sala: juegas contra los bots (elige cuántos). Cuando entre un amigo, pueden jugar juntos.' : sala ? 'Juegas con los amigos de la sala: cuando haya 2 o más, cualquiera aprieta ¡Empezar! y el servidor elige al azar el terreno (todo 50 veces más grande) y quién busca.' : 'Juegas solo contra los bots: elige cuántos.';
     document.getElementById('escondTerrenoFila').hidden = sala;   // con amigos, el terreno sale al azar
     document.getElementById('escondTerrenos').replaceChildren(...TERRENOS.map((T, i) => {
       const b = document.createElement('button'); b.type = 'button'; b.className = escond.terreno === i ? 'on' : '';
@@ -5490,6 +5655,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
       return b;
     }));
     document.getElementById('escondRolFila').hidden = sala;
+    const eb = document.getElementById('escondBots'); eb.hidden = sala; if (!sala && !eb.firstChild) eb.append(controlBots('escondidas'));
     for (const b of escondEl.querySelectorAll('[data-rol]')) b.classList.toggle('on', b.dataset.rol === escond.rol);
     document.getElementById('escondSala').hidden = !sala;
     if (sala) document.getElementById('escondLista').replaceChildren(...escond.espera.map(j => { const li = document.createElement('li'); li.textContent = j.nombre + (j.id === red.id ? ' (tú)' : ''); return li; }));
@@ -5545,8 +5711,9 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     if (sala && !anLobby.sentado) { enviar({ tipo: 'an', que: 'entrar' }); anLobby.sentado = true; }
     if (!sala) levantarseAN();
     document.getElementById('anModo').textContent = sala ? 'Juegas con los amigos de la sala: con 2 o más, cualquiera aprieta ¡Empezar! y el servidor elige al azar quién empieza con la mancha.'
-      : red.id !== null ? 'Estás solo en la sala: juegas contra 4 bots. Cuando entre un amigo, pueden jugar juntos.' : 'Juegas contra 4 bots.';
+      : red.id !== null ? 'Estás solo en la sala: juegas contra los bots (elige cuántos). Cuando entre un amigo, pueden jugar juntos.' : 'Juegas contra los bots: elige cuántos.';
     document.getElementById('anSala').hidden = !sala;
+    const ab = document.getElementById('anBots'); ab.hidden = sala; if (!sala && !ab.firstChild) ab.append(controlBots('atrapadas'));
     if (sala) document.getElementById('anLista').replaceChildren(...anLobby.espera.map(j => { const li = document.createElement('li'); li.textContent = j.nombre + (j.id === red.id ? ' (tú)' : ''); return li; }));
     const boton = document.getElementById('anEmpezar');
     boton.disabled = sala && (anLobby.espera.length < 2 || anLobby.enRonda);
@@ -5610,10 +5777,10 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
   const MODOS_RONDA = {
     carrera: { titulo: '🏁 CARRERA', tipo: 'cr', estado: () => MG.state.cr, empezar: () => empezarCarrera({ solo: true }), salir: o => salirCarrera(o),
       ayuda: '¡Una carrera como Fall Guys! Cruza la pista de colores en el cielo: <b>puentes de dulce</b>, <b>discos que giran</b>, una <b>rueda gigante</b> con barras que barren (¡sáltalas!), <b>puños de boxeo</b> que te pueden tirar y un escalón alto (usa el <b>doble salto</b>). Cada 30 m hay un <b>checkpoint</b>: si te caes, vuelves ahí. El primero en llegar a la meta gana. Moverte gasta batería: <b>Q</b> para responder (¡+4.000 por respuesta!).',
-      bots: 'Estás solo en la sala: corres contra 5 bots. Cuando entre un amigo, pueden correr juntos.' },
+      bots: 'Estás solo en la sala: corres contra los bots (elige cuántos). Cuando entre un amigo, pueden correr juntos.' },
     spleef: { titulo: '🔶 SPLEEF', tipo: 'sp', estado: () => MG.state.sp, empezar: () => empezarSpleef({ solo: true }), salir: o => salirSpleef(o),
       ayuda: 'Una arena gigante con el piso de <b>hexágonos</b>: cuando pisas uno, al ratito <b>se cae</b>. ¡No te quedes quieto! Hay <b>6 capas</b>, una debajo de otra: si se te cae el piso, caes a la de abajo. Si te caes de la última, quedas afuera. <b>Gana el último que quede.</b> Tienes <b>doble salto</b> para cruzar los huecos. Moverte gasta batería: <b>Q</b> para responder (¡+3.000 por respuesta!).',
-      bots: 'Estás solo en la sala: juegas contra 5 bots. Cuando entre un amigo, pueden jugar juntos.' },
+      bots: 'Estás solo en la sala: juegas contra los bots (elige cuántos). Cuando entre un amigo, pueden jugar juntos.' },
   };
   const lobbyModo = { carrera: { espera: [], enRonda: false, sentado: false }, spleef: { espera: [], enRonda: false, sentado: false } };
   let mdModo = null;   // qué modo muestra el panel ahora
@@ -5640,6 +5807,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     if (!sala) levantarseModo();
     document.getElementById('mdModo').textContent = sala ? 'Juegas con los amigos de la sala: con 2 o más, cualquiera aprieta ¡Empezar!' : red.id !== null ? M.bots : 'Juegas contra los bots.';
     document.getElementById('mdSala').hidden = !sala;
+    const mb = document.getElementById('mdBots'); mb.hidden = sala; mb.replaceChildren(); if (!sala) mb.append(controlBots(mdModo));   // (cada modo con su cantidad)
     if (sala) document.getElementById('mdLista').replaceChildren(...L.espera.map(j => { const li = document.createElement('li'); li.textContent = j.nombre + (j.id === red.id ? ' (tú)' : ''); return li; }));
     const boton = document.getElementById('mdEmpezar');
     boton.disabled = sala && (L.espera.length < 2 || L.enRonda);
@@ -5998,7 +6166,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     if (id === 'atrapadas' && st.an) d = { tengo: !st.an.resultado && st.an.portador === yoAN(), faltaMs: st.an.fin - ahora };
     else if (id === 'escondidas' && st.esc) {
       const f = faseEsc(); extra.tic = f === 'esconder';
-      d = { cuenta: f === 'esconder', persiguen: f === 'buscar' && !soyBuscador() && st.esc.solo && MG.built.botEsc && MG.built.botEsc.modo === 'perseguir' };
+      d = { cuenta: f === 'esconder', persiguen: f === 'buscar' && !soyBuscador() && st.esc.solo && (st.esc.bots || []).some(b => b.rol === 'buscar' && b.modo === 'perseguir' && b.objetivo && b.objetivo.yo) };
     } else if (id === 'carrera' && st.cr) {
       const c = st.cr.B.c, x = ps.pos.x - c.x, corr = [{ id: yoCR(), x }];
       if (st.cr.solo) st.cr.bots.forEach((b, i) => corr.push({ id: i + 1, x: b.pos.x - c.x }));
