@@ -2390,3 +2390,64 @@ describe('🤖 Los bots de los modos (jugando solo)', () => {
     expect(BOTS_SOLO[0].sombrero).toBe(true);
   });
 });
+
+import { SALAS_NAVE, puertasNave, paredesNave, salaNaveEn, rutaNave, tocarEspacio, DOBLE_TOQUE_MS, SALIDA_NAVE, INICIO_NAVE, NAVE } from '../src/logic.js';
+describe('🚀 Nave entre sospechas: el plano (diseño propio)', () => {
+  it('salas con nombres en español, ninguna encimada con otra', () => {
+    expect(SALAS_NAVE.map(s => s.nombre)).toContain('Puente de mando'); expect(new Set(SALAS_NAVE.map(s => s.id)).size).toBe(SALAS_NAVE.length);
+    for (let a = 0; a < SALAS_NAVE.length; a++) for (let b = a + 1; b < SALAS_NAVE.length; b++) {
+      const A = SALAS_NAVE[a], B = SALAS_NAVE[b], ix = Math.min(A.x1, B.x1) - Math.max(A.x0, B.x0), iz = Math.min(A.z1, B.z1) - Math.max(A.z0, B.z0);
+      expect(ix > 0 && iz > 0, `${A.id} y ${B.id}`).toBe(false);
+    }
+  });
+  it('todas conectadas por puertas (desde el pasillo se llega a todas), cada una con al menos una puerta', () => {
+    const P = puertasNave(), inicio = salaNaveEn(INICIO_NAVE.x, INICIO_NAVE.z);
+    SALAS_NAVE.forEach((_, i) => { expect(P.some(p => p.a === i || p.b === i), SALAS_NAVE[i].id).toBe(true); expect(rutaNave(inicio, i), SALAS_NAVE[i].id).not.toBeNull(); });
+    for (const p of P) expect(p.hasta - p.desde).toBe(NAVE.puerta);
+    expect(salaNaveEn(SALIDA_NAVE.x, SALIDA_NAVE.z)).toBeGreaterThanOrEqual(0);
+  });
+  it('las paredes: ninguna encimada con otra en la misma línea, y nunca tapan una puerta', () => {
+    const W = paredesNave();
+    for (let i = 0; i < W.length; i++) for (let j = i + 1; j < W.length; j++) {
+      const a = W[i], b = W[j], vertA = a.x1 - a.x0 < 1, vertB = b.x1 - b.x0 < 1;
+      if (vertA !== vertB) continue;   // (una vertical y una horizontal solo se tocan en una esquina)
+      const ix = Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0), iz = Math.min(a.z1, b.z1) - Math.max(a.z0, b.z0);
+      expect(ix > 0.01 && iz > 0.01).toBe(false);
+    }
+    for (const p of puertasNave()) { const c = { x: p.x, z: p.z }; expect(W.some(w => c.x > w.x0 - 0.01 && c.x < w.x1 + 0.01 && c.z > w.z0 - 0.01 && c.z < w.z1 + 0.01)).toBe(false); }
+    expect(W.some(w => w.exterior)).toBe(true);
+  });
+  it('el camino de los bots: de los motores al puente, pasando por el pasillo', () => {
+    const r = rutaNave(SALAS_NAVE.findIndex(s => s.id === 'motores'), SALAS_NAVE.findIndex(s => s.id === 'puente'));
+    expect(r).toHaveLength(2); expect(salaNaveEn(INICIO_NAVE.x, INICIO_NAVE.z)).toBe(0);
+  });
+  it('✈️ dos toques rápidos de ESPACIO prenden el vuelo; otros dos lo apagan; dos lentos no hacen nada', () => {
+    let e = { ultimo: -Infinity, volando: false };
+    e = tocarEspacio(e, 1000); expect(e.volando).toBe(false);
+    e = tocarEspacio(e, 1000 + DOBLE_TOQUE_MS - 50); expect(e).toMatchObject({ volando: true, cambio: true });
+    e = tocarEspacio(e, 1400); expect(e.volando).toBe(true);   // el tercero: empieza de nuevo
+    e = tocarEspacio(e, 2400); expect(e.volando).toBe(true);   // lento: nada
+    e = tocarEspacio(e, 2500); expect(e.volando).toBe(false);
+  });
+});
+
+import { golpeObstaculoCarrera, puedeRecibirGolpe, GOLPE_PAUSA_MS, PISTA_CARRERA as PISTA3, guanteEn as guante3, CARRERA as CR4 } from '../src/logic.js';
+describe('🥊 La Carrera de verdad sigue pegando (a ti y a los bots)', () => {
+  const Y = CR4.y0;
+  it('el puño, la barra y el guardián pegan donde tienen que pegar', () => {
+    const f = PISTA3.punos[0], t = 0.5 - f.fase, gz = guante3(f, t).z;
+    expect(golpeObstaculoCarrera({ x: f.x, y: Y, z: gz }, t).o).toBe(0);
+    const b = PISTA3.barras[0], a = b.w * 2 + b.fase;
+    expect(golpeObstaculoCarrera({ x: b.x + Math.cos(a) * 5, y: Y, z: b.z - Math.sin(a) * 5 }, 2).o).toBe(PISTA3.punos.length);
+    const fila = PISTA3.puertas[0], h = golpeObstaculoCarrera({ x: fila.x, y: Y + 5, z: 0 }, 1);
+    expect(h.guardian).toBe(0); expect(h.g.x).toBeLessThan(0);
+    expect(golpeObstaculoCarrera({ x: 20, y: Y, z: 0 }, 1)).toBeNull();   // en el puente de dulce no hay nada
+  });
+  it('después de un golpe, medio segundo de pausa… y un golpe "viejo" (de otro reloj) NUNCA te deja inmune', () => {
+    const ahora = 100000;
+    expect(puedeRecibirGolpe(0, ahora)).toBe(true);
+    expect(puedeRecibirGolpe(ahora + GOLPE_PAUSA_MS, ahora)).toBe(false);   // recién golpeado
+    expect(puedeRecibirGolpe(ahora - 1, ahora)).toBe(true);                // ya pasó
+    expect(puedeRecibirGolpe(ahora + 3_000_000, ahora)).toBe(true);        // (el error de antes: quedaba inmune por mucho rato)
+  });
+});

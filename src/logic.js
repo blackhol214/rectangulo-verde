@@ -2331,3 +2331,88 @@ export const limitarBots = n => { const v = Number(n); return Number.isFinite(v)
 export const leerBots = (texto, modo) => (texto === null || texto === undefined || texto === '' ? BOTS_POR_MODO[modo] : limitarBots(texto) ?? BOTS_POR_MODO[modo]);
 // Los n bots que juegan (siempre empieza con ALBERT)
 export const rosterBots = n => BOTS_SOLO.slice(0, limitarBots(n) ?? BOTS_MIN);
+
+// ---------- 🚀 Nave entre sospechas: una nave espacial de diseño propio (fase 1: explorar y construir) ----------
+// El plano: salas rectangulares (en metros enteros, desde el origen de la nave) unidas por un pasillo central largo.
+// Diseño nuestro: la nave es como una flecha que apunta hacia +x (el puente de mando adelante y los motores atrás).
+export const NAVE_X = 4500;   // dentro del minijuego del Modo Escuela, lejos de todo lo demás
+export const NAVE = { alto: 5, grosor: 0.3, puerta: 3, vuelo: 7, sube: 7 };
+export const SALAS_NAVE = [
+  { id: 'pasillo', nombre: 'Pasillo central', x0: 8, x1: 62, z0: -3, z1: 3, color: 0x5c6f82, pasillo: true },
+  { id: 'puente', nombre: 'Puente de mando', x0: 62, x1: 78, z0: -9, z1: 9, color: 0x2f5d8a, ventanas: true },
+  { id: 'motores', nombre: 'Sala de motores', x0: -8, x1: 8, z0: -13, z1: 13, color: 0x8a4b2f },
+  { id: 'enfermeria', nombre: 'Enfermería', x0: 12, x1: 28, z0: 3, z1: 15, color: 0x3f9a8a },
+  { id: 'comedor', nombre: 'Comedor', x0: 28, x1: 46, z0: 3, z1: 20, color: 0xb8863b, ventanas: true },
+  { id: 'laboratorio', nombre: 'Laboratorio', x0: 46, x1: 62, z0: 3, z1: 15, color: 0x6b4fa8 },
+  { id: 'bodega', nombre: 'Bodega de carga', x0: 12, x1: 28, z0: -17, z1: -3, color: 0x6b6b4a },
+  { id: 'invernadero', nombre: 'Invernadero', x0: 28, x1: 46, z0: -20, z1: -3, color: 0x3f8a3f, ventanas: true },
+  { id: 'reactor', nombre: 'Sala del reactor', x0: 46, x1: 62, z0: -15, z1: -3, color: 0xa83f5c },
+];
+export const SALIDA_NAVE = { x: 16, z: -14, radio: 1.6 };   // la escotilla de salida (en la bodega): vuelves al salón
+export const INICIO_NAVE = { x: 40, z: 0 };                  // apareces en el pasillo central
+// ¿En qué sala está el punto (x, z)? → su número, o -1 (afuera)
+export const salaNaveEn = (x, z) => SALAS_NAVE.findIndex(s => x >= s.x0 && x < s.x1 && z >= s.z0 && z < s.z1);
+// Las puertas: donde dos salas se tocan (y lo que se tocan mide 3 m o más), una puerta de 3 m en el medio
+export function puertasNave() {
+  const out = [], S = SALAS_NAVE, P = NAVE.puerta;
+  for (let a = 0; a < S.length; a++) for (let b = a + 1; b < S.length; b++) {
+    const A = S[a], B = S[b];
+    for (const [eje, linea] of [['x', A.x1 === B.x0 ? A.x1 : A.x0 === B.x1 ? A.x0 : null], ['z', A.z1 === B.z0 ? A.z1 : A.z0 === B.z1 ? A.z0 : null]]) {
+      if (linea === null) continue;
+      const [i0, i1] = eje === 'x' ? [Math.max(A.z0, B.z0), Math.min(A.z1, B.z1)] : [Math.max(A.x0, B.x0), Math.min(A.x1, B.x1)];
+      if (i1 - i0 < P) continue;
+      const m = Math.floor((i0 + i1) / 2 - P / 2);   // (en metros enteros)
+      out.push({ a, b, eje, linea, desde: m, hasta: m + P, x: eje === 'x' ? linea : m + P / 2, z: eje === 'x' ? m + P / 2 : linea });
+    }
+  }
+  return out;
+}
+// Las paredes: en cada borde de 1 m entre dos lugares distintos (una sala y otra, o una sala y el espacio), menos donde hay puerta.
+// Los bordes seguidos se juntan en una sola pared. exterior: si del otro lado está el espacio (ahí van las ventanas)
+export function paredesNave() {
+  const xs = SALAS_NAVE.flatMap(s => [s.x0, s.x1]), zs = SALAS_NAVE.flatMap(s => [s.z0, s.z1]);
+  const X0 = Math.min(...xs) - 1, X1 = Math.max(...xs) + 1, Z0 = Math.min(...zs) - 1, Z1 = Math.max(...zs) + 1;
+  const sala = (x, z) => salaNaveEn(x + 0.5, z + 0.5), abiertas = new Set();
+  for (const p of puertasNave()) for (let u = p.desde; u < p.hasta; u++) abiertas.add(`${p.eje}:${p.linea}:${u}`);
+  const tramos = [];   // { eje, linea, desde, hasta, exterior, sala }
+  const agregar = (eje, linea, u, exterior, s) => { const t = tramos[tramos.length - 1]; if (t && t.eje === eje && t.linea === linea && t.hasta === u && t.exterior === exterior && t.sala === s) t.hasta = u + 1; else tramos.push({ eje, linea, desde: u, hasta: u + 1, exterior, sala: s }); };
+  for (let x = X0; x <= X1; x++) for (let z = Z0; z < Z1; z++) {   // bordes verticales (en la línea x, entre la celda x−1 y la x)
+    const a = sala(x - 1, z), b = sala(x, z);
+    if (a !== b && !abiertas.has(`x:${x}:${z}`)) agregar('x', x, z, a < 0 || b < 0, a < 0 ? b : a);
+  }
+  for (let z = Z0; z <= Z1; z++) for (let x = X0; x < X1; x++) {   // bordes horizontales (en la línea z)
+    const a = sala(x, z - 1), b = sala(x, z);
+    if (a !== b && !abiertas.has(`z:${z}:${x}`)) agregar('z', z, x, a < 0 || b < 0, a < 0 ? b : a);
+  }
+  const g = NAVE.grosor / 2;
+  return tramos.map(t => (t.eje === 'x' ? { x0: t.linea - g, x1: t.linea + g, z0: t.desde, z1: t.hasta } : { x0: t.desde, x1: t.hasta, z0: t.linea - g, z1: t.linea + g })
+    ).map((c, i) => ({ ...c, y0: 0, y1: NAVE.alto, exterior: tramos[i].exterior, sala: tramos[i].sala }));
+}
+// El camino de una sala a otra pasando por las puertas (para los bots): la lista de puntos (las puertas) por donde pasar
+export function rutaNave(desde, hasta) {
+  const P = puertasNave(), previo = new Map([[desde, null]]), cola = [desde];
+  while (cola.length) { const s = cola.shift(); if (s === hasta) break; for (const p of P) { const o = p.a === s ? p.b : p.b === s ? p.a : null; if (o !== null && !previo.has(o)) { previo.set(o, { s, p }); cola.push(o); } } }
+  if (!previo.has(hasta)) return null;
+  const out = []; for (let s = hasta; previo.get(s); s = previo.get(s).s) out.unshift({ x: previo.get(s).p.x, z: previo.get(s).p.z });
+  return out;
+}
+// ✈️ Volar: tocar ESPACIO dos veces rápido (en menos de 0,35 s) prende o apaga el modo vuelo
+export const DOBLE_TOQUE_MS = 350;
+export function tocarEspacio(est, ahora) {
+  if (ahora - est.ultimo <= DOBLE_TOQUE_MS) return { ultimo: -Infinity, volando: !est.volando, cambio: true };   // (el tercer toque cuenta como uno nuevo)
+  return { ultimo: ahora, volando: est.volando, cambio: false };
+}
+
+// 🥊 ¿Qué obstáculo de la carrera te pega en el segundo t? (el guardián de las puertas, un puño o una barra)
+// rel: tus pies desde el origen de la pista · alto: tu altura. Devuelve { o (su número), g (el empujón) } o null
+export function golpeObstaculoCarrera(rel, t, alto = 2) {
+  const P = PISTA_CARRERA;
+  for (let i = 0; i < P.puertas.length; i++) { const g = golpeGuardian(rel, P.puertas[i]); if (g) return { o: P.punos.length + P.barras.length + P.lanzas.length + i, g, guardian: i }; }
+  for (let i = 0; i < P.punos.length; i++) if (Math.abs(rel.x - P.punos[i].x) < 3) { const g = golpePuno(rel, P.punos[i], t, alto); if (g) return { o: i, g }; }
+  for (let i = 0; i < P.barras.length; i++) { const b = P.barras[i]; if (Math.hypot(rel.x - b.x, rel.z - b.z) < b.r + 1) { const g = golpeBarra(rel, b, t); if (g) return { o: P.punos.length + i, g }; } }
+  return null;
+}
+// Después de un golpe, medio segundo sin que te vuelvan a pegar. Con el reloj de la compu (ms); si "hasta" quedó de otro reloj
+// (más de 1 s en el futuro: imposible), no cuenta. Así nunca quedas "inmune" para siempre
+export const GOLPE_PAUSA_MS = 500;
+export const puedeRecibirGolpe = (hasta, ahora) => !(hasta > ahora && hasta - ahora <= GOLPE_PAUSA_MS * 2);
