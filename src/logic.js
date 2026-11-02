@@ -178,11 +178,31 @@ export function ganaSpooky({ modo = null, fase = null, enRonda = false, resultad
 }
 // Los ojos del disfraz "Mil ojos": ~20 ojos grandes, bien repartidos por el cuerpo (sin encimarse)
 // cuerpo: ancho W, alto H, grosor D (el rectángulo del personaje). Cada ojo: { x, y, z, nx, nz } (hacia dónde mira)
-export const OJO_MIL = 0.13;   // el radio de cada ojo
-export function ojosMilOjos(W = 1, H = 2, D = 0.6) {
-  const out = [], filas = [0.32, 0.76, 1.2, 1.64].map(f => f * H / 2);
-  for (const y of filas) for (const x of [-W / 4, W / 4]) { out.push({ x, y, z: D / 2 + 0.03, nx: 0, nz: 1 }); out.push({ x, y, z: -D / 2 - 0.03, nx: 0, nz: -1 }); }
-  for (const y of [0.5, 1.05, 1.6].map(f => f * H / 2)) for (const s of [-1, 1]) out.push({ x: s * (W / 2 + 0.03), y, z: 0, nx: s, nz: 0 });
+// 👁️ Mil ojos (rediseño de Mathias): ojos de TAMAÑOS mezclados, repartidos al azar (pero siempre igual: con semilla) por
+// las 4 caras del cuerpo, sin encimarse. Cada ojo es de UN color (8 colores) con la pupila oscura en el medio, y cada uno
+// mira para un lado distinto (mira: hacia dónde va la pupila, en la cara del ojo)
+export const OJO_MIL = { min: 0.065, max: 0.17, colores: 8, separa: 0.015 };
+export function ojosMilOjos(W = 1, H = 2, D = 0.6, semilla = 4242) {
+  const r = seededRandom(semilla), out = [], O = OJO_MIL;
+  // las caras: adelante, atrás (ancho W) y los costados (ancho D)
+  const caras = [{ nx: 0, nz: 1, ancho: W, n: 13 }, { nx: 0, nz: -1, ancho: W, n: 11 }, { nx: 1, nz: 0, ancho: D, n: 5 }, { nx: -1, nz: 0, ancho: D, n: 5 }];
+  for (const c of caras) {
+    const enCara = [];
+    for (let intento = 0; intento < 400 && enCara.length < c.n; intento++) {
+      const tam = O.min + (O.max - O.min) * Math.pow(r(), 1.4);   // (más chicos que grandes)
+      if (c.ancho / 2 - tam - 0.02 <= 0) continue;
+      const u = (r() * 2 - 1) * (c.ancho / 2 - tam - 0.02), y = tam + 0.04 + r() * (H - 2 * tam - 0.08);
+      if (enCara.some(e => Math.hypot(e.u - u, e.y - y) < e.r + tam + O.separa)) continue;
+      const ang = r() * Math.PI * 2;
+      enCara.push({ u, y, r: tam, mira: { x: Math.cos(ang), y: Math.sin(ang) }, color: Math.floor(r() * O.colores) });
+    }
+    for (const e of enCara) {
+      const x = c.nz !== 0 ? e.u * c.nz : c.nx * (W / 2 + 0.03), z = c.nz !== 0 ? c.nz * (D / 2 + 0.03) : -e.u * c.nx;
+      out.push({ x, y: e.y, z, nx: c.nx, nz: c.nz, r: e.r, mira: e.mira, color: e.color });
+    }
+  }
+  // (que estén los 8 colores: los primeros 8 van uno de cada uno)
+  out.slice(0, O.colores).forEach((o, i) => { o.color = i; });
   return out;
 }
 export const DISFRACES = [
@@ -2630,3 +2650,16 @@ export function golpeObstaculoCarrera(rel, t, alto = 2) {
 // (más de 1 s en el futuro: imposible), no cuenta. Así nunca quedas "inmune" para siempre
 export const GOLPE_PAUSA_MS = 500;
 export const puedeRecibirGolpe = (hasta, ahora) => !(hasta > ahora && hasta - ahora <= GOLPE_PAUSA_MS * 2);
+
+// 👻 Spleef: el que se cayó es un ESPECTADOR que flota libre (sin gravedad; Q sube, E baja), invisible para los demás,
+// sin pisar hexágonos. No se puede ir de la "caja" de la arena (con el palco incluido). Medidas desde el centro de la arena
+export const ESPECTADOR_SP = { sube: 8 };
+export function cajaEspectadorSP() {
+  const m = SPLEEF.radio + 2, P = SPLEEF.palco;
+  return { x0: -m, x1: m, z0: Math.min(-m, P.z - P.largo / 2 - 2), z1: m, y0: SPLEEF.fuera + 2, y1: P.y + 12 };
+}
+const encajar = (v, a, b) => Math.max(a, Math.min(b, v));
+// Mover al espectador (pos + lo que se mueve), sin salirse de la caja
+export const moverEspectador = (pos, mov, caja = cajaEspectadorSP()) => ({ x: encajar(pos.x + mov.x, caja.x0, caja.x1), y: encajar(pos.y + mov.y, caja.y0, caja.y1), z: encajar(pos.z + mov.z, caja.z0, caja.z1) });
+// 🙈 Escondidas jugando solo: si a ti te encuentran y quedan otros escondidos, sigues de fantasma (caminando); si no, se termina
+export const encontradoSolo = quedanEscondidos => (quedanEscondidos > 0 ? 'fantasma' : 'fin');

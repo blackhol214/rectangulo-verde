@@ -549,11 +549,11 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module">
-import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, ESCUELA, ESCUELA_K, SANDBOX_K, enElHoyo, zonaRara, ZONA_RARA, HOYO, escuelaSiguiente, escuelaMezclar, SALON, salonSillas, sillaCercana, faseDeLuz, ARENA_AN, ARENA_AN_X, TERRENO_X, salidaAN, centroArenaAN, plataformasAN, desplazamientoAN, portalesAN, portalCerca, TERRENOS, CARROS, CARRO, carroPos, partesCarro, TORTUGAS, TORTUGA, tortugaPos, partesTortuga, arrastreDe, girarAlrededor, CARRERA, PISTA_CARRERA, posPlatCarrera, punoEn, golpePuno, golpeBarra, salidaCarrera, enMetaCarrera, seCayoCarrera, puestosCarrera, origenCarrera, SILLA_CARRERA, CARRERA_X, puertasReales, lugaresPuertas, vientoTubo, golpeObstaculoCarrera, puedeRecibirGolpe, GOLPE_PAUSA_MS, NAVE_X, NAVE, SALAS_NAVE, SALIDA_NAVE, INICIO_NAVE, salaNaveEn, puertasNave, paredesNave, rutaNave, SILLA_NAVE, PROPS_NAVE, TAREAS_NAVE, tareaNave, BOTON_REUNION, ESCOTILLAS_NAVE, siguienteEscotilla, ACCION_NAVE, APAGON, puedeApagar, cercaDe, puntoLibreNave, repartirTareas, progresoNave, marcarTarea, sabotearTarea, resultadoNave, elegirImpostor, veFantasmas, hayTestigos, accionNaveE, puestosReunion, COLORES_CABLES, nuevosCables, unirCable, cablesListos, VIRUS, MALEZA, sembrar, multiplicar, nuevasPlantas, plantasListas, MOTOR_CABLES, responderMotor, nuevasMuestras, tocarMuestra, muestrasListas, nuevaComida, sacarHongo, comidaLista, PARTES_CAMILLA, nuevasCamillas, arreglarParte, camillaLista, limpiarChat, puedeEscribir, chatVisible, VOTACION, contarVotos, mensajeExpulsion, puedeBotonReunion, maxBots, elegirImpostores, impostoresPara, BOTS_SOLO, BOTS_MIN, BOTS_MAX, BOTS_POR_MODO, limitarBots, leerBots, rosterBots, rumboDeMovimiento, CALIDADES, leerCalidad, leerNivel, siguienteCalidad, calidadInicial, bajarCalidad, leerEstilo, golpeGuardian, GUARDIAN, temporadaDe, TEMPORADAS, particulaEstacion, MUSICAS, midiAFrecuencia, lugarMusica, intensidadMusica, compasMusica, siguienteVolumen, leerVolumen, CORREDOR_CARRERA, PARED, siguienteCheckpoint, SPLEEF, SPLEEF_X, SILLA_SPLEEF, capaY, HEXES, hexEn, hundido, hexSolido, hexSeVe, pisoSpleef, salidaSpleef, fueraSpleef, capaDe, origenSpleef, cajasPieza, escaleraCanasta, cajasTerreno, escondites, BOT_ESC, botVe, ordenEscondites, cercaDeLaProfe, preguntasDeLaClase, escaparHTML, NO_MIRES, torreNoMires, seededRandom, debeReaparecer, GUIA_COMO, textoQueHago, lugarDelGuia, GUIA_COLORES, siguienteColorGuia, lugaresArboles, lugaresPasto, libreDePasto, ARBOLES, sombreroDeBot, ETAPAS, etapaDe, cajasDe, decoracionTorre, ovniDesplazamiento, HIELO, deslizar, puedeDobleSalto, gastarBateria, cargarBateria, hayBateria, BATERIA, ganaSpooky, ojosMilOjos, OJO_MIL, SPOOKY, sumarTiempoSpooky, DISFRACES, disfrazById, comprarDisfraz, ponerDisfraz, TIENDA_HALLOWEEN, cercaDelVendedor, letrerosEtapas, elegirObjetivoAN, meAburro, MOTIVACION_AN, reboteCaminar, estaCaminando, volumenPasos, puedeAvisar, AVISO_LASER, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, VILLAGE_HOUSE, wallPieces, insideVillageHouse, villageBed, villageEntrance, villageExit, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, squashStretch, ACHIEVEMENTS, achievementById, coinAchievementsFor, TROPHY_TABLE, trophySpot, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
-         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-11-02-nave15'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
-import { NOMBRE_SALA, cerebrosNuevos, proximoCerebro, pensar, crearEpisodio, pasoEpisodio, semillaIntento, torreSandbox, BUSCADOR_SB, leerCerebros, nombreGuy, claveGuy, NOMBRE_GUY } from './src/ia.js?v=2026-11-02-nave15';
-import { VERSION } from './src/version.js?v=2026-11-02-nave15';
-import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, valoresEn, DIA_SEGUNDOS, lugarMoneda, corto, acercar, acercarAngulo, piezasExplosion, leerPreguntas, revisarPreguntas, PROFE, seVen, MG_TORRE, MG_ESCONDIDAS, MG_ATRAPADAS, MG_CARRERA, MG_SPLEEF, MG_SOLO, ESC, AN, nuevaRondaAN, pasarAN, explotarAN, empujeAN, mareadoAN, seTocan } from './src/red.js?v=2026-11-02-nave15';
+import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, ESCUELA, ESCUELA_K, SANDBOX_K, enElHoyo, zonaRara, ZONA_RARA, HOYO, escuelaSiguiente, escuelaMezclar, SALON, salonSillas, sillaCercana, faseDeLuz, ARENA_AN, ARENA_AN_X, TERRENO_X, salidaAN, centroArenaAN, plataformasAN, desplazamientoAN, portalesAN, portalCerca, TERRENOS, CARROS, CARRO, carroPos, partesCarro, TORTUGAS, TORTUGA, tortugaPos, partesTortuga, arrastreDe, girarAlrededor, CARRERA, PISTA_CARRERA, posPlatCarrera, punoEn, golpePuno, golpeBarra, salidaCarrera, enMetaCarrera, seCayoCarrera, puestosCarrera, origenCarrera, SILLA_CARRERA, CARRERA_X, puertasReales, lugaresPuertas, vientoTubo, golpeObstaculoCarrera, puedeRecibirGolpe, GOLPE_PAUSA_MS, NAVE_X, NAVE, SALAS_NAVE, SALIDA_NAVE, INICIO_NAVE, salaNaveEn, puertasNave, paredesNave, rutaNave, SILLA_NAVE, PROPS_NAVE, TAREAS_NAVE, tareaNave, BOTON_REUNION, ESCOTILLAS_NAVE, siguienteEscotilla, ACCION_NAVE, APAGON, puedeApagar, cercaDe, puntoLibreNave, repartirTareas, progresoNave, marcarTarea, sabotearTarea, resultadoNave, elegirImpostor, veFantasmas, hayTestigos, accionNaveE, puestosReunion, COLORES_CABLES, nuevosCables, unirCable, cablesListos, VIRUS, MALEZA, sembrar, multiplicar, nuevasPlantas, plantasListas, MOTOR_CABLES, responderMotor, nuevasMuestras, tocarMuestra, muestrasListas, nuevaComida, sacarHongo, comidaLista, PARTES_CAMILLA, nuevasCamillas, arreglarParte, camillaLista, limpiarChat, puedeEscribir, chatVisible, VOTACION, contarVotos, mensajeExpulsion, puedeBotonReunion, maxBots, elegirImpostores, impostoresPara, cajaEspectadorSP, moverEspectador, ESPECTADOR_SP, encontradoSolo, BOTS_SOLO, BOTS_MIN, BOTS_MAX, BOTS_POR_MODO, limitarBots, leerBots, rosterBots, rumboDeMovimiento, CALIDADES, leerCalidad, leerNivel, siguienteCalidad, calidadInicial, bajarCalidad, leerEstilo, golpeGuardian, GUARDIAN, temporadaDe, TEMPORADAS, particulaEstacion, MUSICAS, midiAFrecuencia, lugarMusica, intensidadMusica, compasMusica, siguienteVolumen, leerVolumen, CORREDOR_CARRERA, PARED, siguienteCheckpoint, SPLEEF, SPLEEF_X, SILLA_SPLEEF, capaY, HEXES, hexEn, hundido, hexSolido, hexSeVe, pisoSpleef, salidaSpleef, fueraSpleef, capaDe, origenSpleef, cajasPieza, escaleraCanasta, cajasTerreno, escondites, BOT_ESC, botVe, ordenEscondites, cercaDeLaProfe, preguntasDeLaClase, escaparHTML, NO_MIRES, torreNoMires, seededRandom, debeReaparecer, GUIA_COMO, textoQueHago, lugarDelGuia, GUIA_COLORES, siguienteColorGuia, lugaresArboles, lugaresPasto, libreDePasto, ARBOLES, sombreroDeBot, ETAPAS, etapaDe, cajasDe, decoracionTorre, ovniDesplazamiento, HIELO, deslizar, puedeDobleSalto, gastarBateria, cargarBateria, hayBateria, BATERIA, ganaSpooky, ojosMilOjos, OJO_MIL, SPOOKY, sumarTiempoSpooky, DISFRACES, disfrazById, comprarDisfraz, ponerDisfraz, TIENDA_HALLOWEEN, cercaDelVendedor, letrerosEtapas, elegirObjetivoAN, meAburro, MOTIVACION_AN, reboteCaminar, estaCaminando, volumenPasos, puedeAvisar, AVISO_LASER, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, VILLAGE_HOUSE, wallPieces, insideVillageHouse, villageBed, villageEntrance, villageExit, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, squashStretch, ACHIEVEMENTS, achievementById, coinAchievementsFor, TROPHY_TABLE, trophySpot, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
+         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-11-02-ojos'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
+import { NOMBRE_SALA, cerebrosNuevos, proximoCerebro, pensar, crearEpisodio, pasoEpisodio, semillaIntento, torreSandbox, BUSCADOR_SB, leerCerebros, nombreGuy, claveGuy, NOMBRE_GUY } from './src/ia.js?v=2026-11-02-ojos';
+import { VERSION } from './src/version.js?v=2026-11-02-ojos';
+import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, valoresEn, DIA_SEGUNDOS, lugarMoneda, corto, acercar, acercarAngulo, piezasExplosion, leerPreguntas, revisarPreguntas, PROFE, seVen, MG_TORRE, MG_ESCONDIDAS, MG_ATRAPADAS, MG_CARRERA, MG_SPLEEF, MG_SOLO, ESC, AN, nuevaRondaAN, pasarAN, explotarAN, empujeAN, mareadoAN, seTocan } from './src/red.js?v=2026-11-02-ojos';
 (() => {
   // iPhone ignora user-scalable=no: aquí se bloquea el zoom con dos dedos y el doble toque
   for (const ev of ['gesturestart', 'gesturechange']) document.addEventListener(ev, e => e.preventDefault(), { passive: false });
@@ -3022,7 +3022,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     const lista = MG.built.botsSolo = MG.built.botsSolo || [];
     return rosterBots(n, modo).map((def, k) => {
       const b = lista[k] || (lista[k] = hacerBotSolo(def));
-      b.obj.visible = true; b.vel.set(0, 0, 0); b.carrying = null; b.onGround = true; b.cuerpo.material.transparent = false; b.cuerpo.material.opacity = 1; b.cuerpo.rotation.z = 0;
+      b.obj.visible = true; b.vel.set(0, 0, 0); b.carrying = null; b.onGround = true; verFantasma(b.obj, false); b.cuerpo.rotation.z = 0;
       return b;
     });
   }
@@ -3162,8 +3162,14 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
       // ¿Tocó a alguien? ¡Lo encontró!
       for (const c of escondidos) {
         if (Math.hypot(bot.pos.x - c.pos.x, bot.pos.z - c.pos.z) >= BOT_ESC.atrapa || Math.abs(bot.pos.y - c.pos.y) >= 2) continue;
-        if (c.yo) { terminarSolo(false, `¡${bot.def.nombre} te encontró! 🙈`); return; }
+        if (c.yo) {
+          // si quedan otros escondidos, sigues como fantasma (caminando, sin batería) hasta que termine la ronda
+          if (encontradoSolo(e.bots.filter(b => b.rol === 'esconder' && !b.encontrado).length) === 'fin') { terminarSolo(false, `¡${bot.def.nombre} te encontró! 🙈`); return; }
+          e.fantasma = true; cerrarCarga(); avisoModo(`👻 ¡${bot.def.nombre} te encontró! Ahora eres un fantasma: puedes seguir caminando (sin batería) hasta que termine la ronda`, true, 4000);
+          continue;
+        }
         encontrarBotEsc(c.bot, bot.def.nombre);
+        if (e.fantasma && !e.bots.some(b => b.rol === 'esconder' && !b.encontrado)) { terminarSolo(false, `🙈 ${bot.def.nombre} los encontró a todos (a ti también)`); return; }
         if (bot.objetivo === c) { bot.objetivo = null; bot.modo = 'buscar'; }
       }
     }
@@ -3171,7 +3177,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
   // Un bot escondido fue encontrado (por ALBERT o por ti): queda de fantasma
   function encontrarBotEsc(b, por) {
     const e = MG.state.esc; if (!e || b.encontrado) return;
-    b.encontrado = true; b.cuerpo.material.transparent = true; b.cuerpo.material.opacity = 0.35; e.encontrados.add(b.def.id);
+    b.encontrado = true; verFantasma(b.obj, true); e.encontrados.add(b.def.id);
     const quedan = e.bots.filter(x => x.rol === 'esconder' && !x.encontrado).length;
     avisoModo(por ? `🎯 ${por} encontró a ${b.def.nombre}` : `🎯 ¡Encontraste a ${b.def.nombre}!${quedan ? ` Quedan ${quedan}` : ''}`, false, 1800);
     if (!por && !quedan) terminarSolo(true, e.bots.length > 1 ? `¡Encontraste a los ${e.bots.length} bots! 🎉` : `¡Encontraste a ${b.def.nombre}! 🎉`);
@@ -3305,7 +3311,8 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     // Fin del tiempo (jugando solo: lo decide esta compu; con amigos, el servidor)
     if (e.solo && fase === 'fin' && !e.resultado) {
       const escondidos = e.bots.filter(b => b.rol === 'esconder'), hallados = escondidos.filter(b => b.encontrado).length;
-      if (e.rol === 'esconder') terminarSolo(true, `¡ALBERT no te encontró! 🎉${escondidos.length ? ` (encontró a ${hallados} de ${escondidos.length} bots)` : ''}`);
+      if (e.rol === 'esconder' && e.fantasma) terminarSolo(false, `Se acabó el tiempo: a ti te encontraron 👻 (quedaron ${escondidos.length - hallados} sin encontrar)`);
+      else if (e.rol === 'esconder') terminarSolo(true, `¡ALBERT no te encontró! 🎉${escondidos.length ? ` (encontró a ${hallados} de ${escondidos.length} bots)` : ''}`);
       else terminarSolo(false, escondidos.length > 1 ? `Se acabó el tiempo: te faltaron ${escondidos.length - hallados} bots` : 'Se acabó el tiempo: ALBERT se escondió muy bien');
     }
     // El letrero de arriba
@@ -3320,7 +3327,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     mgHud.innerHTML = `${TERRENOS[e.terreno].emoji} ${txt} · ${bat}`;
     mgHud.hidden = !escuelaEl.hidden || !escondEl.hidden;
     // Si te encontraron: eres un fantasma (casi transparente)
-    body.material.transparent = e.fantasma; body.material.opacity = e.fantasma ? 0.35 : 1;
+    verFantasma(player, e.fantasma);
   }
   // Volver al salón (termina la ronda para ti)
   function salirEscondidas(o) {
@@ -3328,7 +3335,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     cerrarCarga(); quitarTerrenos(); escNegro.hidden = true;
     if (MG.built.botEsc) MG.built.botEsc.obj.visible = false;
     ocultarBotsSolo();
-    body.material.transparent = false; body.material.opacity = 1;
+    verFantasma(player, false);
     st.fase = 'salon'; st.esc = null;
     const s = SILLAS[11]; placePlayer(o.x + s.x + 2, 0, o.z + s.z);
     camYaw = Math.PI;
@@ -3665,8 +3672,8 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     updateRastro(dt, tiene);
     // Los fantasmas se ven medio transparentes (para todos)
     const yo = yoAN();
-    if (a.solo) a.bots.forEach((b, i) => { const f = !a.vivos.has(i + 1); b.cuerpo.material.transparent = f; b.cuerpo.material.opacity = f ? 0.35 : 1; });
-    body.material.transparent = a.fantasma; body.material.opacity = a.fantasma ? 0.35 : 1;
+    if (a.solo) a.bots.forEach((b, i) => verFantasma(b.obj, !a.vivos.has(i + 1)));
+    verFantasma(player, a.fantasma);   // (todo el personaje, con su disfraz: así se nota que explotó)
     // El letrero de arriba
     const Q = IS_TOUCH ? '<b>RESPONDER</b>' : '<b>Q</b>';
     const bat = a.fantasma ? '👻 eres un fantasma' : hayBateria(st.bateria) ? `🔋 <b>${bateriaTexto(st.bateria)}</b>` : `🔋 <b style="color:#ff5a5a">Sin batería</b>: ${Q}`;
@@ -3681,7 +3688,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     cerrarCarga(); quitarArenaAN(); mancha.visible = false; borrarRastro();
     for (const b of MG.built.botsAN || []) b.obj.visible = false;
     ocultarBotsSolo();
-    body.material.transparent = false; body.material.opacity = 1;
+    verFantasma(player, false);
     st.fase = 'salon'; st.an = null;
     const s = SILLAS[3]; placePlayer(o.x + s.x + 2, 0, o.z + s.z);
     camYaw = Math.PI;
@@ -4126,7 +4133,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
       if (id === yoSP()) { placePlayer(x, s.y, z); camYaw = Math.atan2(x - c.x, z - c.z); }   // mirando hacia el centro
       else if (solo) S.bots[id - 1].pos.set(x, s.y, z);
     });
-    body.material.transparent = false; body.material.opacity = 1;
+    verFantasma(player, false);
     abrirCarga();   // empiezas sin batería: ¡a responder! (el Spleef NO se detiene mientras respondes)
   }
   // Quedó afuera (se cayó de la última capa): va al palco a mirar
@@ -4137,11 +4144,10 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     const puesto = S.vivos.size + 1;
     if (id === yoSP()) {
       S.fuera = true; S.miPuesto = puesto; cerrarCarga();
-      placePlayer(B.c.x + P.x, P.y, B.c.z + P.z); body.material.transparent = true; body.material.opacity = 0.4;
-      S.mirando = [...S.vivos][0] ?? null;   // 👀 la cámara sigue a uno de los que quedan (← → para cambiar)
+      placePlayer(B.c.x + P.x, P.y, B.c.z + P.z); verFantasma(player, true, 0.4);
       avisoModo('😢 Qué mal, te caíste. Mientras tanto, mira a los otros jugadores', true, 3500);
     } else {
-      if (S.solo) { const b = S.bots[id - 1]; b.fuera = true; b.pos.set(B.c.x + P.x + (id - 3) * 2.5, P.y, B.c.z + P.z); b.vel.set(0, 0, 0); b.cuerpo.material.transparent = true; b.cuerpo.material.opacity = 0.4; }
+      if (S.solo) { const b = S.bots[id - 1]; b.fuera = true; b.obj.visible = false; b.pos.set(B.c.x + P.x + (id - 3) * 2.5, P.y, B.c.z + P.z); b.vel.set(0, 0, 0); verFantasma(b.obj, true, 0.4); }
       avisoModo(`💥 ¡${nombre || (S.solo ? S.nombresBots[id - 1] : (red.otros.get(id) || {}).nombre) || 'Alguien'} se cayó! Quedan ${S.vivos.size}`, false, 1800);
     }
   }
@@ -4213,37 +4219,24 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     }
     moverHexes();
     const Q = IS_TOUCH ? '<b>RESPONDER</b>' : '<b>Q</b>';
-    const bat = S.fuera ? '👻 miras desde el palco' : hayBateria(st.bateria) ? `🔋 <b>${bateriaTexto(st.bateria)}</b>` : `🔋 <b style="color:#ff5a5a">Sin batería</b>: ${Q}`;
+    const bat = S.fuera ? '👻 espectador' : hayBateria(st.bateria) ? `🔋 <b>${bateriaTexto(st.bateria)}</b>` : `🔋 <b style="color:#ff5a5a">Sin batería</b>: ${Q}`;
     mgHud.innerHTML = S.resultado ? escaparHTML(S.resultado.texto) : ahora < S.salida ? `🔶 El Spleef empieza en <b>${Math.max(1, falta)}</b>… · ${bat}`
-      : S.fuera ? (() => { if (!S.vivos.has(S.mirando)) cambiarMirandoSP(1); const e = entidadSP(S.mirando);
-          return `😢 Qué mal, te caíste. Mientras tanto, mira a los otros jugadores · quedan <b>${S.vivos.size}</b>${e ? ` · 👀 miras a <b>${escaparHTML(e.nombre || '?')}</b> (${IS_TOUCH ? 'toca aquí' : '← →'} para cambiar)` : ''}`; })()
+      : S.fuera ? `😢 Qué mal, te caíste. Mientras tanto, mira a los otros jugadores · quedan <b>${S.vivos.size}</b> · 👻 ${IS_TOUCH ? '⬆ salto: subir' : '<b>Q</b>/<b>E</b>: subir/bajar'}`
       : `🔶 Capa <b>${capaDe(ps.pos.y) + 1}</b>/${SPLEEF.capas} · quedan <b>${S.vivos.size}</b> · ${bat}`;
     mgHud.hidden = !escuelaEl.hidden || !mdEl.hidden;
   }
-  // 👀 Mirando desde afuera: la cámara sigue a uno de los que siguen jugando
-  function entidadSP(id) {
-    const S = MG.state.sp; if (!S || id === null || id === undefined) return null;
-    if (S.solo) { const b = S.bots[id - 1]; return b && { pos: b.pos, nombre: S.nombresBots[id - 1] }; }
-    const f = red.otros.get(id); return f && { pos: f.obj.position, nombre: f.nombre };
+  // 👻 El espectador del Spleef: flota libre (sin gravedad, Q sube y E baja; en el celular, el botón de salto sube) dentro de la arena
+  function moverEspectadorSP(dt) {
+    const c = MG.built.spleef.c, dy = ((keys.KeyQ || keys.Space) ? 1 : 0) - (keys.KeyE ? 1 : 0);
+    const p = moverEspectador({ x: ps.pos.x - c.x, y: ps.pos.y, z: ps.pos.z - c.z }, { x: ps.walkX, y: dy * ESPECTADOR_SP.sube * dt, z: ps.walkZ });
+    ps.pos.set(c.x + p.x, p.y, c.z + p.z); ps.walkX = ps.walkZ = 0; ps.vel.set(0, 0, 0); ps.onGround = false; ps.standing = null; ps.carrying = null;
   }
-  function cambiarMirandoSP(paso) {
-    const S = MG.state.sp, vivos = [...S.vivos].filter(id => id !== yoSP() && entidadSP(id));
-    if (!vivos.length) { S.mirando = null; return; }
-    const i = vivos.indexOf(S.mirando);
-    S.mirando = vivos[((i < 0 ? 0 : i + paso) % vivos.length + vivos.length) % vivos.length];
-  }
-  addEventListener('keydown', e => {
-    const S = MG.state && MG.state.sp; if (!S || !S.fuera || S.resultado || e.repeat) return;
-    if (e.code === 'ArrowRight') cambiarMirandoSP(1); else if (e.code === 'ArrowLeft') cambiarMirandoSP(-1);
-    else { const n = ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6'].indexOf(e.code); if (n >= 0) { const vivos = [...S.vivos].filter(id => id !== yoSP()); if (vivos[n] !== undefined) S.mirando = vivos[n]; } }
-  });
-  mgHudEl.addEventListener('click', () => { const S = MG.state && MG.state.sp; if (S && S.fuera && !S.resultado) cambiarMirandoSP(1); });   // (en el celular: toca el letrero)
   function salirSpleef(o) {
     const st = MG.state;
     cerrarCarga(); quitarSpleef();
     for (const b of MG.built.botsSP || []) b.obj.visible = false;
     ocultarBotsSolo();
-    body.material.transparent = false; body.material.opacity = 1;
+    verFantasma(player, false);
     st.fase = 'salon'; st.sp = null;
     const s = SILLAS[SILLA_SPLEEF]; placePlayer(o.x + s.x + 2, 0, o.z + s.z);
     camYaw = Math.PI;
@@ -4393,6 +4386,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
   }
   function entrarNave(o) {
     const N = ponerNave(o), st = MG.state;
+    if (st.nave) limpiarRondaNave();   // (por si quedaba algo de otra ronda)
     Object.assign(st, { fase: 'nave', nave: { N, o } });
     empezarRondaNave();
   }
@@ -4411,8 +4405,8 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     for (const h of V.humos || []) scene.remove(h.sp);
     V.humos = [];
     V.cuerpos = [];
-    for (const p of V.gente) if (p.bot) { ponerCasco(p.bot, false); p.bot.cuerpo.material.transparent = false; p.bot.cuerpo.material.opacity = 1; pintarEtiquetaSB(p.bot.etiqueta, p.bot.def.nombre); }
-    body.material.transparent = false; body.material.opacity = 1; player.visible = true;
+    for (const p of V.gente) if (p.bot) { ponerCasco(p.bot, false); verFantasma(p.bot.obj, false); pintarEtiquetaSB(p.bot.etiqueta, p.bot.def.nombre); }
+    verFantasma(player, false); player.visible = true;
     luzNave(false);
   }
   function empezarRondaNave() {
@@ -4569,24 +4563,51 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
       h.sp.scale.setScalar(0.5 + h.t * 2.2); h.sp.material.opacity = 1 - h.t / 0.6;
     }
   }
+  // Una copia del personaje (con su disfraz y su color) para dejarla en el piso: sin el nombre flotante ni la llave, con sus
+  // propios materiales (si el de verdad se vuelve fantasma, la copia no cambia). Sus OJOS se vuelven ✖️: dos barritas oscuras
+  // cruzadas en el mismo lugar y del mismo tamaño, pegadas al cuerpo (se acuestan con él). También los ojos de los disfraces (🍭)
+  const matOjoX = new THREE.MeshBasicMaterial({ color: 0x111111 });
+  function ojoX(tam) {
+    const x = new THREE.Group(), barra = new THREE.BoxGeometry(tam * 2.3, tam * 0.45, 0.04);
+    for (const a of [Math.PI / 4, -Math.PI / 4]) { const b = new THREE.Mesh(barra, matOjoX); b.rotation.z = a; x.add(b); }
+    return x;
+  }
+  function copiaCaida(origen) {
+    const c = origen.clone(true), fuera = [], ojos = [];
+    c.position.set(0, 0, 0); c.rotation.set(0, 0, 0); c.scale.set(1, 1, 1); c.visible = true;
+    c.traverse(m => {
+      if (m.isSprite) { fuera.push(m); return; }
+      if (m.userData.ojo || (m.isMesh && m.geometry === eyeGeo && m.visible)) ojos.push(m);
+      if (m.isMesh && m.material && !Array.isArray(m.material)) { m.material = m.material.clone(); m.material.transparent = false; m.material.opacity = 1; m.material.depthWrite = true; }
+    });
+    for (const m of fuera) m.parent.remove(m);
+    // (si el disfraz tapa los ojos normales, solo cuentan los del disfraz)
+    const visibles = ojos.filter(m => { for (let p = m; p && p !== c; p = p.parent) if (!p.visible) return false; return true; });
+    for (const m of visibles) {
+      const x = ojoX(m.userData.ojo || 0.11); x.position.copy(m.position); x.position.z += 0.03; x.rotation.copy(m.rotation);
+      if (m.userData.ojo && m.isGroup) x.rotation.set(0, m.rotation.y, 0);   // (el chupetín estaba girado: la ✖️ va derechita)
+      m.parent.add(x); m.visible = false;
+    }
+    c.userData = {}; c.updateMatrixWorld(true);
+    return c;
+  }
   // 👊 El ataque (dibujos animados: ¡PUM!, una nubecita de humo y queda acostado en el piso con ojos de ✖️). La víctima es un fantasma
   function atacarNave(atacante, victima) {
     const V = MG.state.nave, P = posDe(victima).clone();
     { const yoP = ps.pos, d = Math.hypot(P.x - yoP.x, P.z - yoP.z); if (atacante.yo || victima.yo || d < 18) sfxGolpeNave(atacante.yo || victima.yo ? 1 : Math.max(0.35, 1 - d / 18)); }   // (lo oyen el que pega, el que recibe y los que están cerca)
-    const g = new THREE.Group(), color = victima.yo ? body.material.color.getHex() : victima.bot.def.color;
-    const cu = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), new THREE.MeshLambertMaterial({ color })); cu.position.y = H / 2; g.add(cu);
-    for (const ex of [-0.22, 0.22]) { const x = spriteEmoji('✖️', 0.3); x.position.set(ex, H * 0.78, D / 2 + 0.05); g.add(x); }
+    const g = new THREE.Group(), modelo = copiaCaida(victima.yo ? player : victima.bot.obj); g.add(modelo);
+    const caja = new THREE.Box3().setFromObject(modelo);   // (lo que ocupa, con disfraz: para que quede ARRIBA del piso)
     g.rotation.order = 'YXZ';   // (primero se cae hacia atrás y después mira para su lado: queda boca arriba)
     g.position.set(P.x, P.y, P.z); g.rotation.y = victima.yo ? ps.facing : victima.bot.facing; scene.add(g);
-    V.cuerpos.push({ id: victima.id, nombre: victima.nombre, sala: salaDe(victima), g, cae: 0, pos: P, piso: P.y });
+    V.cuerpos.push({ id: victima.id, nombre: victima.nombre, sala: salaDe(victima), g, cae: 0, pos: P, piso: P.y, espalda: Math.max(D / 2, -caja.min.z) });
     humoNave(P);
     victima.vivo = false; if (atacante.yo) V.ultimoAtaque = V.t; else atacante.ia.ultimoAtaque = V.t;
     if (victima.yo) {
-      body.material.transparent = true; body.material.opacity = 0.35;
+      verFantasma(player, true);
       cerrarTareaNave();
       avisoModo(`💥 ¡PUM! ${atacante.nombre} es impostor. Ahora eres un fantasma 👻: nadie te ve, pero puedes terminar tus tareas`, true, 5000);
     } else {
-      victima.bot.cuerpo.material.transparent = true; victima.bot.cuerpo.material.opacity = 0.35;
+      verFantasma(victima.bot.obj, true);
       victima.ia.trabajo = 0; planBotNave(victima);
       if (atacante.yo) avisoModo(`👊 ¡PUM! ${victima.nombre} quedó desmayado`, false, 1800);
     }
@@ -4847,7 +4868,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     const cuantos = V.gente.filter(p => p.vivo).map(p => `${p.nombre}: ${r.cuenta[p.id] || 0}`).join(' · ');
     let txt = r.empate ? '🤝 ¡Empate! Nadie fue expulsado.' : !exp ? 'Nadie votó: nadie fue expulsado.' : mensajeExpulsion(exp.nombre === 'Tú' ? 'Tú' : exp.nombre, esImpNave(exp.id));
     if (exp && exp.yo) txt = esImpNave(exp.id) ? 'Tú eras el impostor :D ¡te descubrieron!' : 'Tú no eras impostor :v';
-    if (exp) { exp.vivo = false; exp.expulsado = true; if (exp.bot) { exp.bot.cuerpo.material.transparent = true; exp.bot.cuerpo.material.opacity = 0.35; } else { body.material.transparent = true; body.material.opacity = 0.35; } }
+    if (exp) { exp.vivo = false; exp.expulsado = true; verFantasma(exp.bot ? exp.bot.obj : player, true); }
     R.chat.push({ sistema: true, texto: `Votos → ${cuantos}` }, { sistema: true, texto: txt }); pintarChatNave();
     document.getElementById('naveReunionTiempo').textContent = txt;
     naveVotos.replaceChildren(); naveChatIn.disabled = true;
@@ -4902,7 +4923,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     for (const p of V.gente) if (p.bot) p.bot.obj.visible = p.vivo || veo;
     // los desmayados se caen (una vez)
     // (acostado: gira 90° y sube media espalda, así queda apoyado ARRIBA del piso, sin atravesarlo)
-    for (const cu of V.cuerpos) if (cu.cae < 1) { cu.cae = Math.min(1, cu.cae + dt * 3); const k = cu.cae * cu.cae; cu.g.rotation.x = -Math.PI / 2 * k; cu.g.position.y = cu.piso + (D / 2) * Math.sin(Math.PI / 2 * k); }
+    for (const cu of V.cuerpos) if (cu.cae < 1) { cu.cae = Math.min(1, cu.cae + dt * 3); const k = cu.cae * cu.cae; cu.g.rotation.x = -Math.PI / 2 * k; cu.g.position.y = cu.piso + cu.espalda * Math.sin(Math.PI / 2 * k); }
     updateHumoNave(dt);
     // la caja
     const T = tareaNave('caja'), CM = V.N.cajaMesh;
@@ -5526,7 +5547,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
       get onE() { const st = MG.state; return st.fase === 'salon' ? sentarse : st.fase === 'nave' && st.nave && st.nave.accion ? usarENave : null; },
       get onF() { return MG.state.fase === 'nave' && cuerpoCerca() ? reportarNave : null; },   // 🚀 F: reportar
       get fLabel() { return '📢 Reportar'; },   // E: sentarse (en Escondidas se encuentra tocando: sin E)
-      get onQ() { const st = MG.state; return st.fase === 'nomires' || (st.fase === 'escondidas' && !st.esc.fantasma && !st.esc.resultado) || (st.fase === 'atrapadas' && !st.an.fantasma && !st.an.resultado) || (st.fase === 'carrera' && !st.cr.resultado && !st.cr.llegue) || (st.fase === 'spleef' && !st.sp.resultado) ? abrirCarga : null; },  // Q: responder para cargar batería
+      get onQ() { const st = MG.state; return st.fase === 'nomires' || (st.fase === 'escondidas' && !st.esc.fantasma && !st.esc.resultado) || (st.fase === 'atrapadas' && !st.an.fantasma && !st.an.resultado) || (st.fase === 'carrera' && !st.cr.resultado && !st.cr.llegue) || (st.fase === 'spleef' && !st.sp.resultado && !st.sp.fuera) ? abrirCarga : null; },  // Q: responder para cargar batería
       get eLabel() { if (MG.state.fase === 'nave') return etiquetaENave(); const o = minigameOrigin(MG.k); return MG.state.fase === 'salon' && cercaDelVendedor(ps.pos.x - o.x, ps.pos.z - o.z) ? '🎃 Tienda' : '✋ Sentarse'; },
       // ¿Dónde estoy? (para la red: con quién te ves) · torre: 21 · Escondidas con amigos: 30 + terreno · solo: 99 (no ves a nadie)
       get mgCodigo() { const st = MG.state; if (st.fase === 'nomires') return MG_TORRE; if (st.fase === 'atrapadas') return st.an.solo ? MG_SOLO : MG_ATRAPADAS; if (st.fase === 'carrera') return st.cr.solo ? MG_SOLO : MG_CARRERA; if (st.fase === 'spleef') return st.sp.solo ? MG_SOLO : MG_SPLEEF; if (st.fase === 'escondidas') return st.esc.solo ? MG_SOLO : MG_ESCONDIDAS + st.esc.terreno; if (st.fase === 'nave') return MG_SOLO; return undefined; },
@@ -5536,7 +5557,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
       get agarre() { return MG.state.fase === 'nomires' && MG.state.enHielo && ps.onGround ? HIELO.agarre : 0; },   // solo resbalas con los pies en el hielo: al saltar, controlas tu salto normal
       get dobleSalto() { const f = MG.state.fase; return f === 'nomires' || f === 'carrera' || f === 'spleef'; },
       // 👀 Spleef: si te caíste, la cámara sigue a uno de los que siguen jugando
-      get camaraEn() { const S = MG.state.sp; if (MG.state.fase !== 'spleef' || !S || !S.fuera || S.resultado) return null; const e = entidadSP(S.mirando); return e ? e.pos : null; },   // el doble salto: en la torre, la Carrera y el Spleef
+      get espectador() { const S = MG.state.sp; return MG.state.fase === 'spleef' && !!S && !!S.fuera && !S.resultado; },   // 👻 Spleef: flotas libre (ver moverEspectadorSP)
       look(o) { return { x: o.x, z: o.z + 30 }; },
       build(o) { construirSalon(o); },   // la torre se arma recién cuando entras a ella
       start(o) {
@@ -5557,7 +5578,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
       end() {
         cerrarCarga(); quitarTorre();
         if (MG.state.esc || !escondEl.hidden) { levantarse(); escondEl.hidden = true; }
-        quitarTerrenos(); escNegro.hidden = true; body.material.transparent = false; body.material.opacity = 1;
+        quitarTerrenos(); escNegro.hidden = true; verFantasma(player, false);
         if (MG.built.botEsc) MG.built.botEsc.obj.visible = false;
         if (MG.state.an || !anEl.hidden) { levantarseAN(); anEl.hidden = true; }
         quitarArenaAN(); mancha.visible = false;
@@ -6108,8 +6129,9 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
         const palo = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.4, 6), new THREE.MeshLambertMaterial({ color: 0xffffff })); palo.position.y = -0.2; c.add(palo);
         const disco = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.05, 16), new THREE.MeshLambertMaterial({ color })); disco.rotation.x = Math.PI / 2; c.add(disco);
         const espiral = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.02, 6, 16), new THREE.MeshLambertMaterial({ color: 0xffffff })); espiral.position.z = 0.03; c.add(espiral);
+        return c;
       };
-      chupetin(0xff3b6b, -0.22, alto * 0.75, 0.66); chupetin(0x3bc7ff, 0.22, alto * 0.75, 0.66);   // los ojos
+      for (const ojo of [chupetin(0xff3b6b, -0.22, alto * 0.75, 0.66), chupetin(0x3bc7ff, 0.22, alto * 0.75, 0.66)]) ojo.userData.ojo = 0.13;   // los ojos (ojo: su tamaño, para los ✖️ del desmayo)
       // Los chupetines asomándose ARRIBA, desde el montón de dulces (un poquito inclinados para afuera)
       [[0xffd23f, 0.22, 0.05, 0, -0.35], [0xa94bff, -0.22, 0.08, 0, 0.35], [0x2fd16a, 0.05, -0.2, Math.PI / 2, -0.3], [0xff6fa8, -0.08, 0.22, Math.PI / 2, 0.3], [0xff9a3d, 0, 0, 0, 0]]
         .forEach(([c, x, z, ry, rz], i) => chupetin(c, x, alto + 0.42 + (i % 2) * 0.08, z, ry, rz));
@@ -6127,16 +6149,32 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     // 👁️ Mil ojos: el cuerpo se pone BLANCO y se llena de ojos de verdad (blanco, iris de colores y pupila negra) que parpadean.
     // Los 2 ojitos negros de siempre se esconden
     milojos() {
-      const g = new THREE.Group(), pts = ojosMilOjos(W, H, D), R = OJO_MIL;   // ~20 ojos grandes, bien repartidos (no parpadean)
-      const blanco = new THREE.MeshLambertMaterial({ color: 0xffffff }), negro = new THREE.MeshBasicMaterial({ color: 0x111111 }), iris = new THREE.MeshBasicMaterial({ color: 0xffffff });
-      const COLORES_IRIS = [0x2f7de1, 0x2fae4e, 0xe0475f, 0x8e5bd9, 0xff8a1f, 0xffd23f, 0x4dd6c8, 0x8a5a33];
-      // Cada ojo mira hacia afuera: el iris y la pupila van un poquito adelante del globo
-      const mirando = (M, p, adelante, aplastado) => M.compose(v3.set(p.x + p.nx * adelante, p.y, p.z + p.nz * adelante), q.setFromEuler(e3.set(0, Math.atan2(p.nx, p.nz), 0)), s3.set(1, 1, aplastado));
-      g.add(instancias(new THREE.SphereGeometry(R, 14, 10), blanco, pts, (M, p) => mirando(M, p, 0, 0.55)));
-      const colores = instancias(new THREE.SphereGeometry(R * 0.6, 12, 8), iris, pts, (M, p) => mirando(M, p, R * 0.42, 0.45));
-      pts.forEach((_, i) => colores.setColorAt(i, new THREE.Color(COLORES_IRIS[i % COLORES_IRIS.length])));
-      g.add(colores);
-      g.add(instancias(new THREE.SphereGeometry(R * 0.28, 8, 6), negro, pts, (M, p) => mirando(M, p, R * 0.66, 0.4)));
+      // Ojos de tamaños mezclados repartidos por todo el cuerpo blanco (siempre igual). Cada ojo es de UN color, con la pupila
+      // oscura en el medio y un brillito; cada uno mira para su lado y miran alrededor despacito (no parpadean).
+      // Son 3 dibujos nomás (InstancedMesh): los globos (con su color), las pupilas y los brillitos
+      const g = new THREE.Group(), pts = ojosMilOjos(W, H, D);
+      const COLORES = [0xe0475f, 0x2f7de1, 0x2fae4e, 0x8e5bd9, 0xff8a1f, 0xffd23f, 0x4dd6c8, 0xff6fb5];
+      const globo = (M, p) => M.compose(v3.set(p.x, p.y, p.z), q.setFromEuler(e3.set(0, Math.atan2(p.nx, p.nz), 0)), s3.set(p.r, p.r, p.r * 0.5));
+      const globos = instancias(new THREE.SphereGeometry(1, 14, 10), new THREE.MeshLambertMaterial({ color: 0xffffff }), pts, globo);
+      pts.forEach((p, i) => globos.setColorAt(i, new THREE.Color(COLORES[p.color])));
+      // la pupila (y el brillito) van en la cara del ojo, corridas hacia donde mira: a = cuánto gira la mirada ahora
+      const enCara = (M, p, a, corre, adelante, tam) => {
+        const ang = Math.atan2(p.mira.y, p.mira.x) + a, dx = Math.cos(ang) * p.r * corre, dy = Math.sin(ang) * p.r * corre;
+        const tx = p.nz !== 0 ? p.nz : 0, tz = p.nz !== 0 ? 0 : -p.nx;   // (hacia el costado, en la cara del ojo)
+        return M.compose(v3.set(p.x + tx * dx + p.nx * p.r * adelante, p.y + dy, p.z + tz * dx + p.nz * p.r * adelante), q.setFromEuler(e3.set(0, Math.atan2(p.nx, p.nz), 0)), s3.set(p.r * tam, p.r * tam, p.r * tam * 0.4));
+      };
+      const pupilas = instancias(new THREE.SphereGeometry(1, 10, 8), new THREE.MeshBasicMaterial({ color: 0x111111 }), pts, (M, p) => enCara(M, p, 0, 0.32, 0.42, 0.42));
+      const brillos = instancias(new THREE.SphereGeometry(1, 6, 4), new THREE.MeshBasicMaterial({ color: 0xffffff }), pts, (M, p) => enCara(M, p, 0, 0.32, 0.5, 0.13));
+      g.add(globos, pupilas, brillos);
+      const M = new THREE.Matrix4(), arribaIzq = new THREE.Matrix4().makeTranslation(-0.9, 0.9, 0);
+      g.userData.anim = t => {   // miran alrededor despacito (cada uno a su ritmo)
+        pts.forEach((p, i) => {
+          const a = Math.sin(t * 0.5 + i * 1.7) * 0.9;
+          pupilas.setMatrixAt(i, enCara(M, p, a, 0.32, 0.42, 0.42));
+          brillos.setMatrixAt(i, enCara(M, p, a, 0.32, 0.5, 0.13).multiply(arribaIzq));
+        });
+        pupilas.instanceMatrix.needsUpdate = brillos.instanceMatrix.needsUpdate = true;
+      };
       g.userData.colorCuerpo = 0xffffff; g.userData.ocultaOjos = true;
       return g;
     },
@@ -6146,7 +6184,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
       const tela = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.8, H * 0.95, 20, 1, true), sab); tela.position.y = H * 0.5; g.add(tela);
       const cabeza = new THREE.Mesh(new THREE.SphereGeometry(0.62, 20, 12, 0, Math.PI * 2, 0, Math.PI / 2), sab); cabeza.position.y = H * 0.97; g.add(cabeza);
       for (let k = 0; k < 8; k++) { const onda = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.3, 6), sab); onda.position.set(Math.cos(k * 0.785) * 0.74, 0.05, Math.sin(k * 0.785) * 0.74); onda.rotation.x = Math.PI; g.add(onda); }
-      for (const s of [-1, 1]) { const ojo = new THREE.Mesh(new THREE.SphereGeometry(0.1, 10, 8), new THREE.MeshBasicMaterial({ color: 0x111111 })); ojo.scale.set(1, 1.5, 0.4); ojo.position.set(s * 0.2, H * 0.82, 0.64); g.add(ojo); }
+      for (const s of [-1, 1]) { const ojo = new THREE.Mesh(new THREE.SphereGeometry(0.1, 10, 8), new THREE.MeshBasicMaterial({ color: 0x111111 })); ojo.scale.set(1, 1.5, 0.4); ojo.position.set(s * 0.2, H * 0.82, 0.64); ojo.userData.ojo = 0.12; g.add(ojo); }
       g.userData.ocultaCuerpo = true;
       g.userData.anim = t => { g.position.y = Math.sin(t * 2.5) * 0.08; };
       return g;
@@ -6156,7 +6194,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
       const g = new THREE.Group(), venda = new THREE.MeshLambertMaterial({ color: 0xf1ead8 }), r = seededRandom(7);
       const vendas = Array.from({ length: 11 }, (_, i) => ({ y: 0.15 + i * (H - 0.3) / 10, giro: (r() - 0.5) * 0.35 }));
       g.add(instancias(new THREE.BoxGeometry(W + 0.08, 0.13, D + 0.08), venda, vendas, (M, p) => M.compose(v3.set(0, p.y, 0), q.setFromEuler(e3.set(0, 0, p.giro)), s3.set(1, 1, 1))));
-      const ojo = new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 8), new THREE.MeshBasicMaterial({ color: 0xff2020 })); ojo.position.set(0.22, H * 0.78, D / 2 + 0.06); g.add(ojo);
+      const ojo = new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 8), new THREE.MeshBasicMaterial({ color: 0xff2020 })); ojo.position.set(0.22, H * 0.78, D / 2 + 0.06); ojo.userData.ojo = 0.1; g.add(ojo);
       g.userData.anim = t => { ojo.material.color.setRGB(0.7 + 0.3 * Math.sin(t * 4), 0.05, 0.05); };
       return g;
     },
@@ -6180,6 +6218,28 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     if (d.userData.anim) disfracesAnim.add(d);
   }
   function vestirme() { vestir(player, body, save.disfraz); }
+  // 👻 El look de fantasma para TODO el personaje, también su disfraz: cada pieza usa una copia transparente de su material
+  // (los de verdad se guardan y vuelven al dejar de ser fantasma). Los letreros con el nombre (sprites) no cambian.
+  // Se puede llamar en cada cuadro: si ya está como se pide, no hace nada
+  function verFantasma(obj, si, opacidad = 0.35) {
+    const ya = obj.userData.fantasmaMats;
+    if (si && ya) { if (ya.opacidad !== opacidad) { for (const c of ya.copias.values()) c.opacity = opacidad; ya.opacidad = opacidad; } return; }
+    if (!si && !ya) return;
+    if (si) {
+      const piezas = [], copias = new Map();
+      obj.traverse(m => {
+        if (!m.isMesh || !m.material || Array.isArray(m.material)) return;
+        const orig = m.material; let c = copias.get(orig);
+        if (!c) { c = orig.clone(); c.transparent = true; c.opacity = opacidad; c.depthWrite = false; copias.set(orig, c); }
+        m.material = c; piezas.push([m, orig]);
+      });
+      obj.userData.fantasmaMats = { piezas, copias, opacidad };
+    } else {
+      for (const [m, orig] of ya.piezas) m.material = orig;
+      for (const c of ya.copias.values()) c.dispose();
+      obj.userData.fantasmaMats = null;
+    }
+  }
   function animarDisfraces(t) { for (const d of disfracesAnim) d.userData.anim(t); }
   // ----- El puesto de Halloween en el salón, atendido por un fantasma (amistoso) -----
   function construirTiendaHalloween(o) {
@@ -8260,9 +8320,10 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     const yoMg = miMg(), esc = MG.state && MG.state.esc, enRonda = !!(esc && !esc.solo);
     for (const [id, f] of red.otros) {
       const anR = MG.state && MG.state.an && !MG.state.an.solo ? MG.state.an : null, fantasmaAN = !!(anR && anR.jugadores.includes(id) && !anR.vivos.has(id));   // en Atrapadas, los fantasmas los ve todo el mundo
-      const fantasma = (enRonda && esc.encontrados.has(id)) || fantasmaAN, ve = seVen(yoMg, f.mg) && (!fantasma || fantasmaAN || soyBuscador());
+      const spR = MG.state && MG.state.sp && !MG.state.sp.solo ? MG.state.sp : null, espectadorSP = !!(spR && spR.jugadores.includes(id) && !spR.vivos.has(id));   // 👻 los que se cayeron del Spleef: nadie los ve
+      const fantasma = (enRonda && esc.encontrados.has(id)) || fantasmaAN, ve = seVen(yoMg, f.mg) && (!fantasma || fantasmaAN || soyBuscador()) && !espectadorSP;
       f.look.visible = ve; f.label.visible = ve && !enRonda; f.mgLabel.visible = !ve && yoMg === 0 && f.mg !== 0;
-      if (f.body.material.transparent !== fantasma) { f.body.material.transparent = fantasma; f.body.material.opacity = fantasma ? 0.35 : 1; }
+      verFantasma(f.look, fantasma);   // (todo su look, con disfraz)
     }
     for (const f of red.otros.values()) {
       const o = f.obj;
@@ -8407,7 +8468,8 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     if (wantJump && ps.onGround) sfxSalto();   // ¡bup!
     MG.input = { moving, jumped: (wantJump && ps.onGround) || doble };   // la batería de "No mires abajo" lo usa para saber cuánto gastar
     const vyAntes = ps.vel.y, enAire = !ps.onGround;
-    physics(ps, dt, wantJump, (MG.active && MG.active.jump) || stats.jump);
+    if (MG.active && MG.active.espectador) moverEspectadorSP(dt);   // 👻 (Spleef: el que se cayó flota libre)
+    else physics(ps, dt, wantJump, (MG.active && MG.active.jump) || stats.jump);
     if (enAire && ps.onGround && vyAntes < -7) sfxAterrizar(-vyAntes);   // ¡tump! (al caer de alto)
     bendState(ps, dt);
 

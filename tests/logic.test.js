@@ -1819,12 +1819,23 @@ describe('🎃 SpookyCoins: solo jugando de verdad', () => {
     expect(ganaSpooky({})).toBe(false);
   });
 });
-describe('👁️ Mil ojos', () => {
-  it('unos 20 ojos grandes, que no se enciman', () => {
-    const o = ojosMilOjos();
-    expect(o.length).toBeGreaterThanOrEqual(18); expect(o.length).toBeLessThanOrEqual(24);
-    for (let i = 0; i < o.length; i++) for (let j = i + 1; j < o.length; j++) expect(Math.hypot(o[i].x - o[j].x, o[i].y - o[j].y, o[i].z - o[j].z)).toBeGreaterThanOrEqual(2 * OJO_MIL);
-    o.forEach(p => { expect(p.y).toBeGreaterThan(OJO_MIL); expect(p.y).toBeLessThan(2 - OJO_MIL); });
+describe('👁️ Mil ojos (rediseño): tamaños mezclados, repartidos sin encimarse, 8 colores, cada uno mira para otro lado', () => {
+  const o = ojosMilOjos();
+  it('siempre sale igual (para ti y para tus amigos)', () => { expect(ojosMilOjos()).toEqual(o); });
+  it('entre 25 y 34 ojos, de tamaños mezclados (chicos y grandes)', () => {
+    expect(o.length).toBeGreaterThanOrEqual(25); expect(o.length).toBeLessThanOrEqual(34);
+    for (const p of o) { expect(p.r).toBeGreaterThanOrEqual(OJO_MIL.min); expect(p.r).toBeLessThanOrEqual(OJO_MIL.max); }
+    const rs = o.map(p => p.r); expect(Math.max(...rs) / Math.min(...rs)).toBeGreaterThan(1.8);
+  });
+  it('no se enciman y quedan sobre el cuerpo (no en una grilla)', () => {
+    for (let i = 0; i < o.length; i++) for (let j = i + 1; j < o.length; j++) expect(Math.hypot(o[i].x - o[j].x, o[i].y - o[j].y, o[i].z - o[j].z), `${i} y ${j}`).toBeGreaterThanOrEqual(o[i].r + o[j].r);
+    for (const p of o) { expect(p.y - p.r).toBeGreaterThan(0); expect(p.y + p.r).toBeLessThan(2); expect(Math.abs(p.x)).toBeLessThanOrEqual(0.53 + 1e-9); expect(Math.abs(p.z)).toBeLessThanOrEqual(0.33 + 1e-9); }
+    expect(new Set(o.map(p => p.y.toFixed(2))).size).toBeGreaterThan(o.length * 0.8);   // (alturas distintas: no hay filas)
+  });
+  it('los 8 colores, y cada uno mira para un lado distinto', () => {
+    expect(new Set(o.map(p => p.color))).toEqual(new Set([0, 1, 2, 3, 4, 5, 6, 7]));
+    for (const p of o) expect(Math.hypot(p.mira.x, p.mira.y)).toBeCloseTo(1, 5);
+    expect(new Set(o.map(p => Math.round(Math.atan2(p.mira.y, p.mira.x) / (Math.PI / 4)))).size).toBeGreaterThanOrEqual(6);
   });
 });
 import { arrastreDe, girarAlrededor, carroPos as carroPosA, CARRO as CARRO_A } from '../src/logic.js';
@@ -2625,5 +2636,21 @@ describe('🚀 Nave, fase 2: el apagón y los bots', () => {
     expect(yo / N).toBeGreaterThan(0.31); expect(yo / N).toBeLessThan(0.39);
     expect(elegirImpostores(['yo', 'b0', 'b1'], () => 0.1)).toEqual(['yo']);   // (con pocos, 1 solo)
     const rep = repartirTareas2(ids, ['yo', 'b3'], r); expect(rep.yo).toEqual({}); expect(rep.b3).toEqual({}); expect(Object.keys(rep.b0)).toHaveLength(3);
+  });
+});
+
+import { cajaEspectadorSP, moverEspectador, encontradoSolo, SPLEEF as SP9 } from '../src/logic.js';
+describe('👻 Espectadores y fantasmas que se mueven', () => {
+  it('Spleef: el espectador flota dentro de la arena (con el palco) y no se puede ir', () => {
+    const k = cajaEspectadorSP();
+    expect(k.z0).toBeLessThan(SP9.palco.z - SP9.palco.largo / 2); expect(k.y1).toBeGreaterThan(SP9.palco.y); expect(k.y0).toBeGreaterThan(SP9.fuera);
+    expect(moverEspectador({ x: 0, y: 30, z: 0 }, { x: 1, y: 2, z: -1 })).toEqual({ x: 1, y: 32, z: -1 });
+    expect(moverEspectador({ x: k.x1, y: k.y1, z: k.z0 }, { x: 50, y: 50, z: -50 })).toEqual({ x: k.x1, y: k.y1, z: k.z0 });   // (las paredes invisibles)
+    expect(moverEspectador({ x: 0, y: k.y0, z: 0 }, { x: 0, y: -99, z: 0 }).y).toBe(k.y0);   // (no se baja a la lava)
+    // el palco queda adentro (ahí apareces al caerte)
+    const P = SP9.palco; expect(moverEspectador({ x: P.x, y: P.y, z: P.z }, { x: 0, y: 0, z: 0 })).toEqual({ x: P.x, y: P.y, z: P.z });
+  });
+  it('Escondidas solo: si te encuentran y quedan escondidos, sigues de fantasma', () => {
+    expect(encontradoSolo(2)).toBe('fantasma'); expect(encontradoSolo(0)).toBe('fin');
   });
 });
