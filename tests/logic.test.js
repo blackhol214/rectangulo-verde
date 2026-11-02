@@ -2373,14 +2373,14 @@ describe('🧭 Los demás miran hacia donde caminan', () => {
 import { BOTS_SOLO, BOTS_MIN, BOTS_MAX, BOTS_POR_MODO, limitarBots, leerBots, rosterBots, DISFRACES as DISF } from '../src/logic.js';
 describe('🤖 Los bots de los modos (jugando solo)', () => {
   it('ALBERT siempre, después Amarillo, Rojo, Azul, Verde, Ghoul, Naranja, Rosa, Gris, Blanco y Misterio (11 como mucho)', () => {
-    expect(BOTS_SOLO.map(b => b.nombre)).toEqual(['ALBERT', 'Amarillo', 'Rojo', 'Azul', 'Verde', 'Ghoul', 'Naranja', 'Rosa', 'Gris', 'Blanco', 'Misterio']);
+    expect(BOTS_SOLO.slice(0, BOTS_MAX).map(b => b.nombre)).toEqual(['ALBERT', 'Amarillo', 'Rojo', 'Azul', 'Verde', 'Ghoul', 'Naranja', 'Rosa', 'Gris', 'Blanco', 'Misterio']);   // (los demás son de la Nave)
     expect(BOTS_MIN).toBe(1); expect(BOTS_MAX).toBe(11);
     expect(rosterBots(1).map(b => b.id)).toEqual(['albert']); expect(rosterBots(3).map(b => b.nombre)).toEqual(['ALBERT', 'Amarillo', 'Rojo']);
-    expect(new Set(BOTS_SOLO.map(b => b.color)).size).toBe(11);   // cada uno de su color
+    expect(new Set(BOTS_SOLO.map(b => b.color)).size).toBe(BOTS_SOLO.length);   // cada uno de su color
   });
   it('entre 1 y 11 (lo raro o vacío vuelve a los de siempre de cada modo)', () => {
     expect(limitarBots(0)).toBe(1); expect(limitarBots(50)).toBe(11); expect(limitarBots(4.6)).toBe(5); expect(limitarBots('x')).toBeNull();
-    expect(limitarBots(9, 'nave')).toBe(5); expect(limitarBots(0, 'nave')).toBe(1); expect(leerBots('9', 'nave')).toBe(5); expect(leerBots(null, 'nave')).toBe(5);   // 🚀 la Nave: ALBERT + 4 como máximo
+    expect(limitarBots(99, 'nave')).toBe(14); expect(leerBots(null, 'nave')).toBe(14);   // 🚀 la Nave: siempre 15 (tú + 14 bots)
     expect(leerBots('7', 'carrera')).toBe(7); expect(leerBots(null, 'atrapadas')).toBe(BOTS_POR_MODO.atrapadas); expect(leerBots('hola', 'spleef')).toBe(BOTS_POR_MODO.spleef);
     expect(rosterBots(99)).toHaveLength(11); expect(rosterBots(-3)).toHaveLength(1);
   });
@@ -2474,7 +2474,7 @@ describe('🚀 Nave, fase 2: el mapa de las tareas, las cosas sólidas y las esc
   it('el botón de emergencia está en la mesa del comedor, y los puestos de la reunión no caen adentro de nada', () => {
     expect(salaEn(BOTON_REUNION.x, BOTON_REUNION.z)).toBe(sala('comedor'));
     expect(PROPS_NAVE.some(p => p.tipo === 'mesaReunion' && p.x === BOTON_REUNION.x && p.z === BOTON_REUNION.z)).toBe(true);
-    for (const n of [2, 6, 12]) for (const p of puestosReunion(n)) { expect(enProp(p, 0.45)).toBe(false); expect(salaEn(p.x, p.z)).toBe(sala('comedor')); }
+    for (const n of [2, 6, 12, 15]) for (const p of puestosReunion(n)) { expect(enProp(p, 0.45)).toBe(false); expect(salaEn(p.x, p.z)).toBe(sala('comedor')); }
   });
   it('las escotillas: 3 redes que conectan salas distintas; nunca encima de una tarea, una cosa o la salida', () => {
     const redes = new Set(ESCOTILLAS_NAVE.map(e => e.red)); expect(redes.size).toBe(3);
@@ -2603,12 +2603,27 @@ describe('🚀 Nave, fase 2: el chat de la reunión y la votación', () => {
     expect(mensajeExpulsion('Azul', false)).toBe('Azul no era impostor :v'); expect(mensajeExpulsion('Azul', true)).toBe('Azul era el impostor :D');
   });
 });
-import { APAGON, puedeApagar, maxBots } from '../src/logic.js';
+import { APAGON, puedeApagar, maxBots, rosterBots as rosterBots2, NAVE as NAVE2, impostoresPara, elegirImpostores, repartirTareas as repartirTareas2, seededRandom as srN2 } from '../src/logic.js';
 describe('🚀 Nave, fase 2: el apagón y los bots', () => {
   it('💡 las luces se pueden apagar después de un rato, y no seguido', () => {
     expect(puedeApagar(5, -Infinity)).toBe(false); expect(puedeApagar(APAGON.primero, -Infinity)).toBe(true);
     expect(puedeApagar(40, 30)).toBe(false); expect(puedeApagar(30 + APAGON.espera, 30)).toBe(true);
     expect(APAGON.dura).toBe(10);
   });
-  it('en la Nave hay como mucho 5 bots (6 con vos); en los otros modos, 11', () => { expect(maxBots('nave')).toBe(5); expect(maxBots('carrera')).toBe(11); });
+  it('en la Nave siempre son 15 (tú + 14 bots, todos con nombre y color distinto); en los otros modos, hasta 11 bots', () => {
+    expect(maxBots('nave')).toBe(14); expect(maxBots('carrera')).toBe(11);
+    const r = rosterBots2(14, 'nave'); expect(r).toHaveLength(NAVE2.jugadores - 1);
+    expect(new Set(r.map(b => b.nombre)).size).toBe(14); expect(new Set(r.map(b => b.color)).size).toBe(14);
+    expect(rosterBots2(14)).toHaveLength(11);   // (sin decir el modo: como siempre)
+  });
+  it('😈 impostores: hasta 6 → 1, más de 6 → 2, más de 20 → 3; solo, TÚ eres uno de ellos el 35 % de las veces', () => {
+    for (const [n, k] of [[2, 1], [6, 1], [7, 2], [15, 2], [20, 2], [21, 3], [30, 3]]) expect(impostoresPara(n), `${n} jugadores`).toBe(k);
+    expect(NAVE2.probJugador).toBe(0.35);
+    const ids = ['yo', ...Array.from({ length: 14 }, (_, i) => 'b' + i)], r = srN2(11);
+    let yo = 0; const N = 4000;
+    for (let i = 0; i < N; i++) { const imp = elegirImpostores(ids, r); expect(imp).toHaveLength(2); expect(new Set(imp).size).toBe(2); if (imp.includes('yo')) yo++; }
+    expect(yo / N).toBeGreaterThan(0.31); expect(yo / N).toBeLessThan(0.39);
+    expect(elegirImpostores(['yo', 'b0', 'b1'], () => 0.1)).toEqual(['yo']);   // (con pocos, 1 solo)
+    const rep = repartirTareas2(ids, ['yo', 'b3'], r); expect(rep.yo).toEqual({}); expect(rep.b3).toEqual({}); expect(Object.keys(rep.b0)).toHaveLength(3);
+  });
 });

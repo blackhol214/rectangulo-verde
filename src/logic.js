@@ -2323,24 +2323,32 @@ export const BOTS_SOLO = [
   { id: 'gris', nombre: 'Gris', color: 0x868e96 },
   { id: 'blanco', nombre: 'Blanco', color: 0xf8f9fa },
   { id: 'misterio', nombre: 'Misterio', color: 0x5f3dc4, disfraz: 'dulce' },   // (morado misterioso, con el disfraz "Qué dulce")
+  // (los que siguen juegan en la Nave, que siempre se llena hasta 15)
+  { id: 'cian', nombre: 'Cian', color: 0x22d3ee },
+  { id: 'lima', nombre: 'Lima', color: 0xa3e635 },
+  { id: 'cafe', nombre: 'Café', color: 0x8b5a2b },
+  { id: 'morado', nombre: 'Morado', color: 0x9333ea },
+  { id: 'turquesa', nombre: 'Turquesa', color: 0x14b8a6 },
+  { id: 'dorado', nombre: 'Dorado', color: 0xd4a017 },
 ];
-export const BOTS_MIN = 1, BOTS_MAX = BOTS_SOLO.length;
+export const BOTS_MIN = 1, BOTS_MAX = 11;   // (en los otros modos, hasta 11 bots)
 // Cuántos bots por modo si nunca elegiste (los de siempre)
-export const BOTS_POR_MODO = { escondidas: 1, atrapadas: 4, carrera: 5, spleef: 5, nave: 5 };
-// Algunos modos tienen menos bots como máximo (la Nave: ALBERT + 4 = 6 con vos)
-export const BOTS_MAX_MODO = { nave: 5 };
+export const BOTS_POR_MODO = { escondidas: 1, atrapadas: 4, carrera: 5, spleef: 5, nave: 14 };
+// La Nave tiene su propio máximo: siempre se llena hasta 15 jugadores (tú + 14 bots)
+export const BOTS_MAX_MODO = { nave: 14 };
 export const maxBots = modo => BOTS_MAX_MODO[modo] ?? BOTS_MAX;
 export const limitarBots = (n, modo) => { const v = Number(n); return Number.isFinite(v) ? Math.min(maxBots(modo), Math.max(BOTS_MIN, Math.round(v))) : null; };
 // Lo guardado (en el navegador): si no hay nada o algo raro, los de siempre de ese modo
 export const leerBots = (texto, modo) => (texto === null || texto === undefined || texto === '' ? BOTS_POR_MODO[modo] : limitarBots(texto, modo) ?? BOTS_POR_MODO[modo]);
 // Los n bots que juegan (siempre empieza con ALBERT)
-export const rosterBots = n => BOTS_SOLO.slice(0, limitarBots(n) ?? BOTS_MIN);
+export const rosterBots = (n, modo) => BOTS_SOLO.slice(0, limitarBots(n, modo) ?? BOTS_MIN);
 
 // ---------- 🚀 Nave entre sospechas: una nave espacial de diseño propio (fase 1: explorar y construir) ----------
 // El plano: salas rectangulares (en metros enteros, desde el origen de la nave) unidas por un pasillo central largo.
 // Diseño nuestro: la nave es como una flecha que apunta hacia +x (el puente de mando adelante y los motores atrás).
 export const NAVE_X = 4500;   // dentro del minijuego del Modo Escuela, lejos de todo lo demás
-export const NAVE = { alto: 5, grosor: 0.3, puerta: 3 };
+// jugadores: la nave siempre se llena hasta 15 (con bots) · probJugador: jugando solo, la chance de que TÚ seas uno de los impostores (35 %)
+export const NAVE = { alto: 5, grosor: 0.3, puerta: 3, jugadores: 15, probJugador: 0.35 };
 export const SALAS_NAVE = [
   { id: 'pasillo', nombre: 'Pasillo central', x0: 8, x1: 62, z0: -3, z1: 3, color: 0x5c6f82, pasillo: true },
   { id: 'escaner', nombre: 'Escáner de virus', x0: 62, x1: 78, z0: -9, z1: 9, color: 0x2f5d8a, ventanas: true },
@@ -2462,9 +2470,9 @@ export function puntoLibreNave(salaId, azar = Math.random) {
 // ----- Las tareas: quién tiene cuáles -----
 // personas: ['yo', 'b0', 'b1', …] · el jugador (si no es impostor) tiene las 8; cada bot, `porBot` al azar; el impostor ninguna (hace como que)
 export function repartirTareas(personas, impostor, azar = Math.random, porBot = 3) {
-  const out = {};
+  const out = {}, imps = [].concat(impostor);   // (uno o una lista)
   for (const p of personas) {
-    if (p === impostor) { out[p] = {}; continue; }
+    if (imps.includes(p)) { out[p] = {}; continue; }
     const ids = p === 'yo' ? TAREAS_NAVE.map(t => t.id) : mezclarNave(TAREAS_NAVE.map(t => t.id), azar).slice(0, porBot);
     out[p] = Object.fromEntries(ids.map(id => [id, false]));
   }
@@ -2486,6 +2494,17 @@ export function resultadoNave({ hechas, total, tripulantesVivos, impostoresVivos
   return null;
 }
 export const elegirImpostor = (n, azar = Math.random) => Math.min(n - 1, Math.floor(azar() * n));
+// Cuántos impostores hay con n jugadores (regla de Mathias): hasta 6 → 1 · más de 6 → 2 · más de 20 → 3
+export const impostoresPara = n => (n > 20 ? 3 : n > 6 ? 2 : 1);
+// Los impostores de la ronda (ids). Jugando solo, 'yo' es impostor con probabilidad NAVE.probJugador; los demás salen de los bots
+export function elegirImpostores(ids, azar = Math.random, prob = NAVE.probJugador) {
+  const n = impostoresPara(ids.length), out = [];
+  let resto = ids.slice();
+  if (ids.includes('yo')) { resto = resto.filter(i => i !== 'yo'); if (azar() < prob) out.push('yo'); }
+  resto = mezclarNave(resto, azar);
+  while (out.length < n && resto.length) out.push(resto.shift());
+  return out;
+}
 // 👻 Los fantasmas no los ve NADIE… menos el impostor (regla de Mathias)
 export const veFantasmas = soyImpostor => !!soyImpostor;
 // ¿Hay testigos? (otro tripulante vivo cerca del atacante o de la víctima)

@@ -549,11 +549,11 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module">
-import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, ESCUELA, ESCUELA_K, SANDBOX_K, enElHoyo, zonaRara, ZONA_RARA, HOYO, escuelaSiguiente, escuelaMezclar, SALON, salonSillas, sillaCercana, faseDeLuz, ARENA_AN, ARENA_AN_X, TERRENO_X, salidaAN, centroArenaAN, plataformasAN, desplazamientoAN, portalesAN, portalCerca, TERRENOS, CARROS, CARRO, carroPos, partesCarro, TORTUGAS, TORTUGA, tortugaPos, partesTortuga, arrastreDe, girarAlrededor, CARRERA, PISTA_CARRERA, posPlatCarrera, punoEn, golpePuno, golpeBarra, salidaCarrera, enMetaCarrera, seCayoCarrera, puestosCarrera, origenCarrera, SILLA_CARRERA, CARRERA_X, puertasReales, lugaresPuertas, vientoTubo, golpeObstaculoCarrera, puedeRecibirGolpe, GOLPE_PAUSA_MS, NAVE_X, NAVE, SALAS_NAVE, SALIDA_NAVE, INICIO_NAVE, salaNaveEn, puertasNave, paredesNave, rutaNave, SILLA_NAVE, PROPS_NAVE, TAREAS_NAVE, tareaNave, BOTON_REUNION, ESCOTILLAS_NAVE, siguienteEscotilla, ACCION_NAVE, APAGON, puedeApagar, cercaDe, puntoLibreNave, repartirTareas, progresoNave, marcarTarea, sabotearTarea, resultadoNave, elegirImpostor, veFantasmas, hayTestigos, accionNaveE, puestosReunion, COLORES_CABLES, nuevosCables, unirCable, cablesListos, VIRUS, MALEZA, sembrar, multiplicar, nuevasPlantas, plantasListas, MOTOR_CABLES, responderMotor, nuevasMuestras, tocarMuestra, muestrasListas, nuevaComida, sacarHongo, comidaLista, PARTES_CAMILLA, nuevasCamillas, arreglarParte, camillaLista, limpiarChat, puedeEscribir, chatVisible, VOTACION, contarVotos, mensajeExpulsion, puedeBotonReunion, maxBots, BOTS_SOLO, BOTS_MIN, BOTS_MAX, BOTS_POR_MODO, limitarBots, leerBots, rosterBots, rumboDeMovimiento, CALIDADES, leerCalidad, leerNivel, siguienteCalidad, calidadInicial, bajarCalidad, leerEstilo, golpeGuardian, GUARDIAN, temporadaDe, TEMPORADAS, particulaEstacion, MUSICAS, midiAFrecuencia, lugarMusica, intensidadMusica, compasMusica, siguienteVolumen, leerVolumen, CORREDOR_CARRERA, PARED, siguienteCheckpoint, SPLEEF, SPLEEF_X, SILLA_SPLEEF, capaY, HEXES, hexEn, hundido, hexSolido, hexSeVe, pisoSpleef, salidaSpleef, fueraSpleef, capaDe, origenSpleef, cajasPieza, escaleraCanasta, cajasTerreno, escondites, BOT_ESC, botVe, ordenEscondites, cercaDeLaProfe, preguntasDeLaClase, escaparHTML, NO_MIRES, torreNoMires, seededRandom, debeReaparecer, GUIA_COMO, textoQueHago, lugarDelGuia, GUIA_COLORES, siguienteColorGuia, lugaresArboles, lugaresPasto, libreDePasto, ARBOLES, sombreroDeBot, ETAPAS, etapaDe, cajasDe, decoracionTorre, ovniDesplazamiento, HIELO, deslizar, puedeDobleSalto, gastarBateria, cargarBateria, hayBateria, BATERIA, ganaSpooky, ojosMilOjos, OJO_MIL, SPOOKY, sumarTiempoSpooky, DISFRACES, disfrazById, comprarDisfraz, ponerDisfraz, TIENDA_HALLOWEEN, cercaDelVendedor, letrerosEtapas, elegirObjetivoAN, meAburro, MOTIVACION_AN, reboteCaminar, estaCaminando, volumenPasos, puedeAvisar, AVISO_LASER, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, VILLAGE_HOUSE, wallPieces, insideVillageHouse, villageBed, villageEntrance, villageExit, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, squashStretch, ACHIEVEMENTS, achievementById, coinAchievementsFor, TROPHY_TABLE, trophySpot, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
-         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-11-01-nave2'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
-import { NOMBRE_SALA, cerebrosNuevos, proximoCerebro, pensar, crearEpisodio, pasoEpisodio, semillaIntento, torreSandbox, BUSCADOR_SB, leerCerebros, nombreGuy, claveGuy, NOMBRE_GUY } from './src/ia.js?v=2026-11-01-nave2';
-import { VERSION } from './src/version.js?v=2026-11-01-nave2';
-import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, valoresEn, DIA_SEGUNDOS, lugarMoneda, corto, acercar, acercarAngulo, piezasExplosion, leerPreguntas, revisarPreguntas, PROFE, seVen, MG_TORRE, MG_ESCONDIDAS, MG_ATRAPADAS, MG_CARRERA, MG_SPLEEF, MG_SOLO, ESC, AN, nuevaRondaAN, pasarAN, explotarAN, empujeAN, mareadoAN, seTocan } from './src/red.js?v=2026-11-01-nave2';
+import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, ESCUELA, ESCUELA_K, SANDBOX_K, enElHoyo, zonaRara, ZONA_RARA, HOYO, escuelaSiguiente, escuelaMezclar, SALON, salonSillas, sillaCercana, faseDeLuz, ARENA_AN, ARENA_AN_X, TERRENO_X, salidaAN, centroArenaAN, plataformasAN, desplazamientoAN, portalesAN, portalCerca, TERRENOS, CARROS, CARRO, carroPos, partesCarro, TORTUGAS, TORTUGA, tortugaPos, partesTortuga, arrastreDe, girarAlrededor, CARRERA, PISTA_CARRERA, posPlatCarrera, punoEn, golpePuno, golpeBarra, salidaCarrera, enMetaCarrera, seCayoCarrera, puestosCarrera, origenCarrera, SILLA_CARRERA, CARRERA_X, puertasReales, lugaresPuertas, vientoTubo, golpeObstaculoCarrera, puedeRecibirGolpe, GOLPE_PAUSA_MS, NAVE_X, NAVE, SALAS_NAVE, SALIDA_NAVE, INICIO_NAVE, salaNaveEn, puertasNave, paredesNave, rutaNave, SILLA_NAVE, PROPS_NAVE, TAREAS_NAVE, tareaNave, BOTON_REUNION, ESCOTILLAS_NAVE, siguienteEscotilla, ACCION_NAVE, APAGON, puedeApagar, cercaDe, puntoLibreNave, repartirTareas, progresoNave, marcarTarea, sabotearTarea, resultadoNave, elegirImpostor, veFantasmas, hayTestigos, accionNaveE, puestosReunion, COLORES_CABLES, nuevosCables, unirCable, cablesListos, VIRUS, MALEZA, sembrar, multiplicar, nuevasPlantas, plantasListas, MOTOR_CABLES, responderMotor, nuevasMuestras, tocarMuestra, muestrasListas, nuevaComida, sacarHongo, comidaLista, PARTES_CAMILLA, nuevasCamillas, arreglarParte, camillaLista, limpiarChat, puedeEscribir, chatVisible, VOTACION, contarVotos, mensajeExpulsion, puedeBotonReunion, maxBots, elegirImpostores, impostoresPara, BOTS_SOLO, BOTS_MIN, BOTS_MAX, BOTS_POR_MODO, limitarBots, leerBots, rosterBots, rumboDeMovimiento, CALIDADES, leerCalidad, leerNivel, siguienteCalidad, calidadInicial, bajarCalidad, leerEstilo, golpeGuardian, GUARDIAN, temporadaDe, TEMPORADAS, particulaEstacion, MUSICAS, midiAFrecuencia, lugarMusica, intensidadMusica, compasMusica, siguienteVolumen, leerVolumen, CORREDOR_CARRERA, PARED, siguienteCheckpoint, SPLEEF, SPLEEF_X, SILLA_SPLEEF, capaY, HEXES, hexEn, hundido, hexSolido, hexSeVe, pisoSpleef, salidaSpleef, fueraSpleef, capaDe, origenSpleef, cajasPieza, escaleraCanasta, cajasTerreno, escondites, BOT_ESC, botVe, ordenEscondites, cercaDeLaProfe, preguntasDeLaClase, escaparHTML, NO_MIRES, torreNoMires, seededRandom, debeReaparecer, GUIA_COMO, textoQueHago, lugarDelGuia, GUIA_COLORES, siguienteColorGuia, lugaresArboles, lugaresPasto, libreDePasto, ARBOLES, sombreroDeBot, ETAPAS, etapaDe, cajasDe, decoracionTorre, ovniDesplazamiento, HIELO, deslizar, puedeDobleSalto, gastarBateria, cargarBateria, hayBateria, BATERIA, ganaSpooky, ojosMilOjos, OJO_MIL, SPOOKY, sumarTiempoSpooky, DISFRACES, disfrazById, comprarDisfraz, ponerDisfraz, TIENDA_HALLOWEEN, cercaDelVendedor, letrerosEtapas, elegirObjetivoAN, meAburro, MOTIVACION_AN, reboteCaminar, estaCaminando, volumenPasos, puedeAvisar, AVISO_LASER, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, VILLAGE_HOUSE, wallPieces, insideVillageHouse, villageBed, villageEntrance, villageExit, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, squashStretch, ACHIEVEMENTS, achievementById, coinAchievementsFor, TROPHY_TABLE, trophySpot, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
+         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-11-02-nave15'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
+import { NOMBRE_SALA, cerebrosNuevos, proximoCerebro, pensar, crearEpisodio, pasoEpisodio, semillaIntento, torreSandbox, BUSCADOR_SB, leerCerebros, nombreGuy, claveGuy, NOMBRE_GUY } from './src/ia.js?v=2026-11-02-nave15';
+import { VERSION } from './src/version.js?v=2026-11-02-nave15';
+import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, valoresEn, DIA_SEGUNDOS, lugarMoneda, corto, acercar, acercarAngulo, piezasExplosion, leerPreguntas, revisarPreguntas, PROFE, seVen, MG_TORRE, MG_ESCONDIDAS, MG_ATRAPADAS, MG_CARRERA, MG_SPLEEF, MG_SOLO, ESC, AN, nuevaRondaAN, pasarAN, explotarAN, empujeAN, mareadoAN, seTocan } from './src/red.js?v=2026-11-02-nave15';
 (() => {
   // iPhone ignora user-scalable=no: aquí se bloquea el zoom con dos dedos y el doble toque
   for (const ev of ['gesturestart', 'gesturechange']) document.addEventListener(ev, e => e.preventDefault(), { passive: false });
@@ -3015,12 +3015,12 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     const et = etiquetaSB(); pintarEtiquetaSB(et, def.nombre); et.position.y = H + (def.sombrero ? 1.15 : 0.6); g.add(et);
     g.visible = false; scene.add(g);
     if (def.disfraz) vestir(g, b, def.disfraz);
-    const st = makeState(g); st.cuerpo = b; st.def = def; return st;
+    const st = makeState(g); st.cuerpo = b; st.def = def; st.etiqueta = et; return st;
   }
   // Los n bots que juegan ahora (se arman una sola vez y se usan en todos los modos)
-  function botsSolo(n) {
+  function botsSolo(n, modo) {
     const lista = MG.built.botsSolo = MG.built.botsSolo || [];
-    return rosterBots(n).map((def, k) => {
+    return rosterBots(n, modo).map((def, k) => {
       const b = lista[k] || (lista[k] = hacerBotSolo(def));
       b.obj.visible = true; b.vel.set(0, 0, 0); b.carrying = null; b.onGround = true; b.cuerpo.material.transparent = false; b.cuerpo.material.opacity = 1; b.cuerpo.rotation.z = 0;
       return b;
@@ -4249,7 +4249,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     camYaw = Math.PI;
   }
   // ===== 🚀 Nave entre sospechas (diseño de Mathias, todo propio): 9 salas, 8 tareas, un impostor, escotillas, reuniones y votación =====
-  // Jugando solo, con bots (ALBERT + hasta 4). E: tareas, botón, caja, escotillas y atacar (impostor) · F: reportar un cuerpo · Q (impostor): apagar las luces
+  // Siempre 15 en la nave (tú + 14 bots); 2 impostores (impostoresPara). E: tareas, botón, caja, escotillas y atacar (impostor) · F: reportar un cuerpo · Q (impostor): apagar las luces
   // Una textura de paneles de nave (con canvas): placas con remaches y una franja de luz
   function texturaNave(base, luz, repX = 1, repY = 1) {
     const cv = document.createElement('canvas'); cv.width = cv.height = 128; const g = cv.getContext('2d');
@@ -4389,8 +4389,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
   }
   // E en la silla: elegir cuántos bots y despegar
   function abrirNave(o) {
-    const extra = modalNave('🚀 Nave entre sospechas', 'Uno de los que están en la nave es el IMPOSTOR (¡puedes ser tú!). La tripulación hace las tareas; el impostor sabotea y ataca sin que lo vean.', [['🚀 ¡Despegar!', () => entrarNave(o)], ['Cerrar', () => {}]]);
-    extra.append(controlBots('nave'));
+    modalNave('🚀 Nave entre sospechas', `${NAVE.jugadores} tripulantes (tú + ${NAVE.jugadores - 1} bots) y ${impostoresPara(NAVE.jugadores)} son IMPOSTORES (¡puedes ser tú!). La tripulación hace las tareas; los impostores sabotean y atacan sin que los vean.`, [['🚀 ¡Despegar!', () => entrarNave(o)], ['Cerrar', () => {}]]);
   }
   function entrarNave(o) {
     const N = ponerNave(o), st = MG.state;
@@ -4400,7 +4399,8 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
 
   // ----- La ronda -----
   const yoEnNave = () => MG.state.nave && MG.state.nave.gente[0];
-  const soyImpostorNave = () => { const V = MG.state.nave; return !!V && V.impostor === 'yo'; };
+  const esImpNave = id => { const V = MG.state.nave; return !!V && !!V.imps && V.imps.includes(id); };
+  const soyImpostorNave = () => esImpNave('yo');
   const posDe = p => (p.yo ? ps.pos : p.bot.pos);
   const salaDe = p => { const V = MG.state.nave, P = posDe(p), i = salaNaveEn(P.x - V.N.c.x, P.z - V.N.c.z); return i >= 0 ? SALAS_NAVE[i].nombre : 'el espacio'; };
   const rel = P => ({ x: P.x - MG.state.nave.N.c.x, z: P.z - MG.state.nave.N.c.z });
@@ -4408,18 +4408,20 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     const V = MG.state.nave; if (!V || !V.gente) return;
     cerrarTareaNave(); naveReunionEl.hidden = true; clearInterval(V.reunionTimer);
     for (const cu of V.cuerpos) { scene.remove(cu.g); }
+    for (const h of V.humos || []) scene.remove(h.sp);
+    V.humos = [];
     V.cuerpos = [];
-    for (const p of V.gente) if (p.bot) { ponerCasco(p.bot, false); p.bot.cuerpo.material.transparent = false; p.bot.cuerpo.material.opacity = 1; }
+    for (const p of V.gente) if (p.bot) { ponerCasco(p.bot, false); p.bot.cuerpo.material.transparent = false; p.bot.cuerpo.material.opacity = 1; pintarEtiquetaSB(p.bot.etiqueta, p.bot.def.nombre); }
     body.material.transparent = false; body.material.opacity = 1; player.visible = true;
     luzNave(false);
   }
   function empezarRondaNave() {
     const V = MG.state.nave, c = V.N.c;
     limpiarRondaNave(); naveModalEl.hidden = true;
-    const bots = botsSolo(cuantosBots('nave'));
+    const bots = botsSolo(NAVE.jugadores - 1, 'nave');   // (siempre se llena hasta 15)
     const gente = [{ id: 'yo', nombre: 'Tú', yo: true, vivo: true }, ...bots.map((b, k) => ({ id: 'b' + k, nombre: b.def.nombre, bot: b, vivo: true, ia: { camino: [], hacer: null, trabajo: 0 } }))];
-    const impostor = gente[elegirImpostor(gente.length)].id;
-    Object.assign(V, { gente, impostor, rep: repartirTareas(gente.map(p => p.id), impostor), cuerpos: [], t: 0, ultimoAtaque: 0, ultimaReunion: 0, ultimoSabotaje: -99,
+    const imps = elegirImpostores(gente.map(p => p.id));
+    Object.assign(V, { gente, imps, rep: repartirTareas(gente.map(p => p.id), imps), cuerpos: [], humos: [], t: 0, ultimoAtaque: 0, ultimaReunion: 0, ultimoSabotaje: -99,
       botonUsos: {}, caja: 'reactor', fin: null, reunion: null, accion: null, apagon: { hasta: -1, fin: -Infinity }, impBot: { proxApagon: 25 + Math.random() * 20 } });
     bots.forEach((b, k) => {
       ponerCasco(b, true); const s = SALAS_NAVE[(k + 1) % SALAS_NAVE.length], p = puntoLibreNave(s.id);
@@ -4427,13 +4429,14 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
       if (!b.obj.userData.llave) { const ll = spriteEmoji('🔧', 0.7); ll.position.y = H + 1.6; b.obj.add(ll); b.obj.userData.llave = ll; }
       b.obj.userData.llave.visible = false;
       planBotNave(gente[k + 1]);
+      pintarEtiquetaSB(b.etiqueta, b.def.nombre, imps.includes('yo') && imps.includes('b' + k) ? '#ff4b4b' : '#ffe14d');   // (los impostores se reconocen: nombre en rojo)
     });
     placePlayer(c.x + INICIO_NAVE.x, 0, c.z + INICIO_NAVE.z); camYaw = -Math.PI / 2;
     naveListaEl.hidden = false;
-    const imp = impostor === 'yo';
-    modalNave(imp ? '😈 ¡Eres el IMPOSTOR!' : '🧑‍🚀 Eres TRIPULANTE',
-      imp ? 'Que no te descubran. E: atacar (sin testigos), meterte por las escotillas 🕳️ o sabotear una tarea. Q: apagar las luces 💡. Ganas si quedan tantos tripulantes como impostores.'
-          : `Haz tus tareas (la lista está a la izquierda) con E. Si encuentras a alguien desmayado, F para reportar. El botón rojo del comedor llama a una reunión. En la nave hay ${gente.length} y uno es el impostor…`,
+    const imp = imps.includes('yo'), socios = imps.filter(i => i !== 'yo').map(i => gente.find(p => p.id === i).nombre);
+    modalNave(imp ? '😈 ¡Eres IMPOSTOR!' : '🧑‍🚀 Eres TRIPULANTE',
+      imp ? `${socios.length ? `Tu compañero impostor: ${socios.join(' y ')} (su nombre se ve en ROJO; no se pueden atacar entre ustedes). ` : ''}Que no te descubran. E: atacar (sin testigos), meterte por las escotillas 🕳️ o sabotear una tarea. Q: apagar las luces 💡. Ganan si quedan tantos tripulantes como impostores.`
+          : `Haz tus tareas (la lista está a la izquierda) con E. Si encuentras a alguien desmayado, F para reportar. El botón rojo del comedor llama a una reunión. En la nave hay ${gente.length} y ${imps.length === 1 ? 'uno es el impostor' : imps.length + ' son impostores'}…`,
       [['¡A jugar!', () => {}]]);
   }
   function salirNave(o) {
@@ -4452,7 +4455,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
   function planBotNave(p) {
     const V = MG.state.nave, ia = p.ia, azar = Math.random();
     ia.trabajo = 0; ia.hacer = null;
-    if (p.id === V.impostor && p.vivo) {
+    if (esImpNave(p.id) && p.vivo) {
       if (azar < 0.3) { const e = ESCOTILLAS_NAVE[Math.floor(Math.random() * ESCOTILLAS_NAVE.length)]; ia.hacer = { tipo: 'escotilla', id: e.id }; caminoA(p, e); return; }
       const t = TAREAS_NAVE[Math.floor(Math.random() * TAREAS_NAVE.length)];
       ia.hacer = { tipo: azar < 0.55 && V.t - V.ultimoSabotaje > ACCION_NAVE.esperaSabotaje * 2 ? 'sabotear' : 'fingir', id: t.id }; caminoA(p, t); return;
@@ -4489,8 +4492,8 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
   // El bot impostor: si alguien está solo (sin testigos) y ya puede, lo persigue y lo ataca
   function cazarNave(p, dt) {
     const V = MG.state.nave;
-    if (!p.vivo || V.t < ACCION_NAVE.primerAtaque || V.t - V.ultimoAtaque < ACCION_NAVE.esperaAtaqueBot) return false;
-    const yo = posDe(p), trip = V.gente.filter(q => q.vivo && q.id !== V.impostor);
+    if (!p.vivo || V.t < ACCION_NAVE.primerAtaque || V.t - (p.ia.ultimoAtaque || 0) < ACCION_NAVE.esperaAtaqueBot) return false;
+    const yo = posDe(p), trip = V.gente.filter(q => q.vivo && !esImpNave(q.id));   // (los impostores no se atacan entre ellos)
     let mejor = null, dm = 12;
     for (const v of trip) { const d = Math.hypot(posDe(v).x - yo.x, posDe(v).z - yo.z); if (d < dm && !hayTestigos(yo, posDe(v), trip.filter(q => q !== v).map(posDe))) { dm = d; mejor = v; } }
     if (!mejor) return false;
@@ -4527,21 +4530,61 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
   addEventListener('keydown', e => { if (e.code === 'KeyQ' && !e.repeat && MG.state && MG.state.fase === 'nave' && soyImpostorNave() && yoEnNave().vivo && !naveAbierta()) apagarLucesNave(); });
   naveLucesBtn.addEventListener('click', () => { apagarLucesNave(); naveLucesBtn.blur(); });
 
-  // 👊 El ataque (dibujos animados: ¡PUM!, se cae y queda desmayado con estrellitas). La víctima es un fantasma
+  // 👊 ¡PUM! El golpe de dibujos animados: un "bum" grave que se oye en cualquier parlante (empieza en 240 Hz, no tan abajo
+  // que una compu no lo pueda sonar) + un chasquido de ruido. Más fuerte que la música (va directo al volumen de los efectos)
+  function sfxGolpeNave(fuerza = 1) {
+    if (!audio) return;
+    const { ctx, sfx } = audio; if (ctx.state !== 'running') ctx.resume();
+    const t0 = ctx.currentTime;
+    for (const [tipo, f0, f1, vol] of [['triangle', 240, 70, 0.9], ['square', 120, 45, 0.22]]) {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = tipo; o.frequency.setValueAtTime(f0, t0); o.frequency.exponentialRampToValueAtTime(f1, t0 + 0.2);
+      g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(vol * fuerza, t0 + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.3);
+      o.connect(g).connect(sfx); o.start(t0); o.stop(t0 + 0.32);
+    }
+    sfxRuido('bandpass', 1800, 0.55 * fuerza, 0.05, 1.3);   // el "clac" del golpe
+    sfxRuido('lowpass', 700, 0.7 * fuerza, 0.22, 0.7);      // el "pff" del humo
+  }
+  // 💨 Una nubecita de humo de dibujos animados (unas bolitas grises que se agrandan y desaparecen en 0,6 s)
+  let texHumo = null;
+  function humoNave(P) {
+    if (!texHumo) {
+      const cv = document.createElement('canvas'); cv.width = cv.height = 64; const g = cv.getContext('2d'), gr = g.createRadialGradient(32, 32, 4, 32, 32, 30);
+      gr.addColorStop(0, 'rgba(235,235,240,1)'); gr.addColorStop(0.6, 'rgba(190,195,205,.8)'); gr.addColorStop(1, 'rgba(160,165,175,0)');
+      g.fillStyle = gr; g.fillRect(0, 0, 64, 64); texHumo = new THREE.CanvasTexture(cv);
+    }
+    const V = MG.state.nave;
+    for (let k = 0; k < 6; k++) {
+      const a = (k / 6) * Math.PI * 2, sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: texHumo, transparent: true, depthWrite: false }));
+      sp.position.set(P.x + Math.cos(a) * 0.3, P.y + 0.5 + (k % 3) * 0.35, P.z + Math.sin(a) * 0.3); sp.scale.setScalar(0.5); scene.add(sp);
+      V.humos.push({ sp, t: 0, dx: Math.cos(a) * 1.2, dz: Math.sin(a) * 1.2 });
+    }
+  }
+  function updateHumoNave(dt) {
+    const V = MG.state.nave;
+    for (let i = V.humos.length - 1; i >= 0; i--) {
+      const h = V.humos[i]; h.t += dt;
+      if (h.t >= 0.6) { scene.remove(h.sp); h.sp.material.dispose(); V.humos.splice(i, 1); continue; }
+      h.sp.position.x += h.dx * dt; h.sp.position.z += h.dz * dt; h.sp.position.y += 0.8 * dt;
+      h.sp.scale.setScalar(0.5 + h.t * 2.2); h.sp.material.opacity = 1 - h.t / 0.6;
+    }
+  }
+  // 👊 El ataque (dibujos animados: ¡PUM!, una nubecita de humo y queda acostado en el piso con ojos de ✖️). La víctima es un fantasma
   function atacarNave(atacante, victima) {
     const V = MG.state.nave, P = posDe(victima).clone();
-    sfxPuno(); sfxNotas([['G4', 0.05, 0.1], ['D4', 0.15, 0.1], ['G3', 0.25, 0.25]], 'triangle', 0.08);
+    { const yoP = ps.pos, d = Math.hypot(P.x - yoP.x, P.z - yoP.z); if (atacante.yo || victima.yo || d < 18) sfxGolpeNave(atacante.yo || victima.yo ? 1 : Math.max(0.35, 1 - d / 18)); }   // (lo oyen el que pega, el que recibe y los que están cerca)
     const g = new THREE.Group(), color = victima.yo ? body.material.color.getHex() : victima.bot.def.color;
     const cu = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), new THREE.MeshLambertMaterial({ color })); cu.position.y = H / 2; g.add(cu);
     for (const ex of [-0.22, 0.22]) { const x = spriteEmoji('✖️', 0.3); x.position.set(ex, H * 0.78, D / 2 + 0.05); g.add(x); }
-    const est = spriteEmoji('💫', 0.9); est.position.set(0, H + 0.4, 0); g.add(est);
-    g.position.set(P.x, 0, P.z); g.rotation.y = victima.yo ? ps.facing : victima.bot.facing; scene.add(g);
-    V.cuerpos.push({ id: victima.id, nombre: victima.nombre, sala: salaDe(victima), g, cae: 0, pos: P, est });
-    victima.vivo = false; V.ultimoAtaque = V.t;
+    g.rotation.order = 'YXZ';   // (primero se cae hacia atrás y después mira para su lado: queda boca arriba)
+    g.position.set(P.x, P.y, P.z); g.rotation.y = victima.yo ? ps.facing : victima.bot.facing; scene.add(g);
+    V.cuerpos.push({ id: victima.id, nombre: victima.nombre, sala: salaDe(victima), g, cae: 0, pos: P, piso: P.y });
+    humoNave(P);
+    victima.vivo = false; if (atacante.yo) V.ultimoAtaque = V.t; else atacante.ia.ultimoAtaque = V.t;
     if (victima.yo) {
       body.material.transparent = true; body.material.opacity = 0.35;
       cerrarTareaNave();
-      avisoModo(`💥 ¡PUM! ${atacante.nombre} era el impostor. Ahora eres un fantasma 👻: nadie te ve, pero puedes terminar tus tareas`, true, 5000);
+      avisoModo(`💥 ¡PUM! ${atacante.nombre} es impostor. Ahora eres un fantasma 👻: nadie te ve, pero puedes terminar tus tareas`, true, 5000);
     } else {
       victima.bot.cuerpo.material.transparent = true; victima.bot.cuerpo.material.opacity = 0.35;
       victima.ia.trabajo = 0; planBotNave(victima);
@@ -4551,9 +4594,9 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
 
   // ----- ¿Qué hace la E aquí? -----
   function calcularAccionNave() {
-    const V = MG.state.nave, yo = V.gente[0], R = rel(ps.pos), imp = V.impostor === 'yo';
+    const V = MG.state.nave, yo = V.gente[0], R = rel(ps.pos), imp = esImpNave('yo');
     let victima = null, dv = ACCION_NAVE.ataque;
-    if (imp && yo.vivo) for (const p of V.gente) if (!p.yo && p.vivo) { const d = Math.hypot(p.bot.pos.x - ps.pos.x, p.bot.pos.z - ps.pos.z); if (d <= dv) { dv = d; victima = p; } }
+    if (imp && yo.vivo) for (const p of V.gente) if (!p.yo && p.vivo && !esImpNave(p.id)) { const d = Math.hypot(p.bot.pos.x - ps.pos.x, p.bot.pos.z - ps.pos.z); if (d <= dv) { dv = d; victima = p; } }
     const escotilla = imp && yo.vivo ? ESCOTILLAS_NAVE.find(e => cercaDe(e, R, ACCION_NAVE.escotilla)) : null;
     const boton = yo.vivo && cercaDe(BOTON_REUNION, R, BOTON_REUNION.cerca) && puedeBotonReunion(V.botonUsos.yo || 0, V.t - V.ultimaReunion);
     const T = tareaNave('caja'), tengoCaja = !imp && V.rep.yo && V.rep.yo.caja === false;
@@ -4604,7 +4647,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
   }
   const pct = v => (v * 100).toFixed(1) + '%';
   function abrirTareaNave(id) {
-    const V = MG.state.nave, t = tareaNave(id), imp = V.impostor === 'yo';
+    const V = MG.state.nave, t = tareaNave(id), imp = esImpNave('yo');
     soltarMouse(); cerrarTareaNave(); V.tarea = id;
     document.getElementById('naveTareaTit').textContent = `${t.icono} ${t.nombre}`;
     const ayuda = document.getElementById('naveTareaAyuda'), sab = document.getElementById('naveSabotear');
@@ -4727,7 +4770,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
   }
   function pintarChatNave() {
     const V = MG.state.nave, R = V.reunion, yo = V.gente[0];
-    naveChat.replaceChildren(...R.chat.filter(m => chatVisible(m, { soyFantasma: !yo.vivo, soyImpostor: V.impostor === 'yo' })).map(m => {
+    naveChat.replaceChildren(...R.chat.filter(m => chatVisible(m, { soyFantasma: !yo.vivo, soyImpostor: esImpNave('yo') })).map(m => {
       const l = elN('p', m.sistema ? 'sistema' : m.deFantasma ? 'fantasma' : ''); if (!m.sistema) l.append(elN('b', '', (m.deFantasma ? '👻 ' : '') + m.quien + ': ')); l.append(document.createTextNode(m.texto)); return l;   // (siempre como texto: nunca se arma HTML con lo que escribe alguien)
     }));
     naveChat.scrollTop = naveChat.scrollHeight;
@@ -4751,14 +4794,16 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     naveReunionEl.hidden = false;
     pintarChatNave();
     // lo que dicen los bots (cada uno, lo que "vio")
-    const vivosBots = vivos.filter(p => p.bot);
+    const vivosBots = vivos.filter(p => p.bot), elegir = l => l[Math.floor(Math.random() * l.length)];
     for (const p of vivosBots) {
-      const otros = vivos.filter(q => q !== p), sosp = p.id !== V.impostor && Math.random() < 0.4 && V.gente.find(q => q.id === V.impostor).vivo ? V.gente.find(q => q.id === V.impostor) : otros[Math.floor(Math.random() * otros.length)];
+      const yoImp = esImpNave(p.id), otros = vivos.filter(q => q !== p && !(yoImp && esImpNave(q.id))), impVivos = vivos.filter(q => q !== p && esImpNave(q.id));
+      const sosp = !yoImp && impVivos.length && Math.random() < 0.15 ? elegir(impVivos) : elegir(otros);   // (a veces adivinan, pocas veces: con 15 si no, siempre pillan al impostor; un impostor nunca acusa a su compañero)
       p.ia.sospecha = sosp ? sosp.id : null;
       const tipo = Math.random() < 0.6 ? 'acusa' : 'defiende', fr = FRASES_BOT[tipo][Math.floor(Math.random() * FRASES_BOT[tipo].length)];
       const txt = fr.replaceAll('{x}', sosp ? sosp.nombre : 'alguien').replaceAll('{s}', SALAS_NAVE[Math.floor(Math.random() * SALAS_NAVE.length)].nombre);
       V.reunion.hablar.push({ en: 1 + Math.random() * 6, p, txt });
     }
+    V.reunion.hablar = V.reunion.hablar.sort(() => Math.random() - 0.5).slice(0, 6);
     clearInterval(V.reunionTimer); V.reunionTimer = setInterval(tickReunion, 200);
   }
   function tickReunion() {
@@ -4769,12 +4814,12 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     if (R.fase === 'votar') {
       const falta = Math.max(0, Math.ceil((R.finVoto - ahoraMs()) / 1000));
       document.getElementById('naveReunionTiempo').textContent = `🗳️ ¡A votar! Quedan ${falta} s`;
-      for (const p of V.gente) if (p.bot && p.vivo && !(p.id in R.votos) && ahoraMs() >= R.votoBot[p.id]) votarNave(p, p.id === V.impostor ? azarVivo(V, p, true) : (V.gente.find(q => q.id === p.ia.sospecha && q.vivo) || azarVivo(V, p)));
+      for (const p of V.gente) if (p.bot && p.vivo && !(p.id in R.votos) && ahoraMs() >= R.votoBot[p.id]) votarNave(p, esImpNave(p.id) ? azarVivo(V, p, true) : (V.gente.find(q => q.id === p.ia.sospecha && q.vivo) || azarVivo(V, p)));
       const vivos = V.gente.filter(p => p.vivo);
       if (ahoraMs() >= R.finVoto || vivos.every(p => p.id in R.votos)) terminarVotacion();
     }
   }
-  const azarVivo = (V, p, tripulante = false) => { const l = V.gente.filter(q => q.vivo && q !== p && (!tripulante || q.id !== V.impostor)); return l[Math.floor(Math.random() * l.length)] || null; };
+  const azarVivo = (V, p, tripulante = false) => { const l = V.gente.filter(q => q.vivo && q !== p && (!tripulante || !esImpNave(q.id))); return l[Math.floor(Math.random() * l.length)] || null; };
   function empezarVotacion(quien) {
     const V = MG.state.nave, R = V.reunion; if (!R || R.fase !== 'chat') return;
     R.fase = 'votar'; R.finVoto = ahoraMs() + VOTACION.segundos * 1000; R.votoBot = {};
@@ -4800,8 +4845,8 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     const V = MG.state.nave, R = V.reunion; R.fase = 'resultado';
     const r = contarVotos(R.votos), exp = r.expulsado && V.gente.find(p => p.id === r.expulsado);
     const cuantos = V.gente.filter(p => p.vivo).map(p => `${p.nombre}: ${r.cuenta[p.id] || 0}`).join(' · ');
-    let txt = r.empate ? '🤝 ¡Empate! Nadie fue expulsado.' : !exp ? 'Nadie votó: nadie fue expulsado.' : mensajeExpulsion(exp.nombre === 'Tú' ? 'Tú' : exp.nombre, exp.id === V.impostor);
-    if (exp && exp.yo) txt = exp.id === V.impostor ? 'Tú eras el impostor :D ¡te descubrieron!' : 'Tú no eras impostor :v';
+    let txt = r.empate ? '🤝 ¡Empate! Nadie fue expulsado.' : !exp ? 'Nadie votó: nadie fue expulsado.' : mensajeExpulsion(exp.nombre === 'Tú' ? 'Tú' : exp.nombre, esImpNave(exp.id));
+    if (exp && exp.yo) txt = esImpNave(exp.id) ? 'Tú eras el impostor :D ¡te descubrieron!' : 'Tú no eras impostor :v';
     if (exp) { exp.vivo = false; exp.expulsado = true; if (exp.bot) { exp.bot.cuerpo.material.transparent = true; exp.bot.cuerpo.material.opacity = 0.35; } else { body.material.transparent = true; body.material.opacity = 0.35; } }
     R.chat.push({ sistema: true, texto: `Votos → ${cuantos}` }, { sistema: true, texto: txt }); pintarChatNave();
     document.getElementById('naveReunionTiempo').textContent = txt;
@@ -4810,8 +4855,8 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
   }
   function cerrarReunion() {
     const V = MG.state.nave; clearInterval(V.reunionTimer); naveReunionEl.hidden = true;
-    V.reunion = null; V.ultimaReunion = V.t; V.ultimoAtaque = Math.max(V.ultimoAtaque, V.t - ACCION_NAVE.esperaAtaqueBot + 10);   // (el impostor espera un poquito antes de volver a atacar)
-    for (const p of V.gente) if (p.bot) planBotNave(p);
+    V.reunion = null; V.ultimaReunion = V.t; V.ultimoAtaque = Math.max(V.ultimoAtaque, V.t - ACCION_NAVE.esperaAtaque + 10);   // (los impostores esperan un poquito antes de volver a atacar)
+    for (const p of V.gente) if (p.bot) { p.ia.ultimoAtaque = Math.max(p.ia.ultimoAtaque || 0, V.t - ACCION_NAVE.esperaAtaqueBot + 10); planBotNave(p); }
   }
   function enviarChatNave() {
     const V = MG.state.nave, R = V && V.reunion; if (!R || R.fase === 'resultado') return;
@@ -4827,11 +4872,10 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
   function terminarRondaNave(quien) {
     const V = MG.state.nave; if (V.fin) return; V.fin = quien;
     cerrarTareaNave(); luzNave(false);
-    const imp = V.gente.find(p => p.id === V.impostor);
-    const yoImp = V.impostor === 'yo', gane = (quien === 'impostor') === yoImp;
+    const yoImp = esImpNave('yo'), gane = (quien === 'impostor') === yoImp, nombres = V.imps.map(i => (i === 'yo' ? 'TÚ' : V.gente.find(p => p.id === i).nombre));
     if (gane) sfxNotas([['C5', 0, 0.12], ['E5', 0.12, 0.12], ['G5', 0.24, 0.12], ['C6', 0.36, 0.3]], 'square', 0.07);
-    modalNave(quien === 'impostor' ? '😈 ¡Ganó el impostor!' : '🏆 ¡Ganó la tripulación!',
-      `${gane ? '¡Ganaste! ' : 'Perdiste… '}El impostor era ${yoImp ? 'TÚ' : imp.nombre}.`,
+    modalNave(quien === 'impostor' ? (V.imps.length > 1 ? '😈 ¡Ganaron los impostores!' : '😈 ¡Ganó el impostor!') : '🏆 ¡Ganó la tripulación!',
+      `${gane ? '¡Ganaste! ' : 'Perdiste… '}${V.imps.length > 1 ? `Los impostores eran ${nombres.join(' y ')}` : `El impostor era ${nombres[0]}`}.`,
       [['🔁 Otra ronda', () => empezarRondaNave()], ['↩ Volver al salón', () => salirNave(V.o)]]);
   }
   function updateNave(dt, o) {
@@ -4841,24 +4885,25 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     if (!pausa) V.t += dt;
     // la escotilla de salida
     if (!pausa && Math.hypot(ps.pos.x - c.x - SALIDA_NAVE.x, ps.pos.z - c.z - SALIDA_NAVE.z) < SALIDA_NAVE.radio && ps.pos.y < 1) { salirNave(o); avisoModo('↩ Volviste al salón', false, 1500); return; }
-    const imp = V.impostor === 'yo';
+    const imp = esImpNave('yo');
     // los bots
     if (!pausa) for (const p of V.gente) {
       if (!p.bot) continue;
-      if (p.id === V.impostor && p.vivo) {
+      if (esImpNave(p.id) && p.vivo) {
         if (cazarNave(p, dt)) continue;
         if (V.t >= V.impBot.proxApagon && apagarLucesNave()) V.impBot.proxApagon = V.t + APAGON.espera + 10 + Math.random() * 30;
       }
       updateBotNave(p, dt);
       // un tripulante vivo que ve un cuerpo, lo reporta
-      if (p.vivo && p.id !== V.impostor && V.t > 2) { const cu = V.cuerpos.find(k => k.cae >= 1 && Math.hypot(k.pos.x - p.bot.pos.x, k.pos.z - p.bot.pos.z) < 3.2); if (cu) { abrirReunion(p, cu); break; } }
+      if (p.vivo && !esImpNave(p.id) && V.t > 2) { const cu = V.cuerpos.find(k => k.cae >= 1 && Math.hypot(k.pos.x - p.bot.pos.x, k.pos.z - p.bot.pos.z) < 3.2); if (cu) { abrirReunion(p, cu); break; } }
     }
     // 👻 los fantasmas solo los ve el impostor (y tú te ves a ti mismo, transparente)
     const veo = veFantasmas(imp);
     for (const p of V.gente) if (p.bot) p.bot.obj.visible = p.vivo || veo;
     // los desmayados se caen (una vez)
-    for (const cu of V.cuerpos) if (cu.cae < 1) { cu.cae = Math.min(1, cu.cae + dt * 3); cu.g.rotation.x = -Math.PI / 2 * cu.cae * cu.cae; }
-    for (const cu of V.cuerpos) cu.est.material.rotation += dt * 2;
+    // (acostado: gira 90° y sube media espalda, así queda apoyado ARRIBA del piso, sin atravesarlo)
+    for (const cu of V.cuerpos) if (cu.cae < 1) { cu.cae = Math.min(1, cu.cae + dt * 3); const k = cu.cae * cu.cae; cu.g.rotation.x = -Math.PI / 2 * k; cu.g.position.y = cu.piso + (D / 2) * Math.sin(Math.PI / 2 * k); }
+    updateHumoNave(dt);
     // la caja
     const T = tareaNave('caja'), CM = V.N.cajaMesh;
     if (V.caja === 'yo') CM.position.set(ps.pos.x, ps.pos.y + H + 0.5, ps.pos.z);
@@ -4874,14 +4919,14 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     V.accion = pausa || naveAbierta() ? null : calcularAccionNave();
     // ¿ganó alguien?
     if (!V.fin && !pausa) {
-      const { hechas, total } = progresoNave(V.rep), impVivo = V.gente.find(p => p.id === V.impostor).vivo;
-      const r = resultadoNave({ hechas, total, tripulantesVivos: V.gente.filter(p => p.vivo && p.id !== V.impostor).length, impostoresVivos: impVivo ? 1 : 0 });
+      const { hechas, total } = progresoNave(V.rep);
+      const r = resultadoNave({ hechas, total, tripulantesVivos: V.gente.filter(p => p.vivo && !esImpNave(p.id)).length, impostoresVivos: V.gente.filter(p => p.vivo && esImpNave(p.id)).length });
       if (r) terminarRondaNave(r);
     }
     pintarHudNave(oscuro);
   }
   function pintarHudNave(oscuro) {
-    const V = MG.state.nave, yo = V.gente[0], imp = V.impostor === 'yo', R = rel(ps.pos), si = salaNaveEn(R.x, R.z), sala = si >= 0 ? SALAS_NAVE[si].nombre : 'afuera';
+    const V = MG.state.nave, yo = V.gente[0], imp = esImpNave('yo'), R = rel(ps.pos), si = salaNaveEn(R.x, R.z), sala = si >= 0 ? SALAS_NAVE[si].nombre : 'afuera';
     const espera = Math.max(0, Math.ceil(Math.max(ACCION_NAVE.primerAtaque - V.t, ACCION_NAVE.esperaAtaque - (V.t - V.ultimoAtaque))));
     const rol = !yo.vivo ? '👻 Fantasma' : imp ? `😈 Impostor · 👊 ${espera ? espera + ' s' : '¡listo!'}` : '🧑‍🚀 Tripulante';
     const luces = oscuro ? ` · ⚠️ ¡Sabotearon las luces! ${Math.ceil(V.apagon.hasta - V.t)} s` : '';
@@ -4905,7 +4950,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     if (!A) return R ? R.slice(3) : '';
     const t = A.tipo === 'atacar' ? `Pulsa <kbd>E</kbd> para atacar a <b>${escaparHTML(A.victima.nombre)}</b> 👊` : A.tipo === 'escotilla' ? 'Pulsa <kbd>E</kbd> para meterte por la escotilla 🕳️'
       : A.tipo === 'boton' ? 'Pulsa <kbd>E</kbd> para llamar a una <b>reunión de emergencia</b> 🚨' : A.tipo === 'caja' ? (A.caja === 'recoger' ? 'Pulsa <kbd>E</kbd> para agarrar la <b>caja</b> 📦' : 'Pulsa <kbd>E</kbd> para dejar la <b>caja</b> aquí 📦')
-      : V.impostor === 'yo' ? `Pulsa <kbd>E</kbd> para sabotear <b>${escaparHTML(A.tarea.nombre)}</b> 💥` : `Pulsa <kbd>E</kbd>: <b>${escaparHTML(A.tarea.nombre)}</b> ${A.tarea.icono}`;
+      : esImpNave('yo') ? `Pulsa <kbd>E</kbd> para sabotear <b>${escaparHTML(A.tarea.nombre)}</b> 💥` : `Pulsa <kbd>E</kbd>: <b>${escaparHTML(A.tarea.nombre)}</b> ${A.tarea.icono}`;
     return t + R;
   }
   const etiquetaENave = () => { const A = MG.state.nave && MG.state.nave.accion; return !A ? '✋' : A.tipo === 'atacar' ? '👊 Atacar' : A.tipo === 'escotilla' ? '🕳️ Escotilla' : A.tipo === 'boton' ? '🚨 Reunión' : A.tipo === 'caja' ? '📦 Caja' : soyImpostorNave() ? '💥 Sabotear' : '🔧 Tarea'; };
@@ -5609,12 +5654,12 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     s.scale.set(3, 0.6, 1); s.position.y = H + 0.6; s.userData.canvas = c;
     return s;
   }
-  function pintarEtiquetaSB(s, texto) {
+  function pintarEtiquetaSB(s, texto, color = '#ffe14d') {
     const c = s.userData.canvas, g = c.getContext('2d'); g.clearRect(0, 0, c.width, c.height);
     g.fillStyle = 'rgba(20,10,50,.7)'; g.fillRect(0, 8, c.width, 48);
     let tam = 34; g.font = `900 ${tam}px system-ui, sans-serif`;
     while (g.measureText(texto).width > c.width - 16 && tam > 14) { tam -= 2; g.font = `900 ${tam}px system-ui, sans-serif`; }   // los nombres largos, más chiquitos
-    g.fillStyle = '#ffe14d'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(texto, c.width / 2, 33);
+    g.fillStyle = color; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(texto, c.width / 2, 33);
     s.material.map.needsUpdate = true;
   }
   // The Guy: el rectángulo de siempre con ojos, lila, con su nombre arriba
