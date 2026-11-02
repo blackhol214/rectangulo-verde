@@ -10,8 +10,9 @@
 //    (lo que compra cada uno y sus monedas son solo suyos)
 import { Database } from 'bun:sqlite';
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
-import { PUERTO, MAX_JUGADORES, NUM_MONEDAS, leerMensaje, lugarMoneda, faseAhora, corto, salaDeHost, linkOficial, leerPreguntas, claveCorrecta, ESC, elegirBuscador, elegirTerreno, faseRonda, puedeEncontrar, ganadorRonda, mgDelServidor, AN, nuevaRondaAN, pasarAN, explotarAN, salirAN, seTocan, sigueEnRondaAN, empujeAN, vigilarPos, VIGILA, MG_CARRERA, MG_SPLEEF } from './src/red.js';
-import { zonaAN, zonaEsc, zonaCarrera, CARRERA, checkpointDe, enMetaCarrera, origenCarrera, golpeValidoCarrera, siguienteCheckpoint, SPLEEF, zonaSpleef, origenSpleef, pisoSpleef, fueraSpleef, pisadaValida } from './src/logic.js';
+import { PUERTO, MAX_JUGADORES, NUM_MONEDAS, leerMensaje, lugarMoneda, faseAhora, corto, salaDeHost, linkOficial, leerPreguntas, claveCorrecta, ESC, elegirBuscador, elegirTerreno, faseRonda, puedeEncontrar, ganadorRonda, mgDelServidor, AN, nuevaRondaAN, pasarAN, explotarAN, salirAN, seTocan, sigueEnRondaAN, empujeAN, vigilarPos, VIGILA, MG_CARRERA, MG_SPLEEF, MG_NAVE } from './src/red.js';
+import { zonaAN, zonaEsc, zonaCarrera, CARRERA, checkpointDe, enMetaCarrera, origenCarrera, golpeValidoCarrera, siguienteCheckpoint, SPLEEF, zonaSpleef, origenSpleef, pisoSpleef, fueraSpleef, pisadaValida, zonaNave, centroNave } from './src/logic.js';
+import { nuevaRondaNave, mensajesInicio, tickNave, accionNave, salirNave as salirRondaNave, destinatarios, quienesVen, persona, NAVE_RED } from './src/nave.js';
 
 // ---------- Base de datos ----------
 mkdirSync(new URL('./datos', import.meta.url), { recursive: true });
@@ -198,16 +199,60 @@ function sacarDeSpleef(id, nombre) {
   if (r && r.jugadores.includes(id) && !r.salieron.includes(id)) { eliminarSP(id, nombre, true); if (sp.ronda === r) r.salieron.push(id); }
   if (estaba) avisarEsperaSP();
 }
+// ---------- 🚀 Nave entre sospechas con amigos ----------
+// El árbitro (src/nave.js) decide todo: quiénes son impostores (se lo dice SOLO a cada uno), los ataques, las tareas, las reuniones,
+// el chat y los votos. Los bots viven aquí, en el servidor (así no dependen de la compu de nadie y nadie los puede manejar).
+const nv = { espera: new Set(), ronda: null };
+const hid = id => 'h' + id, jugadorDe = h => conectados.get(Number(String(h).slice(1)));
+const avisoNV = (ws, texto) => ws.send(JSON.stringify({ tipo: 'nvAvisoEspera', texto }));
+const enRondaNV = id => { const p = nv.ronda && persona(nv.ronda, hid(id)); return !!p && !p.salio; };
+function avisarEsperaNV() {
+  aTodos({ tipo: 'nvEspera', jugadores: [...nv.espera].filter(id => conectados.has(id)).map(id => ({ id, nombre: conectados.get(id).nombre })), enRonda: !!nv.ronda });
+}
+// Las posiciones de los jugadores de la ronda (las que aceptó el servidor), en metros desde el centro de la nave
+function posNV() {
+  const C = centroNave(), out = {};
+  for (const p of nv.ronda.gente) if (p.humano && !p.salio) { const j = jugadorDe(p.id); if (j) out[p.id] = { x: j.x - C.x, z: j.z - C.z }; }
+  return out;
+}
+// Mandar lo que dijo el árbitro: a cada uno, solo lo que le toca
+function mandarNV(lista) {
+  const R = nv.ronda; if (!R) return;
+  for (const { a, m } of lista) { const txt = JSON.stringify(m); for (const h of destinatarios(R, a)) { const j = jugadorDe(h); if (j) j.ws.send(txt); } }
+}
+// Moverlos (reunión o escotilla): el servidor los pone ahí (y vigilarPos sigue desde ahí)
+function moverNV(teleports) {
+  const C = centroNave(), ahora = Date.now();
+  for (const t of teleports || []) {
+    const j = jugadorDe(t.id); if (!j) continue;
+    j.x = C.x + t.x; j.z = C.z + t.z; j.y = 0;
+    j.vigilado = { x: j.x, y: 0, z: j.z, t: ahora, llego: true, saldo: VIGILA.maxSaldo, saldoY: VIGILA.maxSaldoY };
+  }
+}
+function despuesNV(r) {
+  mandarNV(r.msgs); moverNV(r.teleports);
+  const R = nv.ronda;
+  if (R && (R.gana || R.gente.every(p => !p.humano || p.salio))) {
+    console.log(`🚀 Fin de la nave: ${R.gana === 'impostor' ? 'ganaron los impostores' : R.gana ? 'ganó la tripulación' : 'se fueron todos'}`);
+    nv.ronda = null; avisarEsperaNV();
+  }
+}
+function sacarDeNave(id) {
+  const estaba = nv.espera.delete(id);
+  if (enRondaNV(id)) despuesNV({ msgs: salirRondaNave(nv.ronda, hid(id)), teleports: [] });   // (se fue: si era impostor, sale de la ronda)
+  if (estaba) avisarEsperaNV();
+}
 // Un jugador está en UNA sola espera y UNA sola ronda a la vez: al sentarse en una silla, se levanta de las otras
 const enRondaEsc = id => !!(esc.ronda && esc.ronda.jugadores.includes(id) && esc.espera.has(id) && !(esc.ronda.salieron || []).includes(id));
 function enOtraRonda(id, modo) {
-  return (modo !== 'esc' && enRondaEsc(id)) || (modo !== 'an' && enRondaAN(id)) || (modo !== 'cr' && enRondaCR(id)) || (modo !== 'sp' && enRondaSP(id));
+  return (modo !== 'esc' && enRondaEsc(id)) || (modo !== 'an' && enRondaAN(id)) || (modo !== 'cr' && enRondaCR(id)) || (modo !== 'sp' && enRondaSP(id)) || (modo !== 'nv' && enRondaNV(id));
 }
 function salirDeOtrasEsperas(yo, modo) {
   if (modo !== 'esc' && esc.espera.has(yo.id)) sacarDeEscondidas(yo.id);
   if (modo !== 'an' && an.espera.has(yo.id)) sacarDeAtrapadas(yo.id, yo.nombre);
   if (modo !== 'cr' && cr.espera.has(yo.id)) sacarDeCarrera(yo.id);
   if (modo !== 'sp' && sp.espera.has(yo.id)) sacarDeSpleef(yo.id, yo.nombre);
+  if (modo !== 'nv' && nv.espera.has(yo.id)) sacarDeNave(yo.id);
 }
 // 🛡️ La zona que vigila el servidor para este jugador (o null si no está jugando una ronda)
 function zonaDe(id) {
@@ -219,6 +264,7 @@ function zonaDe(id) {
   if (enRondaCR(id)) { const r = cr.ronda, j = conectados.get(id); return { ...zonaCarrera(r.jugadores.indexOf(id), r.jugadores.length, j.cpCarrera || 0, j, r.semilla), llegarHasta: r.inicio + VIGILA.llegarMs, quietoHasta: r.inicio + 3000 - 300 }; }   // (quietoHasta: el 3, 2, 1, con un poquito de margen por internet)
   // llegarHasta: si a los 3 s no llegó a su lugar (se quedó afuera), el servidor lo pone ahí igual
   if (enRondaAN(id)) return { ...zonaAN(an.ronda.jugadores.indexOf(id), an.ronda.jugadores.length), llegarHasta: an.ronda.inicio + VIGILA.llegarMs };
+  if (enRondaNV(id)) { const H = nv.ronda.gente.filter(p => p.humano); return { ...zonaNave(H.findIndex(p => p.id === hid(id)), H.length), llegarHasta: nv.ronda.inicio + VIGILA.llegarMs }; }   // 🚀 (sin atravesar paredes ni volar)
   const r = esc.ronda;
   if (r && r.jugadores.includes(id) && esc.espera.has(id) && !(r.salieron || []).includes(id)) return { ...zonaEsc(r.terreno, (Date.now() - r.inicio) / 1000, conectados.get(id)), llegarHasta: r.inicio + VIGILA.llegarMs };
   return null;
@@ -276,7 +322,7 @@ const servidor = Bun.serve({
         ws.send(JSON.stringify({ tipo: 'bienvenida', id: j.id, jugadores: [...conectados.values()].map(sinWs),
           guardado: antes ? { x: antes.x, y: antes.y, z: antes.z, veces: antes.veces + 1 } : null,
           anfitrion, fase: faseDeAhora(), dia: diaPueblo, monedas, preguntas: preguntasClase,
-          escondidas: { espera: [...esc.espera], enRonda: !!esc.ronda }, atrapadas: { espera: [...an.espera], enRonda: !!an.ronda }, carrera: { espera: [...cr.espera], enRonda: !!cr.ronda }, spleef: { espera: [...sp.espera], enRonda: !!sp.ronda } }));
+          escondidas: { espera: [...esc.espera], enRonda: !!esc.ronda }, atrapadas: { espera: [...an.espera], enRonda: !!an.ronda }, carrera: { espera: [...cr.espera], enRonda: !!cr.ronda }, spleef: { espera: [...sp.espera], enRonda: !!sp.ronda }, nave: { espera: [...nv.espera], enRonda: !!nv.ronda } }));
         conectados.set(j.id, j);
         guardar(j);
         ws.subscribe('juego');
@@ -290,7 +336,7 @@ const servidor = Bun.serve({
       if (m.tipo === 'pos') {
         // El mg lo pone el servidor si estás jugando una ronda (y nadie de afuera puede decir que está adentro)
         const r = esc.ronda, enRonda = enRondaEsc(yo.id);
-        yo.mg = mgDelServidor(m.mg, enRonda ? r.terreno : null, enRondaAN(yo.id), enRondaCR(yo.id) ? MG_CARRERA : enRondaSP(yo.id) ? MG_SPLEEF : null);
+        yo.mg = mgDelServidor(m.mg, enRonda ? r.terreno : null, enRondaAN(yo.id), enRondaCR(yo.id) ? MG_CARRERA : enRondaSP(yo.id) ? MG_SPLEEF : enRondaNV(yo.id) ? MG_NAVE : null);
         // 🛡️ En una ronda, el servidor revisa que no vaya más rápido de lo posible ni se salga de la zona
         const zona = zonaDe(yo.id), ahora = Date.now();
         if (zona) {
@@ -315,7 +361,9 @@ const servidor = Bun.serve({
         } else { yo.vigilado = null; yo.x = m.x; yo.y = m.y; yo.z = m.z; }
         yo.rot = m.rot;
         if (m.color !== null) yo.color = m.color;
-        ws.publish('juego', JSON.stringify({ tipo: 'pos', id: yo.id, x: yo.x, y: yo.y, z: yo.z, rot: m.rot, color: yo.color, mg: yo.mg, t: m.t }));   // t: su hora, para dibujarlo suave
+        const txtPos = JSON.stringify({ tipo: 'pos', id: yo.id, x: yo.x, y: yo.y, z: yo.z, rot: m.rot, color: yo.color, mg: yo.mg, t: m.t });   // t: su hora, para dibujarlo suave
+        const ven = enRondaNV(yo.id) ? quienesVen(nv.ronda, hid(yo.id)) : null;   // 👻 (un fantasma de la nave: solo lo ven los impostores)
+        if (ven) { for (const h of ven) { const j = jugadorDe(h); if (j) j.ws.send(txtPos); } } else ws.publish('juego', txtPos);
       } else if (m.tipo === 'visible') {
         // Una pestaña escondida no corre el juego: si era el anfitrión, otro toma el control ya mismo (sin esperar 3 segundos)
         yo.visible = m.v;
@@ -398,6 +446,20 @@ const servidor = Bun.serve({
           if (!g) return;
           yo.extra = CARRERA.empuje.extraM; yo.extraHasta = Date.now() + CARRERA.empuje.extraMs; yo.empujeDir = { x: g.x, z: g.z };
         }
+      } else if (m.tipo === 'nv') {
+        if (m.que === 'entrar') { if (enOtraRonda(yo.id, 'nv')) return avisoNV(ws, 'Estás jugando otra ronda: termínala primero'); salirDeOtrasEsperas(yo, 'nv'); if (!nv.espera.has(yo.id)) { nv.espera.add(yo.id); avisarEsperaNV(); } }
+        else if (m.que === 'salir') sacarDeNave(yo.id);
+        else if (m.que === 'empezar') {
+          if (nv.ronda) return avisoNV(ws, 'Ya hay una ronda en la nave: espera a que termine');
+          if (!nv.espera.has(yo.id)) return avisoNV(ws, 'Siéntate primero en la silla de la nave');
+          const ids = [...nv.espera].filter(id => conectados.has(id)).slice(0, NAVE_RED.maxHumanos);
+          if (ids.length < 2) return avisoNV(ws, 'Hacen falta al menos 2 jugadores');
+          nv.ronda = nuevaRondaNave(ids.map(id => ({ id: hid(id), nombre: conectados.get(id).nombre })), Date.now());
+          olvidarPos(ids);
+          mandarNV(mensajesInicio(nv.ronda));   // (a cada uno, SU rol)
+          console.log(`🚀 Empieza la nave (${ids.length} jugadores + ${nv.ronda.gente.length - ids.length} bots)`);
+          avisarEsperaNV();
+        } else if (enRondaNV(yo.id)) despuesNV(accionNave(nv.ronda, hid(yo.id), m, Date.now(), posNV()));
       } else if (m.tipo === 'sp') {
         const r = sp.ronda;
         if (m.que === 'entrar') { if (enOtraRonda(yo.id, 'sp')) return avisoSP(ws, 'Estás jugando otra ronda: termínala primero'); salirDeOtrasEsperas(yo, 'sp'); if (!sp.espera.has(yo.id)) { sp.espera.add(yo.id); avisarEsperaSP(); } }
@@ -470,6 +532,7 @@ const servidor = Bun.serve({
       sacarDeAtrapadas(yo.id, yo.nombre);
       sacarDeCarrera(yo.id);
       sacarDeSpleef(yo.id, yo.nombre);
+      sacarDeNave(yo.id);
       console.log(`💥 ${yo.nombre} se desconectó (${conectados.size} jugando)`);
     },
   },
@@ -500,6 +563,7 @@ setInterval(() => {
 setInterval(revisarFinRonda, 250);
 setInterval(revisarAN, 100);   // ¿explotó alguien?
 setInterval(revisarCR, 500);   // ¿se terminó la carrera?
+setInterval(() => { if (nv.ronda) despuesNV(tickNave(nv.ronda, 0.1, Date.now(), posNV())); }, 100);   // 🚀 la nave: los bots, las reuniones y quién gana
 setInterval(() => { if (sp.ronda && sp.nuevas.length) aTodos({ tipo: 'spPisa', h: sp.nuevas.splice(0, 300) }); else sp.nuevas.length = 0; revisarSP(); }, 100);   // 🔶 los hexágonos pisados, a todos
 
 // Cada 10 segundos guarda a todos (por si la compu se apaga de golpe) y corrige la hora de todos

@@ -169,7 +169,7 @@
   .nave-grande { position:absolute; inset:0; display:grid; place-items:center; font-size:96px; }
   .nave-cartel { position:absolute; left:4%; top:8%; width:28%; padding:8px; border-radius:10px; background:#fef3c7; color:#7c2d12; display:flex; flex-direction:column; align-items:center; gap:6px; font:800 14px system-ui, sans-serif; text-align:center; }
   .nave-roca { position:absolute; left:38%; top:8%; width:58%; height:84%; border-radius:46% 54% 50% 50% / 55% 45% 55% 45%; background:radial-gradient(circle at 35% 30%, #a8a29e, #57534e); box-shadow:0 0 0 6px #0ea5e9, 0 0 0 12px #0f172a; }
-  .nave-blob { display:block; width:26px; height:26px; border-radius:50% 45% 55% 50%; background:radial-gradient(circle at 35% 35%, #93c5fd, #1d4ed8); box-shadow:0 0 6px #60a5fa; }
+  .nave-blob { display:block; width:40px; height:40px; border-radius:50% 45% 55% 50%; background:radial-gradient(circle at 35% 35%, #93c5fd, #1d4ed8); box-shadow:0 0 6px #60a5fa; }
   .nave-blob.virus { position:absolute; transform:translate(-50%, -50%); cursor:pointer; animation:naveLatir .8s ease-in-out infinite alternate; }
   @keyframes naveLatir { to { transform:translate(-50%, -50%) scale(1.15); } }
   .nave-muestra { border:0; border-radius:50%; aspect-ratio:1; background:radial-gradient(circle, #f8fafc 55%, #cbd5e1 56%); font:800 14px system-ui, sans-serif; color:#334155; cursor:pointer; touch-action:manipulation; }
@@ -549,11 +549,11 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module">
-import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, ESCUELA, ESCUELA_K, SANDBOX_K, enElHoyo, zonaRara, ZONA_RARA, HOYO, escuelaSiguiente, escuelaMezclar, SALON, salonSillas, sillaCercana, faseDeLuz, ARENA_AN, ARENA_AN_X, TERRENO_X, salidaAN, centroArenaAN, plataformasAN, desplazamientoAN, portalesAN, portalCerca, TERRENOS, CARROS, CARRO, carroPos, partesCarro, TORTUGAS, TORTUGA, tortugaPos, partesTortuga, arrastreDe, girarAlrededor, CARRERA, PISTA_CARRERA, posPlatCarrera, punoEn, golpePuno, golpeBarra, salidaCarrera, enMetaCarrera, seCayoCarrera, puestosCarrera, origenCarrera, SILLA_CARRERA, CARRERA_X, puertasReales, lugaresPuertas, vientoTubo, golpeObstaculoCarrera, puedeRecibirGolpe, GOLPE_PAUSA_MS, NAVE_X, NAVE, SALAS_NAVE, SALIDA_NAVE, INICIO_NAVE, salaNaveEn, puertasNave, paredesNave, rutaNave, SILLA_NAVE, PROPS_NAVE, TAREAS_NAVE, tareaNave, BOTON_REUNION, ESCOTILLAS_NAVE, siguienteEscotilla, ACCION_NAVE, APAGON, puedeApagar, cercaDe, puntoLibreNave, repartirTareas, progresoNave, marcarTarea, sabotearTarea, resultadoNave, elegirImpostor, veFantasmas, hayTestigos, accionNaveE, puestosReunion, COLORES_CABLES, nuevosCables, unirCable, cablesListos, VIRUS, MALEZA, sembrar, multiplicar, nuevasPlantas, plantasListas, MOTOR_CABLES, responderMotor, nuevasMuestras, tocarMuestra, muestrasListas, nuevaComida, sacarHongo, comidaLista, PARTES_CAMILLA, nuevasCamillas, arreglarParte, camillaLista, limpiarChat, puedeEscribir, chatVisible, VOTACION, contarVotos, mensajeExpulsion, puedeBotonReunion, maxBots, elegirImpostores, impostoresPara, cajaEspectadorSP, moverEspectador, ESPECTADOR_SP, encontradoSolo, BOTS_SOLO, BOTS_MIN, BOTS_MAX, BOTS_POR_MODO, limitarBots, leerBots, rosterBots, rumboDeMovimiento, CALIDADES, leerCalidad, leerNivel, siguienteCalidad, calidadInicial, bajarCalidad, leerEstilo, golpeGuardian, GUARDIAN, temporadaDe, TEMPORADAS, particulaEstacion, MUSICAS, midiAFrecuencia, lugarMusica, intensidadMusica, compasMusica, siguienteVolumen, leerVolumen, CORREDOR_CARRERA, PARED, siguienteCheckpoint, SPLEEF, SPLEEF_X, SILLA_SPLEEF, capaY, HEXES, hexEn, hundido, hexSolido, hexSeVe, pisoSpleef, salidaSpleef, fueraSpleef, capaDe, origenSpleef, cajasPieza, escaleraCanasta, cajasTerreno, escondites, BOT_ESC, botVe, ordenEscondites, cercaDeLaProfe, preguntasDeLaClase, escaparHTML, NO_MIRES, torreNoMires, seededRandom, debeReaparecer, GUIA_COMO, textoQueHago, lugarDelGuia, GUIA_COLORES, siguienteColorGuia, lugaresArboles, lugaresPasto, libreDePasto, ARBOLES, sombreroDeBot, ETAPAS, etapaDe, cajasDe, decoracionTorre, ovniDesplazamiento, HIELO, deslizar, puedeDobleSalto, gastarBateria, cargarBateria, hayBateria, BATERIA, ganaSpooky, ojosMilOjos, OJO_MIL, SPOOKY, sumarTiempoSpooky, DISFRACES, disfrazById, comprarDisfraz, ponerDisfraz, TIENDA_HALLOWEEN, cercaDelVendedor, letrerosEtapas, elegirObjetivoAN, meAburro, MOTIVACION_AN, reboteCaminar, estaCaminando, volumenPasos, puedeAvisar, AVISO_LASER, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, VILLAGE_HOUSE, wallPieces, insideVillageHouse, villageBed, villageEntrance, villageExit, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, squashStretch, ACHIEVEMENTS, achievementById, coinAchievementsFor, TROPHY_TABLE, trophySpot, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
-         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-11-02-bateria'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
-import { NOMBRE_SALA, cerebrosNuevos, proximoCerebro, pensar, crearEpisodio, pasoEpisodio, semillaIntento, torreSandbox, BUSCADOR_SB, leerCerebros, nombreGuy, claveGuy, NOMBRE_GUY } from './src/ia.js?v=2026-11-02-bateria';
-import { VERSION } from './src/version.js?v=2026-11-02-bateria';
-import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, valoresEn, DIA_SEGUNDOS, lugarMoneda, corto, acercar, acercarAngulo, piezasExplosion, leerPreguntas, revisarPreguntas, PROFE, seVen, MG_TORRE, MG_ESCONDIDAS, MG_ATRAPADAS, MG_CARRERA, MG_SPLEEF, MG_SOLO, ESC, AN, nuevaRondaAN, pasarAN, explotarAN, empujeAN, mareadoAN, seTocan } from './src/red.js?v=2026-11-02-bateria';
+import { MINIGAMES, minigameOrigin, MAZE, generateMaze, pickMaze, pickLemon, clampToArea, CRATES, crateOutside, GARDEN, flowerTired, MEDIUM_HOUSE, insideRect, detourAround, INVERTED, INVERTED_K, minigameDef, fleeCoin, ESCUELA, ESCUELA_K, SANDBOX_K, enElHoyo, zonaRara, ZONA_RARA, HOYO, escuelaSiguiente, escuelaMezclar, SALON, salonSillas, sillaCercana, faseDeLuz, ARENA_AN, ARENA_AN_X, TERRENO_X, salidaAN, centroArenaAN, plataformasAN, desplazamientoAN, portalesAN, portalCerca, TERRENOS, CARROS, CARRO, carroPos, partesCarro, TORTUGAS, TORTUGA, tortugaPos, partesTortuga, arrastreDe, girarAlrededor, CARRERA, PISTA_CARRERA, posPlatCarrera, punoEn, golpePuno, golpeBarra, salidaCarrera, enMetaCarrera, seCayoCarrera, puestosCarrera, origenCarrera, SILLA_CARRERA, CARRERA_X, puertasReales, lugaresPuertas, vientoTubo, golpeObstaculoCarrera, puedeRecibirGolpe, GOLPE_PAUSA_MS, NAVE_X, NAVE, SALAS_NAVE, SALIDA_NAVE, INICIO_NAVE, salaNaveEn, puertasNave, paredesNave, rutaNave, SILLA_NAVE, PROPS_NAVE, TAREAS_NAVE, tareaNave, BOTON_REUNION, ESCOTILLAS_NAVE, siguienteEscotilla, ACCION_NAVE, APAGON, puedeApagar, cercaDe, puntoLibreNave, repartirTareas, progresoNave, marcarTarea, sabotearTarea, resultadoNave, elegirImpostor, veFantasmas, hayTestigos, accionNaveE, puestosReunion, COLORES_CABLES, nuevosCables, unirCable, cablesListos, VIRUS, MALEZA, sembrar, multiplicar, nuevasPlantas, plantasListas, MOTOR_CABLES, responderMotor, nuevasMuestras, tocarMuestra, muestrasListas, nuevaComida, sacarHongo, comidaLista, PARTES_CAMILLA, nuevasCamillas, arreglarParte, camillaLista, limpiarChat, puedeEscribir, chatVisible, VOTACION, contarVotos, mensajeExpulsion, puedeBotonReunion, maxBots, MIN_TAREA_NAVE, elegirImpostores, impostoresPara, cajaEspectadorSP, moverEspectador, ESPECTADOR_SP, encontradoSolo, BOTS_SOLO, BOTS_MIN, BOTS_MAX, BOTS_POR_MODO, limitarBots, leerBots, rosterBots, rumboDeMovimiento, CALIDADES, leerCalidad, leerNivel, siguienteCalidad, calidadInicial, bajarCalidad, leerEstilo, golpeGuardian, GUARDIAN, temporadaDe, TEMPORADAS, particulaEstacion, MUSICAS, midiAFrecuencia, lugarMusica, intensidadMusica, compasMusica, siguienteVolumen, leerVolumen, CORREDOR_CARRERA, PARED, siguienteCheckpoint, SPLEEF, SPLEEF_X, SILLA_SPLEEF, capaY, HEXES, hexEn, hundido, hexSolido, hexSeVe, pisoSpleef, salidaSpleef, fueraSpleef, capaDe, origenSpleef, cajasPieza, escaleraCanasta, cajasTerreno, escondites, BOT_ESC, botVe, ordenEscondites, cercaDeLaProfe, preguntasDeLaClase, escaparHTML, NO_MIRES, torreNoMires, seededRandom, debeReaparecer, GUIA_COMO, textoQueHago, lugarDelGuia, GUIA_COLORES, siguienteColorGuia, lugaresArboles, lugaresPasto, libreDePasto, ARBOLES, sombreroDeBot, ETAPAS, etapaDe, cajasDe, decoracionTorre, ovniDesplazamiento, HIELO, deslizar, puedeDobleSalto, gastarBateria, cargarBateria, hayBateria, BATERIA, ganaSpooky, ojosMilOjos, OJO_MIL, SPOOKY, sumarTiempoSpooky, DISFRACES, disfrazById, comprarDisfraz, ponerDisfraz, TIENDA_HALLOWEEN, cercaDelVendedor, letrerosEtapas, elegirObjetivoAN, meAburro, MOTIVACION_AN, reboteCaminar, estaCaminando, volumenPasos, puedeAvisar, AVISO_LASER, botSpeedAfter, DROPPER, dropperLayers, dropperPad, DOLPHINS, dolphinLane, dolphinLeap, VILLAGE, villageDoor, VILLAGE_HOUSE, wallPieces, insideVillageHouse, villageBed, villageEntrance, villageExit, TASKS, tasksForDay, taskSpot, taskReady, cloudPath, CLOUD_SIZE, TREES, treeCircles, METEORS, meteorSpot, HOUSE_VISIT_CHANCE, HOUSE_VISIT, RED_BUTTON, RED_BUTTON_HOUSE, PARKOUR, parkourStep, parkourSize, LAVA, lavaHeight, followTrail, SWINGS, swingAngle, SLIDE, slidePoint, distanceGain, distanceCutoff, STYLE_STALL, BOT_COLORS, BOT_SCALE, MINIGAME_BOT_SCALE, BOT_MIN_Z, randomBotTarget, noteFrequency, COIN_NOTES, ambientVolume, bitcrush, footstepInterval, COSMETICS, DEFAULT_COLOR, emptyStyle, toggleEquip, cosmeticById, blasterStats, mountainRing, MOUNTAIN_WALL_INSET, ASSIST_SPEED_MAX, BIG_HOUSE, BASEMENT, STAIRWELL, groundHeight, slabPieces, FACTORY, factoryLineSlot, squashStretch, ACHIEVEMENTS, achievementById, coinAchievementsFor, TROPHY_TABLE, trophySpot, missingFor, canAfford, collideWalls, extraLineSlot, MAIN_LINES, MAX_EXTRA_BOX_LINES, MAX_EXTRA_BAG_LINES, saveKey, serializeSave, parseSave, advanceOnBelt, beltItemIsBox, beltItemY, beltSpeed, productReward, nearestIndex, assistantSpeed, moveAndCollide, boxHit,
+         upgradePrice, fmt, sunElevation, clockText, hourToPhase, launchSpeedForHeight } from './src/logic.js?v=2026-11-02-nave-amigos'; // cambiar la versión al cambiar logic.js: así el navegador nunca usa una copia vieja
+import { NOMBRE_SALA, cerebrosNuevos, proximoCerebro, pensar, crearEpisodio, pasoEpisodio, semillaIntento, torreSandbox, BUSCADOR_SB, leerCerebros, nombreGuy, claveGuy, NOMBRE_GUY } from './src/ia.js?v=2026-11-02-nave-amigos';
+import { VERSION } from './src/version.js?v=2026-11-02-nave-amigos';
+import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregarMuestra, valoresEn, DIA_SEGUNDOS, lugarMoneda, corto, acercar, acercarAngulo, piezasExplosion, leerPreguntas, revisarPreguntas, PROFE, seVen, MG_TORRE, MG_ESCONDIDAS, MG_ATRAPADAS, MG_CARRERA, MG_SPLEEF, MG_NAVE, MG_SOLO, ESC, AN, nuevaRondaAN, pasarAN, explotarAN, empujeAN, mareadoAN, seTocan } from './src/red.js?v=2026-11-02-nave-amigos';
 (() => {
   // iPhone ignora user-scalable=no: aquí se bloquea el zoom con dos dedos y el doble toque
   for (const ev of ['gesturestart', 'gesturechange']) document.addEventListener(ev, e => e.preventDefault(), { passive: false });
@@ -4394,7 +4394,8 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
   const yoEnNave = () => MG.state.nave && MG.state.nave.gente[0];
   const esImpNave = id => { const V = MG.state.nave; return !!V && !!V.imps && V.imps.includes(id); };
   const soyImpostorNave = () => esImpNave('yo');
-  const posDe = p => (p.yo ? ps.pos : p.bot.pos);
+  const lejos = new THREE.Vector3(1e6, 0, 1e6);
+  const posDe = p => (p.yo ? ps.pos : p.bot ? p.bot.pos : (red.otros.get(p.sid) ? red.otros.get(p.sid).obj.position : lejos));   // (un amigo: donde lo vemos)
   const salaDe = p => { const V = MG.state.nave, P = posDe(p), i = salaNaveEn(P.x - V.N.c.x, P.z - V.N.c.z); return i >= 0 ? SALAS_NAVE[i].nombre : 'el espacio'; };
   const rel = P => ({ x: P.x - MG.state.nave.N.c.x, z: P.z - MG.state.nave.N.c.z });
   function limpiarRondaNave() {
@@ -4434,6 +4435,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
   }
   function salirNave(o) {
     const st = MG.state;
+    if (st.nave && st.nave.red) { enviarNV({ que: 'salir' }); lobbyModo.nave.sentado = false; for (const p of st.nave.gente) if (p.humano && !p.yo) etiquetaAmigoNV(p.sid, false); }   // 🚀
     limpiarRondaNave(); naveModalEl.hidden = true; naveListaEl.hidden = true; naveLucesBtn.hidden = true;
     ocultarBotsSolo(); quitarNave();
     st.fase = 'salon'; st.nave = null;
@@ -4510,6 +4512,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
   // 💡 Apagón: 10 s a oscuras para la tripulación
   function apagarLucesNave() {
     const V = MG.state.nave; if (!V || V.fin || V.reunion || !puedeApagar(V.t, V.apagon.fin)) return false;
+    if (V.red) { enviarNV({ que: 'luces' }); return true; }   // 🚀 (el servidor avisa a todos)
     V.apagon = { hasta: V.t + APAGON.dura, fin: V.t + APAGON.dura };
     sfxNotas([['A3', 0, 0.3], ['E3', 0.3, 0.4]], 'sawtooth', 0.06);
     avisoModo('⚠️ ¡Sabotearon las luces!', true, 2500);
@@ -4616,7 +4619,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
   function calcularAccionNave() {
     const V = MG.state.nave, yo = V.gente[0], R = rel(ps.pos), imp = esImpNave('yo');
     let victima = null, dv = ACCION_NAVE.ataque;
-    if (imp && yo.vivo) for (const p of V.gente) if (!p.yo && p.vivo && !esImpNave(p.id)) { const d = Math.hypot(p.bot.pos.x - ps.pos.x, p.bot.pos.z - ps.pos.z); if (d <= dv) { dv = d; victima = p; } }
+    if (imp && yo.vivo) for (const p of V.gente) if (!p.yo && p.vivo && !esImpNave(p.id)) { const q = posDe(p), d = Math.hypot(q.x - ps.pos.x, q.z - ps.pos.z); if (d <= dv) { dv = d; victima = p; } }
     const escotilla = imp && yo.vivo ? ESCOTILLAS_NAVE.find(e => cercaDe(e, R, ACCION_NAVE.escotilla)) : null;
     const boton = yo.vivo && cercaDe(BOTON_REUNION, R, BOTON_REUNION.cerca) && puedeBotonReunion(V.botonUsos.yo || 0, V.t - V.ultimaReunion);
     const T = tareaNave('caja'), tengoCaja = !imp && V.rep.yo && V.rep.yo.caja === false;
@@ -4633,6 +4636,14 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
   const cuerpoCerca = () => { const V = MG.state.nave; return V && V.gente[0].vivo && !V.reunion && !V.fin ? V.cuerpos.find(cu => Math.hypot(cu.pos.x - ps.pos.x, cu.pos.z - ps.pos.z) <= ACCION_NAVE.reporte) : null; };
   function usarENave() {
     const V = MG.state.nave, A = V && V.accion; if (!A || V.fin || V.reunion || naveAbierta()) return;
+    if (V.red) {   // 🚀 con amigos: se lo pides al servidor (él revisa que se pueda)
+      if (A.tipo === 'atacar') { V.esperoAtaque = { id: A.victima.id, t: performance.now() }; enviarNV({ que: 'atacar', a: A.victima.id }); }
+      else if (A.tipo === 'escotilla') enviarNV({ que: 'escotilla', id: A.escotilla.id });
+      else if (A.tipo === 'boton') { V.botonUsos.yo = (V.botonUsos.yo || 0) + 1; enviarNV({ que: 'boton' }); }
+      else if (A.tipo === 'caja') enviarNV({ que: 'caja' });
+      else if (A.tipo === 'tarea') abrirTareaNave(A.tarea.id);
+      return;
+    }
     if (A.tipo === 'atacar') atacarNave(V.gente[0], A.victima);
     else if (A.tipo === 'escotilla') saltarEscotilla(V.gente[0], A.escotilla.id);
     else if (A.tipo === 'boton') { V.botonUsos.yo = (V.botonUsos.yo || 0) + 1; sfxNotas([['A5', 0, 0.15], ['E5', 0.18, 0.15], ['A5', 0.36, 0.15], ['E5', 0.54, 0.15]], 'square', 0.06); abrirReunion(V.gente[0], null); }
@@ -4642,7 +4653,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     }
     else if (A.tipo === 'tarea') abrirTareaNave(A.tarea.id);
   }
-  function reportarNave() { const cu = cuerpoCerca(); if (cu) abrirReunion(MG.state.nave.gente[0], cu); }
+  function reportarNave() { const cu = cuerpoCerca(); if (!cu) return; if (MG.state.nave.red) enviarNV({ que: 'reportar' }); else abrirReunion(MG.state.nave.gente[0], cu); }
 
   // ----- Los paneles de las tareas -----
   let tareaTimer = 0, soltarPanel = null;
@@ -4653,7 +4664,14 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
   }
   document.getElementById('naveTareaCerrar').addEventListener('click', cerrarTareaNave);
   function terminarTareaNave(id) {
-    const V = MG.state.nave; V.rep = marcarTarea(V.rep, 'yo', id);
+    const V = MG.state.nave;
+    if (V.red && id !== 'caja') {   // 🚀 con amigos: el servidor la marca (si fuiste muy rápido, espera un poquito a que se cumpla el tiempo de la tarea)
+      const falta = Math.max(0, (MIN_TAREA_NAVE[id] || 3) * 1000 + 300 - (performance.now() - (V.tareaDesde || 0)));
+      naveMsj.textContent = '✅ ¡Listo!'; naveMsj.className = 'esc-resultado bien'; sfxCoin();
+      setTimeout(() => { enviarNV({ que: 'tarea', tarea: id }); if (V.tarea === id) cerrarTareaNave(); }, falta);
+      return;
+    }
+    V.rep = marcarTarea(V.rep, 'yo', id);
     sfxCoin(); avisoModo(`✅ ¡Tarea lista: ${tareaNave(id).nombre}!`, false, 1800);
     if (!naveTareaEl.hidden) { naveMsj.textContent = '✅ ¡Listo!'; naveMsj.className = 'esc-resultado bien'; setTimeout(() => { if (V.tarea === id) cerrarTareaNave(); }, 700); }
   }
@@ -4661,14 +4679,17 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
   function barrer(zona, clase, alTocar) {
     let apretado = false;
     const tocar = e => { const x = document.elementFromPoint(e.clientX, e.clientY), b = x && x.closest('.' + clase); if (b && zona.contains(b)) alTocar(+b.dataset.i); };
-    zona.addEventListener('pointerdown', e => { apretado = true; try { zona.setPointerCapture(e.pointerId); } catch (er) {} tocar(e); });
+    // (sin capturar el puntero: si se captura, el clic de después le llega a la zona y no a lo que tocaste — así las plantas no se abonaban con el mouse)
+    zona.addEventListener('pointerdown', e => { apretado = true; tocar(e); });
+    zona.addEventListener('pointerleave', () => { apretado = false; });
     zona.addEventListener('pointermove', e => { if (apretado) tocar(e); });
     for (const ev of ['pointerup', 'pointercancel']) zona.addEventListener(ev, () => { apretado = false; });
   }
   const pct = v => (v * 100).toFixed(1) + '%';
   function abrirTareaNave(id) {
     const V = MG.state.nave, t = tareaNave(id), imp = esImpNave('yo');
-    soltarMouse(); cerrarTareaNave(); V.tarea = id;
+    soltarMouse(); cerrarTareaNave(); V.tarea = id; V.tareaDesde = performance.now();
+    if (V.red && !imp) enviarNV({ que: 'abrir', tarea: id });   // 🚀 (desde ahora cuenta el tiempo de la tarea)
     document.getElementById('naveTareaTit').textContent = `${t.icono} ${t.nombre}`;
     const ayuda = document.getElementById('naveTareaAyuda'), sab = document.getElementById('naveSabotear');
     naveMsj.textContent = ''; naveMsj.className = 'esc-resultado'; sab.hidden = !imp;
@@ -4776,7 +4797,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
       pintar();
     }
   }
-  document.getElementById('naveSabotear').addEventListener('click', () => { const V = MG.state.nave; if (V && V.tarea) { sabotearNave(V.tarea, V.gente[0]); cerrarTareaNave(); } });
+  document.getElementById('naveSabotear').addEventListener('click', () => { const V = MG.state.nave; if (V && V.tarea) { if (V.red) enviarNV({ que: 'sabotear', tarea: V.tarea }); else sabotearNave(V.tarea, V.gente[0]); cerrarTareaNave(); } });
 
   // ----- 🗣️ Reunión: chat (solo aquí), y votación (20 s, sin saltar) -----
   const naveChat = document.getElementById('naveChat'), naveChatIn = document.getElementById('naveChatTexto'), naveVotar = document.getElementById('naveVotar'), naveVotos = document.getElementById('naveVotos');
@@ -4847,7 +4868,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     R.chat.push({ sistema: true, texto: `🗳️ ${quien === 'Tú' ? 'Empezaste' : quien + ' empezó'} la votación. ¡Hay ${VOTACION.segundos} segundos y no se puede saltar!` }); pintarChatNave();
     naveVotar.hidden = true; pintarVotosNave();
   }
-  naveVotar.addEventListener('click', () => empezarVotacion('Tú'));
+  naveVotar.addEventListener('click', () => { if (MG.state.nave && MG.state.nave.red) enviarNV({ que: 'empezarVoto' }); else empezarVotacion('Tú'); });
   function pintarVotosNave() {
     const V = MG.state.nave, R = V.reunion, yo = V.gente[0];
     naveVotos.replaceChildren(...V.gente.filter(p => p.vivo).map(p => {
@@ -4881,6 +4902,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
   function enviarChatNave() {
     const V = MG.state.nave, R = V && V.reunion; if (!R || R.fase === 'resultado') return;
     const t = limpiarChat(naveChatIn.value); if (!t) return;
+    if (V.red) { enviarNV({ que: 'chat', texto: t }); naveChatIn.value = ''; return; }   // 🚀 (el servidor lo limpia, revisa la espera y lo reparte)
     if (!puedeEscribir(R.ultimoMsj, ahoraMs())) { if (R.fase === 'chat') document.getElementById('naveReunionTiempo').textContent = '⏳ Espera 2 segundos entre mensajes'; return; }
     R.ultimoMsj = ahoraMs(); naveChatIn.value = ''; if (R.fase === 'chat') document.getElementById('naveReunionTiempo').textContent = '';
     decirNave(V.gente[0], t);
@@ -4901,6 +4923,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
   function updateNave(dt, o) {
     const st = MG.state, V = st.nave, c = V.N.c;
     if (!V.gente) return;
+    if (V.red) return updateNaveRed(dt, o);   // 🚀 con amigos: manda el servidor
     const pausa = !!(V.fin || V.reunion || !naveModalEl.hidden);
     if (!pausa) V.t += dt;
     // 🔋 la batería: caminar y saltar gastan (los fantasmas no necesitan)
@@ -4955,9 +4978,9 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     mgHud.innerHTML = `🚀 ${rol} · 📍 <b>${escaparHTML(sala)}</b>${bat}${luces}`;
     mgHud.hidden = false;
     // la lista de tareas y la barra de la tripulación
-    const { hechas, total } = progresoNave(V.rep);
+    const { hechas, total } = V.red ? V.progreso : progresoNave(V.rep);
     document.getElementById('naveBarra').style.width = pct(total ? hechas / total : 0);
-    const lista = document.getElementById('naveTareas'), filas = imp ? TAREAS_NAVE.map(t => `🎭 ${t.nombre}`) : TAREAS_NAVE.filter(t => V.rep.yo && t.id in V.rep.yo).map(t => `${V.rep.yo[t.id] ? '✅' : '⬜'} ${t.nombre}`);
+    const lista = document.getElementById('naveTareas'), filas = imp ? TAREAS_NAVE.map(t => `🎭 ${t.nombre}`) : TAREAS_NAVE.filter(t => V.rep.yo && t.id in V.rep.yo).map(t => `${V.rep.yo[t.id] ? '✅' : '⬜'} ${t.nombre}${V.red && V.cuentas && V.cuentas[t.id] > 1 ? ` (×${V.cuentas[t.id]})` : ''}`);
     const cab = imp ? '😈 Tareas de mentira (sabotéalas)' : !yo.vivo ? '👻 Termina tus tareas' : 'Tus tareas';
     const clave = cab + filas.join('|');
     if (lista.dataset.clave !== clave) { lista.dataset.clave = clave; lista.replaceChildren(elN('li', 'cab', cab), ...filas.map(f => elN('li', '', f))); }
@@ -4976,6 +4999,186 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     return t + R;
   }
   const etiquetaENave = () => { const A = MG.state.nave && MG.state.nave.accion; return !A ? '✋' : A.tipo === 'atacar' ? '👊 Atacar' : A.tipo === 'escotilla' ? '🕳️ Escotilla' : A.tipo === 'boton' ? '🚨 Reunión' : A.tipo === 'caja' ? '📦 Caja' : soyImpostorNave() ? '💥 Sabotear' : '🔧 Tarea'; };
+  // ===== 🚀 La nave CON AMIGOS: el servidor es el árbitro (y mueve a los bots). Aquí solo se dibuja y se le pide cosas =====
+  // Los ids son los del servidor: amigos 'h<número>' y bots 'b<número>'; tú eres 'yo'.
+  const idNV = id => (id === 'h' + red.id ? 'yo' : id);
+  const enviarNV = m => enviar({ tipo: 'nv', ...m });
+  // Empieza la ronda: el servidor te dice TU rol (y tus compañeros, si eres impostor), quiénes juegan y tus tareas
+  function entrarNaveRed(m) {
+    const o = minigameOrigin(MG.k), N = ponerNave(o), st = MG.state;
+    if (st.nave) limpiarRondaNave();
+    cerrarModoRonda(false);
+    const defs = m.gente.filter(p => !p.humano), bots = defs.length ? botsSolo(defs.length, 'nave') : [];
+    const gente = m.gente.map(p => {
+      const id = idNV(String(p.id)), k = p.humano ? -1 : Number(String(p.id).slice(1));
+      return { id, sid: p.humano ? Number(String(p.id).slice(1)) : null, nombre: id === 'yo' ? 'Tú' : String(p.nombre).slice(0, 20), humano: !!p.humano, yo: id === 'yo', bot: k >= 0 ? bots[k] : null, vivo: true, x: +p.x || 0, z: +p.z || 0 };
+    }).sort((a, b) => (b.yo ? 1 : 0) - (a.yo ? 1 : 0));   // (tú primero, como jugando solo)
+    const imp = m.rol === 'impostor', imps = imp ? ['yo', ...(m.socios || []).map(String).map(idNV)] : [];
+    const c = N.c;
+    Object.assign(st, { fase: 'nave', bateria: 0, nave: { N, o, red: true, gente, imps, rep: { yo: tareasNV(m.tareas) }, cuentas: m.tareas || {}, progreso: { hechas: m.hechas || 0, total: m.total || 1 },
+      cuerpos: [], humos: [], t: 0, ultimoAtaque: 0, ultimaReunion: 0, ultimoSabotaje: -99, botonUsos: {}, caja: 'reactor', fin: null, reunion: null, accion: null,
+      apagon: { hasta: -1, fin: -Infinity }, metas: {}, cuantosImps: m.cuantosImps || 2 } });
+    for (const p of gente) if (p.bot) {
+      ponerCasco(p.bot, true); p.bot.pos.set(c.x + p.x, 0, c.z + p.z); p.bot.atascado = 0;
+      if (!p.bot.obj.userData.llave) { const ll = spriteEmoji('🔧', 0.7); ll.position.y = H + 1.6; p.bot.obj.add(ll); p.bot.obj.userData.llave = ll; }
+      p.bot.obj.userData.llave.visible = false;
+      pintarEtiquetaSB(p.bot.etiqueta, p.bot.def.nombre, imps.includes(p.id) ? '#ff4b4b' : '#ffe14d');   // (los impostores se reconocen: nombre en rojo)
+    }
+    for (const p of gente) if (p.humano && !p.yo && imps.includes(p.id)) etiquetaAmigoNV(p.sid, true);
+    const yo = gente[0]; placePlayer(c.x + yo.x, 0, c.z + yo.z); camYaw = -Math.PI / 2;
+    naveListaEl.hidden = false;
+    const socios = imps.filter(i => i !== 'yo').map(i => (gente.find(p => p.id === i) || {}).nombre).filter(Boolean);
+    modalNave(imp ? '😈 ¡Eres IMPOSTOR!' : '🧑‍🚀 Eres TRIPULANTE',
+      imp ? `${socios.length ? `Tu compañero impostor: ${socios.join(' y ')} (su nombre se ve en ROJO; no se pueden atacar entre ustedes). ` : ''}Que no te descubran. E: atacar (sin testigos), meterte por las escotillas 🕳️ o sabotear una tarea. Z: apagar las luces 💡. Q: responder preguntas para tener batería 🔋.`
+          : `Haz tus tareas (la lista está a la izquierda) con E. Caminar gasta batería 🔋: con Q respondes preguntas para cargarla. Si encuentras a alguien desmayado, F para reportar. En la nave hay ${gente.length} (${gente.filter(p => p.humano).length} amigos y ${bots.length} bots) y ${m.cuantosImps === 1 ? 'uno es el impostor' : (m.cuantosImps || 2) + ' son impostores'}…`,
+      [['¡A jugar!', () => abrirCarga()]]);
+  }
+  // Tus tareas: el servidor manda cuántas veces te falta cada una (0 = hecha)
+  const tareasNV = t => Object.fromEntries(Object.entries(t || {}).filter(([k]) => tareaNave(k)).map(([k, v]) => [k, !(v > 0)]));
+  // El nombre de un amigo impostor, en rojo (solo para los impostores)
+  function etiquetaAmigoNV(sid, rojo) {
+    const f = red.otros.get(sid); if (!f) return;
+    if (rojo) { if (!f.labelOriginal) f.labelOriginal = f.label.material.map; f.label.material.map = makeLabel(f.nombre, '#ff4b4b').material.map; }
+    else if (f.labelOriginal) { f.label.material.map = f.labelOriginal; f.labelOriginal = null; }
+    f.label.material.needsUpdate = true;
+  }
+  // Cada cuadro, con amigos: los bots van a donde dice el servidor (suave), y tú gastas batería
+  function updateNaveRed(dt, o) {
+    const st = MG.state, V = st.nave, c = V.N.c;
+    const pausa = !!(V.fin || V.reunion || !naveModalEl.hidden);
+    if (!V.fin) V.t += dt;
+    const inp = MG.input || {};
+    if (V.gente[0].vivo && !V.fin) st.bateria = gastarBateria(st.bateria, dt, inp.moving, inp.jumped);
+    const imp = esImpNave('yo'), veo = veFantasmas(imp);
+    for (const p of V.gente) {
+      if (!p.bot) continue;
+      const m = V.metas[p.id];
+      p.bot.obj.visible = !!m && (p.vivo || veo);
+      if (!m) continue;
+      const meta = new THREE.Vector3(c.x + m.x, 0, c.z + m.z);
+      if (p.bot.pos.distanceTo(meta) > 6) p.bot.pos.copy(meta); else p.bot.pos.lerp(meta, Math.min(1, dt * 10));
+      p.bot.facing = m.rot; p.bot.obj.rotation.y = m.rot;
+      p.bot.obj.userData.llave.visible = !!m.trabaja;
+      animarCaminar(p.bot.obj, p.bot.cuerpo, H / 2, dt);
+    }
+    for (const cu of V.cuerpos) if (cu.cae < 1) { cu.cae = Math.min(1, cu.cae + dt * 3); const k = cu.cae * cu.cae; cu.g.rotation.x = -Math.PI / 2 * k; cu.g.position.y = cu.piso + cu.espalda * Math.sin(Math.PI / 2 * k); }
+    updateHumoNave(dt);
+    const T = tareaNave('caja'), CM = V.N.cajaMesh;
+    if (V.caja === 'yo') CM.position.set(ps.pos.x, ps.pos.y + H + 0.5, ps.pos.z);
+    else if (V.caja === 'dejada') CM.position.set(c.x + T.x, 0.4, c.z + T.z);
+    else CM.position.set(c.x + T.recoger.x, 0.4, c.z + T.recoger.z);
+    for (const t of TAREAS_NAVE) { const A = V.N.tareas[t.id]; A.anillo.material.color.setHex(imp ? 0xff8a3d : V.rep.yo && V.rep.yo[t.id] ? 0x30d158 : 0xffd400); }
+    V.N.nucleo.material.color.setHSL(0.93, 1, 0.55 + 0.15 * Math.sin(MG.t * 3));
+    const oscuro = V.t < V.apagon.hasta; luzNave(oscuro && !imp);
+    V.accion = pausa || naveAbierta() ? null : calcularAccionNave();
+    pintarHudNave(oscuro);
+  }
+  // Lo que dice el servidor de la nave
+  function mensajeNave(m) {
+    const L = lobbyModo.nave, V = MG.state && MG.state.nave && MG.state.nave.red ? MG.state.nave : null;
+    if (m.tipo === 'nvEspera') {
+      L.espera = Array.isArray(m.jugadores) ? m.jugadores.filter(j => j && Number.isInteger(j.id) && typeof j.nombre === 'string') : [];
+      L.enRonda = !!m.enRonda; repintarModoRonda(); return;
+    }
+    if (m.tipo === 'nvAvisoEspera') { const t = String(m.texto || ''); if (!mdEl.hidden) mdMsj.textContent = t; else avisoModo(t, true); return; }
+    if (m.tipo === 'nvRonda') {
+      if (!Array.isArray(m.gente) || MG.active !== MODES.escuela || (MG.state.fase !== 'salon' && MG.state.fase !== 'nave')) return;
+      entrarNaveRed(m); return;
+    }
+    if (!V) return;
+    const c = V.N.c, P = id => V.gente.find(p => p.id === idNV(String(id)));
+    if (m.tipo === 'nvBots' && Array.isArray(m.l)) {
+      V.metas = {};
+      for (const b of m.l) if (Array.isArray(b) && b.length >= 6) { V.metas[String(b[0])] = { x: +b[1], z: +b[2], rot: +b[3], trabaja: b[4] === 1 }; const p = P(b[0]); if (p && b[5] === 0) p.vivo = false; }
+    } else if (m.tipo === 'nvCuerpo') {
+      const p = P(m.id); if (!p) return;
+      const pos = new THREE.Vector3(c.x + (+m.x || 0), 0, c.z + (+m.z || 0));
+      const modelo = p.yo ? player : p.bot ? p.bot.obj : red.otros.get(p.sid) && red.otros.get(p.sid).obj;
+      p.vivo = false;
+      if (!modelo) return;
+      const g = new THREE.Group(), copia = copiaCaida(modelo); g.add(copia);
+      const caja = new THREE.Box3().setFromObject(copia);
+      g.rotation.order = 'YXZ'; g.position.copy(pos); g.rotation.y = modelo.rotation.y; scene.add(g);
+      V.cuerpos.push({ id: p.id, nombre: p.nombre, g, cae: 0, pos, piso: 0, espalda: Math.max(D / 2, -caja.min.z) });
+      humoNave(pos);
+      const d = Math.hypot(pos.x - ps.pos.x, pos.z - ps.pos.z); if (d < 18 || p.yo) sfxGolpeNave(p.yo ? 1 : Math.max(0.35, 1 - d / 18));
+      if (V.esperoAtaque && V.esperoAtaque.id === p.id && performance.now() - V.esperoAtaque.t < 2000) { V.ultimoAtaque = V.t; V.esperoAtaque = null; avisoModo(`👊 ¡PUM! ${p.nombre} quedó desmayado`, false, 1800); }
+    } else if (m.tipo === 'nvTeAtacaron') {
+      V.gente[0].vivo = false; verFantasma(player, true); cerrarTareaNave(); cerrarCarga();
+      avisoModo(`💥 ¡PUM! ${String(m.por || 'Alguien').slice(0, 20)} es impostor. Ahora eres un fantasma 👻: nadie te ve, pero puedes terminar tus tareas`, true, 5000);
+    } else if (m.tipo === 'nvFantasma') { const p = P(m.id); if (p) p.vivo = false; }
+    else if (m.tipo === 'nvTareas') { V.cuentas = m.tareas || {}; V.rep.yo = tareasNV(m.tareas); }
+    else if (m.tipo === 'nvProgreso') V.progreso = { hechas: +m.hechas || 0, total: +m.total || 1 };
+    else if (m.tipo === 'nvCaja') {
+      V.caja = m.estado === 'lleva' ? 'yo' : m.estado === 'dejada' ? 'dejada' : 'reactor';
+      if (m.estado === 'lleva') avisoModo('📦 ¡Agarraste la caja! Llévala a la bodega (el cuadrado amarillo y negro)', false, 2500);
+      else if (m.estado !== 'reactor') { sfxCoin(); avisoModo('✅ ¡Tarea lista: Llevar la caja!', false, 1800); }
+    } else if (m.tipo === 'nvSabotaje') {
+      const t = tareaNave(m.tarea); if (!t) return;
+      sfxNotas([['E5', 0, 0.1], ['C5', 0.1, 0.1], ['A4', 0.2, 0.2]], 'sawtooth', 0.05);
+      avisoModo(`⚠️ ¡Sabotaje en ${SALAS_NAVE.find(s => s.id === t.sala).nombre}! «${t.nombre}» se rompió`, true, 3500);
+      if (V.tarea === t.id) cerrarTareaNave();
+    } else if (m.tipo === 'nvLuces') {
+      V.apagon = { hasta: V.t + (+m.ms || 10000) / 1000, fin: V.t + (+m.ms || 10000) / 1000 };
+      sfxNotas([['A3', 0, 0.3], ['E3', 0.3, 0.4]], 'sawtooth', 0.06); avisoModo('⚠️ ¡Sabotearon las luces!', true, 2500);
+    } else if (m.tipo === 'nvMover') { placePlayer(c.x + (+m.x || 0), 0, c.z + (+m.z || 0)); sfxNotas([['C5', 0, 0.08], ['G4', 0.08, 0.1], ['C4', 0.16, 0.12]], 'triangle', 0.08); }
+    else if (m.tipo === 'nvReunion') abrirReunionRed(m);
+    else if (m.tipo === 'nvChat' && V.reunion) { V.reunion.chat.push({ quien: String(m.de || '?').slice(0, 20), texto: String(m.texto || '').slice(0, 100), deFantasma: !!m.fantasma }); pintarChatNave(); }
+    else if (m.tipo === 'nvAviso') document.getElementById('naveReunionTiempo').textContent = String(m.texto || '').slice(0, 80);
+    else if (m.tipo === 'nvVotar' && V.reunion) {
+      const R = V.reunion; R.fase = 'votar'; R.finVoto = performance.now() + (+m.ms || 20000);
+      R.chat.push({ sistema: true, texto: `🗳️ ${String(m.quien || 'Alguien').slice(0, 20)} empezó la votación. ¡Hay ${Math.round((+m.ms || 20000) / 1000)} segundos y no se puede saltar!` }); pintarChatNave();
+      naveVotar.hidden = true; pintarVotosRed();
+      clearInterval(V.reunionTimer); V.reunionTimer = setInterval(() => { const R2 = V.reunion; if (!R2 || R2.fase !== 'votar') return clearInterval(V.reunionTimer); document.getElementById('naveReunionTiempo').textContent = `🗳️ ¡A votar! Quedan ${Math.max(0, Math.ceil((R2.finVoto - performance.now()) / 1000))} s`; }, 250);
+    } else if (m.tipo === 'nvVoto' && V.reunion) { V.reunion.votaron.add(idNV(String(m.id))); pintarVotosRed(); }
+    else if (m.tipo === 'nvResultado' && V.reunion) {
+      const R = V.reunion, exp = m.expulsado ? P(m.expulsado) : null; R.fase = 'resultado'; clearInterval(V.reunionTimer);
+      let texto = String(m.texto || '').slice(0, 80);
+      if (exp) { exp.vivo = false; if (exp.yo) { verFantasma(player, true); texto = /:D/.test(texto) ? 'Tú eras el impostor :D ¡te descubrieron!' : 'Tú no eras impostor :v'; } }
+      const cuenta = m.cuenta || {}, linea = R.vivos.map(id => { const p = P(id); return p ? `${p.nombre}: ${+cuenta[id === 'yo' ? 'h' + red.id : id] || 0}` : ''; }).filter(Boolean).join(' · ');
+      R.chat.push({ sistema: true, texto: `Votos → ${linea}` }, { sistema: true, texto }); pintarChatNave();
+      document.getElementById('naveReunionTiempo').textContent = texto; naveVotos.replaceChildren(); naveChatIn.disabled = true;
+    } else if (m.tipo === 'nvSigue') { naveReunionEl.hidden = true; clearInterval(V.reunionTimer); V.reunion = null; V.ultimaReunion = V.t; }
+    else if (m.tipo === 'nvSalio') { const p = P(m.id); if (p) { p.vivo = false; p.salio = true; } avisoModo(`🚪 ${String(m.nombre || 'Alguien').slice(0, 20)} se fue de la nave`, false, 2000); }
+    else if (m.tipo === 'nvFin') {
+      if (V.fin) return; V.fin = m.gana === 'impostor' ? 'impostor' : 'tripulacion';
+      cerrarTareaNave(); cerrarCarga(); naveReunionEl.hidden = true; luzNave(false);
+      const yoImp = esImpNave('yo'), gane = (V.fin === 'impostor') === yoImp, nombres = (Array.isArray(m.imps) ? m.imps : []).map(i => (idNV(String(i.id)) === 'yo' ? 'TÚ' : String(i.nombre).slice(0, 20)));
+      if (gane) { sfxGanar(); save.coins += 25; renderCoins(); ganarSpooky(SPOOKY.porGanar); } else sfxPerder();
+      modalNave(V.fin === 'impostor' ? (nombres.length > 1 ? '😈 ¡Ganaron los impostores!' : '😈 ¡Ganó el impostor!') : '🏆 ¡Ganó la tripulación!',
+        `${gane ? '¡Ganaste! (+25 monedas) ' : 'Perdiste… '}${nombres.length > 1 ? `Los impostores eran ${nombres.join(' y ')}` : `El impostor era ${nombres[0] || '?'}`}.`,
+        [['🔁 Otra ronda', () => { salirNave(V.o); abrirModoRonda('nave'); }], ['↩ Volver al salón', () => salirNave(V.o)]]);
+    }
+  }
+  // 🗣️ La reunión con amigos: el servidor dice quién reportó, dónde va cada uno y quiénes siguen vivos
+  function abrirReunionRed(m) {
+    const V = MG.state.nave, c = V.N.c;
+    cerrarTareaNave(); cerrarCarga(); soltarMouse();
+    const vivos = (Array.isArray(m.vivos) ? m.vivos : []).map(String).map(idNV);
+    for (const p of V.gente) if (!vivos.includes(p.id)) p.vivo = false;
+    const mio = m.puestos && m.puestos['h' + red.id]; if (mio) placePlayer(c.x + (+mio[0] || 0), 0, c.z + (+mio[1] || 0));
+    for (const cu of V.cuerpos) scene.remove(cu.g);
+    V.cuerpos = []; V.apagon.hasta = -1;
+    V.reunion = { chat: [], fase: 'chat', vivos, votaron: new Set(), miVoto: null };
+    const quien = idNV(String(m.quienId)) === 'yo' ? null : String(m.quien || 'Alguien').slice(0, 20);
+    document.getElementById('naveReunionTit').textContent = m.cuerpo ? '📢 ¡REPORTE!' : '🚨 ¡REUNIÓN DE EMERGENCIA!';
+    const cu = m.cuerpo ? `${String(m.cuerpo.nombre).slice(0, 20)} desmayado en ${String(m.cuerpo.sala).slice(0, 30)}` : null;
+    document.getElementById('naveReunionTxt').textContent = !quien ? (cu ? `Encontraste a ${cu}.` : 'Apretaste el botón rojo.') : cu ? `${quien} encontró a ${cu}.` : `${quien} apretó el botón rojo.`;
+    naveVotos.replaceChildren(); naveVotar.hidden = !V.gente[0].vivo; document.getElementById('naveReunionTiempo').textContent = '';
+    naveChatIn.value = ''; naveChatIn.disabled = false; naveReunionEl.hidden = false;
+    pintarChatNave();
+  }
+  function pintarVotosRed() {
+    const V = MG.state.nave, R = V.reunion, yo = V.gente[0]; if (!R || R.fase !== 'votar') return;
+    naveVotos.replaceChildren(...R.vivos.map(id => {
+      const p = V.gente.find(q => q.id === id); if (!p) return null;
+      const b = elN('button', 'nave-voto' + (R.miVoto === id ? ' elegido' : '')); b.type = 'button';
+      b.append(elN('b', '', p.nombre), elN('small', '', R.votaron.has(id) ? '✔ votó' : '…'));
+      b.disabled = !yo.vivo || !!R.miVoto;
+      b.addEventListener('click', () => { if (R.miVoto) return; R.miVoto = id; enviarNV({ que: 'voto', a: id === 'yo' ? 'h' + red.id : id }); pintarVotosRed(); });
+      return b;
+    }).filter(Boolean));
+  }
   // E junto a una silla: la del modo te lleva a la torre; las demás todavía no tienen modo
   function sentarse() {
     const o = minigameOrigin(MG.k);
@@ -4988,7 +5191,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     else if (SILLAS[i].modo === 'atrapadas') abrirAtrapadas();
     else if (SILLAS[i].modo === 'carrera') abrirModoRonda('carrera');
     else if (SILLAS[i].modo === 'spleef') abrirModoRonda('spleef');
-    else if (SILLAS[i].modo === 'nave') abrirNave(o);
+    else if (SILLAS[i].modo === 'nave') { if (enSalaAN()) abrirModoRonda('nave'); else abrirNave(o); }   // 🚀 (con amigos: la espera, como los otros modos)
     else avisoModo('Próximamente: esta silla todavía no tiene modo');
   }
   function entrarTorre(o) {
@@ -5552,7 +5755,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
       get onQ() { const st = MG.state; return st.fase === 'nomires' || (st.fase === 'escondidas' && !st.esc.fantasma && !st.esc.resultado) || (st.fase === 'atrapadas' && !st.an.fantasma && !st.an.resultado) || (st.fase === 'carrera' && !st.cr.resultado && !st.cr.llegue) || (st.fase === 'spleef' && !st.sp.resultado && !st.sp.fuera) || (st.fase === 'nave' && !!st.nave && !!st.nave.gente && !st.nave.fin && !st.nave.reunion) ? abrirCarga : null; },  // Q: responder para cargar batería
       get eLabel() { if (MG.state.fase === 'nave') return etiquetaENave(); const o = minigameOrigin(MG.k); return MG.state.fase === 'salon' && cercaDelVendedor(ps.pos.x - o.x, ps.pos.z - o.z) ? '🎃 Tienda' : '✋ Sentarse'; },
       // ¿Dónde estoy? (para la red: con quién te ves) · torre: 21 · Escondidas con amigos: 30 + terreno · solo: 99 (no ves a nadie)
-      get mgCodigo() { const st = MG.state; if (st.fase === 'nomires') return MG_TORRE; if (st.fase === 'atrapadas') return st.an.solo ? MG_SOLO : MG_ATRAPADAS; if (st.fase === 'carrera') return st.cr.solo ? MG_SOLO : MG_CARRERA; if (st.fase === 'spleef') return st.sp.solo ? MG_SOLO : MG_SPLEEF; if (st.fase === 'escondidas') return st.esc.solo ? MG_SOLO : MG_ESCONDIDAS + st.esc.terreno; if (st.fase === 'nave') return MG_SOLO; return undefined; },
+      get mgCodigo() { const st = MG.state; if (st.fase === 'nomires') return MG_TORRE; if (st.fase === 'atrapadas') return st.an.solo ? MG_SOLO : MG_ATRAPADAS; if (st.fase === 'carrera') return st.cr.solo ? MG_SOLO : MG_CARRERA; if (st.fase === 'spleef') return st.sp.solo ? MG_SOLO : MG_SPLEEF; if (st.fase === 'escondidas') return st.esc.solo ? MG_SOLO : MG_ESCONDIDAS + st.esc.terreno; if (st.fase === 'nave') return st.nave && st.nave.red ? MG_NAVE : MG_SOLO; return undefined; },
       // El cielo se pone oscuro en el espacio (con estrellas) y en el neón
       get sky() { if (MG.state.fase === 'nave') return 0x070a1f; /* 🚀 el espacio */ if (MG.state.fase === 'spleef') return 0xffd9ec; /* rosadito, de día */ if (MG.state.fase === 'carrera') return 0xa8dcff; /* celeste pastel, como Fall Guys */ if (MG.state.fase === 'escondidas') return 0xefe6d6; if (MG.state.fase === 'atrapadas') return 0x0b2e33; /* el espacio verde azulado oscuro */ if (MG.state.fase !== 'nomires') return undefined; const id = etapaDe(ps.pos.y).id; return id === 'espacio' ? 0x070a1f : id === 'neon' ? 0x0d0618 : undefined; },
       // Parado en hielo: resbalas (agarre chico). 0 = piso normal
@@ -5589,6 +5792,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
         quitarCarrera(); for (const b of MG.built.botsCR || []) b.obj.visible = false;
         if (MG.state.sp) levantarseModo('spleef');
         quitarSpleef(); for (const b of MG.built.botsSP || []) b.obj.visible = false;
+        if (MG.state.nave && MG.state.nave.red) enviarNV({ que: 'salir' });
         if (MG.state.nave) limpiarRondaNave();
         naveModalEl.hidden = true; naveListaEl.hidden = true; naveLucesBtn.hidden = true;
         quitarNave(); MG.state.nave = null;
@@ -6646,7 +6850,10 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
       ayuda: 'Una arena gigante con el piso de <b>hexágonos</b>: cuando pisas uno, al ratito <b>se cae</b>. ¡No te quedes quieto! Hay <b>6 capas</b>, una debajo de otra: si se te cae el piso, caes a la de abajo. Si te caes de la última, quedas afuera. <b>Gana el último que quede.</b> Tienes <b>doble salto</b> para cruzar los huecos. Moverte gasta batería: <b>Q</b> para responder (¡+3.000 por respuesta!).',
       bots: 'Estás solo en la sala: juegas contra los bots (elige cuántos). Cuando entre un amigo, pueden jugar juntos.' },
   };
-  const lobbyModo = { carrera: { espera: [], enRonda: false, sentado: false }, spleef: { espera: [], enRonda: false, sentado: false } };
+  MODOS_RONDA.nave = { titulo: '🚀 NAVE ENTRE SOSPECHAS', tipo: 'nv', estado: () => (MG.state.nave && MG.state.nave.red ? MG.state.nave : null), empezar: () => { mdEl.hidden = true; entrarNave(minigameOrigin(MG.k)); }, salir: o => salirNave(o),
+    ayuda: 'Una nave con <b>15 tripulantes</b> (los que falten son bots). Algunos son <b>IMPOSTORES</b> 😈: atacan sin que los vean, sabotean y usan escotillas secretas. La tripulación hace las <b>tareas</b> (E) y, si encuentra a alguien desmayado, lo <b>reporta</b> (F) para hablar y <b>votar</b>. Moverte gasta batería: <b>Q</b> para responder.',
+    bots: 'Estás solo en la sala: juegas con 14 bots. Cuando entre un amigo, pueden jugar juntos (los bots completan hasta 15).' };
+  const lobbyModo = { carrera: { espera: [], enRonda: false, sentado: false }, spleef: { espera: [], enRonda: false, sentado: false }, nave: { espera: [], enRonda: false, sentado: false } };
   let mdModo = null;   // qué modo muestra el panel ahora
   function abrirModoRonda(modo) {
     for (const k in keys) keys[k] = false;
@@ -6671,7 +6878,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     if (!sala) levantarseModo();
     document.getElementById('mdModo').textContent = sala ? 'Juegas con los amigos de la sala: con 2 o más, cualquiera aprieta ¡Empezar!' : red.id !== null ? M.bots : 'Juegas contra los bots.';
     document.getElementById('mdSala').hidden = !sala;
-    const mb = document.getElementById('mdBots'); mb.hidden = sala; mb.replaceChildren(); if (!sala) mb.append(controlBots(mdModo));   // (cada modo con su cantidad)
+    const mb = document.getElementById('mdBots'); mb.hidden = sala || mdModo === 'nave'; mb.replaceChildren(); if (!sala && mdModo !== 'nave') mb.append(controlBots(mdModo));   // (la nave siempre se llena hasta 15)   // (cada modo con su cantidad)
     if (sala) document.getElementById('mdLista').replaceChildren(...L.espera.map(j => { const li = document.createElement('li'); li.textContent = j.nombre + (j.id === red.id ? ' (tú)' : ''); return li; }));
     const boton = document.getElementById('mdEmpezar');
     boton.disabled = sala && (L.espera.length < 2 || L.enRonda);
@@ -8112,11 +8319,11 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
 
   // ---------- Multijugador: tus amigos en tiempo real ----------
   // Cartelito con el nombre encima de la cabeza
-  function makeLabel(text) {
+  function makeLabel(text, color = '#fff') {
     const c = document.createElement('canvas'); c.width = 256; c.height = 64;
     const g = c.getContext('2d');
     g.fillStyle = 'rgba(0,0,0,.55)'; g.fillRect(0, 8, 256, 48);
-    g.fillStyle = '#fff'; g.font = 'bold 34px system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillStyle = color; g.font = 'bold 34px system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
     g.fillText(text, 128, 33);
     const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false }));
     s.scale.set(2.4, 0.6, 1); s.position.y = H + 0.6;
@@ -8202,6 +8409,7 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
         anLobby.enRonda = !!(m.atrapadas && m.atrapadas.enRonda);
         lobbyModo.carrera.enRonda = !!(m.carrera && m.carrera.enRonda);
         lobbyModo.spleef.enRonda = !!(m.spleef && m.spleef.enRonda);
+        lobbyModo.nave.enRonda = !!(m.nave && m.nave.enRonda);
         if (document.hidden) enviar({ tipo: 'visible', v: 0 });
         for (const j of m.jugadores) addFriend(j);
         // En una compu nueva (sin guardado en el navegador) apareces donde te dejó la base de datos
@@ -8269,6 +8477,8 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
         mensajeCarrera(m);
       } else if (['spEspera', 'spRonda', 'spPisa', 'spFuera', 'spFin', 'spAviso'].includes(m.tipo)) {
         mensajeSpleef(m);
+      } else if (m.tipo.startsWith('nv')) {
+        mensajeNave(m);   // 🚀
       } else if (m.tipo.startsWith('esc')) {
         mensajeEscondidas(m);
       } else if (m.tipo === 'error') {
@@ -8324,7 +8534,8 @@ import { PUERTO, OFICIAL, leerSala, ENVIOS_POR_SEGUNDO, nuevoSuavizador, agregar
     for (const [id, f] of red.otros) {
       const anR = MG.state && MG.state.an && !MG.state.an.solo ? MG.state.an : null, fantasmaAN = !!(anR && anR.jugadores.includes(id) && !anR.vivos.has(id));   // en Atrapadas, los fantasmas los ve todo el mundo
       const spR = MG.state && MG.state.sp && !MG.state.sp.solo ? MG.state.sp : null, espectadorSP = !!(spR && spR.jugadores.includes(id) && !spR.vivos.has(id));   // 👻 los que se cayeron del Spleef: nadie los ve
-      const fantasma = (enRonda && esc.encontrados.has(id)) || fantasmaAN, ve = seVen(yoMg, f.mg) && (!fantasma || fantasmaAN || soyBuscador()) && !espectadorSP;
+      const Vn = MG.state && MG.state.fase === 'nave' && MG.state.nave && MG.state.nave.red ? MG.state.nave : null, pNV = Vn && Vn.gente.find(q => q.sid === id), fantasmaNV = !!(pNV && !pNV.vivo && !pNV.salio);   // 🚀
+      const fantasma = (enRonda && esc.encontrados.has(id)) || fantasmaAN || fantasmaNV, ve = seVen(yoMg, f.mg) && (!fantasma || fantasmaAN || soyBuscador() || (fantasmaNV && esImpNave('yo'))) && !espectadorSP && !(pNV && pNV.salio);
       f.look.visible = ve; f.label.visible = ve && !enRonda; f.mgLabel.visible = !ve && yoMg === 0 && f.mg !== 0;
       verFantasma(f.look, fantasma);   // (todo su look, con disfraz)
     }

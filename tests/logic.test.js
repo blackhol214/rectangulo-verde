@@ -2561,8 +2561,10 @@ describe('🚀 Nave, fase 2: lo de adentro de cada tarea', () => {
     for (let s = 0; s < 120; s++) v = multiplicar(v, 0.5, VIRUS, r);
     expect(v.length).toBe(VIRUS.max); expect(v.every(b => b.x >= 0 && b.x <= 1 && b.y >= 0 && b.y <= 1)).toBe(true);
     expect(multiplicar([], 10, VIRUS, r)).toEqual([]);   // si no queda ninguno, no vuelve
-    // alguien que saca uno cada 0,45 s le gana al virus (y a la maleza) aunque esté lleno
-    for (const R of [VIRUS, MALEZA]) { let l = sembrar(R.max, r, R), t = 0; while (l.length && t < 60) { l = multiplicar(l, 0.45, R, r); l = l.slice(1); t += 0.45; } expect(l.length, R === VIRUS ? 'virus' : 'maleza').toBe(0); }
+    // aunque esté lleno se puede ganar: al virus (rápido) sacando uno cada 0,3 s (clics rápidos o arrastrando), a la maleza uno cada 0,45 s
+    for (const [R, cada] of [[VIRUS, 0.3], [MALEZA, 0.45]]) { let l = sembrar(R.max, r, R), t = 0; while (l.length && t < 60) { l = multiplicar(l, cada, R, r); l = l.slice(1); t += cada; } expect(l.length, R === VIRUS ? 'virus' : 'maleza').toBe(0); }
+    // y se reparte rápido: si no haces nada, en 5 s ya hay más del doble
+    { let l = sembrar(VIRUS.inicio, r, VIRUS); for (let k = 0; k < 50; k++) l = multiplicar(l, 0.1, VIRUS, r); expect(l.length).toBeGreaterThan(VIRUS.inicio * 2); }
   });
   it('🌱 plantas: abonar las 4 y sacar toda la maleza', () => {
     const e = nuevasPlantas(srN(1)); expect(plantasListas(e)).toBe(false);

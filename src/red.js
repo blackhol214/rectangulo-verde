@@ -82,7 +82,7 @@ export const claveCorrecta = (dada, real) => typeof dada === 'string' && typeof 
 // 0 = en el mundo · 1 a 20 = en el minijuego número mg − 1 · 21 = en la torre "No mires abajo"
 // · 30, 31, 32 = en una ronda de Escondidas con amigos (en el terreno 0, 1 o 2) · 99 = jugando solo (no ve a nadie)
 // · 50 = en una Carrera con amigos · 60 = en un Spleef con amigos
-export const MG_TORRE = 21, MG_ESCONDIDAS = 30, MG_ATRAPADAS = 40, MG_CARRERA = 50, MG_SPLEEF = 60, MG_SOLO = 99;
+export const MG_TORRE = 21, MG_ESCONDIDAS = 30, MG_ATRAPADAS = 40, MG_CARRERA = 50, MG_SPLEEF = 60, MG_NAVE = 70, MG_SOLO = 99;
 // Dos jugadores se ven solo si están en el mismo lugar (y ninguno está jugando solo)
 export const seVen = (miMg, suMg) => miMg === suMg && miMg !== MG_SOLO;
 
@@ -361,6 +361,15 @@ export function leerMensaje(texto) {
     if (['entrar', 'salir', 'empezar'].includes(m.que)) return { tipo: 'sp', que: m.que };
     if (m.que === 'pisa' && Array.isArray(m.h) && m.h.length >= 1 && m.h.length <= 30 && m.h.every(p => Array.isArray(p) && p.length === 2 && esEntero(p[0], 0, 9) && esEntero(p[1], 0, 9999)))
       return { tipo: 'sp', que: 'pisa', h: m.h.map(p => [p[0], p[1]]) };
+    return null;
+  }
+  // 🚀 Nave entre sospechas: la espera (entrar, salir, empezar) y lo que haces en la ronda (el servidor revisa TODO)
+  if (m.tipo === 'nv') {
+    if (['entrar', 'salir', 'empezar', 'luces', 'reportar', 'boton', 'caja', 'empezarVoto'].includes(m.que)) return { tipo: 'nv', que: m.que };
+    if (['abrir', 'tarea', 'sabotear'].includes(m.que) && typeof m.tarea === 'string' && /^[a-z]{1,12}$/.test(m.tarea)) return { tipo: 'nv', que: m.que, tarea: m.tarea };
+    if ((m.que === 'atacar' || m.que === 'voto') && typeof m.a === 'string' && /^[hb][0-9]{1,6}$/.test(m.a)) return { tipo: 'nv', que: m.que, a: m.a };
+    if (m.que === 'escotilla' && typeof m.id === 'string' && /^[a-z][0-9]$/.test(m.id)) return { tipo: 'nv', que: 'escotilla', id: m.id };
+    if (m.que === 'chat' && typeof m.texto === 'string' && m.texto.length <= 300) return { tipo: 'nv', que: 'chat', texto: m.texto };
     return null;
   }
   // Tu pestaña se escondió (v: 0) o volvió a verse (v: 1): una pestaña escondida no puede ser el anfitrión

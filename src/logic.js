@@ -2475,7 +2475,9 @@ export function siguienteEscotilla(id) {
 // Las distancias de las acciones (en metros) y las esperas (en segundos)
 export const ACCION_NAVE = { tarea: 1.8, escotilla: 1.4, ataque: 1.8, reporte: 3, testigos: 9, esperaAtaque: 25, esperaAtaqueBot: 30, primerAtaque: 20, esperaSabotaje: 15 };
 // 💡 Sabotaje de las luces: 10 s a oscuras para la tripulación (el impostor ve normal). Después hay que esperar para volver a apagarlas
-export const APAGON = { dura: 10, espera: 35, primero: 15, vista: 6 };   // vista: hasta dónde ven los tripulantes (m)
+export const APAGON = { dura: 10, espera: 35, primero: 15, vista: 6 };
+// Lo mínimo que tarda cada tarea (segundos): con amigos, el servidor no acepta una tarea hecha más rápido
+export const MIN_TAREA_NAVE = { cables: 3, plantas: 4, motor: 10, virus: 4, muestras: 3, comida: 3, camillas: 5 };   // vista: hasta dónde ven los tripulantes (m)
 export const puedeApagar = (t, finAnterior) => t >= APAGON.primero && t - finAnterior >= APAGON.espera;
 const cerca = (a, b, d) => Math.hypot(a.x - b.x, a.z - b.z) <= d;
 export const cercaDe = cerca;
@@ -2555,7 +2557,7 @@ export function unirCable(est, i, j) {
 export const cablesListos = est => est.unidos.length === COLORES_CABLES.length;
 // 🦠 / 🌿 Cosas que se multiplican (el virus, la maleza): cada una, cada `cada` segundos, hace otra al lado (hasta `max`)
 // (solo los primeros `padres` se multiplican a la vez: así, sacándolos rápido, siempre se puede ganar)
-export const VIRUS = { inicio: 3, cada: 2.4, max: 26, salto: 0.13, padres: 3 };
+export const VIRUS = { inicio: 4, cada: 1.4, max: 22, salto: 0.16, padres: 4 };   // (Mathias: se reparte MUCHO más rápido: ~3 nuevos por segundo)
 export const MALEZA = { inicio: 5, cada: 2, max: 14, salto: 0.18, padres: 3 };
 const entre = (v, a, b) => Math.max(a, Math.min(b, v));
 export function sembrar(n, azar = Math.random, R = VIRUS) { return Array.from({ length: n }, () => ({ x: 0.15 + azar() * 0.7, y: 0.15 + azar() * 0.7, t: azar() * R.cada })); }
@@ -2663,3 +2665,64 @@ const encajar = (v, a, b) => Math.max(a, Math.min(b, v));
 export const moverEspectador = (pos, mov, caja = cajaEspectadorSP()) => ({ x: encajar(pos.x + mov.x, caja.x0, caja.x1), y: encajar(pos.y + mov.y, caja.y0, caja.y1), z: encajar(pos.z + mov.z, caja.z0, caja.z1) });
 // 🙈 Escondidas jugando solo: si a ti te encuentran y quedan otros escondidos, sigues de fantasma (caminando); si no, se termina
 export const encontradoSolo = quedanEscondidos => (quedanEscondidos > 0 ? 'fantasma' : 'fin');
+
+// ----- 🚀 Nave con amigos: lo que comparten el servidor y el juego -----
+// El centro de la nave (en coordenadas del mundo): la nave está dentro del minijuego del Modo Escuela, NAVE_X más allá
+export const centroNave = () => { const o = minigameOrigin(ESCUELA_K); return { x: o.x + NAVE_X, z: o.z }; };
+// ¿El segmento a→b pasa por adentro de la caja k? (para no atravesar cosas ni paredes)
+export function segmentoEnCaja(a, b, k) {
+  let t0 = 0, t1 = 1;
+  for (const [p, d, lo, hi] of [[a.x, b.x - a.x, k.x0, k.x1], [a.z, b.z - a.z, k.z0, k.z1]]) {
+    if (Math.abs(d) < 1e-9) { if (p < lo || p > hi) return false; continue; }
+    let u0 = (lo - p) / d, u1 = (hi - p) / d; if (u0 > u1) [u0, u1] = [u1, u0];
+    t0 = Math.max(t0, u0); t1 = Math.min(t1, u1); if (t0 > t1) return false;
+  }
+  return true;
+}
+const cajaDeProp = (p, m) => ({ x0: p.x - p.an / 2 - m, x1: p.x + p.an / 2 + m, z0: p.z - p.la / 2 - m, z1: p.z + p.la / 2 + m });
+export const cruzaProp = (a, b, m = 0.6) => PROPS_NAVE.some(p => segmentoEnCaja(a, b, cajaDeProp(p, m)));
+// El camino de un bot (en metros desde el centro de la nave): por las puertas, y adentro de cada sala, rodeando las cosas
+// (una mesa, una maceta…) por una red de puntos libres de esa sala (se arma una sola vez). Devuelve los puntos (sin el de salida)
+const REDES_SALA = new Map();
+function redDeSala(si) {
+  if (REDES_SALA.has(si)) return REDES_SALA.get(si);
+  const s = SALAS_NAVE[si], nodos = [];
+  for (let x = s.x0 + 1; x <= s.x1 - 1 + 1e-9; x += 1.5) for (let z = s.z0 + 1; z <= s.z1 - 1 + 1e-9; z += 1.5)
+    if (!PROPS_NAVE.some(p => Math.abs(x - p.x) < p.an / 2 + 0.8 && Math.abs(z - p.z) < p.la / 2 + 0.8)) nodos.push({ x, z });
+  const vecinos = nodos.map((a, i) => nodos.map((b, j) => j).filter(j => j !== i && Math.hypot(nodos[j].x - a.x, nodos[j].z - a.z) < 6 && !cruzaProp(a, nodos[j])));
+  const red = { nodos, vecinos }; REDES_SALA.set(si, red); return red;
+}
+// De a hasta b adentro de una sala, sin cruzar nada: el camino más corto (en saltos) por la red de esa sala
+function rodeo(a, b, si) {
+  if (!cruzaProp(a, b)) return [];
+  const { nodos, vecinos } = redDeSala(si), n = nodos.length, previo = new Array(n).fill(-2), cola = [];
+  nodos.forEach((p, i) => { if (!cruzaProp(a, p)) { previo[i] = -1; cola.push(i); } });
+  for (let k = 0; k < cola.length; k++) {
+    const i = cola[k];
+    if (!cruzaProp(nodos[i], b)) { const out = []; for (let j = i; j !== -1; j = previo[j]) out.unshift(nodos[j]); return out; }
+    for (const j of vecinos[i]) if (previo[j] === -2) { previo[j] = i; cola.push(j); }
+  }
+  return [];   // (no hay forma: va derecho, como antes)
+}
+export function rutaNaveLibre(desde, hasta) {
+  const s0 = salaNaveEn(desde.x, desde.z), s1 = salaNaveEn(hasta.x, hasta.z);
+  const puntos = [desde, ...(s0 >= 0 && s1 >= 0 ? rutaNave(s0, s1) || [] : []), hasta], out = [];
+  for (let i = 1; i < puntos.length; i++) {
+    const a = puntos[i - 1], b = puntos[i], m = { x: (a.x + b.x) / 2, z: (a.z + b.z) / 2 }, si = salaNaveEn(m.x, m.z);
+    if (si >= 0) out.push(...rodeo(a, b, si));
+    out.push(b);
+  }
+  return out;
+}
+// 🛡️ La zona que vigila el servidor en la nave (para vigilarPos): adentro de la nave, sin volar, sin atravesar paredes
+let PAREDES_NAVE = null;
+export function zonaNave(i = 0, n = 1) {
+  const C = centroNave(), xs = SALAS_NAVE.flatMap(s => [s.x0, s.x1]), zs = SALAS_NAVE.flatMap(s => [s.z0, s.z1]);
+  if (!PAREDES_NAVE) PAREDES_NAVE = paredesNave().map(w => ({ x0: C.x + w.x0, x1: C.x + w.x1, z0: C.z + w.z0, z1: C.z + w.z1 }));
+  const L = lugarInicioNave(i, n);
+  return { x0: C.x + Math.min(...xs) + 0.5, x1: C.x + Math.max(...xs) - 0.5, z0: C.z + Math.min(...zs) + 0.5, z1: C.z + Math.max(...zs) - 0.5,
+    yMin: 0, yMax: 4.6, velMax: VEL_ESC, llegada: { x: C.x + L.x, z: C.z + L.z, radio: 6 }, saltos: [],
+    cruce: (antes, p) => (PAREDES_NAVE.some(w => segmentoEnCaja(antes, p, w)) ? { x: antes.x, z: antes.z } : null) };   // (atravesar una pared: te quedas donde estabas)
+}
+// Dónde aparece cada uno al empezar (en ronda en el pasillo, alrededor del inicio)
+export function lugarInicioNave(i, n) { const a = (i / Math.max(1, n)) * Math.PI * 2; return { x: INICIO_NAVE.x + Math.cos(a) * 2.2, z: INICIO_NAVE.z + Math.sin(a) * 2.2 }; }
